@@ -1,0 +1,422 @@
+# Vietnamese translation for OpenLDAP.
+# Copyright © 2008 Free Software Foundation, Inc.
+# Clytie Siddall <clytie@riverland.net.au>, 2005-2008.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: openldap 2.4.7-6.4\n"
+"Report-Msgid-Bugs-To: openldap@packages.debian.org\n"
+"POT-Creation-Date: 2008-07-19 19:11-0700\n"
+"PO-Revision-Date: 2008-05-09 00:24+0930\n"
+"Last-Translator: Clytie Siddall <clytie@riverland.net.au>\n"
+"Language-Team: Vietnamese <vi-VN@googlegroups.com>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: vi\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: LocFactoryEditor 1.7b3\n"
+
+#. Type: boolean
+#. Description
+#: ../slapd.templates:1001
+msgid "Omit OpenLDAP server configuration?"
+msgstr "Bỏ qua cấu hình trình phục vụ OpenLDAP không?"
+
+#. Type: boolean
+#. Description
+#: ../slapd.templates:1001
+msgid ""
+"If you enable this option, no initial configuration or database will be "
+"created for you."
+msgstr ""
+"Bật tùy chọn này thì không tạo cho bạn cấu hình hay cơ sở dữ liệu đầu tiên."
+
+#. Type: select
+#. Choices
+#: ../slapd.templates:2001
+msgid "always"
+msgstr "luôn luôn"
+
+#. Type: select
+#. Choices
+#: ../slapd.templates:2001
+msgid "when needed"
+msgstr "khi cần thiết"
+
+#. Type: select
+#. Choices
+#: ../slapd.templates:2001
+msgid "never"
+msgstr "không bao giờ"
+
+#. Type: select
+#. Description
+#: ../slapd.templates:2002
+msgid "Dump databases to file on upgrade:"
+msgstr "Nâng cấp thì đổ các cơ sở dữ liệu vào tập tin:"
+
+#. Type: select
+#. Description
+#: ../slapd.templates:2002
+msgid ""
+"Before upgrading to a new version of the OpenLDAP server, the data from your "
+"LDAP directories can be dumped into plain text files in the standard LDAP "
+"Data Interchange Format."
+msgstr ""
+"Trước khi nâng cấp lên phiên bản mới của trình phục vụ OpenLDAP, dữ liệu nằm "
+"trong các thư mục LDAP có thể được đổ vào tập tin nhập thô theo định dạng "
+"trao đổi dữ liệu LDAP chuẩn."
+
+#. Type: select
+#. Description
+#: ../slapd.templates:2002
+msgid ""
+"Selecting \"always\" will cause the databases to be dumped unconditionally "
+"before an upgrade. Selecting \"when needed\" will only dump the database if "
+"the new version is incompatible with the old database format and it needs to "
+"be reimported. If you select \"never\", no dump will be done."
+msgstr ""
+"Chọn mục « luôn luôn » thì gây ra các cơ sở dữ liệu bị đổ một cách không điều "
+"kiện trước khi nâng cấp. Chọn « khi cần thiết » thì chỉ đổ cơ sở dữ liệu nếu "
+"phiên bản mới không tương thích với định dạng cơ sở dữ liệu cũ và cần phải "
+"nhập lại nó. Còn chọn « không bao giờ » thì không đổ gì."
+
+#. Type: string
+#. Description
+#: ../slapd.templates:3001
+msgid "Directory to use for dumped databases:"
+msgstr "Thư mục vào đó cần đổ cơ sở dữ liệu :"
+
+#. Type: string
+#. Description
+#: ../slapd.templates:3001
+msgid ""
+"Please specify the directory where the LDAP databases will be exported. In "
+"this directory, several LDIF files will be created which correspond to the "
+"search bases located on the server. Make sure you have enough free space on "
+"the partition where the directory is located. The first occurrence of the "
+"string \"VERSION\" is replaced with the server version you are upgrading "
+"from."
+msgstr ""
+"Ghi rõ tên thư mục vào đó cần xuất các cơ sở dữ liệu LDAP. Trong thư mục này "
+"thì tạo vài tập tin LDIF mà tương ứng với những cơ bản tìm kiếm nằm trên máy "
+"phục vụ. Hãy kiểm tra xem vẫn có đủ chỗ rỗng trong phân vùng đó. Lần đầu "
+"tiên gặp chuỗi « VERSION » (phiên bản) thì được thay thế bằng phiên bản từ đó "
+"bạn đang nâng cấp."
+
+#. Type: boolean
+#. Description
+#: ../slapd.templates:4001
+msgid "Move old database?"
+msgstr "Di chuyển cơ sở dữ liệu cũ không?"
+
+#. Type: boolean
+#. Description
+#: ../slapd.templates:4001
+msgid ""
+"There are still files in /var/lib/ldap which will probably break the "
+"configuration process. If you enable this option, the maintainer scripts "
+"will move the old database files out of the way before creating a new "
+"database."
+msgstr ""
+"Vẫn còn có một số tập tin nằm trong thư mục « /var/lib/ldap » mà sẽ rất có "
+"thể phá vỡ tiến trình cấu hình. Nếu bạn hiệu lực tùy chọn này, những văn "
+"lệnh bảo quản sẽ di chuyển những tập tin cơ sở dữ liệu cũ ra, trước khi tạo "
+"cơ sở dữ liệu mới."
+
+#. Type: boolean
+#. Description
+#: ../slapd.templates:5001
+msgid "Retry configuration?"
+msgstr "Thử lại cấu hình không?"
+
+#. Type: boolean
+#. Description
+#: ../slapd.templates:5001
+msgid ""
+"The configuration you entered is invalid. Make sure that the DNS domain name "
+"is syntactically valid, the organization is not left empty and the admin "
+"passwords match. If you decide not to retry the configuration the LDAP "
+"server will not be set up. Run 'dpkg-reconfigure slapd' if you want to retry "
+"later."
+msgstr ""
+"Bạn đã nhập một cấu hình không hợp lệ. Hãy kiểm tra xem tên miền DNS có cú "
+"pháp hợp lệ, trường tổ chức không rỗng và có hai mật khẩu quản lý trùng. Nếu "
+"bạn quyết định không thử lại tiến trình cấu hình thì không thiết lập trình "
+"phục vụ LDAP. Muốn thử lại sau thì chạy lệnh cấu hình lại « dpkg-reconfigure "
+"slapd »."
+
+#. Type: string
+#. Description
+#: ../slapd.templates:6001
+msgid "DNS domain name:"
+msgstr "Tên miền DNS:"
+
+# The DNS domain name is used to construct the base DN of your LDAP
+# directory. Entering foo.bar.org will give you the base DN dc=foo, dc=bar,
+# dc=org.
+#. Type: string
+#. Description
+#: ../slapd.templates:6001
+msgid ""
+"The DNS domain name is used to construct the base DN of the LDAP directory. "
+"For example, 'foo.example.org' will create the directory with 'dc=foo, "
+"dc=example, dc=org' as base DN."
+msgstr ""
+"Tên miền DNS được dùng để cấu trúc tên miền cơ bản của thư mục LDAP. Chẳng "
+"hạn, « foo.thí_dụ.org » sẽ tạo thư mục có « dc=foo, dc=thí_dụ, dc=org » là tên "
+"miền cơ bản."
+
+#. Type: string
+#. Description
+#: ../slapd.templates:7001
+msgid "Organization name:"
+msgstr "Tên tổ chức:"
+
+#. Type: string
+#. Description
+#: ../slapd.templates:7001
+msgid ""
+"Please enter the name of the organization to use in the base DN of your LDAP "
+"directory."
+msgstr ""
+"Hãy nhập tên của tổ chức cần dùng trong tên miền cơ bản của thư mục LDAP."
+
+#. Type: password
+#. Description
+#: ../slapd.templates:8001
+msgid "Administrator password:"
+msgstr "Mật khẩu quản trị:"
+
+#. Type: password
+#. Description
+#: ../slapd.templates:8001
+msgid "Please enter the password for the admin entry in your LDAP directory."
+msgstr "Hãy nhập mật khẩu cho mục ghi quản trị trong thư mục LDAP của bạn."
+
+#. Type: password
+#. Description
+#: ../slapd.templates:9001
+msgid "Confirm password:"
+msgstr "Xác nhận mật khẩu :"
+
+#. Type: password
+#. Description
+#: ../slapd.templates:9001
+msgid ""
+"Please enter the admin password for your LDAP directory again to verify that "
+"you have typed it correctly."
+msgstr ""
+"Hãy nhập lại mật khẩu quản trị cho thư mục LDAP, để xác nhận bạn đã gõ đúng."
+
+#. Type: note
+#. Description
+#: ../slapd.templates:10001
+msgid "Password mismatch"
+msgstr "Sai khớp mật khẩu"
+
+#. Type: note
+#. Description
+#: ../slapd.templates:10001
+msgid "The two passwords you entered were not the same. Please try again."
+msgstr "Bạn đã gõ hai mật khẩu khác nhau. Hãy thử lại."
+
+#. Type: boolean
+#. Description
+#: ../slapd.templates:11001
+msgid "Do you want the database to be removed when slapd is purged?"
+msgstr ""
+"Khi tẩy gói phần mềm slapd, bạn cũng có muốn gỡ bỏ cơ sở dữ liệu không?"
+
+#. Type: boolean
+#. Description
+#: ../slapd.templates:13001
+msgid "Allow LDAPv2 protocol?"
+msgstr "Cho phép giao thức LDAPv2 không?"
+
+#. Type: boolean
+#. Description
+#: ../slapd.templates:13001
+msgid ""
+"The obsolete LDAPv2 protocol is disabled by default in slapd. Programs and "
+"users should upgrade to LDAPv3.  If you have old programs which can't use "
+"LDAPv3, you should select this option and 'allow bind_v2' will be added to "
+"your slapd.conf file."
+msgstr ""
+"Giao thức LDAPv2 (phiên bản 2) quá cũ bị tắt theo mặc định trong slapd. Các "
+"chương trình và người dùng đều nên nâng cấp lên LDAPv3 (phiên bản 3). Có "
+"chương trình cũ không thể dùng LDAPv3 thì bạn nên bật tùy chọn này và chuỗi « "
+"allow bind_v2 » sẽ được thêm vào tập tin cấu hình « slapd.conf »."
+
+#. Type: boolean
+#. Description
+#: ../slapd.templates:14001
+msgid "Back up current database and create a new one?"
+msgstr "Sao lưu cơ sở dữ liệu hiện thời và tạo điều mới không?"
+
+#. Type: boolean
+#. Description
+#: ../slapd.templates:14001
+msgid ""
+"The directory suffix (domain) you specified doesn't match the one currently "
+"in /etc/ldap/slapd.conf. Changing the directory suffix requires moving aside "
+"the current LDAP database and creating a new one. Please confirm whether you "
+"want to back up and abandon the current database."
+msgstr ""
+"Bạn đã ghi rõ một hậu tố thư mục (miền) không khớp với điều hiện thời được "
+"ghi trong tập tin cấu hình « /etc/ldap/slapd.conf ». Việc thay đổi hậu tố thư "
+"mục cần thiết di chuyển cơ sở dữ liệu LDAP hiện thời ra rồi tạo một điều "
+"mới. Hãy xác nhận nếu bạn muốn sao lưu và hủy cơ sở dữ liệu hiện thời không."
+
+#. Type: error
+#. Description
+#: ../slapd.templates:15001
+msgid "slapcat failure during upgrade"
+msgstr "slapcat bị lỗi trong khi nâng cấp"
+
+#. Type: error
+#. Description
+#: ../slapd.templates:15001
+msgid "An error occurred while upgrading the LDAP directory."
+msgstr "Gặp lỗi trong khi nâng cấp thư mục LDAP."
+
+#. Type: error
+#. Description
+#: ../slapd.templates:15001
+msgid ""
+"The 'slapcat' program failed while extracting the LDAP directory. This may "
+"be caused by an incorrect configuration file (for example, missing "
+"'moduleload' lines to support the backend database)."
+msgstr ""
+"Chương trình « slapcat » bị lỗi trong khi giải nén mục LDAP. Có lẽ do tập tin "
+"cấu hình sai (v.d. thiếu dòng « moduleload » để hỗ trợ cơ sở dữ liệu hậu "
+"phương)."
+
+#. Type: error
+#. Description
+#. This paragraph is followed by a (non translatable) paragraph
+#. containing a command line
+#: ../slapd.templates:15001
+msgid ""
+"This failure will cause 'slapadd' to fail later as well. The old database "
+"files will be moved to /var/backups. If you want to try this upgrade again, "
+"you should move the old database files back into place, fix whatever caused "
+"slapcat to fail, and run:"
+msgstr ""
+"Sự thất bại này sẽ cũng gây ra tiến trình « slapadd » thất bại về sau. Các "
+"tập tin cơ sở dữ liệu cũ sẽ được di chuyển vào thư mục « /var/backups ». Muốn "
+"thử lại tiến trình nâng cấp thì bạn nên di chuyển các tập tin cơ sở dữ liệu "
+"cũ về nơi gốc, sửa chữa trường hợp gây ra slapcat bị lỗi, rồi chạy lệnh này:"
+
+#. Type: error
+#. Description
+#. Translators: keep "$location" unchanged. This is a variable that
+#. will be replaced by a directory name at execution
+#: ../slapd.templates:15001
+msgid ""
+"Then move the database files back to a backup area and then try running "
+"slapadd from $location."
+msgstr ""
+"Sau đó, hãy di chuyển các tập tin cơ sở dữ liệu sang một vùng sao lưu, rồi "
+"thử chạy trình slapadd từ nơi « $location »."
+
+#. Type: select
+#. Description
+#: ../slapd.templates:16001
+msgid "Database backend to use:"
+msgstr "Hậu phương cơ sở dữ liệu cần dùng:"
+
+#. Type: select
+#. Description
+#: ../slapd.templates:16001
+msgid ""
+"The HDB backend is recommended. HDB and BDB use similar storage formats, but "
+"HDB adds support for subtree renames. Both support the same configuration "
+"options."
+msgstr ""
+"Khuyên bạn dùng hậu phương HDB. HDB và BDB dùng định dạng cất giữ tương tự "
+"nhau, nhưng HDB thêm hỗ trợ khả năng thay đổi tên của cây con. Cả hai đều hỗ "
+"trợ cùng các tùy chọn cấu hình."
+
+# The BDB backend is the recommended choice of the OpenLDAP developers.
+# When using the BDB backend make sure that you configure the underlying
+# database for your requirements. Look into /usr/share/doc/slapd/README.
+# DB_CONFIG.gz
+#. Type: select
+#. Description
+#: ../slapd.templates:16001
+msgid ""
+"In either case, you should review the resulting database configuration for "
+"your needs. See /usr/share/doc/slapd/README.DB_CONFIG.gz for more details."
+msgstr ""
+"Trong cả trường hợp, bạn nên xem lại cấu hình cơ sở dữ liệu đã kết quả, kiểm "
+"tra nó thích hợp với trường hợp của bạn. Xem tài liệu Đọc Đi « /usr/share/doc/"
+"slapd/README.DB_CONFIG.gz » để tìm chi tiết."
+
+#. Type: error
+#. Description
+#: ../slapd.templates:17001
+msgid "slurpd is obsolete; replicas must be reconfigured by hand"
+msgstr "slurpd quá cũ ; mỗi bản sao phải được cấu hình lại bằng tay"
+
+#. Type: error
+#. Description
+#: ../slapd.templates:17001
+msgid ""
+"One or more slurpd \"replica\" options were found in your slapd config when "
+"upgrading.  Because slurpd is obsolete beginning with OpenLDAP 2.4, you will "
+"need to migrate your replicas to use the syncrepl protocol instead."
+msgstr ""
+"Một hay nhiều tùy chọn « sao chép » của slurpd đã được tim trong cấu hình "
+"slapd của bạn trong khi nâng cấp. Vì slurpd quá cũ kể từ OpenLDAP 2.4, bạn "
+"cần phải nâng cấp các bản sao để sử dụng giao thức syncrepl thay vào đó."
+
+#. Type: error
+#. Description
+#: ../slapd.templates:17001
+msgid ""
+"The conversion from slurpd to the pull-based syncrepl protocol cannot be "
+"done automatically and you will need to configure your replica servers by "
+"hand.  Please see http://www.openldap.org/doc/admin24/syncrepl.html for "
+"details."
+msgstr ""
+"Tiến trình chuyển đổi từ slurpd sang giao thức syncrepl dựa vào pull không "
+"thể được tự động chạy, và bạn sẽ cần phải cấu hình bằng tay các trình phục "
+"vụ sao chép. Xem địa chỉ « http://www.openldap.org/doc/admin24/syncrepl.html "
+"» để tìm chi tiết."
+
+#. Type: error
+#. Description
+#: ../slapd.templates:18001
+msgid "TLSCipherSuite values have changed"
+msgstr "Giá trị TLSCipherSuite bị thay đổi"
+
+#. Type: error
+#. Description
+#: ../slapd.templates:18001
+msgid ""
+"A \"TLSCipherSuite\" option was found in your slapd config when upgrading. "
+"The values allowed for this option are determined by the SSL implementation "
+"used, which has been changed from OpenSSL to GnuTLS.  As a result, your "
+"existing TLSCipherSuite setting will not work with this package."
+msgstr ""
+"Một tùy chọn « TLSCipherSuite » đã được tìm trong cấu hình slapd của bạn "
+"trong khi nâng cấp. Các giá trị được phép cho tùy chọn này được quyết định "
+"bởi bản thực hiện SSL đang chạy, mà đã được thay đổi từ OpenSSL sang GnuTLS. "
+"Kết quả là thiết lập TLSCipherSuite đã tồn tại của bạn sẽ không chạy được "
+"với gói này."
+
+#. Type: error
+#. Description
+#: ../slapd.templates:18001
+msgid ""
+"This setting has been automatically commented out for you.  If you have "
+"specific encryption needs that require this option to be re-enabled, see the "
+"output of 'gnutls-cli -l' in the gnutls-bin package for the list of ciphers "
+"supported by GnuTLS."
+msgstr ""
+"Thiết lập này đã do ghi chú tự động tắt cho bạn. Nếu bạn có sự cần mật mã "
+"đặc biệt mà cần thiết bật lại tùy chọn này, xem kết xuất của câu lệnh « "
+"gnutls-cli -l » trong gói gnutls-bin để tìm danh sách các mật mã được GnuTLS "
+"hỗ trợ."

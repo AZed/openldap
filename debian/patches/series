@@ -1,0 +1,16 @@
+man-slapd 
+evolution-ntlm
+add-autogen-sh
+slapi-errorlog-file 
+ldapi-socket-place 
+wrong-database-location 
+index-files-created-as-root 
+sasl-default-path 
+libldap-symbol-versions
+gnutls-ciphers
+getaddrinfo-is-threadsafe
+back-perl-init
+CVE-2009-3767
+CVE-2010-0211_and_CVE-2010-0212
+CVE-2011-1024
+CVE-2011-1081
