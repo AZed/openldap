@@ -1,22 +1,25 @@
-# translation of openldap_2.4.10-2_sv.po to Swedish
-# Copyright (C) 2008
+# Translation of openldap debconf template to Swedish
+# Copyright (C) 2010 Martin Bagge <brother@bsnet.se>
 # This file is distributed under the same license as the openldap package.
 #
 # Martin Ågren <martin.agren@gmail.com>, 2008.
+# Martin Bagge <brother@bsnet.se>, 2010
 msgid ""
 msgstr ""
 "Project-Id-Version: openldap_2.4.10-2_sv\n"
 "Report-Msgid-Bugs-To: openldap@packages.debian.org\n"
-"POT-Creation-Date: 2008-07-19 19:11-0700\n"
-"PO-Revision-Date: 2008-07-28 18:16+0200\n"
-"Last-Translator: Martin Ågren <martin.agren@gmail.com>\n"
+"POT-Creation-Date: 2010-07-15 22:05+0200\n"
+"PO-Revision-Date: 2010-05-03 22:26+0100\n"
+"Last-Translator: Martin Bagge <brother@bsnet.se>\n"
 "Language-Team: Swedish <debian-l10n-swedish@lists.debian.org>\n"
+"Language: sv\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Language: sv\n"
 "X-Generator: KBabel 1.11.4\n"
-"Plural-Forms:  nplurals=2; plural=(n != 1);\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Poedit-Language: Swedish\n"
+"X-Poedit-Country: Sweden\n"
 
 #. Type: boolean
 #. Description
@@ -138,16 +141,16 @@ msgstr "Försöka konfigurera igen?"
 #: ../slapd.templates:5001
 msgid ""
 "The configuration you entered is invalid. Make sure that the DNS domain name "
-"is syntactically valid, the organization is not left empty and the admin "
-"passwords match. If you decide not to retry the configuration the LDAP "
-"server will not be set up. Run 'dpkg-reconfigure slapd' if you want to retry "
-"later."
+"is syntactically valid, the field for the organization is not left empty and "
+"the admin passwords match. If you decide not to retry the configuration the "
+"LDAP server will not be set up. Run 'dpkg-reconfigure slapd' if you want to "
+"retry later."
 msgstr ""
-"Konfigurationen du har angett är ogiltig. Säkerställ att DNS-domännamnet är "
+"Konfigurationen du angav är ogiltig. Säkerställ att DNS-domännamnet är "
 "syntaktiskt giltigt, att organisationsfältet inte lämnats tomt och att "
-"administratörslösenorden matchar. Om du väljer att inte försöka konfigurera "
-"igen, kommer LDAP-servern inte att ställas in. Kör \"dpkg-reconfigure slapd"
-"\" om du vill försöka igen senare."
+"administratörslösenorden överrensstämmer. Om du väljer att inte försöka "
+"konfigurera igen kommer LDAP-servern inte att ha korrekta instääkningar. Kör "
+"\"dpkg-reconfigure slapd\" om du vill försöka igen senare."
 
 #. Type: string
 #. Description
@@ -231,13 +234,13 @@ msgstr "Vill du att databasen ska tas bort när slapd rensas bort?"
 
 #. Type: boolean
 #. Description
-#: ../slapd.templates:13001
+#: ../slapd.templates:14001
 msgid "Allow LDAPv2 protocol?"
 msgstr "Tillåt LDAPv2-protokollet?"
 
 #. Type: boolean
 #. Description
-#: ../slapd.templates:13001
+#: ../slapd.templates:14001
 msgid ""
 "The obsolete LDAPv2 protocol is disabled by default in slapd. Programs and "
 "users should upgrade to LDAPv3.  If you have old programs which can't use "
@@ -248,26 +251,6 @@ msgstr ""
 "slapd. Program och använder ska uppgradera till LDAPv3. Om du har gamla "
 "program som inte kan använda LDAPv3, behöver du välja detta vilket gör att "
 "\"allow bin_v2\" läggs till i din slapd.conf-fil."
-
-#. Type: boolean
-#. Description
-#: ../slapd.templates:14001
-msgid "Back up current database and create a new one?"
-msgstr "Säkerhetskopiera aktuell databas och skapa en ny?"
-
-#. Type: boolean
-#. Description
-#: ../slapd.templates:14001
-msgid ""
-"The directory suffix (domain) you specified doesn't match the one currently "
-"in /etc/ldap/slapd.conf. Changing the directory suffix requires moving aside "
-"the current LDAP database and creating a new one. Please confirm whether you "
-"want to back up and abandon the current database."
-msgstr ""
-"Katalogsuffixet (domänen) du angett matchar inte den som för tillfället "
-"anges i /etc/ldap/slapd.conf. Om du ändrar katalogsuffixet krävs att du "
-"flyttar den nuvarande LDAP-databasen å sidan och skapar en ny. Bekräfta att "
-"du vill säkerhetskopiera och överge den nuvarande databasen."
 
 #. Type: error
 #. Description
@@ -311,15 +294,15 @@ msgstr ""
 
 #. Type: error
 #. Description
-#. Translators: keep "$location" unchanged. This is a variable that
+#. Translators: keep "${location}" unchanged. This is a variable that
 #. will be replaced by a directory name at execution
 #: ../slapd.templates:15001
 msgid ""
 "Then move the database files back to a backup area and then try running "
-"slapadd from $location."
+"slapadd from ${location}."
 msgstr ""
 "Flytta sedan tillbaka databasfilerna till ett utrymme för säkerhetskopior "
-"och kör slapadd från $location."
+"och kör slapadd från ${location}."
 
 #. Type: select
 #. Description
@@ -350,72 +333,71 @@ msgstr ""
 "för dina behov. Se /usr/share/doc/slapd/README.DB_CONFIG.gz för fler "
 "detaljer."
 
-#. Type: error
-#. Description
-#: ../slapd.templates:17001
-msgid "slurpd is obsolete; replicas must be reconfigured by hand"
-msgstr "slurpd är inte aktuell; repliker måste konfigureras för hand"
+#~ msgid "slurpd is obsolete; replicas must be reconfigured by hand"
+#~ msgstr "slurpd är inte aktuell; repliker måste konfigureras för hand"
 
-#. Type: error
-#. Description
-#: ../slapd.templates:17001
-msgid ""
-"One or more slurpd \"replica\" options were found in your slapd config when "
-"upgrading.  Because slurpd is obsolete beginning with OpenLDAP 2.4, you will "
-"need to migrate your replicas to use the syncrepl protocol instead."
-msgstr ""
-"En eller flera av slurpds \"replica\"-val har hittats i din slapd-"
-"konfiguration vid uppgraderingen. Eftersom slurpd inte är aktuell längre "
-"från och med OpenLDAP 2.4, kommer du behöva migrera dina repliker till att "
-"använda syncrepl-protokollet istället."
+#~ msgid ""
+#~ "One or more slurpd \"replica\" options were found in your slapd config "
+#~ "when upgrading.  Because slurpd is obsolete beginning with OpenLDAP 2.4, "
+#~ "you will need to migrate your replicas to use the syncrepl protocol "
+#~ "instead."
+#~ msgstr ""
+#~ "En eller flera av slurpds \"replica\"-val har hittats i din slapd-"
+#~ "konfiguration vid uppgraderingen. Eftersom slurpd inte är aktuell längre "
+#~ "från och med OpenLDAP 2.4, kommer du behöva migrera dina repliker till "
+#~ "att använda syncrepl-protokollet istället."
 
-#. Type: error
-#. Description
-#: ../slapd.templates:17001
-msgid ""
-"The conversion from slurpd to the pull-based syncrepl protocol cannot be "
-"done automatically and you will need to configure your replica servers by "
-"hand.  Please see http://www.openldap.org/doc/admin24/syncrepl.html for "
-"details."
-msgstr ""
-"Konverteringen från slurpd till det frågebaserade syncrepl-protokollet kan "
-"inte göras automatiskt och du kommer behöva konfigurera dina replica-servrar "
-"för hand. Se http://www.openldap.org/doc/admin24/syncrepl.html för detaljer."
+#~ msgid ""
+#~ "The conversion from slurpd to the pull-based syncrepl protocol cannot be "
+#~ "done automatically and you will need to configure your replica servers by "
+#~ "hand.  Please see http://www.openldap.org/doc/admin24/syncrepl.html for "
+#~ "details."
+#~ msgstr ""
+#~ "Konverteringen från slurpd till det frågebaserade syncrepl-protokollet "
+#~ "kan inte göras automatiskt och du kommer behöva konfigurera dina replica-"
+#~ "servrar för hand. Se http://www.openldap.org/doc/admin24/syncrepl.html "
+#~ "för detaljer."
 
-#. Type: error
-#. Description
-#: ../slapd.templates:18001
-msgid "TLSCipherSuite values have changed"
-msgstr "Värden på TLSCipherSuite har ändrats"
+#~ msgid "TLSCipherSuite values have changed"
+#~ msgstr "Värden på TLSCipherSuite har ändrats"
 
-#. Type: error
-#. Description
-#: ../slapd.templates:18001
-msgid ""
-"A \"TLSCipherSuite\" option was found in your slapd config when upgrading. "
-"The values allowed for this option are determined by the SSL implementation "
-"used, which has been changed from OpenSSL to GnuTLS.  As a result, your "
-"existing TLSCipherSuite setting will not work with this package."
-msgstr ""
-"Ett \"TLSCipherSuite\"-val hittades i din slapd-konfiguration vid "
-"uppgraderingen. De värden som tillåts för detta val avgörs av den SSL-"
-"implementation som används och detta har ändrats från OpenSSL till GnuTLS. "
-"Som en följd av detta kommer inte din befintliga TLSCipherSuite-inställning "
-"att fungera med det här paketet."
+#~ msgid ""
+#~ "A \"TLSCipherSuite\" option was found in your slapd config when "
+#~ "upgrading. The values allowed for this option are determined by the SSL "
+#~ "implementation used, which has been changed from OpenSSL to GnuTLS.  As a "
+#~ "result, your existing TLSCipherSuite setting will not work with this "
+#~ "package."
+#~ msgstr ""
+#~ "Ett \"TLSCipherSuite\"-val hittades i din slapd-konfiguration vid "
+#~ "uppgraderingen. De värden som tillåts för detta val avgörs av den SSL-"
+#~ "implementation som används och detta har ändrats från OpenSSL till "
+#~ "GnuTLS. Som en följd av detta kommer inte din befintliga TLSCipherSuite-"
+#~ "inställning att fungera med det här paketet."
 
-#. Type: error
-#. Description
-#: ../slapd.templates:18001
-msgid ""
-"This setting has been automatically commented out for you.  If you have "
-"specific encryption needs that require this option to be re-enabled, see the "
-"output of 'gnutls-cli -l' in the gnutls-bin package for the list of ciphers "
-"supported by GnuTLS."
-msgstr ""
-"Den inställning har automatiskt kommenterats ut åt dig. Om du har särskilda "
-"krypteringsbehov som kräver att detta val återaktiveras, se utdatat från "
-"\"gnutls-cli -l\" i gnutls-bin-paketet för en lista över krypton som stöds "
-"av GnuTLS."
+#~ msgid ""
+#~ "This setting has been automatically commented out for you.  If you have "
+#~ "specific encryption needs that require this option to be re-enabled, see "
+#~ "the output of 'gnutls-cli -l' in the gnutls-bin package for the list of "
+#~ "ciphers supported by GnuTLS."
+#~ msgstr ""
+#~ "Den inställning har automatiskt kommenterats ut åt dig. Om du har "
+#~ "särskilda krypteringsbehov som kräver att detta val återaktiveras, se "
+#~ "utdatat från \"gnutls-cli -l\" i gnutls-bin-paketet för en lista över "
+#~ "krypton som stöds av GnuTLS."
+
+#~ msgid "Back up current database and create a new one?"
+#~ msgstr "Säkerhetskopiera aktuell databas och skapa en ny?"
+
+#~ msgid ""
+#~ "The directory suffix (domain) you specified doesn't match the one "
+#~ "currently in /etc/ldap/slapd.conf. Changing the directory suffix requires "
+#~ "moving aside the current LDAP database and creating a new one. Please "
+#~ "confirm whether you want to back up and abandon the current database."
+#~ msgstr ""
+#~ "Katalogsuffixet (domänen) du angett matchar inte den som för tillfället "
+#~ "anges i /etc/ldap/slapd.conf. Om du ändrar katalogsuffixet krävs att du "
+#~ "flyttar den nuvarande LDAP-databasen å sidan och skapar en ny. Bekräfta "
+#~ "att du vill säkerhetskopiera och överge den nuvarande databasen."
 
 #~ msgid "Change backend type from LDBM to BDB?"
 #~ msgstr "Ändra bakändstyp från LDBM till BDB?"

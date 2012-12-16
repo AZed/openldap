@@ -1,4 +1,4 @@
-# translation of ru.po to Russian
+# translation of openldap_2.4.21-1_ru.po to Russian
 #
 #    Translators, if you are not familiar with the PO format, gettext
 #    documentation is worth reading, especially sections dedicated to
@@ -11,21 +11,22 @@
 #    Developers do not need to manually edit POT or PO files.
 #
 # Yuri Kozlov <kozlov.y@gmail.com>, 2007, 2008.
+# Yuri Kozlov <yuray@komyakino.ru>, 2010.
 msgid ""
 msgstr ""
-"Project-Id-Version: openldap 2.4.7-6.4\n"
+"Project-Id-Version: openldap 2.4.21-1\n"
 "Report-Msgid-Bugs-To: openldap@packages.debian.org\n"
-"POT-Creation-Date: 2008-07-19 19:11-0700\n"
-"PO-Revision-Date: 2008-05-11 08:49+0400\n"
-"Last-Translator: Yuri Kozlov <kozlov.y@gmail.com>\n"
+"POT-Creation-Date: 2010-07-15 22:05+0200\n"
+"PO-Revision-Date: 2010-06-13 11:30+0400\n"
+"Last-Translator: Yuri Kozlov <yuray@komyakino.ru>\n"
 "Language-Team: Russian <debian-l10n-russian@lists.debian.org>\n"
+"Language: ru\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Language: ru\n"
 "X-Generator: KBabel 1.11.4\n"
-"Plural-Forms:  nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%"
-"10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"Plural-Forms:  nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
+"%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 
 #. Type: boolean
 #. Description
@@ -148,14 +149,14 @@ msgstr "Повторить настройку?"
 #: ../slapd.templates:5001
 msgid ""
 "The configuration you entered is invalid. Make sure that the DNS domain name "
-"is syntactically valid, the organization is not left empty and the admin "
-"passwords match. If you decide not to retry the configuration the LDAP "
-"server will not be set up. Run 'dpkg-reconfigure slapd' if you want to retry "
-"later."
+"is syntactically valid, the field for the organization is not left empty and "
+"the admin passwords match. If you decide not to retry the configuration the "
+"LDAP server will not be set up. Run 'dpkg-reconfigure slapd' if you want to "
+"retry later."
 msgstr ""
 "Введённая вами конфигурация неправильна. Убедитесь, что доменное имя DNS "
-"записано в правильном формате, что введено непустое название организации и "
-"что пароль администратора верен. Если вы не станете повторять настройку, то "
+"записано в правильном формате, что поле названия организации непустое и что "
+"пароль администратора верен. Если вы не станете повторять настройку, то "
 "сервер LDAP останется ненастроенным. Если позднее вы захотите выполнить "
 "настройку, запустите команду 'dpkg-reconfigure slapd'."
 
@@ -240,13 +241,13 @@ msgstr "Удалять базу данных при вычистке slapd?"
 
 #. Type: boolean
 #. Description
-#: ../slapd.templates:13001
+#: ../slapd.templates:14001
 msgid "Allow LDAPv2 protocol?"
 msgstr "Включить протокол LDAPv2?"
 
 #. Type: boolean
 #. Description
-#: ../slapd.templates:13001
+#: ../slapd.templates:14001
 msgid ""
 "The obsolete LDAPv2 protocol is disabled by default in slapd. Programs and "
 "users should upgrade to LDAPv3.  If you have old programs which can't use "
@@ -257,26 +258,6 @@ msgstr ""
 "нужно обновить до версий с поддержкой LDAPv3. Если у вас есть старые "
 "программы, которые не могут использовать LDAPv3, то вы должны ответить "
 "утвердительно, и в файл slapd.conf будет добавлена запись 'allow bind_v2'."
-
-#. Type: boolean
-#. Description
-#: ../slapd.templates:14001
-msgid "Back up current database and create a new one?"
-msgstr "Сделать резервную копию имеющейся базы данных и создать новую?"
-
-#. Type: boolean
-#. Description
-#: ../slapd.templates:14001
-msgid ""
-"The directory suffix (domain) you specified doesn't match the one currently "
-"in /etc/ldap/slapd.conf. Changing the directory suffix requires moving aside "
-"the current LDAP database and creating a new one. Please confirm whether you "
-"want to back up and abandon the current database."
-msgstr ""
-"Вы указали суффикс каталога (домен), который не совпадает с имеющимся в /etc/"
-"ldap/slapd.conf. Изменение суффикса каталога требует перемещения имеющейся "
-"базы данных LDAP и создание новой. Подтвердите, что хотите сделать резервную "
-"копию базы данных и отказаться от имеющейся."
 
 #. Type: error
 #. Description
@@ -321,15 +302,15 @@ msgstr ""
 
 #. Type: error
 #. Description
-#. Translators: keep "$location" unchanged. This is a variable that
+#. Translators: keep "${location}" unchanged. This is a variable that
 #. will be replaced by a directory name at execution
 #: ../slapd.templates:15001
 msgid ""
 "Then move the database files back to a backup area and then try running "
-"slapadd from $location."
+"slapadd from ${location}."
 msgstr ""
-"Затем переместите файлы базы данных обратно в место хранения резервной копии "
-"и попытайтесь выполнить slapadd из $location."
+"Переместите файлы базы данных обратно в место хранения резервной копии и "
+"затем попытайтесь запустить slapadd из ${location}."
 
 #. Type: select
 #. Description
@@ -360,68 +341,67 @@ msgstr ""
 "вашим требованиям. Подробней о настройке смотрите в файле /usr/share/doc/"
 "slapd/README.DB_CONFIG.gz."
 
-#. Type: error
-#. Description
-#: ../slapd.templates:17001
-msgid "slurpd is obsolete; replicas must be reconfigured by hand"
-msgstr "slurpd устарел; реплики должны быть перенастроены вручную"
+#~ msgid "slurpd is obsolete; replicas must be reconfigured by hand"
+#~ msgstr "slurpd устарел; реплики должны быть перенастроены вручную"
 
-#. Type: error
-#. Description
-#: ../slapd.templates:17001
-msgid ""
-"One or more slurpd \"replica\" options were found in your slapd config when "
-"upgrading.  Because slurpd is obsolete beginning with OpenLDAP 2.4, you will "
-"need to migrate your replicas to use the syncrepl protocol instead."
-msgstr ""
-"При обновлении в вашем конфигурационном файле для slapd найден один или "
-"несколько параметров \"replica\" для slurpd. Так как slurpd устарел начиная "
-"с OpenLDAP версии 2.4, для реплик вам нужно перейти на протокол syncrepl."
+#~ msgid ""
+#~ "One or more slurpd \"replica\" options were found in your slapd config "
+#~ "when upgrading.  Because slurpd is obsolete beginning with OpenLDAP 2.4, "
+#~ "you will need to migrate your replicas to use the syncrepl protocol "
+#~ "instead."
+#~ msgstr ""
+#~ "При обновлении в вашем конфигурационном файле для slapd найден один или "
+#~ "несколько параметров \"replica\" для slurpd. Так как slurpd устарел "
+#~ "начиная с OpenLDAP версии 2.4, для реплик вам нужно перейти на протокол "
+#~ "syncrepl."
 
-#. Type: error
-#. Description
-#: ../slapd.templates:17001
-msgid ""
-"The conversion from slurpd to the pull-based syncrepl protocol cannot be "
-"done automatically and you will need to configure your replica servers by "
-"hand.  Please see http://www.openldap.org/doc/admin24/syncrepl.html for "
-"details."
-msgstr ""
-"Автоматическое преобразование настроек slurpd в настройки основанного на "
-"вытягивании протокола syncrepl невозможно, и поэтому вы должны настроить "
-"свои серверы реплик вручную. Подробней об этом смотрите на странице http://"
-"www.openldap.org/doc/admin24/syncrepl.html."
+#~ msgid ""
+#~ "The conversion from slurpd to the pull-based syncrepl protocol cannot be "
+#~ "done automatically and you will need to configure your replica servers by "
+#~ "hand.  Please see http://www.openldap.org/doc/admin24/syncrepl.html for "
+#~ "details."
+#~ msgstr ""
+#~ "Автоматическое преобразование настроек slurpd в настройки основанного на "
+#~ "вытягивании протокола syncrepl невозможно, и поэтому вы должны настроить "
+#~ "свои серверы реплик вручную. Подробней об этом смотрите на странице "
+#~ "http://www.openldap.org/doc/admin24/syncrepl.html."
 
-#. Type: error
-#. Description
-#: ../slapd.templates:18001
-msgid "TLSCipherSuite values have changed"
-msgstr "Изменились значения для TLSCipherSuite"
+#~ msgid "TLSCipherSuite values have changed"
+#~ msgstr "Изменились значения для TLSCipherSuite"
 
-#. Type: error
-#. Description
-#: ../slapd.templates:18001
-msgid ""
-"A \"TLSCipherSuite\" option was found in your slapd config when upgrading. "
-"The values allowed for this option are determined by the SSL implementation "
-"used, which has been changed from OpenSSL to GnuTLS.  As a result, your "
-"existing TLSCipherSuite setting will not work with this package."
-msgstr ""
-"При обновлении в настройке slapd был найден параметр \"TLSCipherSuite\". "
-"Допустимые значения этого параметра, определяемые авторами SSL, были "
-"изменены при переходе с OpenSSL на GnuTLS. В результате, имеющаяся настройка "
-"TLSCipherSuite не заработает с этим пакетом."
+#~ msgid ""
+#~ "A \"TLSCipherSuite\" option was found in your slapd config when "
+#~ "upgrading. The values allowed for this option are determined by the SSL "
+#~ "implementation used, which has been changed from OpenSSL to GnuTLS.  As a "
+#~ "result, your existing TLSCipherSuite setting will not work with this "
+#~ "package."
+#~ msgstr ""
+#~ "При обновлении в настройке slapd был найден параметр \"TLSCipherSuite\". "
+#~ "Допустимые значения этого параметра, определяемые авторами SSL, были "
+#~ "изменены при переходе с OpenSSL на GnuTLS. В результате, имеющаяся "
+#~ "настройка TLSCipherSuite не заработает с этим пакетом."
 
-#. Type: error
-#. Description
-#: ../slapd.templates:18001
-msgid ""
-"This setting has been automatically commented out for you.  If you have "
-"specific encryption needs that require this option to be re-enabled, see the "
-"output of 'gnutls-cli -l' in the gnutls-bin package for the list of ciphers "
-"supported by GnuTLS."
-msgstr ""
-"Данная настройка будет автоматически закомментирована. Если для какого-то "
-"специфичного шифрования вам требуется её использовать, то список "
-"поддерживаемых GnuTLS алгоритмов можно посмотреть, запустив команду 'gnutls-"
-"cli -l' из пакета gnutls-bin."
+#~ msgid ""
+#~ "This setting has been automatically commented out for you.  If you have "
+#~ "specific encryption needs that require this option to be re-enabled, see "
+#~ "the output of 'gnutls-cli -l' in the gnutls-bin package for the list of "
+#~ "ciphers supported by GnuTLS."
+#~ msgstr ""
+#~ "Данная настройка будет автоматически закомментирована. Если для какого-то "
+#~ "специфичного шифрования вам требуется её использовать, то список "
+#~ "поддерживаемых GnuTLS алгоритмов можно посмотреть, запустив команду "
+#~ "'gnutls-cli -l' из пакета gnutls-bin."
+
+#~ msgid "Back up current database and create a new one?"
+#~ msgstr "Сделать резервную копию имеющейся базы данных и создать новую?"
+
+#~ msgid ""
+#~ "The directory suffix (domain) you specified doesn't match the one "
+#~ "currently in /etc/ldap/slapd.conf. Changing the directory suffix requires "
+#~ "moving aside the current LDAP database and creating a new one. Please "
+#~ "confirm whether you want to back up and abandon the current database."
+#~ msgstr ""
+#~ "Вы указали суффикс каталога (домен), который не совпадает с имеющимся в /"
+#~ "etc/ldap/slapd.conf. Изменение суффикса каталога требует перемещения "
+#~ "имеющейся базы данных LDAP и создание новой. Подтвердите, что хотите "
+#~ "сделать резервную копию базы данных и отказаться от имеющейся."

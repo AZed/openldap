@@ -11,13 +11,13 @@ SASL and DIGEST-MD5, it's not very appealing.
 Bug#457374 filed against evolution-data-server asking if this support is
 still required on 2007-12-21.
 
-Index: trunk/include/ldap.h
+Index: b/include/ldap.h
 ===================================================================
---- trunk.orig/include/ldap.h
-+++ trunk/include/ldap.h
-@@ -2359,5 +2359,25 @@
- 	int		iscritical,
- 	LDAPControl	**ctrlp ));
+--- a/include/ldap.h	2010-07-12 12:05:43.000000000 +0200
++++ b/include/ldap.h	2010-07-12 12:07:19.000000000 +0200
+@@ -2487,5 +2487,25 @@
+ 	LDAPControl	**ctrls,
+ 	LDAPDerefRes	**drp ));
  
 +/*
 + * hacks for NTLM
@@ -41,10 +41,10 @@ Index: trunk/include/ldap.h
 +
  LDAP_END_DECL
  #endif /* _LDAP_H */
-Index: trunk/libraries/libldap/ntlm.c
+Index: b/libraries/libldap/ntlm.c
 ===================================================================
---- /dev/null
-+++ trunk/libraries/libldap/ntlm.c
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ b/libraries/libldap/ntlm.c	2010-07-12 12:07:19.000000000 +0200
 @@ -0,0 +1,138 @@
 +/* $OpenLDAP: pkg/ldap/libraries/libldap/ntlm.c,v 1.1.4.10 2002/01/04 20:38:21 kurt Exp $ */
 +/*
@@ -184,47 +184,47 @@ Index: trunk/libraries/libldap/ntlm.c
 + return( ld->ld_errno );
 +}
 +
-Index: trunk/libraries/libldap/Makefile.in
+Index: b/libraries/libldap/Makefile.in
 ===================================================================
---- trunk.orig/libraries/libldap/Makefile.in
-+++ trunk/libraries/libldap/Makefile.in
-@@ -26,7 +26,7 @@
- 	request.c os-ip.c url.c pagectrl.c sortctrl.c vlvctrl.c \
+--- a/libraries/libldap/Makefile.in	2010-07-12 12:05:43.000000000 +0200
++++ b/libraries/libldap/Makefile.in	2010-07-12 12:07:19.000000000 +0200
+@@ -27,7 +27,7 @@
  	init.c options.c print.c string.c util-int.c schema.c \
- 	charray.c tls.c os-local.c dnssrv.c utf-8.c utf-8-conv.c \
+ 	charray.c os-local.c dnssrv.c utf-8.c utf-8-conv.c \
+ 	tls2.c tls_o.c tls_g.c tls_m.c \
 -	turn.c ppolicy.c dds.c txn.c ldap_sync.c stctrl.c \
 +	turn.c ppolicy.c dds.c txn.c ldap_sync.c stctrl.c ntlm.c \
- 	assertion.c
+ 	assertion.c deref.c
  
  OBJS	= bind.lo open.lo result.lo error.lo compare.lo search.lo \
-@@ -38,7 +38,7 @@
- 	request.lo os-ip.lo url.lo pagectrl.lo sortctrl.lo vlvctrl.lo \
+@@ -40,7 +40,7 @@
  	init.lo options.lo print.lo string.lo util-int.lo schema.lo \
- 	charray.lo tls.lo os-local.lo dnssrv.lo utf-8.lo utf-8-conv.lo \
+ 	charray.lo os-local.lo dnssrv.lo utf-8.lo utf-8-conv.lo \
+ 	tls2.lo tls_o.lo tls_g.lo tls_m.lo \
 -	turn.lo ppolicy.lo dds.lo txn.lo ldap_sync.lo stctrl.lo \
 +	turn.lo ppolicy.lo dds.lo txn.lo ldap_sync.lo stctrl.lo ntlm.lo \
- 	assertion.lo
+ 	assertion.lo deref.lo
  
  LDAP_INCDIR= ../../include       
-Index: trunk/libraries/libldap_r/Makefile.in
+Index: b/libraries/libldap_r/Makefile.in
 ===================================================================
---- trunk.orig/libraries/libldap_r/Makefile.in
-+++ trunk/libraries/libldap_r/Makefile.in
-@@ -28,7 +28,7 @@
- 	request.c os-ip.c url.c pagectrl.c sortctrl.c vlvctrl.c \
+--- a/libraries/libldap_r/Makefile.in	2010-07-12 12:05:42.000000000 +0200
++++ b/libraries/libldap_r/Makefile.in	2010-07-12 12:07:19.000000000 +0200
+@@ -29,7 +29,7 @@
  	init.c options.c print.c string.c util-int.c schema.c \
- 	charray.c tls.c os-local.c dnssrv.c utf-8.c utf-8-conv.c \
+ 	charray.c os-local.c dnssrv.c utf-8.c utf-8-conv.c \
+ 	tls2.c tls_o.c tls_g.c tls_m.c \
 -	turn.c ppolicy.c dds.c txn.c ldap_sync.c stctrl.c \
 +	turn.c ppolicy.c dds.c txn.c ldap_sync.c stctrl.c ntlm.c \
- 	assertion.c
+ 	assertion.c deref.c
  SRCS	= threads.c rdwr.c rmutex.c tpool.c rq.c \
  	thr_posix.c thr_cthreads.c thr_thr.c thr_lwp.c thr_nt.c \
-@@ -45,7 +45,7 @@
- 	request.lo os-ip.lo url.lo pagectrl.lo sortctrl.lo vlvctrl.lo \
+@@ -47,7 +47,7 @@
  	init.lo options.lo print.lo string.lo util-int.lo schema.lo \
- 	charray.lo tls.lo os-local.lo dnssrv.lo utf-8.lo utf-8-conv.lo \
+ 	charray.lo os-local.lo dnssrv.lo utf-8.lo utf-8-conv.lo \
+ 	tls2.lo tls_o.lo tls_g.lo tls_m.lo \
 -	turn.lo ppolicy.lo dds.lo txn.lo ldap_sync.lo stctrl.lo \
 +	turn.lo ppolicy.lo dds.lo txn.lo ldap_sync.lo stctrl.lo ntlm.lo \
- 	assertion.lo
+ 	assertion.lo deref.lo
  
  LDAP_INCDIR= ../../include       

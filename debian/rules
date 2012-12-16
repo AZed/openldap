@@ -6,7 +6,7 @@
 # want the checks for DFSG-freeness.
 #DFSG_NONFREE = 1
 
-CFLAGS = -Wall -g -D_FILE_OFFSET_BITS=64
+CFLAGS = -Wall -g -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE
 INSTALL = install
 INSTALL_FILE    = $(INSTALL) -p    -o root -g root  -m  644
 INSTALL_PROGRAM = $(INSTALL) -p    -o root -g root  -m  755
@@ -42,7 +42,7 @@ include /usr/share/quilt/quilt.make
 
 # These variables are used only by get-orig-source, which will normally only
 # be run by maintainers.
-VERSION = 2.4.10
+VERSION = 2.4.23
 URL     = http://www.openldap.org/software/download/OpenLDAP/openldap-release/
 
 # Download the upstream source and make changes as required for DFSG reasons.
@@ -102,6 +102,8 @@ build-arch: build-stamp
 build-indep:
 build-stamp: configure-stamp
 	$(MAKE) -C $(builddir) $(MAKEVARS)
+	$(MAKE) -C contrib/slapd-modules/smbk5pwd
+	$(MAKE) -C contrib/slapd-modules/autogroup
 ifeq (,$(findstring nocheck,$(DEB_BUILD_OPTIONS)))
 	RESOLV_MULTI=off $(MAKE) -C $(builddir) test
 endif
@@ -114,6 +116,14 @@ endif
 install: install-stamp
 install-stamp: build-stamp
 	$(MAKE) -C $(builddir) $(MAKEVARS) install
+	$(MAKE) -C contrib/slapd-modules/smbk5pwd install DESTDIR=$(installdir)
+	$(MAKE) -C contrib/slapd-modules/autogroup install DESTDIR=$(installdir)
+	
+	# Empty the dependency_libs file in the .la files.
+	for F in $(installdir)/usr/lib/ldap/*.la; do \
+		sed -i "s/^dependency_libs=.*/dependency_libs=''/" $$F; \
+	done
+	
 	for F in $(installdir)/usr/lib/*.so.*.*.*; do \
 	    if echo "$$F" | grep -q libslapi ; then \
 	        continue; \
@@ -142,6 +152,7 @@ binary-arch: install-stamp
 	cp -al $(installdir) $(tmpdir)
 
 	dh_install -a
+	rm -rf $(CURDIR)/debian/slapd/usr/lib/ldap/smbk5pwd*
 	chmod 0755 $(CURDIR)/debian/slapd/usr/share/slapd/ldiftopasswd
 
 	dh_installchangelogs -a
@@ -150,9 +161,11 @@ binary-arch: install-stamp
 	dh_installman -a
 	dh_installinit -Xslapd.prerm -a -- "defaults 19 80"
 	dh_installdebconf -a
+	dh_lintian -a
 	dh_strip -plibldap-2.4-2 --dbg-package=libldap-2.4-2-dbg
 	dh_strip -pslapd --dbg-package=slapd-dbg
 	dh_strip -pldap-utils
+	dh_strip -pslapd-smbk5pwd
 	dh_link -a
 
 	# hardlink these so not confined by apparmor
@@ -197,6 +210,16 @@ clean: unpatch
 	rm -f contrib/ldapc++/config.sub contrib/ldapc++/config.guess
 	rm -rf $(builddir) $(builddir_notls) $(installdir)
 	rm -rf build/ltmain.sh autom4te.cache configure aclocal.m4
+	
+	# Clean the contrib directory
+	rm -rf contrib/slapd-modules/smbk5pwd/.libs \
+		contrib/slapd-modules/smbk5pwd/smbk5pwd.lo \
+		contrib/slapd-modules/smbk5pwd/smbk5pwd.la \
+		contrib/slapd-modules/smbk5pwd/smbk5pwd.o
+	rm -rf contrib/slapd-modules/autogroup/.libs \
+		contrib/slapd-modules/autogroup/autogroup.lo \
+		contrib/slapd-modules/autogroup/autogroup.la \
+		contrib/slapd-modules/autogroup/autogroup.o
 	dh_clean
 
 .PHONY: binary binary-arch binary-indep build build-arch build-indep clean

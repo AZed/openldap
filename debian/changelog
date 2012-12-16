@@ -1,25 +1,268 @@
-openldap (2.4.11-1+lenny2.1) oldstable; urgency=low
+openldap (2.4.23-7.3) stable; urgency=low
 
-  * Non-maintainer upload.
-  * Backport security fixes: (Closes: #617606)
-    - CVE-2011-1024 Authentication bypass in back-ldap
-    - CVE-2011-1081 DoS in modrdn operation
+  * Non-maintainer upload targeted at stable
+  * Dump the database in prerm if we're upgrading. Closes: #665199
 
- -- Jonathan Wiltshire <jmw@debian.org>  Mon, 25 Jul 2011 13:40:32 +0100
+ -- Wouter Verhelst <wouter@debian.org>  Sun, 16 Dec 2012 12:44:59 +0100
 
-openldap (2.4.11-1+lenny2) stable-security; urgency=high
+openldap (2.4.23-7.2) stable; urgency=low
 
-  * Fixes CVE-2010-0211 and CVE-2010-0212
+  * Non-maintainer upload targeted at stable.
+  * Fix "dpkg-reconfigure slapd". Closes: #596343
 
- -- Matthijs Mohlmann <matthijs@cacholong.nl>  Fri, 23 Jul 2010 22:31:35 +0200
+ -- Thijs Kinkhorst <thijs@debian.org>  Wed, 15 Jun 2011 13:27:46 +0200
 
-openldap (2.4.11-1+lenny1) stable-security; urgency=high
+openldap (2.4.23-7.1) stable; urgency=low
+
+  * Non-maintainer upload targeted at stable.
+  * Picked the following patches from various sources:
+
+  [ Matthijs Möhlmann ]
+  * Update patch service-operational-before-detach (Closes: #616164, #598361)
+
+  [ Ubuntu Security Team / Jamie Strandboge ]
+  * SECURITY UPDATE: fix successful anonymous bind via chain overlay when
+    using forwarded authentication failures
+    - debian/patches/CVE-2011-1024
+    - CVE-2011-1024
+  * SECURITY UPDATE: verify password when authenticating to rootdn and using ndb
+    backend. Note: Debian is not compiled with --enable-ndb by default
+    - debian/patches/CVE-2011-1025
+    - CVE-2011-1025
+  * SECURITY UPDATE: fix DoS when processing unauthenticated modrdn requests
+    and requestDN is empty
+    - debian/patches/CVE-2011-1081
+    - CVE-2011-1081
+    - LP: #742104, Closes: 617606
+
+ -- Thijs Kinkhorst <thijs@debian.org>  Tue, 31 May 2011 11:13:02 +0200
+
+openldap (2.4.23-7) unstable; urgency=low
+
+  * Updated vietnamese translation, thanks Clytie Siddall
+    (Closes: #601537, #598575)
+  * Updated portuguese translation, thanks Traduz (Closes: #599760)
+  * Updated danish translation, thanks Joe Dalton (Closes: #599835)
+
+ -- Matthijs Mohlmann <matthijs@cacholong.nl>  Sat, 06 Nov 2010 12:13:01 +0100
+
+openldap (2.4.23-6) unstable; urgency=high
+
+  * Check for an empty directory to prevent an rm -f /*. (Closes: #597704)
+
+ -- Matthijs Mohlmann <matthijs@cacholong.nl>  Thu, 23 Sep 2010 10:17:50 +0200
+
+openldap (2.4.23-5) unstable; urgency=high
+
+  [ Steve Langasek ]
+  * High-urgency upload for RC bugfix.
+  * debian/slapd.scripts-common: fix gratuitous (and wrong) use of grep in
+    get_suffix(), which causes us to incorrectly parse any slapd.conf that
+    uses tabs instead of spaces.  Closes: #595672.
+  * debian/slapd.init, debian/slapd.scripts-common: when $SLAPD_CONF is not
+    set in /etc/default/slapd, we should always set a default value, giving
+    precedence to slapd.d and falling back to slapd.conf.  Users who don't
+    want to use an existing slapd.d should point at slapd.conf explicitly.
+    Closes: #594714, #596343.
+  * debian/slapd.init: 'invoke-rc.d slapd stop' should not fail due to the
+    absence of a slapd configuration; we should still exit 0 so that the
+    package can be removed gracefully.  Closes: #596100.
+  * drop build-conflicts with libssl-dev; we explicitly pass
+    --with-tls=gnutls to configure, so there's no risk of a misbuild here.
+  * debian/slapd.default: now that we have a sensible default behavior in
+    both slapd.init and the maintainer scripts, leave SLAPD_CONF empty to
+    save pain later.
+  * debian/slapd.scripts-common: ... and do the same in
+    migrate_to_slapd_d_style, we just need to comment out the user's
+    previous entry instead of blowing it away.
+  * debian/slapd.scripts-common: call get_suffix in a way that lets us
+    separate responses by newlines, to properly handle the case when a
+    DN has embedded spaces.  Introduces a few more stupid fd tricks to work
+    around possible problems with debconf.  Closes: #595466.
+  * debian/slapd.scripts-common: when parsing the names of includes, handle
+    double-quotes and escape characters as described in slapd.conf(5).
+    Closes: #595784.
+  * debian/slapd.scripts-common, debian/slapd.postinst: on upgrade from
+    versions <= 2.4.23-4, explicitly grant access to cn=Subschema, which
+    otherwise is blocked by our added olcAccess settings.  Closes: #596326.
+  * debian/slapd.init.ldif: set the acl in the default LDIF for new installs,
+    too.
+  * Likewise, grant access to dn.exact="" so that base dn autodiscovery
+    works as intended.  Closes: #596049.
+  * debian/slapd.init.ldif: synchronize our behavior on new installs with
+    that on upgrades, avoiding the non-standard cn=localroot,cn=config.
+  * debian/slapd.scripts-common: don't run the migration code if slapd.d
+    already exists.  Closes: #593965.
+
+  [ Matthijs Mohlmann ]
+  * Remove upgrade_supported_from_backend, implemented patch from
+    Peter Marschall <peter@adpm.de> to automatically detect if an upgrade is
+    supported. (Closes: #594712)
+
+  [ Peter Marschall ]
+  * debian/slapd.init: correctly set the slapd.conf argument even when
+    SLAPD_PIDFILE is non-empty in /etc/default/slapd.  Closes: #593880.
+  * debian/slapd.scripts-common: pass -g to slapadd/slapcat, so that
+    subordinate databases aren't incorrectly included in the dump/restore of
+    the parent database.  Closes: #594821.
+
+ -- Steve Langasek <vorlon@debian.org>  Mon, 13 Sep 2010 06:59:11 +0000
+
+openldap (2.4.23-4) unstable; urgency=low
+
+  [ Steve Langasek ]
+  * Bump the database upgrade version check to 2.4.23-4; should have been
+    set to 2.4.23-1 when we switched to db4.8, but was missed so we need to
+    clean up.  Closes: #593550.
+
+  [ Matthijs Mohlmann ]
+  * Fix root access to cn=config on upgrades from configuration style slapd.conf
+    Thanks to Mathias Gug (Closes: #593566, #593878)
+
+ -- Matthijs Mohlmann <matthijs@cacholong.nl>  Thu, 26 Aug 2010 20:30:51 +0200
+
+openldap (2.4.23-3) unstable; urgency=low
+
+  * Configure the newly installed openldap package using slapd.d instead of
+    slapd.conf, merged from ubuntu. (Closes: #562723, #494155, #333428)
+  * Update the debconf templates by running debconf-updatepo.
+  * We do not support upgrades from older releases then lenny, so removed some
+    upgrade functions from slapd.scripts-common.
+  * Updated japanese translation, thanks Kenshi Muto (Closes: #589508)
+  * Updated czech translation, thanks Miroslav Kure (Closes: #589569)
+  * Update slapd.README.Debian and slapd.NEWS and note the new configuration
+    style.
+  * Fixes CVE-2010-0211 and CVE-2010-0212 (Closes: #589852)
+  * Update italian translation, thanks Luca Monducci (Closes: #590154)
+  * Update spanish translation, thanks Francisco Javier Cuadrado
+    (Closes: #590829)
+  * Update basque translation, thanks Iñaki Larrañaga Murgoitio
+  * Bump Standards-Version to 3.9.1
+  * Added debian specific patch to wait until slapd is operational before
+    detaching to the terminal (Closes: #589915)
+  * Add a lintian overrides for libldap.
+  * Empty dependency_libs line in .la files. (Closes: #591550)
+  * Update galician translation, thanks Jorge Barreiro (Closes: #592815)
+
+ -- Matthijs Mohlmann <matthijs@cacholong.nl>  Tue, 17 Aug 2010 22:00:16 +0200
+
+openldap (2.4.23-2) unstable; urgency=medium
+
+  * Depend on libdb4.8 >= 4.8.30 (Closes: #588969)
+  * Urgency previous as previous version fixes a RC bug.
+
+ -- Matthijs Mohlmann <matthijs@cacholong.nl>  Wed, 14 Jul 2010 10:17:27 +0200
+
+openldap (2.4.23-1) unstable; urgency=low
+
+  * New upstream version
+  * Change to build dependency libdb4.8-dev instead of libdb4.7-dev
+  * Updated french translation thanks Christian Perrier (Closes: #579192)
+  * Updated swedish translation thanks Martin Bagge (Closes: #580145)
+  * Updated german translation thanks Helge Kreutzmann (Closes: #579582)
+  * Updated russian translation thanks Yuri Kozlov (Closes: #585688)
+  * Fix bashisms in debian/rules (Closes: #581454)
+  * Add documentation patch (Closes: #513270)
+  * Refreshed all quilt patches.
+  * Bump Standards-Version to 3.9.0
+
+ -- Matthijs Mohlmann <matthijs@cacholong.nl>  Mon, 12 Jul 2010 13:25:00 +0200
+
+openldap (2.4.21-1) unstable; urgency=low
+
+  [ Steve Langasek ]
+  * New upstream version
+    (Closes: #561144, #465024, #502769, #528695, #564686, #504728)
+  * Add upstream manpage for ldapexop; thanks to Peter Marschall
+    <peter@adpm.de>.  Closes: #549291.
+
+  [ Matthijs Mohlmann ]
+  * Ack NMU (Closes: #553432)
+  * Update Standards-Version to 3.8.4
+  * Fix NEWS entry to have the correct version number
+  * Improve the wording for the slapd/invalid_config question (Closes: #452834)
+  * Make lintian a bit more happy (Closes: #518660)
+  * Fix bashism (Closes: #518657)
+  * Refresh all patches
+  * Add patch from upstream (Closes: #549642)
+  * Reworked the configure.options a bit to include some more options
+  * Enable dynamic acls
+  * Use slappasswd to create a secure password (Closes: #490930)
+  * Set a rootdn and rootpw if no password is given by debconf (Closes: #231950)
+  * Better document the TLSCipherSuite in slapd.conf manpage (Closes: #563113)
+  * Better document the TLS_CIPHER_SUITE in ldap.conf manpage (Closes: #510346)
+  * Add smbk5pwd slapd module, used patch from Mark Hymers (Closes: #443073)
+  * Add autogroup slapd module, used patch from Mathieu Parent (Closes: #575900)
+  * Add lsb logging, used patch from David Härdeman (Closes: #385898)
+  * Use dh_lintian to install the lintian-overrides
+  * Added critical error report when slapcat fails (Closes: #226090)
+
+ -- Matthijs Mohlmann <matthijs@cacholong.nl>  Thu, 22 Apr 2010 23:40:30 +0200
+
+openldap (2.4.17-2.1) unstable; urgency=high
 
   * Non-maintainer upload by the Security Team.
   * Fixed CVE-2009-3767: libraries/libldap/tls_o.c doesn't properly handle NULL
     character in subject Common Name (Closes: #553432)
 
- -- Giuseppe Iuculano <iuculano@debian.org>  Mon, 16 Nov 2009 17:37:17 +0100
+ -- Giuseppe Iuculano <iuculano@debian.org>  Tue, 10 Nov 2009 19:09:45 +0100
+
+openldap (2.4.17-2) unstable; urgency=low
+
+  * Fix up the lintian warnings:
+    - add missing misc-depends on all packages
+    - slapd, libldap-2.4-2-dbg sections changed to 'debug' to match archive
+      overrides
+    - bump Standards-Version to 3.8.2, no changes required.
+  * slapd.scripts-common: fix upgrade to correctly handle multiple database
+    declarations; thanks, Peter Marschall <peter@adpm.de>!  Closes: #517556
+  * Add 'status' argument to init script; thanks to Peter Eisentraut
+    <petere@debian.org>.  Closes: #545898.
+  * New patch, do-not-second-guess-sonames, to remove an incorrect check for
+    the Cyrus SASL version number at runtime.  If there's any reason this is
+    needed, it needs to be addressed in the cyrus-sasl soname and Debian
+    shlibs, not here.  Closes: #546885.
+
+ -- Steve Langasek <vorlon@debian.org>  Tue, 22 Sep 2009 20:06:34 -0700
+
+openldap (2.4.17-1) unstable; urgency=low
+
+  * New upstream version.
+    - Fixes FTBFS on ia64 with -fPIE. Closes: #524770.
+    - Fixes some TLS issues with GnuTLS.  Closes: #505191.
+  * Update priority of libldap-2.4-2 to match the archive override.
+  * Add the missing ldapexop and ldapurl tools to ldap-utils, as well as the
+    ldapurl(1) manpage.  Thanks to Peter Marschall for the patch.
+    Closes: #496749.
+  * Bump build-dependency on debhelper to 6 instead of 5, since that's
+    what we're using.  Closes: #498116.
+  * Set the default SLAPD_SERVICES to ldap:/// ldapi:///, instead of using
+    the built-in default of ldap:/// only.
+  * Build-depend on libltdl-dev | libltdl3-dev (>= 1.4.3), for the package
+    name change.  Closes: #522965.
+
+  [ Updated debconf translations ]
+  * Spanish, thanks to Francisco Javier Cuadrado <fcocuadrado@gmail.com>.
+    Closes: #521804.
+
+ -- Steve Langasek <vorlon@debian.org>  Tue, 28 Jul 2009 10:17:15 -0700
+
+openldap (2.4.15-1) unstable; urgency=low
+
+  * New upstream version
+    - Fixes a bug with the pcache overlay not returning cached entries
+      (closes: #497697)
+    - Update evolution-ntlm patch to apply to current Makefiles.
+    - (tentatively) drop gnutls-ciphers, since this bug was reported to be
+      fixed upstream in 2.4.8.  The fix applied in 2.4.8 didn't match the
+      patch from the bug report, so this should be watched for regressions.
+  * Build against db4.7 instead of db4.2 at last!  Closes: #421946.
+  * Build with --disable-ndb, to avoid a misbuild when libmysqlclient is
+    installed in the build environment.
+  * Add -D_GNU_SOURCE to CFLAGS, apparently required for building with
+    current headers in unstable
+
+ -- Steve Langasek <vorlon@debian.org>  Tue, 24 Feb 2009 14:27:35 -0800
 
 openldap (2.4.11-1) unstable; urgency=low
 
