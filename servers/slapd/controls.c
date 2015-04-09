@@ -1,7 +1,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2012 The OpenLDAP Foundation.
+ * Copyright 1998-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -564,6 +564,29 @@ void slap_free_ctrls(
 	LDAPControl **ctrls )
 {
 	int i;
+
+	if( ctrls == op->o_ctrls ) {
+		if( op->o_assertion != NULL ) {
+			filter_free_x( op, op->o_assertion, 1 );
+			op->o_assertion = NULL;
+		}
+		if( op->o_vrFilter != NULL) {
+			vrFilter_free( op, op->o_vrFilter );
+			op->o_vrFilter = NULL;
+		}
+		if( op->o_preread_attrs != NULL ) {
+			op->o_tmpfree( op->o_preread_attrs, op->o_tmpmemctx );
+			op->o_preread_attrs = NULL;
+		}
+		if( op->o_postread_attrs != NULL ) {
+			op->o_tmpfree( op->o_postread_attrs, op->o_tmpmemctx );
+			op->o_postread_attrs = NULL;
+		}
+		if( op->o_pagedresults_state != NULL ) {
+			op->o_tmpfree( op->o_pagedresults_state, op->o_tmpmemctx );
+			op->o_pagedresults_state = NULL;
+		}
+	}
 
 	for (i=0; ctrls[i]; i++) {
 		op->o_tmpfree(ctrls[i], op->o_tmpmemctx );
@@ -1613,7 +1636,7 @@ static int parsePermissiveModify (
 		return LDAP_PROTOCOL_ERROR;
 	}
 
-	if ( BER_BVISNULL( &ctrl->ldctl_value )) {
+	if ( !BER_BVISNULL( &ctrl->ldctl_value )) {
 		rs->sr_text = "permissiveModify control value not absent";
 		return LDAP_PROTOCOL_ERROR;
 	}

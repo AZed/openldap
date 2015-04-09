@@ -2,7 +2,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2007-2012 The OpenLDAP Foundation.
+ * Copyright 2007-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -48,6 +48,7 @@ sock_read_and_send_results(
 	char	line[BUFSIZ];
 	char	ebuf[128];
 
+	(void) fflush(fp);
 	/* read in the result and send it along */
 	buf = (char *) ch_malloc( BUFSIZ );
 	buf[0] = '\0';

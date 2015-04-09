@@ -2,7 +2,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2012 The OpenLDAP Foundation.
+ * Copyright 2003-2014 The OpenLDAP Foundation.
  * Portions Copyright 2003 Howard Chu.
  * All rights reserved.
  *
@@ -196,12 +196,13 @@ chaining_control_remove(
 	 * added by the chain overlay, so it's the only one we explicitly 
 	 * free */
 	if ( op->o_ctrls != oldctrls ) {
-		assert( op->o_ctrls != NULL );
-		assert( op->o_ctrls[ 0 ] != NULL );
+		if ( op->o_ctrls != NULL ) {
+			assert( op->o_ctrls[ 0 ] != NULL );
 
-		free( op->o_ctrls );
+			free( op->o_ctrls );
 
-		op->o_chaining = 0;
+			op->o_chaining = 0;
+		}
 		op->o_ctrls = oldctrls;
 	} 
 
@@ -320,6 +321,10 @@ ldap_chain_cb_search_response( Operation *op, SlapReply *rs )
 
 		/* back-ldap tried to send result */
 		lb->lb_status = LDAP_CH_RES;
+		/* don't let other callbacks run, this isn't
+		 * the real result for this op.
+		 */
+		op->o_callback->sc_next = NULL;
 	}
 
 	return 0;
@@ -623,6 +628,11 @@ cleanup:;
 		}
 
 further_cleanup:;
+		if ( op->o_req_dn.bv_val == pdn.bv_val ) {
+			op->o_req_dn = odn;
+			op->o_req_ndn = ondn;
+		}
+
 		if ( free_dn ) {
 			op->o_tmpfree( pdn.bv_val, op->o_tmpmemctx );
 			op->o_tmpfree( ndn.bv_val, op->o_tmpmemctx );
@@ -647,9 +657,6 @@ further_cleanup:;
 
 		rc = rs2.sr_err;
 	}
-
-	op->o_req_dn = odn;
-	op->o_req_ndn = ondn;
 
 #ifdef LDAP_CONTROL_X_CHAINING_BEHAVIOR
 	(void)chaining_control_remove( op, &ctrls );
@@ -894,13 +901,15 @@ cleanup:;
 		}
 		
 further_cleanup:;
+		if ( op->o_req_dn.bv_val == pdn.bv_val ) {
+			op->o_req_dn = odn;
+			op->o_req_ndn = ondn;
+		}
+
 		if ( free_dn ) {
 			op->o_tmpfree( pdn.bv_val, op->o_tmpmemctx );
 			op->o_tmpfree( ndn.bv_val, op->o_tmpmemctx );
 		}
-
-		op->o_req_dn = odn;
-		op->o_req_ndn = ondn;
 
 		if ( tmp_oq_search.rs_filter != NULL ) {
 			filter_free_x( op, tmp_oq_search.rs_filter, 1 );
@@ -924,8 +933,6 @@ further_cleanup:;
 	(void)chaining_control_remove( op, &ctrls );
 #endif /* LDAP_CONTROL_X_CHAINING_BEHAVIOR */
 
-	op->o_req_dn = odn;
-	op->o_req_ndn = ondn;
 	rs->sr_type = REP_SEARCHREF;
 	rs->sr_entry = save_entry;
 	rs->sr_flags = save_flags;
@@ -1338,12 +1345,16 @@ chain_ldadd( CfEntryInfo *p, Entry *e, ConfigArgs *ca )
 
 	if ( lc->lc_common_li == NULL ) {
 		rc = ldap_chain_db_init_common( ca->be );
+		if ( rc != 0 )
+			goto fail;
+		li = ca->be->be_private;
+		lc->lc_common_li = lc->lc_cfg_li = li;
 
-	} else {
-		rc = ldap_chain_db_init_one( ca->be );
 	}
+	rc = ldap_chain_db_init_one( ca->be );
 
 	if ( rc != 0 ) {
+fail:
 		Debug( LDAP_DEBUG_ANY, "slapd-chain: "
 			"unable to init %sunderlying database \"%s\".\n",
 			lc->lc_common_li == NULL ? "common " : "", e->e_name.bv_val, 0 );
@@ -1352,10 +1363,7 @@ chain_ldadd( CfEntryInfo *p, Entry *e, ConfigArgs *ca )
 
 	li = ca->be->be_private;
 
-	if ( lc->lc_common_li == NULL ) {
-		lc->lc_common_li = li;
-
-	} else {
+	if ( at ) {
 		li->li_uri = ch_strdup( at->a_vals[ 0 ].bv_val );
 		value_add_one( &li->li_bvuri, &at->a_vals[ 0 ] );
 		if ( avl_insert( &lc->lc_lai.lai_tree, (caddr_t)li,
@@ -2086,16 +2094,26 @@ ldap_chain_db_open_one(
 
 		if ( li->li_uri == NULL ) {
 			ber_str2bv( "cn=Common Connections", 0, 1,
-				&li->li_monitor_info.lmi_rdn );
+				&li->li_monitor_info.lmi_conn_rdn );
+			ber_str2bv( "cn=Operations on Common Connections", 0, 1,
+				&li->li_monitor_info.lmi_conn_rdn );
 
 		} else {
 			char		*ptr;
 
-			li->li_monitor_info.lmi_rdn.bv_len
+			li->li_monitor_info.lmi_conn_rdn.bv_len
 				= STRLENOF( "cn=" ) + strlen( li->li_uri );
-			ptr = li->li_monitor_info.lmi_rdn.bv_val
-				= ch_malloc( li->li_monitor_info.lmi_rdn.bv_len + 1 );
+			ptr = li->li_monitor_info.lmi_conn_rdn.bv_val
+				= ch_malloc( li->li_monitor_info.lmi_conn_rdn.bv_len + 1 );
 			ptr = lutil_strcopy( ptr, "cn=" );
+			ptr = lutil_strcopy( ptr, li->li_uri );
+			ptr[ 0 ] = '\0';
+
+			li->li_monitor_info.lmi_ops_rdn.bv_len
+				= STRLENOF( "cn=Operations on " ) + strlen( li->li_uri );
+			ptr = li->li_monitor_info.lmi_ops_rdn.bv_val
+				= ch_malloc( li->li_monitor_info.lmi_ops_rdn.bv_len + 1 );
+			ptr = lutil_strcopy( ptr, "cn=Operations on " );
 			ptr = lutil_strcopy( ptr, li->li_uri );
 			ptr[ 0 ] = '\0';
 		}

@@ -2,7 +2,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2004-2012 The OpenLDAP Foundation.
+ * Copyright 2004-2014 The OpenLDAP Foundation.
  * Portions Copyright 2004,2006-2007 Symas Corporation.
  * All rights reserved.
  *
@@ -17,7 +17,7 @@
 /* ACKNOWLEDGEMENTS: 
  * This work was initially developed by Symas Corporation for
  * inclusion in OpenLDAP Software, with subsequent enhancements by
- * Matthew Backes at Symas Corporation.  This work was sponsored by
+ * Emily Backes at Symas Corporation.  This work was sponsored by
  * Hewlett-Packard.
  */
 
@@ -823,47 +823,6 @@ unique_db_destroy(
 	return 0;
 }
 
-static int
-unique_open(
-	BackendDB *be,
-	ConfigReply *cr
-)
-{
-	Debug(LDAP_DEBUG_TRACE, "unique_open: overlay initialized\n", 0, 0, 0);
-
-	return 0;
-}
-
-
-/*
-** Leave unique_data but wipe out config
-**
-*/
-
-static int
-unique_close(
-	BackendDB *be,
-	ConfigReply *cr
-)
-{
-	slap_overinst *on	= (slap_overinst *) be->bd_info;
-	unique_data **privatep = (unique_data **) &on->on_bi.bi_private;
-	unique_data *private = *privatep;
-
-	Debug(LDAP_DEBUG_TRACE, "==> unique_close\n", 0, 0, 0);
-
-	if ( private ) {
-		unique_domain *domains = private->domains;
-		unique_domain *legacy = private->legacy;
-
-		unique_free_domain ( domains );
-		unique_free_domain ( legacy );
-		memset ( private, 0, sizeof ( unique_data ) );
-	}
-
-	return ( 0 );
-}
-
 
 /*
 ** search callback
@@ -1465,8 +1424,6 @@ unique_initialize()
 	unique.on_bi.bi_type = "unique";
 	unique.on_bi.bi_db_init = unique_db_init;
 	unique.on_bi.bi_db_destroy = unique_db_destroy;
-	unique.on_bi.bi_db_open = unique_open;
-	unique.on_bi.bi_db_close = unique_close;
 	unique.on_bi.bi_op_add = unique_add;
 	unique.on_bi.bi_op_modify = unique_modify;
 	unique.on_bi.bi_op_modrdn = unique_modrdn;

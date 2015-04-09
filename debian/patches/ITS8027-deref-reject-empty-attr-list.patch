@@ -4,11 +4,11 @@ Date:   Mon Jan 19 22:25:53 2015 +0000
 
     ITS#8027 require non-empty AttributeList
 
-Index: openldap/servers/slapd/overlays/deref.c
-===================================================================
---- openldap.orig/servers/slapd/overlays/deref.c	2015-02-05 12:46:45.420064048 +0100
-+++ openldap/servers/slapd/overlays/deref.c	2015-02-05 12:46:45.412060048 +0100
-@@ -182,7 +182,8 @@
+diff --git a/servers/slapd/overlays/deref.c b/servers/slapd/overlays/deref.c
+index 9420e3e..05aa890 100644
+--- a/servers/slapd/overlays/deref.c
++++ b/servers/slapd/overlays/deref.c
+@@ -183,7 +183,8 @@ deref_parseCtrl (
  		ber_len_t cnt = sizeof(struct berval);
  		ber_len_t off = 0;
  

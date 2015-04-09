@@ -26,7 +26,7 @@ MAKEVARS	:= STRIP=
 
 # These variables are used only by get-orig-source, which will normally only
 # be run by maintainers.
-VERSION = 2.4.28
+VERSION = $(shell dpkg-parsechangelog |grep Version| sed 's/.*: //;s/-.*//')
 URL     = http://www.openldap.org/software/download/OpenLDAP/openldap-release/
 
 # Download the upstream source and make changes as required for DFSG reasons.
@@ -51,7 +51,16 @@ get-orig-source:
 	gzip -9 openldap_$(VERSION).orig.tar
 
 %:
-	dh $@ --with quilt,autoreconf --builddirectory=$(builddir)
+	dh $@ --with quilt,autoreconf --builddirectory=$(builddir) --parallel
+
+# Only contrib/ldapc++ uses Automake, so special care is needed to update
+# config.guess and config.sub at the top level.
+autoreconf:
+	autoreconf -f -i . contrib/ldapc++
+	cp -f /usr/share/misc/config.guess /usr/share/misc/config.sub build/
+
+override_dh_autoreconf:
+	dh_autoreconf debian/rules -- autoreconf
 
 override_dh_auto_configure:
 	# Check if we include the RFCs, Internet-Drafts, or upstream schemas
@@ -80,11 +89,15 @@ override_dh_auto_build:
 	dh_auto_build -- $(MAKEVARS)
 	$(MAKE) -C contrib/slapd-modules/smbk5pwd
 	$(MAKE) -C contrib/slapd-modules/autogroup
+	$(MAKE) -C contrib/slapd-modules/lastbind
+	$(MAKE) -C contrib/slapd-modules/passwd/sha2
 
 override_dh_auto_install:
 	dh_auto_install -- $(MAKEVARS)
 	$(MAKE) -C contrib/slapd-modules/smbk5pwd install DESTDIR=$(installdir)
 	$(MAKE) -C contrib/slapd-modules/autogroup install DESTDIR=$(installdir)
+	$(MAKE) -C contrib/slapd-modules/lastbind install DESTDIR=$(installdir)
+	$(MAKE) -C contrib/slapd-modules/passwd/sha2 install DESTDIR=$(installdir)
 
 	# Empty the dependency_libs file in the .la files.
 	for F in $(installdir)/usr/lib/ldap/*.la; do \
@@ -142,6 +155,8 @@ override_dh_makeshlibs:
 	# at all, but that requires adjusting the build scripts first to
 	# link against libldap_r, otherwise dh_shlibdeps fails
 	#dh_makeshlibs -plibldap-2.4-2 -V 'libldap-2.4-2 (>= 2.4.7)'
+	mkdir -p debian/libldap-2.4-2/DEBIAN
+	cp -p debian/libldap-2.4-2.shlibs debian/libldap-2.4-2/DEBIAN/shlibs
 	echo "slapd:Provides=$$(objdump -p debian/slapd/usr/lib/$(DEB_HOST_MULTIARCH)/libslapi-*.so.* \
 		| sed -ne '/SONAME/ { s/[[:space:]]*SONAME[[:space:]]*//; \
 		                      s/\.so\./-/; p; q }' \
@@ -172,9 +187,11 @@ override_dh_auto_clean:
 		contrib/slapd-modules/autogroup/autogroup.lo \
 		contrib/slapd-modules/autogroup/autogroup.la \
 		contrib/slapd-modules/autogroup/autogroup.o
-
-# Avoid running back-mdb tests on ppc64 builders
-ifeq ($(DEB_HOST_ARCH),powerpc)
-override_dh_auto_test:
-	dh_auto_test -- BUILD_MDB=no
-endif
+	rm -rf contrib/slapd-modules/lastbind/.libs \
+		contrib/slapd-modules/lastbind/lastbind.lo \
+		contrib/slapd-modules/lastbind/lastbind.la \
+		contrib/slapd-modules/lastbind/lastbind.o
+	rm -rf contrib/slapd-modules/passwd/sha2/.libs \
+		contrib/slapd-modules/passwd/sha2/pw-sha2.lo \
+		contrib/slapd-modules/passwd/sha2/pw-sha2.la \
+		contrib/slapd-modules/passwd/sha2/pw-sha2.o

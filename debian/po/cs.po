@@ -15,8 +15,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: openldap\n"
 "Report-Msgid-Bugs-To: openldap@packages.debian.org\n"
-"POT-Creation-Date: 2010-07-15 22:05+0200\n"
-"PO-Revision-Date: 2010-07-18 19:23+0200\n"
+"POT-Creation-Date: 2014-10-20 22:17-0700\n"
+"PO-Revision-Date: 2014-11-08 16:21+0100\n"
 "Last-Translator: Miroslav Kure <kurem@debian.cz>\n"
 "Language-Team: Czech <debian-l10n-czech@lists.debian.org>\n"
 "Language: cs\n"
@@ -317,24 +317,32 @@ msgstr "Databázový backend:"
 #. Description
 #: ../slapd.templates:16001
 msgid ""
-"The HDB backend is recommended. HDB and BDB use similar storage formats, but "
-"HDB adds support for subtree renames. Both support the same configuration "
-"options."
+"HDB and BDB use similar storage formats, but HDB adds support for subtree "
+"renames. Both support the same configuration options."
 msgstr ""
-"Doporučenou volbou je backend HDB. HDB i BDB ukládají data obdobně, ale HDB "
-"přidává podporu pro přejmenování podstromů. Oba backendy podporují stejné "
-"konfigurační parametry."
+"HDB i BDB ukládají data obdobně, ale HDB přidává podporu pro přejmenování "
+"podstromů. Oba backendy podporují stejné konfigurační parametry."
 
 #. Type: select
 #. Description
 #: ../slapd.templates:16001
 msgid ""
-"In either case, you should review the resulting database configuration for "
-"your needs. See /usr/share/doc/slapd/README.DB_CONFIG.gz for more details."
+"The MDB backend is recommended. MDB uses a new storage format and requires "
+"less configuration than BDB or HDB."
 msgstr ""
-"V obou případech byste zkontrolovat, zda nastavení databáze odpovídá vašim "
-"potřebám. Více informací o nastavení databáze naleznete v souboru /usr/share/"
-"doc/slapd/README.DB_CONFIG.gz."
+"Doporučenou volbou je backend MDB. MDB používá nový formát úložiště a "
+"vyžaduje méně nastavování než BDB enbo HDB."
+
+#. Type: select
+#. Description
+#: ../slapd.templates:16001
+msgid ""
+"In any case, you should review the resulting database configuration for your "
+"needs. See /usr/share/doc/slapd/README.Debian.gz for more details."
+msgstr ""
+"Ve všech případech byste měli zkontrolovat, zda nastavení databáze odpovídá "
+"vašim potřebám. Více informací naleznete v souboru "
+"/usr/share/doc/slapd/README.Debian.gz."
 
 #. Type: note
 #. Description

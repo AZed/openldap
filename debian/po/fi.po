@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: openldap\n"
 "Report-Msgid-Bugs-To: openldap@packages.debian.org\n"
-"POT-Creation-Date: 2010-07-15 22:05+0200\n"
+"POT-Creation-Date: 2014-10-20 22:17-0700\n"
 "PO-Revision-Date: 2008-04-09 20:55+0200\n"
 "Last-Translator: Esko Arajärvi <edu@iki.fi>\n"
 "Language-Team: Finnish <debian-l10n-finnish@lists.debian.org>\n"
@@ -313,10 +313,14 @@ msgstr "Käytettävä taustatietokanta:"
 #. Type: select
 #. Description
 #: ../slapd.templates:16001
+#, fuzzy
+#| msgid ""
+#| "The HDB backend is recommended. HDB and BDB use similar storage formats, "
+#| "but HDB adds support for subtree renames. Both support the same "
+#| "configuration options."
 msgid ""
-"The HDB backend is recommended. HDB and BDB use similar storage formats, but "
-"HDB adds support for subtree renames. Both support the same configuration "
-"options."
+"HDB and BDB use similar storage formats, but HDB adds support for subtree "
+"renames. Both support the same configuration options."
 msgstr ""
 "HDB-taustatietokantaa suositellaan. HDB ja BDB käyttävät samantapaisia "
 "tallennusmuotoja, mutta HDB tukee lisäksi puun osien uudelleennimeämistä. "
@@ -325,9 +329,30 @@ msgstr ""
 #. Type: select
 #. Description
 #: ../slapd.templates:16001
+#, fuzzy
+#| msgid ""
+#| "The HDB backend is recommended. HDB and BDB use similar storage formats, "
+#| "but HDB adds support for subtree renames. Both support the same "
+#| "configuration options."
 msgid ""
-"In either case, you should review the resulting database configuration for "
-"your needs. See /usr/share/doc/slapd/README.DB_CONFIG.gz for more details."
+"The MDB backend is recommended. MDB uses a new storage format and requires "
+"less configuration than BDB or HDB."
+msgstr ""
+"HDB-taustatietokantaa suositellaan. HDB ja BDB käyttävät samantapaisia "
+"tallennusmuotoja, mutta HDB tukee lisäksi puun osien uudelleennimeämistä. "
+"Molemmat tukevat samoja asetusvalintoja."
+
+#. Type: select
+#. Description
+#: ../slapd.templates:16001
+#, fuzzy
+#| msgid ""
+#| "In either case, you should review the resulting database configuration "
+#| "for your needs. See /usr/share/doc/slapd/README.DB_CONFIG.gz for more "
+#| "details."
+msgid ""
+"In any case, you should review the resulting database configuration for your "
+"needs. See /usr/share/doc/slapd/README.Debian.gz for more details."
 msgstr ""
 "Joka tapauksessa tulisi tarkistaa, että tuloksena olevat tietokanta-"
 "asetukset vastaavat tarpeita. Tiedostosta /usr/share/doc/slapd/README."
