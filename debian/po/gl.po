@@ -333,6 +333,45 @@ msgstr ""
 "axusta ás súas necesidades. Consulte /usr/share/doc/slapd/README.DB_CONFIG."
 "gz para máis detalles."
 
+#. Type: note
+#. Description
+#: ../slapd.templates:17001
+msgid "Potentially unsafe slapd access control configuration"
+msgstr ""
+"A configuración de control de acceso de slapd é potencialmente insegura"
+
+#. Type: note
+#. Description
+#: ../slapd.templates:17001
+msgid ""
+"One or more of the configured databases has an access control rule that "
+"allows users to modify most of their own attributes. This may be unsafe, "
+"depending on how the database is used."
+msgstr ""
+"Polo menos unha das bases de datos configuradas ten unha regra de control de "
+"acceso que permite aos usuarios modificar a maioría dos atributos. Isto pode "
+"ser inseguro dependendo da maneira en que se use a base de datos."
+
+#. Type: note
+#. Description
+#. Translators: keep "by self write" and "to *" unchanged. These are part
+#. of the slapd configuration and are not translatable.
+#: ../slapd.templates:17001
+msgid ""
+"In the case of slapd access rules that begin with \"to *\", it is "
+"recommended to remove any instances of \"by self write\", so that users are "
+"only able to modify specifically allowed attributes."
+msgstr ""
+"No caso das regras de acceso de «slapd» que comezan con «to *», "
+"recoméndaselle eliminar calquera instancia de «by self write», de maneira "
+"que os usuarios só poidan modificar os atributos especificamente permitidos."
+
+#. Type: note
+#. Description
+#: ../slapd.templates:17001
+msgid "See /usr/share/doc/slapd/README.Debian.gz for more details."
+msgstr "Pode obter máis información en /usr/share/doc/slapd/README.Debian.gz ."
+
 #~ msgid "Back up current database and create a new one?"
 #~ msgstr "¿Facer unha copia da base de datos actual e crear unha nova?"
 

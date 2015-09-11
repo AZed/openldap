@@ -18,3 +18,7 @@ service-operational-before-detach
 CVE-2011-1024
 CVE-2011-1025
 CVE-2011-1081
+ITS7723-fix-reference-counting.patch
+ITS8027-deref-reject-empty-attr-list.patch
+ITS7143-fix-attr_dup2-when-attrsOnly.patch
+ITS8240-remove-obsolete-assert.patch

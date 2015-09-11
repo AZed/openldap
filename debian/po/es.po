@@ -366,6 +366,45 @@ msgstr ""
 "En cualquier caso, debe revisar la configuración de la base de datos. Vea en "
 "«/usr/share/doc/slapd/README.DB_CONFIG.gz» para más detalles."
 
+#. Type: note
+#. Description
+#: ../slapd.templates:17001
+msgid "Potentially unsafe slapd access control configuration"
+msgstr "Configuración potencialmente insegura en el control de acceso de slapd"
+
+#. Type: note
+#. Description
+#: ../slapd.templates:17001
+msgid ""
+"One or more of the configured databases has an access control rule that "
+"allows users to modify most of their own attributes. This may be unsafe, "
+"depending on how the database is used."
+msgstr ""
+"Una o varias de las bases de datos configuradas contiene una regla de "
+"control de acceso que permite a los usuarios modificar la mayoría de sus "
+"propios atributos. Esta configuración puede ser insegura dependiendo de cómo "
+"se utilice la base de datos."
+
+#. Type: note
+#. Description
+#. Translators: keep "by self write" and "to *" unchanged. These are part
+#. of the slapd configuration and are not translatable.
+#: ../slapd.templates:17001
+msgid ""
+"In the case of slapd access rules that begin with \"to *\", it is "
+"recommended to remove any instances of \"by self write\", so that users are "
+"only able to modify specifically allowed attributes."
+msgstr ""
+"Se recomienda que elimine cualquier instancia «by self write» en las reglas "
+"de acceso de slapd que empiecen con «to *» para que los usuarios sólo puedan "
+"modificar los atributos que se hayan permitido expresamente."
+
+#. Type: note
+#. Description
+#: ../slapd.templates:17001
+msgid "See /usr/share/doc/slapd/README.Debian.gz for more details."
+msgstr "Consulte «/usr/share/doc/slapd/README.Debian.gz» para más detalles."
+
 #~ msgid "slurpd is obsolete; replicas must be reconfigured by hand"
 #~ msgstr "slurpd es obsoleto; hay que configurar las réplicas a mano"
 

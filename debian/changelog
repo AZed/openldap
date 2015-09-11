@@ -1,3 +1,34 @@
+openldap (2.4.23-7.3+deb6u2) squeeze-lts; urgency=high
+
+  * Import upstream patch to remove an unnecessary assert(0) that could be
+    triggered remotely by an unauthenticated user by sending a malformed BER
+    element. (ITS#8240) (CVE-2015-6908) (Closes: #798622)
+
+ -- Ryan Tandy <ryan@nardis.ca>  Fri, 11 Sep 2015 08:28:34 -0700
+
+openldap (2.4.23-7.3+deb6u1) squeeze-lts; urgency=high
+
+  * debian/slapd.init.ldif: Disallow modifying one's own entry by default,
+    except specific attributes. (CVE-2014-9713) (Closes: #761406)
+  * debian/slapd.{config,templates}: On upgrade, if an access rule begins with 
+    "to * by self write", show a debconf note warning that it should be 
+    changed.
+  * debian/slapd.README.debian: Add information about how to remove "to * by 
+    self write" from existing ACLs.
+  * debian/po/*: Add translations of debconf warning.
+  * debian/patches/ITS7723-fix-reference-counting.patch: Import upstream patch 
+    to fix a crash in the rwm overlay when a search is immediately followed by 
+    an unbind. (ITS#7723) (CVE-2013-4449) (Closes: #729367)
+  * debian/patches/ITS8027-deref-reject-empty-attr-list.patch: Import upstream 
+    patch to fix a crash when a search includes the Deref control with an 
+    empty attribute list. (ITS#8027) (CVE-2015-1545) (Closes: #776988)
+  * debian/patches/ITS7143-fix-attr_dup2-when-attrsOnly.patch: Import upstream
+    patch to fix a crash when doing an attrsOnly search of a database
+    configured with both the rwm and translucent overlays. (ITS#7143)
+    (CVE-2012-1164) (Closes: #663644)
+
+ -- Ryan Tandy <ryan@nardis.ca>  Fri, 17 Apr 2015 18:39:40 -0700
+
 openldap (2.4.23-7.3) stable; urgency=low
 
   * Non-maintainer upload targeted at stable

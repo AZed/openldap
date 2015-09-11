@@ -323,3 +323,35 @@ msgid ""
 msgstr ""
 "いずれの場合でも、必要に応じてデータベース設定の結果を再確認すべきです。詳細"
 "については /usr/share/doc/slapd/README.DB_CONFIG.gz を参照してください。"
+
+#. Type: note
+#. Description
+#: ../slapd.templates:17001
+msgid "Potentially unsafe slapd access control configuration"
+msgstr "潜在的に安全でない slapd のアクセス制御設定です"
+
+#. Type: note
+#. Description
+#: ../slapd.templates:17001
+msgid ""
+"One or more of the configured databases has an access control rule that "
+"allows users to modify most of their own attributes. This may be unsafe, "
+"depending on how the database is used."
+msgstr "設定されたデータベースには、ユーザに自身の属性のほとんどの変更を許容する 1 つ以上のアクセス制御ルールがあります。これはデータベースの使いようによっては安全でない可能性があります。"
+
+#. Type: note
+#. Description
+#. Translators: keep "by self write" and "to *" unchanged. These are part
+#. of the slapd configuration and are not translatable.
+#: ../slapd.templates:17001
+msgid ""
+"In the case of slapd access rules that begin with \"to *\", it is "
+"recommended to remove any instances of \"by self write\", so that users are "
+"only able to modify specifically allowed attributes."
+msgstr "\"to *\" で始まる slapd アクセスルールがある場合、各 \"by self write\" 記述を削除することをお勧めします。そうすれば、ユーザが変更できるのは明示的に許可された属性のみになります。"
+
+#. Type: note
+#. Description
+#: ../slapd.templates:17001
+msgid "See /usr/share/doc/slapd/README.Debian.gz for more details."
+msgstr "詳細については /usr/share/doc/slapd/README.Debian.gz を参照してください。"
