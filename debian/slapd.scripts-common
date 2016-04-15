@@ -46,7 +46,7 @@ database_format_changed() {						# {{{
 # Return success if yes.
 # Usage: if database_format_changed; then
 
-	if dpkg --compare-versions "$OLD_VERSION" lt-nl 2.4.23-4; then
+	if dpkg --compare-versions "$OLD_VERSION" lt-nl 2.4.25-2; then
 		return 0
 	else
 		return 1
@@ -275,14 +275,14 @@ get_suffix() {
 			sed -n -e's/^suffix[[:space:]]\+"*\([^"]\+\)"*/\1/p' $f
 		done
 	else
-		grep -h olcSuffix ${SLAPD_CONF}/cn\=config/olcDatabase* | cut -d: -f 2
+		grep -h olcSuffix ${SLAPD_CONF}/cn\=config/olcDatabase*.ldif | cut -d: -f 2
 	fi
 }
 # }}}
 get_directory() {							# {{{
 # Returns the db directory for a given suffix
 	if [ -d "${SLAPD_CONF}" ] && get_suffix | grep -q "$1" ; then
-		grep "olcDbDirectory:" `grep -l "olcSuffix: $1" ${SLAPD_CONF}/cn\=config/olcDatabase*` | cut -d: -f 2 | sed 's/^  *//g'
+		grep "olcDbDirectory:" `grep -l "olcSuffix: $1" ${SLAPD_CONF}/cn\=config/olcDatabase*.ldif` | cut -d: -f 2 | sed 's/^  *//g'
 	elif [ -f "${SLAPD_CONF}" ]; then
 		# Extract the directory for the given suffix ($1)
 		for f in `get_all_slapd_conf_files`; do
@@ -666,7 +666,7 @@ create_password_hash() {						# {{{
 # Create the password hash for the given password
 # Usage: hash=`create_password_hash "$password"`
 
-	slappasswd -s $1
+	slappasswd -s "$1"
 }
 
 # }}}

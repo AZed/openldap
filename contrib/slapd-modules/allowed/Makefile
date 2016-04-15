@@ -1,7 +1,7 @@
-# $OpenLDAP: pkg/ldap/contrib/slapd-modules/allowed/Makefile,v 1.1.2.3 2010/04/13 20:22:26 kurt Exp $
+# $OpenLDAP$
 # This work is part of OpenLDAP Software <http://www.openldap.org/>.
 #
-# Copyright 1998-2010 The OpenLDAP Foundation.
+# Copyright 1998-2012 The OpenLDAP Foundation.
 # Copyright 2004 Howard Chu, Symas Corp. All Rights Reserved.
 #
 # Redistribution and use in source and binary forms, with or without

@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-perl/add.c,v 1.20.2.5 2010/04/13 20:23:36 kurt Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2010 The OpenLDAP Foundation.
+ * Copyright 1999-2012 The OpenLDAP Foundation.
  * Portions Copyright 1999 John C. Quillan.
  * Portions Copyright 2002 myinternet Limited.
  * All rights reserved.
@@ -26,9 +26,7 @@ perl_back_add(
 	int len;
 	int count;
 
-#if defined(HAVE_WIN32_ASPERL) || defined(USE_ITHREADS)
 	PERL_SET_CONTEXT( PERL_INTERPRETER );
-#endif
 	ldap_pvt_thread_mutex_lock( &perl_interpreter_mutex );
 	ldap_pvt_thread_mutex_lock( &entry2str_mutex );
 
@@ -37,15 +35,11 @@ perl_back_add(
 
 		PUSHMARK(sp);
 		XPUSHs( perl_back->pb_obj_ref );
-		XPUSHs(sv_2mortal(newSVpv( entry2str( op->ora_e, &len ), 0 )));
+		XPUSHs(sv_2mortal(newSVpv( entry2str( op->ora_e, &len ), len )));
 
 		PUTBACK;
 
-#ifdef PERL_IS_5_6
 		count = call_method("add", G_SCALAR);
-#else
-		count = perl_call_method("add", G_SCALAR);
-#endif
 
 		SPAGAIN;
 

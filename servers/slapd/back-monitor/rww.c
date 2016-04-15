@@ -1,8 +1,8 @@
 /* readw.c - deal with read waiters subsystem */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/rww.c,v 1.36.2.7 2010/04/13 20:23:33 kurt Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2001-2010 The OpenLDAP Foundation.
+ * Copyright 2001-2012 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * All rights reserved.
  *
@@ -155,7 +155,7 @@ monitor_subsys_rww_update(
 {
 	monitor_info_t *mi = (monitor_info_t *)op->o_bd->be_private;
 	Connection	*c;
-	int		connindex;
+	ber_socket_t	connindex;
 	long		nconns, nwritewaiters, nreadwaiters;
 
 	int		i;

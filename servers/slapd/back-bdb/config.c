@@ -1,8 +1,8 @@
 /* config.c - bdb backend configuration file routine */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/config.c,v 1.91.2.19 2010/04/13 20:23:23 kurt Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2010 The OpenLDAP Foundation.
+ * Copyright 2000-2012 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -387,8 +387,8 @@ bdb_cf_gen( ConfigArgs *c )
 			if ( bdb->bi_txn_cp ) {
 				char buf[64];
 				struct berval bv;
-				bv.bv_len = snprintf( buf, sizeof(buf), "%d %d", bdb->bi_txn_cp_kbyte,
-					bdb->bi_txn_cp_min );
+				bv.bv_len = snprintf( buf, sizeof(buf), "%ld %ld",
+					(long) bdb->bi_txn_cp_kbyte, (long) bdb->bi_txn_cp_min );
 				if ( bv.bv_len > 0 && bv.bv_len < sizeof(buf) ) {
 					bv.bv_val = buf;
 					value_add_one( &c->rvalue_vals, &bv );

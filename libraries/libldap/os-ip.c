@@ -1,8 +1,8 @@
 /* os-ip.c -- platform-specific TCP & UDP related code */
-/* $OpenLDAP: pkg/ldap/libraries/libldap/os-ip.c,v 1.118.2.20 2010/04/13 20:22:58 kurt Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2010 The OpenLDAP Foundation.
+ * Copyright 1998-2012 The OpenLDAP Foundation.
  * Portions Copyright 1999 Lars Uffmann.
  * All rights reserved.
  *
@@ -592,16 +592,12 @@ ldap_connect_to_host(LDAP *ld, Sockbuf *sb,
 	hints.ai_socktype = socktype;
 	snprintf(serv, sizeof serv, "%d", port );
 
-#ifdef LDAP_R_COMPILE
 	/* most getaddrinfo(3) use non-threadsafe resolver libraries */
-	ldap_pvt_thread_mutex_lock(&ldap_int_resolv_mutex);
-#endif
+	LDAP_MUTEX_LOCK(&ldap_int_resolv_mutex);
 
 	err = getaddrinfo( host, serv, &hints, &res );
 
-#ifdef LDAP_R_COMPILE
-	ldap_pvt_thread_mutex_unlock(&ldap_int_resolv_mutex);
-#endif
+	LDAP_MUTEX_UNLOCK(&ldap_int_resolv_mutex);
 
 	if ( err != 0 ) {
 		osip_debug(ld, "ldap_connect_to_host: getaddrinfo failed: %s\n",
@@ -727,9 +723,9 @@ ldap_connect_to_host(LDAP *ld, Sockbuf *sb,
 			async);
    
 		if ( (rc == 0) || (rc == -2) ) {
-			i = ldap_int_connect_cbs( ld, sb, &s, srv, (struct sockaddr *)&sin );
-			if ( i )
-				rc = i;
+			int err = ldap_int_connect_cbs( ld, sb, &s, srv, (struct sockaddr *)&sin );
+			if ( err )
+				rc = err;
 			else
 				break;
 		}
@@ -967,6 +963,32 @@ ldap_mark_select_clear( LDAP *ld, Sockbuf *sb )
 	/* for UNIX select(2) */
 	FD_CLR( sd, &sip->si_writefds );
 	FD_CLR( sd, &sip->si_readfds );
+#endif
+}
+
+void
+ldap_clear_select_write( LDAP *ld, Sockbuf *sb )
+{
+	struct selectinfo	*sip;
+	ber_socket_t		sd;
+
+	sip = (struct selectinfo *)ld->ld_selectinfo;
+
+	ber_sockbuf_ctrl( sb, LBER_SB_OPT_GET_FD, &sd );
+
+#ifdef HAVE_POLL
+	/* for UNIX poll(2) */
+	{
+		int i;
+		for(i=0; i < sip->si_maxfd; i++) {
+			if( sip->si_fds[i].fd == sd ) {
+				sip->si_fds[i].events &= ~POLL_WRITE;
+			}
+		}
+	}
+#else
+	/* for UNIX select(2) */
+	FD_CLR( sd, &sip->si_writefds );
 #endif
 }
 

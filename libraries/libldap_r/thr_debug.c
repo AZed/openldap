@@ -1,8 +1,8 @@
 /* thr_debug.c - wrapper around the chosen thread wrapper, for debugging. */
-/* $OpenLDAP: pkg/ldap/libraries/libldap_r/thr_debug.c,v 1.5.2.9 2010/04/13 20:23:02 kurt Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2005-2010 The OpenLDAP Foundation.
+ * Copyright 2005-2012 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -481,6 +481,7 @@ debug_noop( void )
  *
  * Returns true if the resource is initialized and not copied/realloced.
  */
+LDAP_GCCATTR((noinline))
 static int
 debug_already_initialized( const ldap_debug_usage_info_t *usage )
 {
