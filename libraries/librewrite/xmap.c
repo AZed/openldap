@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/librewrite/xmap.c,v 1.4.2.2 2004/03/06 16:10:31 ando Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2004 The OpenLDAP Foundation.
@@ -95,7 +95,7 @@ rewrite_xmap_parse(
 	 * Experimental file map:
 	 * looks up key in a `key value' ascii file
 	 */
-	} else if ( strncasecmp(s, "xfile", 5 ) == 0 ) {
+	} else if ( strncasecmp( s, "xfile", 5 ) == 0 ) {
 		char *filename;
 		const char *p;
 		int l;

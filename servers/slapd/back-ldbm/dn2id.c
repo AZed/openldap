@@ -1,8 +1,17 @@
 /* dn2id.c - routines to deal with the dn2id index */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/dn2id.c,v 1.63.2.3 2003/03/03 17:10:09 kurt Exp $ */
-/*
- * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
- * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
+/* $OpenLDAP$ */
+/* This work is part of OpenLDAP Software <http://www.openldap.org/>.
+ *
+ * Copyright 1998-2004 The OpenLDAP Foundation.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted only as authorized by the OpenLDAP
+ * Public License.
+ *
+ * A copy of this license is available in the file LICENSE in the
+ * top-level directory of the distribution or, alternatively, at
+ * <http://www.OpenLDAP.org/license.html>.
  */
 
 #include "portable.h"
@@ -264,6 +273,65 @@ dn2idl(
 
 
 int
+dn2idl(
+    Backend	*be,
+    struct berval	*dn,
+    int		prefix,
+    ID_BLOCK    **idlp
+)
+{
+	DBCache	*db;
+	Datum		key;
+	unsigned char	*tmp;
+
+#ifdef NEW_LOGGING
+	LDAP_LOG( BACK_LDBM, ENTRY, "dn2idl: \"%c%s\"\n", prefix, dn->bv_val, 0 );
+#else
+	Debug( LDAP_DEBUG_TRACE, "=> dn2idl( \"%c%s\" )\n", prefix, dn->bv_val, 0 );
+#endif
+
+	assert( idlp != NULL );
+	*idlp = NULL;
+
+	if ( prefix == DN_SUBTREE_PREFIX && be_issuffix(be, dn) ) {
+		*idlp = idl_allids( be );
+		return 0;
+	}
+
+	db = ldbm_cache_open( be, "dn2id", LDBM_SUFFIX, LDBM_WRCREAT );
+	if ( db == NULL ) {
+#ifdef NEW_LOGGING
+		LDAP_LOG( BACK_LDBM, ERR, 
+			   "dn2idl: could not open dn2id%s\n", LDBM_SUFFIX, 0, 0 );
+#else
+		Debug( LDAP_DEBUG_ANY, "<= dn2idl could not open dn2id%s\n",
+			LDBM_SUFFIX, 0, 0 );
+#endif
+
+		return -1;
+	}
+
+	ldbm_datum_init( key );
+
+	key.dsize = dn->bv_len + 2;
+	key.dptr = ch_malloc( key.dsize );
+	tmp = (unsigned char *)key.dptr;
+	tmp[0] = prefix;
+	tmp++;
+	AC_MEMCPY( tmp, dn->bv_val, dn->bv_len );
+	tmp[dn->bv_len] = '\0';
+
+	*idlp = idl_fetch( be, db, key );
+
+	ldbm_cache_close( be, db );
+
+	free( key.dptr );
+
+	return( 0 );
+}
+
+
+int
 dn2id_delete(
     Backend	*be,
     struct berval *dn,
@@ -419,7 +487,8 @@ dn2entry_rw(
 	/* entry does not exist - see how much of the dn does exist */
 	if ( !be_issuffix( be, dn ) && (dnParent( dn, &pdn ), pdn.bv_len) ) {
 		/* get entry with reader lock */
-		if ( (e = dn2entry_r( be, &pdn, matched )) != NULL ) {
+		if ((e = dn2entry_r( be, &pdn, matched )) != NULL )
+		{
 			*matched = e;
 		}
 	}
