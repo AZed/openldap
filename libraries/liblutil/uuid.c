@@ -1,5 +1,5 @@
 /* uuid.c -- Universally Unique Identifier routines */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/libraries/liblutil/uuid.c,v 1.21.2.3 2004/01/01 18:16:32 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2004 The OpenLDAP Foundation.

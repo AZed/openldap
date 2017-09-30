@@ -1,4 +1,4 @@
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/modify.c,v 1.182.2.11 2004/04/28 22:57:24 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -449,18 +449,6 @@ do_modify(
 		rs->sr_err = LDAP_SUCCESS;
 		send_ldap_result( op, rs );
 	} else {
-#endif /* defined( LDAP_SLAPI ) */
-
-	/*
-	 * It's possible that the preoperation plugin changed the
-	 * modification array, so we need to convert it back to
-	 * a Modification list.
-	 *
-	 * Calling slapi_x_modifications2ldapmods() destroyed modlist so
-	 * we don't need to free it.
-	 */
-	slapi_pblock_get( pb, SLAPI_MODIFY_MODS, (void **)&modv );
-	modlist = slapi_x_ldapmods2modifications( modv );
 #endif /* defined( LDAP_SLAPI ) */
 
 	/*

@@ -1,5 +1,5 @@
 # Clients Makefile.in for OpenLDAP
-# $OpenLDAP$
+# $OpenLDAP: pkg/ldap/clients/Makefile.in,v 1.12.2.2 2004/01/01 18:16:26 kurt Exp $
 ## Copyright 1998-2004 The OpenLDAP Foundation.
 ## All rights reserved.
 ##

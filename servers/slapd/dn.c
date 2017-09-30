@@ -1,5 +1,5 @@
 /* dn.c - routines for dealing with distinguished names */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/dn.c,v 1.144.2.7 2004/04/12 18:13:21 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -834,31 +834,6 @@ rdnValidate( struct berval *rdn )
  *
  * new_dn = parent (p_dn) + separator + rdn (newrdn) + null.
  */
-void
-dnParent( 
-	struct berval	*dn, 
-	struct berval	*pdn )
-{
-	char	*p;
-
-	p = strchr( dn->bv_val, ',' );
-
-	/* one-level dn */
-	if ( p == NULL ) {
-		pdn->bv_len = 0;
-		pdn->bv_val = dn->bv_val + dn->bv_len;
-		return;
-	}
-
-	assert( DN_SEPARATOR( p[ 0 ] ) );
-	p++;
-
-	assert( ATTR_LEADCHAR( p[ 0 ] ) );
-	pdn->bv_val = p;
-	pdn->bv_len = dn->bv_len - (p - dn->bv_val);
-
-	return;
-}
 
 void
 build_new_dn( struct berval * new_dn,

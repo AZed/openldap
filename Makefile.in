@@ -1,5 +1,5 @@
 # Master Makefile for OpenLDAP
-# $OpenLDAP$
+# $OpenLDAP: pkg/ldap/Makefile.in,v 1.24.2.2 2004/01/01 18:16:16 kurt Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 1998-2004 The OpenLDAP Foundation.

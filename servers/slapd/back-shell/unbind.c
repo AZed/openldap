@@ -1,5 +1,5 @@
 /* unbind.c - shell backend unbind function */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-shell/unbind.c,v 1.18.2.3 2004/01/01 18:16:39 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.

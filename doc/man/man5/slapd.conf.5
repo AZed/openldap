@@ -1,7 +1,7 @@
 .TH SLAPD.CONF 5 "RELEASEDATE" "OpenLDAP LDVERSION"
 .\" Copyright 1998-2004 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
-.\" $OpenLDAP$
+.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapd.conf.5,v 1.133.2.16 2004/05/21 23:35:59 kurt Exp $
 .SH NAME
 slapd.conf \- configuration file for slapd, the stand-alone LDAP daemon
 .SH SYNOPSIS
@@ -285,134 +285,6 @@ feature.  The default is 0.
 Read additional configuration information from the given file before
 continuing with the next line of the current file.
 .\"-- NEW_LOGGING option --
-.\".TP
-.\".B logfile <filename>
-.\"Specify a file for recording debug log messages. By default these messages
-.\"only go to stderr and are not recorded anywhere else. Specifying a logfile
-.\"copies messages to both stderr and the logfile.
-.TP
-.B limits <who> <limit> [<limit> [...]]
-Specify time and size limits based on who initiated an operation.
-The argument
-.B who
-can be any of
-.RS
-.RS
-.TP
-anonymous | users | [dn[.<style>]=]<pattern>
-
-.RE
-with
-.RS
-.TP
-<style> ::= exact | base | one | subtree | children | regex | anonymous
-
-.RE
-.B Anonymous
-is hit when a search is performed without prior binding;
-.B users
-is hit when a search is performed by a successfully bound user;
-otherwise a
-.B regex
-dn pattern is assumed unless otherwise specified by qualifying 
-the (optional) key string
-.B dn
-with 
-.B exact
-or
-.B base
-(which are synonims), to require an exact match; with
-.BR one, 
-to require exactly one level of depth match; with
-.BR subtree,
-to allow any level of depth match, including the exact match; with
-.BR children,
-to allow any level of depth match, not including the exact match;
-.BR regex
-explicitly requires the (default) match based on regular expression
-pattern, as detailed in
-.BR regex (7).
-Finally,
-.B anonymous
-matches unbound operations; the 
-.B pattern
-field is ignored.
-The same behavior is obtained by using the 
-.B anonymous
-form of the
-.B who
-clause.
-
-The currently supported limits are 
-.B size
-and 
-.BR time.
-
-The syntax for time limits is 
-.BR time[.{soft|hard}]=<integer> ,
-where 
-.BR integer
-is the number of seconds slapd will spend answering a search request.
-If no time limit is explicitly requested by the client, the 
-.BR soft
-limit is used; if the requested time limit exceedes the
-.BR hard
-limit, an "Administrative limit exceeded" is returned.
-If the
-.BR hard
-limit is set to 0 or to the keyword "soft", the soft limit is used 
-in either case; if it is set to -1 or to the keyword "none", 
-no hard limit is enforced.
-Explicit requests for time limits smaller or equal to the
-.BR hard 
-limit are honored.
-If no flag is set, the value is assigned to the 
-.BR soft 
-limit, and the
-.BR hard
-limit is set to zero, to preserve the original behavior.
-
-The syntax for size limits is
-.BR size[.{soft|hard|unchecked}]=<integer> ,
-where
-.BR integer
-is the maximum number of entries slapd will return answering a search 
-request.
-If no size limit is explicitly requested by the client, the
-.BR soft
-limit is used; if the requested size limit exceedes the
-.BR hard
-limit, an "Administrative limit exceeded" is returned.
-If the 
-.BR hard
-limit is set to 0 or to the keyword "soft", the soft limit is used 
-in either case; if it is set to -1 or to the keyword "none", 
-no hard limit is enforced.
-Explicit requests for size limits smaller or equal to the
-.BR hard
-limit are honored.
-The
-.BR unchecked
-flag sets a limit on the number of candidates a search request is allowed
-to examine.
-If the selected candidates exceed the 
-.BR unchecked
-limit, the search will abort with "Unwilling to perform".
-If it is set to -1 or to the keyword "none", no limit is applied (the default).
-If no flag is set, the value is assigned to the
-.BR soft 
-limit, and the
-.BR hard
-limit is set to zero, to preserve the original behavior.
-
-In case of no match, the global limits are used.
-The default values are the same of
-.BR sizelimit
-and
-.BR timelimit ;
-no limit is set on 
-.BR unchecked .
-.RE
 .\".TP
 .\".B logfile <filename>
 .\"Specify a file for recording debug log messages. By default these messages

@@ -1,5 +1,5 @@
 /* result.c - wait for an ldap result */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/result.c,v 1.84.2.5 2004/03/25 23:06:26 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -39,10 +39,6 @@
  */
 /* Portions Copyright (C) The Internet Society (1997)
  * ASN.1 fragments are from RFC 2251; see RFC for full legal notices.
- */
-/* Note: A verbatim copy of version 2.0.1 of the OpenLDAP Public License 
- * can be found in the file "build/LICENSE-2.0.1" in this distribution
- * of OpenLDAP Software.
  */
 
 /*
@@ -462,7 +458,6 @@ retry:
 	ber = lc->lconn_ber;
 	assert( LBER_VALID (ber) );
 
-retry2:
 	/* get the next message */
 	errno = 0;
 #ifdef LDAP_CONNECTIONLESS
@@ -504,12 +499,6 @@ nextresp3:
 		ld->ld_errno = LDAP_LOCAL_ERROR;
 		return -1;
 	}
-
-	/*
-     * We read a complete message.
-	 * The connection should no longer need this ber.
-	 */
-    lc->lconn_ber = NULL;
 
 	/* message id */
 	if ( ber_get_int( ber, &id ) == LBER_ERROR ) {

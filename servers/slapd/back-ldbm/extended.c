@@ -1,5 +1,5 @@
 /* extended.c - ldbm backend extended routines */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/extended.c,v 1.15.2.3 2004/01/01 18:16:37 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.

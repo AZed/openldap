@@ -1,5 +1,5 @@
 /* aclparse.c - routines to parse and check acl's */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/aclparse.c,v 1.110.2.11 2004/04/12 18:13:21 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -1763,15 +1763,6 @@ str2access( const char *str )
 }
 
 #ifdef LDAP_DEBUG
-
-static char *style_strings[5] = {
-			"regex",
-			"base",
-			"one",
-			"subtree",
-			"children"
-		};
-
 
 static void
 print_access( Access *b )

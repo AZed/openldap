@@ -1,5 +1,5 @@
 /* fork.c - fork and exec a process, connecting stdin/out w/pipes */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-shell/fork.c,v 1.13.2.2 2004/01/01 18:16:39 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.

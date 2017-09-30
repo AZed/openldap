@@ -1,5 +1,5 @@
 /* acl.c - routines to parse and check acl's */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/acl.c,v 1.189.2.16 2004/05/13 08:12:37 ando Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -786,22 +786,6 @@ acl_mask(
 				
 				if ( e->e_dn == NULL || !dn_match( &e->e_nname, &op->o_ndn ) ) {
 					continue;
-
-				if ( b->a_dn_expand ) {
-					struct berval bv;
-					char buf[ACL_BUF_SIZE];
-
-					bv.bv_len = sizeof( buf ) - 1;
-					bv.bv_val = buf;
-
-					string_expand(&bv, &b->a_dn_pat, 
-							e->e_ndn, matches);
-					if ( dnNormalize2(NULL, &bv, &pat) != LDAP_SUCCESS ) {
-						/* did not expand to a valid dn */
-						continue;
-					}
-				} else {
-					pat = b->a_dn_pat;
 				}
 
 			} else if ( b->a_dn_style == ACL_STYLE_REGEX ) {

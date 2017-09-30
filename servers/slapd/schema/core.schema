@@ -1,5 +1,5 @@
 # OpenLDAP Core schema
-# $OpenLDAP$
+# $OpenLDAP: pkg/ldap/servers/slapd/schema/core.schema,v 1.68.2.5 2004/04/15 01:41:49 kurt Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 1998-2004 The OpenLDAP Foundation.

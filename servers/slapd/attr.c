@@ -1,10 +1,5 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/attr.c,v 1.71.2.3 2003/03/03 17:10:07 kurt Exp $ */
-/*
- * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
- * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
- */
 /* attr.c - routines for dealing with attributes */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/attr.c,v 1.88.2.5 2004/04/12 18:13:21 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -28,8 +23,6 @@
  * software without specific prior written permission. This software
  * is provided ``as is'' without express or implied warranty.
  */
-
-#include "portable.h"
 
 #include "portable.h"
 

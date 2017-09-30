@@ -1,5 +1,5 @@
 /* kerberos.c - ldbm backend kerberos bind routines */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/kerberos.c,v 1.8.2.2 2004/01/01 18:16:33 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.

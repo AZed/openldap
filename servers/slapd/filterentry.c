@@ -1,5 +1,5 @@
 /* filterentry.c - apply a filter to an entry */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/filterentry.c,v 1.66.2.8 2004/05/21 02:11:38 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -375,7 +375,6 @@ static int test_mra_filter(
 	return LDAP_COMPARE_FALSE;
 }
 
-
 static int
 test_ava_filter(
 	Operation	*op,
@@ -555,7 +554,6 @@ test_filter_and(
 
 	return rtn;
 }
-
 
 static int
 test_filter_or(

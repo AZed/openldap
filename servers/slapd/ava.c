@@ -1,10 +1,5 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/ava.c,v 1.26.2.3 2003/03/03 17:10:07 kurt Exp $ */
-/*
- * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
- * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
- */
 /* ava.c - routines for dealing with attribute value assertions */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/ava.c,v 1.34.2.4 2004/04/12 18:13:21 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -31,8 +26,6 @@
 
 #include "portable.h"
 
-#include "portable.h"
-
 #include <stdio.h>
 
 #include <ac/string.h>
@@ -52,6 +45,7 @@ ava_free(
 	if ( freeit ) {
 		op->o_tmpfree( (char *) ava, op->o_tmpmemctx );
 	}
+}
 
 int
 get_ava(

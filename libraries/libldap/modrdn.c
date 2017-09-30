@@ -1,4 +1,4 @@
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/modrdn.c,v 1.22.2.3 2004/01/01 18:16:30 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -25,17 +25,6 @@
  */
 /* Portions Copyright (C) The Internet Society (1997)
  * ASN.1 fragments are from RFC 2251; see RFC 2251 for full legal notices.
- */
-/*
- * Support for MODIFYDN REQUEST V3 (newSuperior) by:
- *
- * Copyright 1999, Juan C. Gomez, All rights reserved.
- * This software is not subject to any license of Silicon Graphics 
- * Inc. or Purdue University.
- *
- * Redistribution and use in source and binary forms are permitted
- * without restriction or fee of any kind as long as this notice
- * is preserved.
  */
 
 /* ACKNOWLEDGEMENTS:

@@ -1,5 +1,5 @@
 /* limits.c - routines to handle regex-based size and time limits */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/limits.c,v 1.30.2.10 2004/04/19 20:13:20 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.

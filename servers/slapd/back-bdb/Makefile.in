@@ -1,5 +1,5 @@
 # Makefile.in for back-bdb
-# $OpenLDAP$
+# $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/Makefile.in,v 1.21.2.5 2004/04/12 18:20:13 kurt Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 1998-2004 The OpenLDAP Foundation.

@@ -1,5 +1,5 @@
 /* filter.c - routines for parsing and dealing with filters */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/filter.c,v 1.115.2.7 2004/05/21 02:11:38 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -304,8 +304,6 @@ get_filter(
 				/* (!Undefined) is Undefined */
 			}
 		}
-
-		assert( f->f_mra != NULL );
 		break;
 
 	case LDAP_FILTER_EXT:

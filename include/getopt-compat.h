@@ -1,5 +1,5 @@
 /* getopt-compat.h -- getopt(3) compatibility header */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/include/getopt-compat.h,v 1.15.2.2 2004/01/01 18:16:27 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.

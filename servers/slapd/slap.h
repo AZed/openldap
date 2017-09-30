@@ -1,5 +1,5 @@
 /* slap.h - stand alone ldap server include file */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/slap.h,v 1.452.2.19 2004/06/04 03:39:43 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -2351,57 +2351,6 @@ enum {
 #else
 #define SLAP_CTRL_HIDE				0x80000000U
 #endif
-#ifdef LDAP_CONNECTIONLESS
-	int	sl_is_udp;		/* UDP listener is also data port */
-#endif
-	int	sl_is_mute;	/* Listening is temporarily disabled */
-	ber_socket_t sl_sd;
-	Sockaddr sl_sa;
-#define sl_addr	sl_sa.sa_in_addr
-};
-
-#ifdef SLAPD_MONITOR
-/*
- * Operation indices
- */
-enum {
-	SLAP_OP_BIND = 0,
-	SLAP_OP_UNBIND,
-	SLAP_OP_ADD,
-	SLAP_OP_DELETE,
-	SLAP_OP_MODRDN,
-	SLAP_OP_MODIFY,
-	SLAP_OP_COMPARE,
-	SLAP_OP_SEARCH,
-	SLAP_OP_ABANDON,
-	SLAP_OP_EXTENDED,
-	SLAP_OP_LAST
-};
-#endif /* SLAPD_MONITOR */
-
-/*
- * Better know these all around slapd
- */
-#define SLAP_LDAPDN_PRETTY 0x1
-#define SLAP_LDAPDN_MAXLEN 8192
-
-/*
- * Macros for LCUP
- */
-#ifdef LDAP_CLIENT_UPDATE
-#define SLAP_LCUP_STATE_UPDATE_TRUE	1
-#define SLAP_LCUP_STATE_UPDATE_FALSE	0
-#define SLAP_LCUP_ENTRY_DELETED_TRUE	1
-#define SLAP_LCUP_ENTRY_DELETED_FALSE	0
-#endif /* LDAP_CLIENT_UPDATE */
-
-#if defined(LDAP_CLIENT_UPDATE) || defined(LDAP_SYNC)
-#define SLAP_SEARCH_MAX_CTRLS   10
-#endif
-
-LDAP_END_DECL
-
-#include "proto-slap.h"
 
 #define SLAP_CTRL_FRONTEND			0x00800000U
 #define SLAP_CTRL_FRONTEND_SEARCH	0x00010000U	/* for NOOP */

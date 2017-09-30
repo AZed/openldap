@@ -1,10 +1,5 @@
-/* $OpenLDAP: pkg/ldap/clients/tools/ldapmodify.c,v 1.109.2.18 2003/12/17 23:30:20 kurt Exp $ */
-/*
- * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
- * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
- */
 /* ldapmodify.c - generic program to modify or add entries using LDAP */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/clients/tools/ldapmodify.c,v 1.139.2.8 2004/04/06 16:49:54 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -38,8 +33,6 @@
  *   Kurt D. Zeilenga
  *   Norbert Klasen
  */
-
-#include "portable.h"
 
 #include "portable.h"
 

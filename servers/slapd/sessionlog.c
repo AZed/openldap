@@ -1,5 +1,5 @@
 /* sessionlog.c -- Session History Management Routines */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/sessionlog.c,v 1.4.2.5 2004/03/18 01:01:02 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2003-2004 The OpenLDAP Foundation.

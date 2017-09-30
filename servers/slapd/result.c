@@ -1,5 +1,5 @@
 /* result.c - routines to send ldap results, errors, and referrals */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/result.c,v 1.186.2.18 2004/04/12 18:20:12 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -922,7 +922,6 @@ slap_send_search_entry( Operation *op, SlapReply *rs )
 				}
 			}
 		}
-	}
 
 		if ( op->ors_attrsonly ) {
 			if ( ! access_allowed( op, rs->sr_entry, desc, NULL,
@@ -1551,179 +1550,6 @@ rel:
 	}
 	return rc;
 }
-
-int
-slap_send_search_reference(
-    Backend	*be,
-    Connection	*conn,
-    Operation	*op,
-    Entry	*e,
-	BerVarray refs,
-	LDAPControl **ctrls,
-    BerVarray *v2refs
-)
-{
-	BerElementBuffer berbuf;
-	BerElement	*ber = (BerElement *)&berbuf;
-	int rc;
-	int bytes;
-
-	AttributeDescription *ad_ref = slap_schema.si_ad_ref;
-	AttributeDescription *ad_entry = slap_schema.si_ad_entry;
-
-	if (op->o_callback && op->o_callback->sc_sendreference) {
-		return op->o_callback->sc_sendreference( be, conn, op, e, refs, ctrls, v2refs );
-	}
-
-#ifdef NEW_LOGGING
-	LDAP_LOG( OPERATION, ENTRY, 
-		"send_search_reference: conn %lu  dn=\"%s\"\n", 
-		op->o_connid, e ? e->e_dn : "(null)", 0 );
-#else
-	Debug( LDAP_DEBUG_TRACE,
-		"=> send_search_reference: dn=\"%s\"\n",
-		e ? e->e_dn : "(null)", 0, 0 );
-#endif
-
-	if (  e && ! access_allowed( be, conn, op, e,
-		ad_entry, NULL, ACL_READ, NULL ) )
-	{
-#ifdef NEW_LOGGING
-		LDAP_LOG( ACL, INFO, 
-			"send_search_reference: conn %lu	"
-			"access to entry %s not allowed\n",
-			op->o_connid, e->e_dn, 0 );
-#else
-		Debug( LDAP_DEBUG_ACL,
-			"send_search_reference: access to entry not allowed\n",
-		    0, 0, 0 );
-#endif
-
-		return( 1 );
-	}
-
-	if ( e && ! access_allowed( be, conn, op, e,
-		ad_ref, NULL, ACL_READ, NULL ) )
-	{
-#ifdef NEW_LOGGING
-		LDAP_LOG( ACL, INFO, 
-			"send_search_reference: conn %lu access "
-			"to reference not allowed.\n", op->o_connid, 0, 0 );
-#else
-		Debug( LDAP_DEBUG_ACL,
-			"send_search_reference: access "
-			"to reference not allowed\n",
-		    0, 0, 0 );
-#endif
-
-		return( 1 );
-	}
-
-#ifdef LDAP_CONTROL_X_DOMAIN_SCOPE
-	if( op->o_domain_scope ) {
-#ifdef NEW_LOGGING
-		LDAP_LOG( OPERATION, ERR, 
-			"send_search_reference: conn %lu domainScope control in (%s).\n",
-			op->o_connid, e->e_dn, 0 );
-#else
-		Debug( LDAP_DEBUG_ANY,
-			"send_search_reference: domainScope control in (%s)\n", 
-			e->e_dn, 0, 0 );
-#endif
-
-		return( 0 );
-	}
-#endif
-
-	if( refs == NULL ) {
-#ifdef NEW_LOGGING
-		LDAP_LOG( OPERATION, ERR, 
-			"send_search_reference: conn %lu null ref in (%s).\n",
-			op->o_connid, e ? e->e_dn : "(null)", 0 );
-#else
-		Debug( LDAP_DEBUG_ANY,
-			"send_search_reference: null ref in (%s)\n", 
-			e ? e->e_dn : "(null)", 0, 0 );
-#endif
-
-		return( 1 );
-	}
-
-	if( op->o_protocol < LDAP_VERSION3 ) {
-		/* save the references for the result */
-		if( refs[0].bv_val != NULL ) {
-			if( value_add( v2refs, refs ) )
-				return LDAP_OTHER;
-		}
-		return 0;
-	}
-
-#ifdef LDAP_CONNECTIONLESS
-	if (conn->c_is_udp)
-		ber = op->o_res_ber;
-	else
-#endif
-	ber_init_w_nullc( ber, LBER_USE_DER );
-
-	rc = ber_printf( ber, "{it{W}" /*"}"*/ , op->o_msgid,
-		LDAP_RES_SEARCH_REFERENCE, refs );
-
-	if( rc != -1 && ctrls != NULL ) {
-		rc = send_ldap_controls( ber, ctrls );
-	}
-
-	if( rc != -1 ) {
-		rc = ber_printf( ber, /*"{"*/ "N}", op->o_msgid,
-			LDAP_RES_SEARCH_REFERENCE, refs );
-	}
-
-	if ( rc == -1 ) {
-#ifdef NEW_LOGGING
-		LDAP_LOG( OPERATION, ERR, 
-			"send_search_reference: conn %lu	"
-			"ber_printf failed.\n", op->o_connid, 0, 0 );
-#else
-		Debug( LDAP_DEBUG_ANY,
-			"send_search_reference: ber_printf failed\n", 0, 0, 0 );
-#endif
-
-#ifdef LDAP_CONNECTIONLESS
-		if (conn->c_is_udp == 0)
-#endif
-		ber_free_buf( ber );
-		send_ldap_result( conn, op, LDAP_OTHER,
-			NULL, "encode DN error", NULL, NULL );
-		return -1;
-	}
-
-#ifdef LDAP_CONNECTIONLESS
-	if (conn->c_is_udp == 0) {
-#endif
-	bytes = op->o_noop ? 0 : send_ldap_ber( conn, ber );
-	ber_free_buf( ber );
-
-	ldap_pvt_thread_mutex_lock( &num_sent_mutex );
-	num_bytes_sent += bytes;
-	num_refs_sent++;
-	num_pdu_sent++;
-	ldap_pvt_thread_mutex_unlock( &num_sent_mutex );
-#ifdef LDAP_CONNECTIONLESS
-	}
-#endif
-
-	Statslog( LDAP_DEBUG_STATS2, "conn=%lu op=%lu REF dn=\"%s\"\n",
-		conn->c_connid, op->o_opid, e ? e->e_dn : "(null)", 0, 0 );
-
-#ifdef NEW_LOGGING
-	LDAP_LOG( OPERATION, ENTRY, 
-		"send_search_reference: conn %lu exit.\n", op->o_connid, 0, 0 );
-#else
-	Debug( LDAP_DEBUG_TRACE, "<= send_search_reference\n", 0, 0, 0 );
-#endif
-
-	return 0;
-}
-
 
 int
 str2result(

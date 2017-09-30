@@ -1,5 +1,5 @@
 /* thr_nt.c - wrapper around NT threads */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap_r/thr_nt.c,v 1.24.2.4 2004/03/17 20:11:37 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.

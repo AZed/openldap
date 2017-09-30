@@ -1,5 +1,5 @@
 /* config.c - configuration file handling routines */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/config.c,v 1.228.2.17 2004/05/21 23:35:58 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -1206,14 +1206,8 @@ read_config( const char *fname, int depth )
 				}
 			}
 
-			global_disallows = disallows;
-
-		/* require these features */
-		} else if ( strcasecmp( cargv[0], "requires" ) == 0 ||
-			strcasecmp( cargv[0], "require" ) == 0 )
-		{
-			slap_mask_t	requires;
-
+		/* set super-secret magic database password */
+		} else if ( strcasecmp( cargv[0], "rootpw" ) == 0 ) {
 			if ( cargc < 2 ) {
 #ifdef NEW_LOGGING
 				LDAP_LOG( CONFIG, CRIT, 
@@ -1262,10 +1256,8 @@ read_config( const char *fname, int depth )
 				be->be_rootpw.bv_len = strlen( be->be_rootpw.bv_val );
 			}
 
-		/* required security factors */
-		} else if ( strcasecmp( cargv[0], "security" ) == 0 ) {
-			slap_ssf_set_t *set;
-
+		/* make this database read-only */
+		} else if ( strcasecmp( cargv[0], "readonly" ) == 0 ) {
 			if ( cargc < 2 ) {
 #ifdef NEW_LOGGING
 				LDAP_LOG( CONFIG, CRIT, 
@@ -1273,13 +1265,12 @@ read_config( const char *fname, int depth )
 					"line.\n", fname, lineno ,0 );
 #else
 				Debug( LDAP_DEBUG_ANY,
-	    "%s: line %d: missing factor(s) in \"security <factors>\" line\n",
+	    "%s: line %d: missing on|off in \"readonly <on|off>\" line\n",
 				    fname, lineno, 0 );
 #endif
 
 				return( 1 );
 			}
-
 			if ( be == NULL ) {
 				if ( strcasecmp( cargv[1], "on" ) == 0 ) {
 					global_restrictops |= SLAP_RESTRICT_OP_WRITES;
@@ -2127,11 +2118,6 @@ read_config( const char *fname, int depth )
 			if( value_add( &be->be_update_refs, vals ) ) {
 				return LDAP_OTHER;
 			}
-
-			vals[0].bv_val = cargv[1];
-			vals[0].bv_len = strlen( vals[0].bv_val );
-			if( value_add( &be->be_update_refs, vals ) )
-				return LDAP_OTHER;
 
 		/* replication log file to which changes are appended */
 		} else if ( strcasecmp( cargv[0], "replogfile" ) == 0 ) {

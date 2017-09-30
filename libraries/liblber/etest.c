@@ -1,5 +1,5 @@
 /* etest.c - lber encoding test program */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/libraries/liblber/etest.c,v 1.28.2.3 2004/01/01 18:16:29 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -27,8 +27,6 @@
  * This work was originally developed by the University of Michigan
  * (as part of U-MICH LDAP).
  */
-
-#include "portable.h"
 
 #include "portable.h"
 

@@ -1,4 +1,4 @@
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/contrib/slapi-plugins/addrdnvalues/addrdnvalues.c,v 1.5.2.1 2004/01/17 18:01:45 kurt Exp $ */
 /*
  * Copyright 2003-2004 PADL Software Pty Ltd.
  * All rights reserved.

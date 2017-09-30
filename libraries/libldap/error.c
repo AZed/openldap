@@ -1,4 +1,4 @@
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/error.c,v 1.50.2.8 2004/01/01 18:16:29 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -127,7 +127,6 @@ static const struct ldaperror *
 ldap_int_error( int err )
 {
 	int	i;
-	nl_catd catd = catopen( LDAP_NLS_SDK_CAT, NL_CAT_LOCALE );
 
 	/* XXYYZ: O(n) search instead of O(1) lookup */
 	for ( i=0; ldap_errlist[i].e_reason != NULL; i++ ) {

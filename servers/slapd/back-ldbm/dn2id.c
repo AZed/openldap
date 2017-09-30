@@ -1,5 +1,5 @@
 /* dn2id.c - routines to deal with the dn2id index */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/dn2id.c,v 1.66.2.3 2004/01/01 18:16:37 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -212,65 +212,6 @@ dn2id(
 
 	return( 0 );
 }
-
-int
-dn2idl(
-    Backend	*be,
-    struct berval	*dn,
-    int		prefix,
-    ID_BLOCK    **idlp
-)
-{
-	DBCache	*db;
-	Datum		key;
-	unsigned char	*tmp;
-
-#ifdef NEW_LOGGING
-	LDAP_LOG( BACK_LDBM, ENTRY, "dn2idl: \"%c%s\"\n", prefix, dn->bv_val, 0 );
-#else
-	Debug( LDAP_DEBUG_TRACE, "=> dn2idl( \"%c%s\" )\n", prefix, dn->bv_val, 0 );
-#endif
-
-	assert( idlp != NULL );
-	*idlp = NULL;
-
-	if ( prefix == DN_SUBTREE_PREFIX && be_issuffix(be, dn) ) {
-		*idlp = idl_allids( be );
-		return 0;
-	}
-
-	db = ldbm_cache_open( be, "dn2id", LDBM_SUFFIX, LDBM_WRCREAT );
-	if ( db == NULL ) {
-#ifdef NEW_LOGGING
-		LDAP_LOG( BACK_LDBM, ERR, 
-			   "dn2idl: could not open dn2id%s\n", LDBM_SUFFIX, 0, 0 );
-#else
-		Debug( LDAP_DEBUG_ANY, "<= dn2idl could not open dn2id%s\n",
-			LDBM_SUFFIX, 0, 0 );
-#endif
-
-		return -1;
-	}
-
-	ldbm_datum_init( key );
-
-	key.dsize = dn->bv_len + 2;
-	key.dptr = ch_malloc( key.dsize );
-	tmp = (unsigned char *)key.dptr;
-	tmp[0] = prefix;
-	tmp++;
-	AC_MEMCPY( tmp, dn->bv_val, dn->bv_len );
-	tmp[dn->bv_len] = '\0';
-
-	*idlp = idl_fetch( be, db, key );
-
-	ldbm_cache_close( be, db );
-
-	free( key.dptr );
-
-	return( 0 );
-}
-
 
 int
 dn2idl(

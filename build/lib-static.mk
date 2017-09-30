@@ -1,4 +1,4 @@
-# $OpenLDAP$
+# $OpenLDAP: pkg/ldap/build/lib-static.mk,v 1.8.2.2 2004/01/01 18:16:25 kurt Exp $
 ## Copyright 1998-2004 The OpenLDAP Foundation.
 ## All rights reserved.
 ##

@@ -1,4 +1,4 @@
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/main.c,v 1.157.2.11 2004/04/28 23:07:36 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -414,7 +414,6 @@ int main( int argc, char **argv )
 		fprintf( stderr, "%s\n", Versionstr );
 		if ( version > 1 ) goto stop;
 	}
-#endif
 
 	{
 		char *logName;

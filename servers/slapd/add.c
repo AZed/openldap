@@ -1,4 +1,4 @@
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/add.c,v 1.162.2.12 2004/05/21 02:11:38 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -147,49 +147,6 @@ do_add( Operation *op, SlapReply *rs )
 				"no values for attribute type" );
 			goto done;
 		}
-		mod  = (Modifications *) ch_malloc( sizeof(Modifications) );
-		
-		mod->sml_op = LDAP_MOD_ADD;
-		mod->sml_next = NULL;
-		mod->sml_desc = NULL;
-		mod->sml_type = tmp.sml_type;
-		mod->sml_bvalues = tmp.sml_bvalues;
-
-		*modtail = mod;
-		modtail = &mod->sml_next;
-	}
-
-	if ( ber_scanf( ber, /*{*/ "}") == LBER_ERROR ) {
-#ifdef NEW_LOGGING
-		LDAP_LOG( OPERATION, ERR, 
-			"do_add: conn %d ber_scanf failed\n", conn->c_connid, 0, 0 );
-#else
-		Debug( LDAP_DEBUG_ANY, "do_add: ber_scanf failed\n", 0, 0, 0 );
-#endif
-		send_ldap_disconnect( conn, op,
-			LDAP_PROTOCOL_ERROR, "decoding error" );
-		rc = -1;
-		goto done;
-	}
-
-	if( (rc = get_ctrls( conn, op, 1 )) != LDAP_SUCCESS ) {
-#ifdef NEW_LOGGING
-		LDAP_LOG( OPERATION, INFO, 
-			"do_add: conn %d get_ctrls failed\n", conn->c_connid, 0, 0 );
-#else
-		Debug( LDAP_DEBUG_ANY, "do_add: get_ctrls failed\n", 0, 0, 0 );
-#endif
-		goto done;
-	} 
-
-	if ( modlist == NULL ) {
-		send_ldap_result( conn, op, rc = LDAP_PROTOCOL_ERROR,
-			NULL, "no attributes provided", NULL, NULL );
-		goto done;
-	}
-
-	Statslog( LDAP_DEBUG_STATS, "conn=%lu op=%lu ADD dn=\"%s\"\n",
-	    op->o_connid, op->o_opid, e->e_dn, 0, 0 );
 
 		mod  = (Modifications *) ch_malloc( sizeof(Modifications) );
 		mod->sml_op = LDAP_MOD_ADD;

@@ -1,5 +1,5 @@
 /* os-ip.c -- platform-specific TCP & UDP related code */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/os-ip.c,v 1.90.2.6 2004/03/17 20:10:49 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -600,41 +600,6 @@ ldap_host_connected_to( Sockbuf *sb, const char *host )
 		{
 			return LDAP_STRDUP( hbuf );   
 		}
-		break;
-#endif
-	case AF_INET:
-		{
-			struct in_addr localhost;
-			localhost.s_addr = htonl( INADDR_ANY );
-
-			if( memcmp ( &((struct sockaddr_in *)sa)->sin_addr,
-				&localhost, sizeof(localhost) ) == 0 )
-			{
-				return LDAP_STRDUP( ldap_int_hostname );
-			}
-
-#ifdef INADDR_LOOPBACK
-			localhost.s_addr = htonl( INADDR_LOOPBACK );
-
-			if( memcmp ( &((struct sockaddr_in *)sa)->sin_addr,
-				&localhost, sizeof(localhost) ) == 0 )
-			{
-				return LDAP_STRDUP( ldap_int_hostname );
-			}
-#endif
-		}
-		break;
-
-	default:
-		return( NULL );
-		break;
-	}
-
-	hbuf[0] = 0;
-	if (ldap_pvt_get_hname( sa, len, hbuf, sizeof(hbuf), &herr ) == 0 &&
-		hbuf[0] ) 
-	{
-		host = LDAP_STRDUP( hbuf );   
 	}
 
 	return host ? LDAP_STRDUP( host ) : NULL;

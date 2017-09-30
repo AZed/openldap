@@ -1,4 +1,4 @@
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/proto-slap.h,v 1.429.2.22 2004/04/28 23:26:30 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -284,19 +284,6 @@ LDAP_SLAPD_F (int) glue_sub_init( void );
 /*
  * backover.c
  */
-#ifdef CSRIMALLOC
-#define ch_malloc malloc
-#define ch_realloc realloc
-#define ch_calloc calloc
-#define ch_strdup strdup
-#define ch_free free
-
-#else
-LDAP_SLAPD_F (void *) ch_malloc LDAP_P(( ber_len_t size ));
-LDAP_SLAPD_F (void *) ch_realloc LDAP_P(( void *block, ber_len_t size ));
-LDAP_SLAPD_F (void *) ch_calloc LDAP_P(( ber_len_t nelem, ber_len_t size ));
-LDAP_SLAPD_F (char *) ch_strdup LDAP_P(( const char *string ));
-LDAP_SLAPD_F (void) ch_free LDAP_P(( void * ));
 
 LDAP_SLAPD_F (int) overlay_register( slap_overinst *on );
 LDAP_SLAPD_F (int) overlay_config( BackendDB *be, const char *ov );

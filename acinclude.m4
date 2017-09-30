@@ -1,5 +1,5 @@
 dnl OpenLDAP Autoconf Macros
-dnl $OpenLDAP$
+dnl $OpenLDAP: pkg/ldap/acinclude.m4,v 1.14.2.2 2004/01/01 18:16:16 kurt Exp $
 dnl This work is part of OpenLDAP Software <http://www.openldap.org/>.
 dnl
 dnl Copyright 1998-2004 The OpenLDAP Foundation.

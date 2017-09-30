@@ -1,4 +1,4 @@
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/request.c,v 1.91.2.4 2004/04/12 15:16:23 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -34,10 +34,6 @@
  *  request.c - sending of ldap requests; handling of referrals
  *---
  * Note: A verbatim copy of version 2.0.1 of the OpenLDAP Public License 
- * can be found in the file "build/LICENSE-2.0.1" in this distribution
- * of OpenLDAP Software.
- */
-/* Note: A verbatim copy of version 2.0.1 of the OpenLDAP Public License 
  * can be found in the file "build/LICENSE-2.0.1" in this distribution
  * of OpenLDAP Software.
  */

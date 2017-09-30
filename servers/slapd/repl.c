@@ -1,5 +1,5 @@
 /* repl.c - log modifications for replication purposes */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/repl.c,v 1.49.2.6 2004/04/12 18:13:21 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -361,9 +361,6 @@ replog1(
 			if ( ml->sml_values ) {
 				print_vals( fp, &ml->sml_desc->ad_cname, ml->sml_values );
 			}
-			fprintf( fp, "%s: %s\n", did, type );
-			if ( ml->sml_bvalues )
-				print_vals( fp, &ml->sml_desc->ad_cname, ml->sml_bvalues );
 			fprintf( fp, "-\n" );
 		}
 		break;
