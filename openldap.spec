@@ -1,13 +1,13 @@
 %define migtools_version 45
-%define db_version 4.1.25
+%define db_version 4.2.52
 %define db_version_40 4.0.14
 %define ldbm_backend berkeley
 %define version_20 2.0.27
 %define nptl_arches %{ix86} ia64 ppc ppc64 s390 s390x sparcv9 x86_64
 Summary: The configuration files, libraries, and documentation for OpenLDAP.
 Name: openldap
-Version: 2.1.22
-Release: 8
+Version: 2.1.29
+Release: 1
 License: OpenLDAP
 Group: System Environment/Daemons
 Source0: ftp://ftp.OpenLDAP.org/pub/OpenLDAP/openldap-release/openldap-%{version}.tgz
@@ -29,7 +29,6 @@ Patch2: openldap-1.2.11-cldap.patch
 Patch3: openldap-2.1.17-syslog.patch
 Patch4: openldap-2.0.11-ldaprc.patch
 Patch5: openldap-2.1.17-susesec.patch
-Patch11: http://www.sleepycat.com/update/4.1.25/patch.4.1.25.1
 Patch12: db-4.0.14-disable-mutex.patch
 Patch13: db-4.0.14-libobjs.patch
 Patch21: MigrationTools-38-instdir.patch
@@ -37,6 +36,8 @@ Patch22: MigrationTools-36-mktemp.patch
 Patch23: MigrationTools-27-simple.patch
 Patch24: MigrationTools-26-suffix.patch
 Patch25: MigrationTools-44-schema.patch
+Patch30: http://www.sleepycat.com/update/4.2.52/patch.4.2.52.1
+Patch31: http://www.sleepycat.com/update/4.2.52/patch.4.2.52.2
 URL: http://www.openldap.org/
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 BuildPreReq: cyrus-sasl-devel >= 2.1, gdbm-devel, libtool >= 1.5, krb5-devel
@@ -103,14 +104,16 @@ programs needed for accessing and modifying OpenLDAP directories.
 %patch4 -p1 -b .ldaprc
 %patch5 -p1 -b .susesec
 
-pushd db-%{db_version}
-%patch11 -p0 -b .bdb
-popd
 pushd db-%{db_version_40}
 %patch12 -p1 -b .disable-mutex
 %patch13 -p1 -b .libobj
 cd dist
 ./s_config
+popd
+
+pushd db-%{db_version}
+%patch30 -b .db-1
+%patch31 -b .db-2
 popd
 
 pushd MigrationTools-%{migtools_version}
@@ -224,13 +227,14 @@ buildbdb() {
 		--with-uniquename=_openldap_slapd_rhl \
 		--prefix=${dbdir} \
 		--libdir=${dbdir}/%{_lib}${subdir:+/${subdir}}
+	# XXX db-4.2.x handles O_DIRECT (by disabling on linux) correctly.
 	# XXX hack out O_DIRECT support in db4 for now.
 	perl -pi -e 's/#define HAVE_O_DIRECT 1/#undef HAVE_O_DIRECT/' db_config.h
 	if test -n "$nptl_lo" ; then
 		./libtool --mode=compile %{__cc} -o $nptl_lo -c $nptl_s
 	fi
-	make %{_smp_mflags} libso_base=libslapd_db LIBSO_LIBS="$nptl_lo"
-	make install libso_base=libslapd_db LIBSO_LIBS="$nptl_lo"
+	make %{_smp_mflags} libdb_base=libslapd_db libso_base=libslapd_db LIBSO_LIBS="$nptl_lo"
+	make install libdb_base=libslapd_db libso_base=libslapd_db LIBSO_LIBS="$nptl_lo"
 	ln -sf libslapd_db.so ${dbdir}/%{_lib}/${subdir}/libdb.so
 	popd
 }
@@ -308,8 +312,7 @@ build \
 	--enable-rewrite \
 	--disable-shared \
 	--with-kerberos=k5only \
-	--with-cyrus-sasl \
-	--enable-kpasswd
+	--with-cyrus-sasl
 popd
 
 # Build clients without Kerberos password-checking support, which is only
@@ -436,7 +439,7 @@ if /usr/sbin/useradd -c "LDAP User" -u 55 \
 	if [ -d /var/lib/ldap ] ; then
 		for dbfile in /var/lib/ldap/* ; do
 			if [ -f $dbfile ] ; then
-				chown ldap.ldap $dbfile
+				chown ldap:ldap $dbfile
 			fi
 		done
 	fi
@@ -458,7 +461,7 @@ SomeOrganizationalUnit
 localhost.localdomain
 root@localhost.localdomain
 EOF
-chown root.ldap slapd.pem
+chown root:ldap slapd.pem
 chmod 640 slapd.pem
 popd
 fi
@@ -526,6 +529,51 @@ fi
 %attr(0644,root,root) %{_mandir}/man3/*
 
 %changelog
+* Wed Apr 14 2004 Nalin Dahyabhai <nalin@redhat.com> 2.1.29-1
+- rebuild
+
+* Tue Apr  6 2004 Nalin Dahyabhai <nalin@redhat.com> 2.1.29-0
+- update to 2.1.29 (stable 20040329)
+
+* Mon Mar 29 2004 Nalin Dahyabhai <nalin@redhat.com>
+- don't build servers with --with-kpasswd, that option hasn't been recognized
+  since 2.1.23
+
+* Tue Mar 02 2004 Elliot Lee <sopwith@redhat.com> 2.1.25-5.1
+- rebuilt
+
+* Mon Feb 23 2004 Tim Waugh <twaugh@redhat.com> 2.1.25-5
+- Use ':' instead of '.' as separator for chown.
+
+* Fri Feb 13 2004 Elliot Lee <sopwith@redhat.com>
+- rebuilt
+
+* Tue Feb 10 2004 Nalin Dahyabhai <nalin@redhat.com> 2.1.25-4
+- remove 'reload' from the init script -- it never worked as intended (#115310)
+
+* Wed Feb  4 2004 Nalin Dahyabhai <nalin@redhat.com> 2.1.25-3
+- commit that last fix correctly this time
+
+* Tue Feb  3 2004 Nalin Dahyabhai <nalin@redhat.com> 2.1.25-2
+- fix incorrect use of find when attempting to detect a common permissions
+  error in the init script (#114866)
+
+* Fri Jan 16 2004 Nalin Dahyabhai <nalin@redhat.com>
+- add bug fix patch for DB 4.2.52
+
+* Thu Jan  8 2004 Nalin Dahyabhai <nalin@redhat.com> 2.1.25-1
+- change logging facility used from daemon to local4 (#112730, reversing #11047)
+  BEHAVIOR CHANGE - SHOULD BE MENTIONED IN THE RELEASE NOTES.
+
+* Wed Jan  7 2004 Nalin Dahyabhai <nalin@redhat.com>
+- incorporate fix for logic quasi-bug in slapd's SASL auxprop code (Dave Jones)
+
+* Thu Dec 18 2003 Nalin Dahyabhai <nalin@redhat.com>
+- update to 2.1.25, now marked STABLE
+
+* Thu Dec 11 2003 Jeff Johnson <jbj@jbj.org> 2.1.22-9
+- update to db-4.2.52.
+
 * Thu Oct 23 2003 Nalin Dahyabhai <nalin@redhat.com> 2.1.22-8
 - add another section to the ABI note for the TLS libdb so that it's marked as
   not needing an executable stack (from Arjan Van de Ven)
@@ -541,6 +589,9 @@ fi
 - disable posix mutexes unconditionally for db 4.0, which shouldn't need
   them for the migration cases where it's used
 - update to MigrationTools 45
+
+* Thu Sep 25 2003 Jeff Johnson <jbj@jbj.org> 2.1.22-6.1
+- upgrade db-4.1.25 to db-4.2.42.
 
 * Fri Sep 12 2003 Nalin Dahyabhai <nalin@redhat.com> 2.1.22-6
 - drop rfc822-MailMember.schema, merged into upstream misc.schema at some point
