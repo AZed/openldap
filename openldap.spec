@@ -1,10 +1,14 @@
 %define migtools_ver 44
 %define db_version 4.0.14
+
+# For RHL 7.x, 8.0, RHEL 2.1, we use "gdbm" (.gdbm).
+# For RHL 9, RHEL 3, we use "berkeley" (.dbb).
 %define ldbm_backend berkeley
+
 Summary: The configuration files, libraries, and documentation for OpenLDAP.
 Name: openldap
 Version: 2.0.27
-Release: 11
+Release: 17
 License: OpenLDAP
 Group: System Environment/Daemons
 Source0: ftp://ftp.OpenLDAP.org/pub/OpenLDAP/openldap-release/openldap-%{version}.tgz
@@ -33,6 +37,9 @@ Patch24: MigrationTools-26-suffix.patch
 Patch25: MigrationTools-44-schema.patch
 Patch26: openldap-2.0.27-susesec.patch
 Patch27: openldap-2.0.27-messages-references.patch
+Patch28: openldap-2.0.27-openssl-0.9.7.patch
+Patch29: openldap-2.0.27-hostnamecheck.patch
+Patch30: openldap-2.0.27-64.patch
 URL: http://www.openldap.org/
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 BuildPreReq: cyrus-sasl-devel, gdbm-devel, krb5-devel, openssl-devel
@@ -110,6 +117,9 @@ pushd MigrationTools-%{migtools_ver}
 popd
 %patch26 -p0 -b .susesec
 %patch27 -p1 -b .messages-references
+%patch28 -p1 -b .openssl-0.9.7
+%patch29 -p1 -b .hostnamecheck
+%patch30 -p1 -b .64
 
 mkdir build-gdbm
 ln -s ../configure build-gdbm
@@ -391,6 +401,27 @@ fi
 %attr(0644,root,root) %{_mandir}/man3/*
 
 %changelog
+* Thu Sep  2 2004 Jonathan Blandford <jrb@redhat.com> 2.0.27-17
+- Change ldbm_backend to berkeley.  Patch from Warren Togami.
+
+* Fri Aug 27 2004 Nalin Dahyabhai <nalin@redhat.com> 2.0.27-15
+- incorporate fix for implicit declarations of some functions which return
+  pointers
+
+* Wed May 26 2004 Nalin Dahyabhai <nalin@redhat.com> 2.0.27-14
+- incorporate patch to perform SSL certificate name check if and only if
+  the certificate is being validated (more of #111492)
+
+* Tue May 18 2004 Nalin Dahyabhai <nalin@redhat.com> 2.0.27-13
+- incorporate fix for client crash when server certs include a subjectAltName
+  field (#111492)
+
+* Wed Mar 10 2004 Nalin Dahyabhai <nalin@redhat.com> 2.0.27-4.7
+- rebuild
+
+* Tue Feb 10 2004 Nalin Dahyabhai <nalin@redhat.com> 2.0.27-12
+- remove 'reload' from the init script -- it never worked as intended (#115310)
+
 * Fri Sep 19 2003 Nalin Dahyabhai <nalin@redhat.com> 2.0.27-11
 - include messages.lo and references.lo in libldap_r (#104691)
 

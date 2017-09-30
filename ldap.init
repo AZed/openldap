@@ -95,16 +95,6 @@ case "$1" in
 	stop
 	start
 	;;
-    reload)
-    	killproc ${slapd} -HUP
-	RETVAL=$?
-	if [ $RETVAL -eq 0 ]; then
-	    if grep -q "^replogfile" /etc/openldap/slapd.conf; then
-		killproc ${slurpd} -HUP
-		RETVAL=$?
-	    fi
-	fi
-	;;
     condrestart)
         if [ -f /var/lock/subsys/ldap ] ; then
             stop
