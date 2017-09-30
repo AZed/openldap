@@ -31,14 +31,13 @@
  #define	SRVTAB				"/etc/srvtab"
 --- openldap/servers/slapd/slapd.conf
 +++ openldap/servers/slapd/slapd.conf
-@@ -4,6 +4,12 @@
+@@ -4,6 +4,11 @@
  # This file should NOT be world readable.
  #
  include		%SYSCONFDIR%/schema/core.schema
 +include		%SYSCONFDIR%/schema/cosine.schema
 +include		%SYSCONFDIR%/schema/inetorgperson.schema
 +include		%SYSCONFDIR%/schema/nis.schema
-+include		%SYSCONFDIR%/schema/redhat/rfc822-MailMember.schema
 +include		%SYSCONFDIR%/schema/redhat/autofs.schema
 +include		%SYSCONFDIR%/schema/redhat/kerberosobject.schema
  
@@ -58,22 +57,23 @@
  
  # Load dynamic backend modules:
  # modulepath	%MODULEDIR%
-@@ -20,7 +29,14 @@
+@@ -20,7 +29,15 @@
  # moduleload	back_ldbm.la
  # moduleload	back_passwd.la
  # moduleload	back_shell.la
  
 +#
-+# The next two lines allow use of TLS for connections using a dummy test
++# The next three lines allow use of TLS for connections using a dummy test
 +# certificate, but you should generate a proper certificate by changing to
 +# /usr/share/ssl/certs, running "make slapd.pem", and fixing permissions on
 +# slapd.pem so that the ldap user or group can read it.
 +# TLSCertificateFile /usr/share/ssl/certs/slapd.pem
 +# TLSCertificateKeyFile /usr/share/ssl/certs/slapd.pem
++# TLSCACertificateFile /usr/share/ssl/certs/ca-bundle.crt
  #
  # Sample Access Control
  #	Allow read access of root DSE
-@@ -49,11 +65,17 @@
+@@ -49,11 +66,17 @@
  rootdn		"cn=Manager,dc=my-domain,dc=com"
  #rootdn		"cn=Manager,o=My Organization Name,c=US"
  # Cleartext passwords, especially for the rootdn, should

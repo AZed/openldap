@@ -1,15 +1,17 @@
-%define migtools_ver 39
+%define migtools_ver 44
+%define db_version 4.0.14
+%define ldbm_backend berkeley
 Summary: The configuration files, libraries, and documentation for OpenLDAP.
 Name: openldap
-Version: 2.0.21
-Release: 1
+Version: 2.0.27
+Release: 11
 License: OpenLDAP
 Group: System Environment/Daemons
 Source0: ftp://ftp.OpenLDAP.org/pub/OpenLDAP/openldap-release/openldap-%{version}.tgz
+Source1: http://www.sleepycat.com/update/%{db_version}/db-%{db_version}.tar.gz
 Source2: ldap.init
 Source3: ftp://ftp.padl.com/pub/MigrationTools-%{migtools_ver}.tar.gz
 Source4: migration-tools.txt
-Source5: rfc822-MailMember.schema
 Source6: autofs.schema
 Source7: kerberosobject.schema
 Source8: README.upgrading
@@ -19,7 +21,7 @@ Patch0: openldap-2.0.16-config.patch
 Patch1: openldap-2.0.12-redhat.patch
 Patch2: openldap-1.2.11-cldap.patch
 Patch3: openldap-2.0.3-syslog.patch
-Patch6: openldap-2.0.7-sendbuf.patch
+Patch6: openldap-2.0.23-sendbuf.patch
 Patch7: openldap-2.0.11-ldaprc.patch
 Patch8: openldap-2.0.11-debug.patch
 Patch9: openldap-2.0.11-libtool.patch
@@ -28,12 +30,13 @@ Patch21: MigrationTools-38-instdir.patch
 Patch22: MigrationTools-36-mktemp.patch
 Patch23: MigrationTools-27-simple.patch
 Patch24: MigrationTools-26-suffix.patch
-Patch25: MigrationTools-24-schema.patch
+Patch25: MigrationTools-44-schema.patch
+Patch26: openldap-2.0.27-susesec.patch
+Patch27: openldap-2.0.27-messages-references.patch
 URL: http://www.openldap.org/
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 BuildPreReq: cyrus-sasl-devel, gdbm-devel, krb5-devel, openssl-devel
-BuildPreReq: pam-devel
-BuildPreReq: perl, tcp_wrappers
+BuildPreReq: pam-devel, perl, pkgconfig, tcp_wrappers
 BuildPreReq: libtool >= 1.4
 Requires: cyrus-sasl, cyrus-sasl-md5, mktemp
 
@@ -61,7 +64,7 @@ customized LDAP clients.
 
 %package servers
 Summary: OpenLDAP servers and related files.
-Prereq: fileutils, make, openldap = %{version}-%{release}, openssl, /usr/sbin/useradd
+Prereq: fileutils, make, openldap = %{version}-%{release}, openssl, /usr/sbin/useradd, /sbin/chkconfig
 Group: System Environment/Daemons
 
 %description servers
@@ -88,7 +91,7 @@ over the Internet. The openldap-clients package contains the client
 programs needed for accessing and modifying OpenLDAP directories.
 
 %prep
-%setup -q -a 3
+%setup -q -a 1 -a 3
 %patch0 -p1 -b .config
 %patch1 -p1 -b .redhat
 %patch2 -p1 -b .cldap
@@ -103,67 +106,146 @@ pushd MigrationTools-%{migtools_ver}
 %patch22 -p1 -b .mktemp
 %patch23 -p1 -b .simple
 %patch24 -p1 -b .suffix
-%patch25 -p2 -b .schema
+%patch25 -p1 -b .schema
 popd
+%patch26 -p0 -b .susesec
+%patch27 -p1 -b .messages-references
+
+mkdir build-gdbm
+ln -s ../configure build-gdbm
+mkdir build-berkeley
+ln -s ../configure build-berkeley
+mkdir build-krb5
+ln -s ../configure build-krb5
+mkdir build-clients
+ln -s ../configure build-clients
+
+cp %{_datadir}/libtool/config.{sub,guess} build/
 
 %build
+dbdir=`pwd`/db-instroot
 %ifarch ia64
 RPM_OPT_FLAGS="$RPM_OPT_FLAGS -O0"
 %endif
-CPPFLAGS="-I/usr/kerberos/include"; export CPPFLAGS
-CFLAGS="$CPPFLAGS $RPM_OPT_FLAGS -D_REENTRANT -DHAVE_KERBEROS_V -fPIC"; export CFLAGS
-LDFLAGS="-L/usr/kerberos/lib"; export LDFLAGS
+if pkg-config openssl ; then
+	OPENSSL_CPPFLAGS=`pkg-config --cflags openssl`
+	CPPFLAGS="$OPENSSL_CPPFLAGS" ; export CPPFLAGS
+	OPENSSL_LDFLAGS=`pkg-config --libs-only-L openssl`
+	LDFLAGS="$OPENSSL_LDFLAGS" ; export LDFLAGS
+fi
+CFLAGS="$CPPFLAGS $RPM_OPT_FLAGS -D_REENTRANT -fPIC"; export CFLAGS
 TARGET_PLATFORM=%{_target_platform}
 %define _target_platform --target=${TARGET_PLATFORM}
-libtoolize --force
+build() {
+cat << _EOF | sed -e 's,--host=[^ ]*,,g' -e 's,--build=[^ ]*,,g' -e 's,--target=[^ ]*,,g' -e 's,%{_target_platform},,g' > run-build
 %configure \
 	--with-slapd --with-slurpd --without-ldapd \
-	--with-threads=posix --enable-shared --enable-static \
-	--enable-ldbm --with-ldbm-api=gdbm \
-	--enable-passwd \
-	--enable-shell \
+	--with-threads=posix --enable-static \
 	\
 	--enable-local --enable-cldap --disable-rlookups \
 	\
-	--with-kerberos=k5only \
 	--with-tls \
 	--with-cyrus-sasl \
 	\
 	--enable-wrappers \
 	\
+	--enable-passwd \
+	--enable-shell \
 	--enable-cleartext \
 	--enable-crypt \
-	--enable-kpasswd \
 	--enable-spasswd \
+	--enable-modules \
+	--disable-sql \
 	\
 	--libexecdir=%{_sbindir} \
-	--localstatedir=/%{_var}/run
-make depend
-make
+	--localstatedir=/%{_var}/run \
+	$@ \$@
+_EOF
+sh -x ./run-build %{_target_platform}
+make depend %{_smp_mflags}
+make %{_smp_mflags}
+}
+# Build Berkeley DB and install it into a temporary area, isolating OpenLDAP
+# from any future changes to the system-wide Berkeley DB library.
+pushd db-%{db_version}/dist
+./configure --with-pic --disable-shared --with-uniquename=_openldap_rhl --prefix=${dbdir} --libdir=${dbdir}/%{_lib}
+make %{_smp_mflags}
+make install
+popd
+# Build one for tools which use gdbm.
+CPPFLAGS="$OPENSSL_CPPFLAGS" ; export CPPFLAGS
+LDFLAGS="$OPENSSL_LDFLAGS" ; export LDFLAGS
+pushd build-gdbm
+build --enable-ldbm --with-ldbm-api=gdbm --disable-shared --without-kerberos
+popd
+# Build one for tools which use db.
+CPPFLAGS="$OPENSSL_CPPFLAGS" ; export CPPFLAGS
+LDFLAGS="$OPENSSL_LDFLAGS" ; export LDFLAGS
+LIBS="-lpthread"; export LIBS
+CPPFLAGS="$CPPFLAGS -I${dbdir}/include"
+LDFLAGS="$LDFLAGS -L${dbdir}/%{_lib}"
+pushd build-berkeley
+build --enable-ldbm --with-ldbm-api=berkeley --disable-shared --without-kerberos
+popd
+# Build the servers with Kerberos support and whichever backend we want.  Even
+# enable the bdb backend, which doesn't exist yet.
+CPPFLAGS="$OPENSSL_CPPFLAGS" ; export CPPFLAGS
+LDFLAGS="$OPENSSL_LDFLAGS" ; export LDFLAGS
+LIBS="-lpthread"; export LIBS
+pushd build-krb5
+CPPFLAGS="$CPPFLAGS -I${dbdir}/include -I%{_prefix}/kerberos/include -DHAVE_KERBEROS_V"
+LDFLAGS="$LDFLAGS -L${dbdir}/%{_lib} -L%{_prefix}/kerberos/%{_lib}"
+build --enable-ldbm --with-ldbm-api=%{ldbm_backend} --enable-bdb --disable-shared --with-kerberos=k5only --enable-kpasswd
+popd
+# Build clients without Kerberos password-checking support, which is only
+# useful in the server anyway.
+CPPFLAGS="$OPENSSL_CPPFLAGS" ; export CPPFLAGS
+LDFLAGS="$OPENSSL_LDFLAGS" ; export LDFLAGS
+unset LIBS
+pushd build-clients
+build --disable-ldbm --enable-shared --without-kerberos
+popd
 
 %install
 [ "$RPM_BUILD_ROOT" != "/" ] && rm -rf $RPM_BUILD_ROOT
 mkdir $RPM_BUILD_ROOT
-# libtool loves relinking shared libraries
-rm -f libraries/*/*.la
-make
+makeinstall() {
 %makeinstall \
 	datadir=$RPM_BUILD_ROOT%{_datadir}/openldap \
 	libexecdir=$RPM_BUILD_ROOT%{_sbindir} \
 	localstatedir=/%{_var}/run \
 	sysconfdir=$RPM_BUILD_ROOT%{_sysconfdir}/openldap $@
+}
 
-# hack the default config files
-perl -pi -e "s|$RPM_BUILD_ROOT||g" $RPM_BUILD_ROOT/etc/openldap/slapd.conf
+# Install compatibility binaries.
+pushd build-gdbm
+makeinstall -C servers/slapd/tools
+mv $RPM_BUILD_ROOT%{_sbindir}/slapadd $RPM_BUILD_ROOT%{_sbindir}/slapadd-gdbm
+mv $RPM_BUILD_ROOT%{_sbindir}/slapcat $RPM_BUILD_ROOT%{_sbindir}/slapcat-gdbm
+popd
+if [ %{ldbm_backend} != gdbm ] ; then
+	pushd build-berkeley
+	makeinstall -C servers/slapd/tools
+	mv $RPM_BUILD_ROOT%{_sbindir}/slapadd $RPM_BUILD_ROOT%{_sbindir}/slapadd-berkeley
+	mv $RPM_BUILD_ROOT%{_sbindir}/slapcat $RPM_BUILD_ROOT%{_sbindir}/slapcat-berkeley
+	popd
+fi
 
-# we don't need the default files
-rm -f $RPM_BUILD_ROOT/etc/openldap/*.default
+# Install clients and libraries.
+pushd build-clients
+makeinstall
+popd
 
-# install init script
-mkdir -p $RPM_BUILD_ROOT/etc/rc.d/init.d
-install -m 755 %{SOURCE2} $RPM_BUILD_ROOT/etc/rc.d/init.d/ldap
+# Install servers with Kerberos support.
+pushd build-krb5
+makeinstall -C servers
+popd
 
-# install the migration tools
+# Set the right set of slap... tools for the server.
+ln -f $RPM_BUILD_ROOT%{_sbindir}/slapadd-%{ldbm_backend} $RPM_BUILD_ROOT%{_sbindir}/slapadd
+ln -f $RPM_BUILD_ROOT%{_sbindir}/slapcat-%{ldbm_backend} $RPM_BUILD_ROOT%{_sbindir}/slapcat
+
+# Install the padl.com migration tools.
 mkdir -p $RPM_BUILD_ROOT%{_datadir}/openldap/migration
 install -m 755 MigrationTools-%{migtools_ver}/migrate_* \
 	$RPM_BUILD_ROOT%{_datadir}/openldap/migration
@@ -178,25 +260,38 @@ if make -C contrib/saucer ; then
 	./libtool install -m644 contrib/saucer/saucer.1 $RPM_BUILD_ROOT%{_mandir}/man1/
 fi
 
-# create the data directory
+# Create the data directory.
 mkdir -p $RPM_BUILD_ROOT/var/lib/ldap
 
-# get the buildroot out of the man pages
+# Hack the build root out of the default config files.
+perl -pi -e "s|$RPM_BUILD_ROOT||g" $RPM_BUILD_ROOT/%{_sysconfdir}/openldap/slapd.conf
+
+# Get the buildroot out of the man pages.
 perl -pi -e "s|$RPM_BUILD_ROOT||g" $RPM_BUILD_ROOT%{_mandir}/*/*.*
 
-# if ldapadd and ldapmodify are the same, make them a hard link
+# We don't need the default files -- RPM handles changes.
+rm -f $RPM_BUILD_ROOT/%{_sysconfdir}/openldap/*.default
+
+# Install an init script for the server.
+mkdir -p $RPM_BUILD_ROOT/etc/rc.d/init.d
+install -m 755 %{SOURCE2} $RPM_BUILD_ROOT/etc/rc.d/init.d/ldap
+
+# If ldapadd and ldapmodify are the same binary, make them a hard link
 if cmp $RPM_BUILD_ROOT%{_bindir}/ldapadd $RPM_BUILD_ROOT%{_bindir}/ldapmodify ; then
 	ln -f $RPM_BUILD_ROOT%{_bindir}/ldapadd $RPM_BUILD_ROOT%{_bindir}/ldapmodify
 fi
 
-# add some more schema for the sake of migration scripts
+# Add some more schema for the sake of migration scripts.
 install -d -m755 $RPM_BUILD_ROOT%{_sysconfdir}/openldap/schema/redhat
-install -m644 %{SOURCE5} %{SOURCE6} %{SOURCE7} $RPM_BUILD_ROOT%{_sysconfdir}/openldap/schema/redhat/
+install -m644 %{SOURCE6} %{SOURCE7} $RPM_BUILD_ROOT%{_sysconfdir}/openldap/schema/redhat/
 
-# tweak permissions
-chmod +rx $RPM_BUILD_ROOT/%{_libdir}/lib*.so*
-chmod +r $RPM_BUILD_ROOT/%{_libdir}/lib*.*a
-chmod -x $RPM_BUILD_ROOT/%{_libdir}/lib*.*a
+# Tweak permissions on the libraries to make sure they're correct.
+chmod 755 $RPM_BUILD_ROOT/%{_libdir}/lib*.so*
+chmod 644 $RPM_BUILD_ROOT/%{_libdir}/lib*.*a
+
+# Remove files we don't want packaged.
+rm -f $RPM_BUILD_ROOT/%{_datadir}/openldap/migration/*.{instdir,simple,schema,mktemp,suffix}
+rm -f $RPM_BUILD_ROOT/%{_libdir}/*.la
 
 %clean 
 rm -rf $RPM_BUILD_ROOT
@@ -266,7 +361,7 @@ fi
 %doc README.migration TOOLS.migration
 %doc $RPM_SOURCE_DIR/README.upgrading $RPM_SOURCE_DIR/README.sendbuf $RPM_SOURCE_DIR/guide.html
 %attr(0755,root,root) %config /etc/rc.d/init.d/ldap
-%attr(0600,ldap,ldap) %config(noreplace) /etc/openldap/slapd.conf
+%attr(0640,root,ldap) %config(noreplace) /etc/openldap/slapd.conf
 %attr(0755,root,root) %dir /etc/openldap/schema
 %attr(0644,root,root) %config(noreplace) /etc/openldap/schema/*.schema*
 %attr(0755,root,root) %dir /etc/openldap/schema/redhat
@@ -296,8 +391,97 @@ fi
 %attr(0644,root,root) %{_mandir}/man3/*
 
 %changelog
-* Wed Jan 16 2002 Nalin Dahyabhai <nalin@redhat.com> 2.0.21-1
-- build for RHL 7.2 errata
+* Fri Sep 19 2003 Nalin Dahyabhai <nalin@redhat.com> 2.0.27-11
+- include messages.lo and references.lo in libldap_r (#104691)
+
+* Fri Sep 12 2003 Nalin Dahyabhai <nalin@redhat.com> 2.0.27-10
+- remove rfc822-MailMember.schema, contents merged into upstream misc.schema
+
+* Tue Jun 17 2003 Nalin Dahyabhai <nalin@redhat.com> 2.0.27-9
+- don't use the system libtool
+
+* Mon Feb 10 2003 Nalin Dahyabhai <nalin@redhat.com> 2.0.27-8
+- back down to db 4.0.x, which 2.0.x can compile with in ldbm-over-db setups
+- tweak SuSE patch to fix a few copy-paste errors and a NULL dereference
+
+* Wed Jan 22 2003 Tim Powers <timp@redhat.com>
+- rebuilt
+
+* Tue Jan  7 2003 Nalin Dahyabhai <nalin@redhat.com> 2.0.27-6
+- rebuild
+
+* Mon Dec 16 2002 Nalin Dahyabhai <nalin@redhat.com> 2.0.27-5
+- rebuild
+
+* Fri Dec 13 2002 Nalin Dahyabhai <nalin@redhat.com> 2.0.27-4
+- check for setgid as well
+
+* Thu Dec 12 2002 Nalin Dahyabhai <nalin@redhat.com> 2.0.27-3
+- rebuild
+
+* Thu Dec 12 2002 Nalin Dahyabhai <nalin@redhat.com>
+- incorporate fixes from SuSE's security audit, except for fixes to ITS 1963,
+  1936, 2007, 2009, which were included in 2.0.26.
+- add two more patches for db 4.1.24 from sleepycat's updates page
+- use openssl pkgconfig data, if any is available
+
+* Mon Nov 11 2002 Nalin Dahyabhai <nalin@redhat.com> 2.0.27-2
+- add patches for db 4.1.24 from sleepycat's updates page
+
+* Mon Nov  4 2002 Nalin Dahyabhai <nalin@redhat.com>
+- add a sample TLSCACertificateFile directive to the default slapd.conf
+
+* Tue Sep 24 2002 Nalin Dahyabhai <nalin@redhat.com> 2.0.27-1
+- update to 2.0.27
+
+* Fri Sep 20 2002 Nalin Dahyabhai <nalin@redhat.com> 2.0.26-1
+- update to 2.0.26, db 4.1.24.NC
+
+* Fri Sep 13 2002 Nalin Dahyabhai <nalin@redhat.com> 2.0.25-2
+- change LD_FLAGS to refer to %{_prefix}/kerberos/%{_lib} instead of
+  /usr/kerberos/lib, which might not be right on some arches
+
+* Mon Aug 26 2002 Nalin Dahyabhai <nalin@redhat.com> 2.0.25-1
+- update to 2.0.25 "stable", ldbm-over-gdbm (putting off migration of LDBM
+  slapd databases until we move to 2.1.x)
+- use %%{_smp_mflags} when running make
+- update to MigrationTools 44
+- enable dynamic module support in slapd
+
+* Thu May 16 2002 Nalin Dahyabhai <nalin@redhat.com> 2.0.23-5
+- rebuild in new environment
+
+* Wed Feb 20 2002 Nalin Dahyabhai <nalin@redhat.com> 2.0.23-3
+- use the gdbm backend again
+
+* Mon Feb 18 2002 Nalin Dahyabhai <nalin@redhat.com> 2.0.23-2
+- make slapd.conf read/write by root, read by ldap
+
+* Sun Feb 17 2002 Nalin Dahyabhai <nalin@redhat.com>
+- fix corner case in sendbuf fix
+- 2.0.23 now marked "stable"
+
+* Tue Feb 12 2002 Nalin Dahyabhai <nalin@redhat.com> 2.0.23-1
+- update to 2.0.23
+
+* Fri Feb  8 2002 Nalin Dahyabhai <nalin@redhat.com> 2.0.22-2
+- switch to an internalized Berkeley DB as the ldbm back-end  (NOTE: this breaks
+  access to existing on-disk directory data)
+- add slapcat/slapadd with gdbm for migration purposes
+- remove Kerberos dependency in client libs (the direct Kerberos dependency
+  is used by the server for checking {kerberos} passwords)
+
+* Fri Feb  1 2002 Nalin Dahyabhai <nalin@redhat.com> 2.0.22-1
+- update to 2.0.22
+
+* Sat Jan 26 2002 Florian La Roche <Florian.LaRoche@redhat.de> 2.0.21-5
+- prereq chkconfig for server subpackage
+
+* Fri Jan 25 2002 Nalin Dahyabhai <nalin@redhat.com> 2.0.21-4
+- update migration tools to version 40
+
+* Wed Jan 23 2002 Nalin Dahyabhai <nalin@redhat.com> 2.0.21-3
+- free ride through the build system
 
 * Wed Jan 16 2002 Nalin Dahyabhai <nalin@redhat.com> 2.0.21-2
 - update to 2.0.21, now earmarked as STABLE
