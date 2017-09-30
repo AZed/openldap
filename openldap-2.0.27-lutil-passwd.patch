@@ -1,0 +1,18 @@
+This keeps slapd from checking a password which begins with "{" as if it were a
+plaintext password, for example, "{SCHEME}foo@REALM".  Note that this would
+only even happen if the SCHEME wasn't supported by the server, either because
+it wasn't enabled, or because it once had been but had had its code removed.
+
+--- openldap/libraries/liblutil/passwd.c	2002-01-04 15:38:25.000000000 -0500
++++ openldap/libraries/liblutil/passwd.c	2004-04-07 08:25:48.000000000 -0400
+@@ -270,7 +270,9 @@
+ 
+ #ifdef SLAPD_CLEARTEXT
+ 	if( is_allowed_scheme("{CLEARTEXT}", schemes ) ) {
+-		return passwd->bv_len == cred->bv_len
++		return (( passwd->bv_len == cred->bv_len ) &&
++				( passwd->bv_val != NULL ) &&
++				( passwd->bv_val[0] != '{' /*'}'*/ ))
+ 			? memcmp( passwd->bv_val, cred->bv_val, passwd->bv_len )
+ 			: 1;
+ 	}

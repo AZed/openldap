@@ -5,10 +5,14 @@
 # For RHL 9, RHEL 3, we use "berkeley" (.dbb).
 %define ldbm_backend berkeley
 
+%define nss_ldap_prefix %{_libdir}/nss_ldap-openldap
+%define nss_ldap_includedir %{nss_ldap_prefix}/include
+%define nss_ldap_libdir %{nss_ldap_prefix}/%{_lib}
+
 Summary: The configuration files, libraries, and documentation for OpenLDAP.
 Name: openldap
 Version: 2.0.27
-Release: 17
+Release: 20
 License: OpenLDAP
 Group: System Environment/Daemons
 Source0: ftp://ftp.OpenLDAP.org/pub/OpenLDAP/openldap-release/openldap-%{version}.tgz
@@ -40,10 +44,14 @@ Patch27: openldap-2.0.27-messages-references.patch
 Patch28: openldap-2.0.27-openssl-0.9.7.patch
 Patch29: openldap-2.0.27-hostnamecheck.patch
 Patch30: openldap-2.0.27-64.patch
+Patch31: openldap-2.0.27-hop.patch
+Patch32: openldap-2.0.27-start_tls-async.patch
+Patch33: openldap-2.0.27-lutil-passwd.patch
+Patch34: openldap-2.2.13-tls-fix-connection-test.patch
 URL: http://www.openldap.org/
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 BuildPreReq: cyrus-sasl-devel, gdbm-devel, krb5-devel, openssl-devel
-BuildPreReq: pam-devel, perl, pkgconfig, tcp_wrappers
+BuildPreReq: pam-devel, perl, pkgconfig, tcp_wrappers, readline-devel
 BuildPreReq: libtool >= 1.4
 Requires: cyrus-sasl, cyrus-sasl-md5, mktemp
 
@@ -98,7 +106,17 @@ over the Internet. The openldap-clients package contains the client
 programs needed for accessing and modifying OpenLDAP directories.
 
 %prep
-%setup -q -a 1 -a 3
+%setup -q -a 1 -a 3 -c
+
+pushd MigrationTools-%{migtools_ver}
+%patch21 -p1 -b .instdir
+%patch22 -p1 -b .mktemp
+%patch23 -p1 -b .simple
+%patch24 -p1 -b .suffix
+%patch25 -p1 -b .schema
+popd
+
+pushd %{name}-%{version}
 %patch0 -p1 -b .config
 %patch1 -p1 -b .redhat
 %patch2 -p1 -b .cldap
@@ -108,19 +126,20 @@ programs needed for accessing and modifying OpenLDAP directories.
 %patch8 -p1 -b .debug
 %patch9 -p1 -b .libtool
 %patch10 -p1 -b .linkage
-pushd MigrationTools-%{migtools_ver}
-%patch21 -p1 -b .instdir
-%patch22 -p1 -b .mktemp
-%patch23 -p1 -b .simple
-%patch24 -p1 -b .suffix
-%patch25 -p1 -b .schema
-popd
 %patch26 -p0 -b .susesec
 %patch27 -p1 -b .messages-references
 %patch28 -p1 -b .openssl-0.9.7
 %patch29 -p1 -b .hostnamecheck
 %patch30 -p1 -b .64
+%patch31 -p1 -b .hop
+%patch33 -p1 -b .lutil-passwd
+%patch34 -p1 -b .CAN-2005-2069
+cp %{_datadir}/libtool/config.{sub,guess} build/
+popd
 
+cp -a %{name}-%{version} %{name}-%{version}-build-nss_ldap
+
+pushd %{name}-%{version}
 mkdir build-gdbm
 ln -s ../configure build-gdbm
 mkdir build-berkeley
@@ -129,8 +148,13 @@ mkdir build-krb5
 ln -s ../configure build-krb5
 mkdir build-clients
 ln -s ../configure build-clients
+popd
 
-cp %{_datadir}/libtool/config.{sub,guess} build/
+pushd %{name}-%{version}-build-nss_ldap
+%patch32 -p0 -b .start_tls
+mkdir build-clients
+ln -s ../configure build-clients
+popd
 
 %build
 dbdir=`pwd`/db-instroot
@@ -185,7 +209,7 @@ popd
 # Build one for tools which use gdbm.
 CPPFLAGS="$OPENSSL_CPPFLAGS" ; export CPPFLAGS
 LDFLAGS="$OPENSSL_LDFLAGS" ; export LDFLAGS
-pushd build-gdbm
+pushd %{name}-%{version}/build-gdbm
 build --enable-ldbm --with-ldbm-api=gdbm --disable-shared --without-kerberos
 popd
 # Build one for tools which use db.
@@ -194,7 +218,7 @@ LDFLAGS="$OPENSSL_LDFLAGS" ; export LDFLAGS
 LIBS="-lpthread"; export LIBS
 CPPFLAGS="$CPPFLAGS -I${dbdir}/include"
 LDFLAGS="$LDFLAGS -L${dbdir}/%{_lib}"
-pushd build-berkeley
+pushd %{name}-%{version}/build-berkeley
 build --enable-ldbm --with-ldbm-api=berkeley --disable-shared --without-kerberos
 popd
 # Build the servers with Kerberos support and whichever backend we want.  Even
@@ -202,7 +226,7 @@ popd
 CPPFLAGS="$OPENSSL_CPPFLAGS" ; export CPPFLAGS
 LDFLAGS="$OPENSSL_LDFLAGS" ; export LDFLAGS
 LIBS="-lpthread"; export LIBS
-pushd build-krb5
+pushd %{name}-%{version}/build-krb5
 CPPFLAGS="$CPPFLAGS -I${dbdir}/include -I%{_prefix}/kerberos/include -DHAVE_KERBEROS_V"
 LDFLAGS="$LDFLAGS -L${dbdir}/%{_lib} -L%{_prefix}/kerberos/%{_lib}"
 build --enable-ldbm --with-ldbm-api=%{ldbm_backend} --enable-bdb --disable-shared --with-kerberos=k5only --enable-kpasswd
@@ -212,8 +236,11 @@ popd
 CPPFLAGS="$OPENSSL_CPPFLAGS" ; export CPPFLAGS
 LDFLAGS="$OPENSSL_LDFLAGS" ; export LDFLAGS
 unset LIBS
-pushd build-clients
+pushd %{name}-%{version}/build-clients
 build --disable-ldbm --enable-shared --without-kerberos
+popd
+pushd %{name}-%{version}-build-nss_ldap/build-clients
+build --disable-ldbm --enable-shared --without-kerberos --includedir=%{nss_ldap_includedir} --libdir=%{nss_ldap_libdir}
 popd
 
 %install
@@ -228,13 +255,13 @@ makeinstall() {
 }
 
 # Install compatibility binaries.
-pushd build-gdbm
+pushd %{name}-%{version}/build-gdbm
 makeinstall -C servers/slapd/tools
 mv $RPM_BUILD_ROOT%{_sbindir}/slapadd $RPM_BUILD_ROOT%{_sbindir}/slapadd-gdbm
 mv $RPM_BUILD_ROOT%{_sbindir}/slapcat $RPM_BUILD_ROOT%{_sbindir}/slapcat-gdbm
 popd
 if [ %{ldbm_backend} != gdbm ] ; then
-	pushd build-berkeley
+	pushd %{name}-%{version}/build-berkeley
 	makeinstall -C servers/slapd/tools
 	mv $RPM_BUILD_ROOT%{_sbindir}/slapadd $RPM_BUILD_ROOT%{_sbindir}/slapadd-berkeley
 	mv $RPM_BUILD_ROOT%{_sbindir}/slapcat $RPM_BUILD_ROOT%{_sbindir}/slapcat-berkeley
@@ -242,12 +269,16 @@ if [ %{ldbm_backend} != gdbm ] ; then
 fi
 
 # Install clients and libraries.
-pushd build-clients
+pushd %{name}-%{version}/build-clients
+makeinstall
+popd
+
+pushd %{name}-%{version}-build-nss_ldap/build-clients
 makeinstall
 popd
 
 # Install servers with Kerberos support.
-pushd build-krb5
+pushd %{name}-%{version}/build-krb5
 makeinstall -C servers
 popd
 
@@ -265,10 +296,12 @@ cp MigrationTools-%{migtools_ver}/README README.migration
 cp %{SOURCE4} TOOLS.migration
 
 # try to build saucer, but don't fret if we can't
+pushd %{name}-%{version}/build-clients
 if make -C contrib/saucer ; then
-	./libtool install -m755 contrib/saucer/saucer $RPM_BUILD_ROOT%{_bindir}/
-	./libtool install -m644 contrib/saucer/saucer.1 $RPM_BUILD_ROOT%{_mandir}/man1/
+	./libtool install -m755 contrib/saucer/saucer $RPM_BUILD_ROOT/%{_bindir}/
+	./libtool install -m644 ../contrib/saucer/saucer.1 $RPM_BUILD_ROOT/%{_mandir}/man1/
 fi
+popd
 
 # Create the data directory.
 mkdir -p $RPM_BUILD_ROOT/var/lib/ldap
@@ -281,6 +314,7 @@ perl -pi -e "s|$RPM_BUILD_ROOT||g" $RPM_BUILD_ROOT%{_mandir}/*/*.*
 
 # We don't need the default files -- RPM handles changes.
 rm -f $RPM_BUILD_ROOT/%{_sysconfdir}/openldap/*.default
+#rm -f $RPM_BUILD_ROOT/%{_sysconfdir}/openldap/schema/*.default
 
 # Install an init script for the server.
 mkdir -p $RPM_BUILD_ROOT/etc/rc.d/init.d
@@ -301,6 +335,8 @@ chmod 644 $RPM_BUILD_ROOT/%{_libdir}/lib*.*a
 
 # Remove files we don't want packaged.
 rm -f $RPM_BUILD_ROOT/%{_datadir}/openldap/migration/*.{instdir,simple,schema,mktemp,suffix}
+rm -f $RPM_BUILD_ROOT/%{_datadir}/openldap/*-
+rm -f $RPM_BUILD_ROOT/%{_bindir}/*-
 rm -f $RPM_BUILD_ROOT/%{_libdir}/*.la
 
 %clean 
@@ -358,7 +394,7 @@ fi
 
 %files
 %defattr(-,root,root)
-%doc ANNOUNCEMENT CHANGES COPYRIGHT LICENSE README doc/rfc
+%doc %{name}-%{version}/{ANNOUNCEMENT,CHANGES,COPYRIGHT,LICENSE,README} %{name}-%{version}/doc/rfc
 %attr(0755,root,root) %dir /etc/openldap
 %attr(0644,root,root) %config(noreplace) /etc/openldap/ldap*.conf
 %attr(0755,root,root) %{_libdir}/lib*.so.*
@@ -394,13 +430,26 @@ fi
 
 %files devel
 %defattr(-,root,root)
-%doc doc/drafts
+%doc %{name}-%{version}/doc/drafts
 %attr(0755,root,root) %{_libdir}/lib*.so
 %attr(0644,root,root) %{_libdir}/lib*.a
 %attr(0644,root,root) %{_includedir}/*
 %attr(0644,root,root) %{_mandir}/man3/*
 
 %changelog
+* Fri Aug 19 2005 Jay Fenlason <fenlason@redhat.com> 2.0.27-20
+- Fix packaging error that left usr/bin/ud- in the -clients rpm.
+- Add readline-devel to BuildPreReq so that saucer always gets built.
+
+* Tue Aug 9 2005 Jay Fenlason <fenlason@redhat.com> 2.0.27-19
+- Backport tls-fix-connection-test patch (CAN-2005-2069) for
+  bz#161990 openldap password disclosure issue
+
+* Wed May  4 2005 Nalin Dahyabhai <nalin@redhat.com> 2.0.27-18
+- backport fix to hashed-passwords-can-be-treated-as-plaintext (CAN-2004-0823)
+  (#156386)
+- ITS #3578, stop chasing v3 referrals at some point
+
 * Thu Sep  2 2004 Jonathan Blandford <jrb@redhat.com> 2.0.27-17
 - Change ldbm_backend to berkeley.  Patch from Warren Togami.
 
