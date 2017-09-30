@@ -1,0 +1,31 @@
+--- openldap-2.0.11/clients/mail500/main.c	Tue Jul  3 16:33:49 2001
++++ openldap-2.0.11/clients/mail500/main.c	Tue Jul  3 16:37:59 2001
+@@ -237,18 +237,23 @@
+ 	setuid( geteuid() );
+ 
+ 	if ( debug ) {
+-		char	buf[1024];
++		char	*buf;
++		size_t	buf_len = 1;
+ 		int	i;
+ 
+-		memset( buf, '\0', sizeof(buf) );
+ 		syslog( LOG_ALERT, "running as %d", geteuid() );
+ 		strncpy( buf, argv[0], sizeof(buf) - 1 );
+ 		for ( i = 1; i < argc; i++ ) {
+-			strncat( buf, " ", sizeof(buf) - 1 );
+-			strncat( buf, argv[i], sizeof(buf) - strlen(buf) - 1 );
++			buf_len += (strlen(argv[i]) + 1);
+ 		}
++		buf = (char *) malloc ( buf_len );
++		memset( buf, '\0', buf_len );
++		for ( i = 1; i < argc; i++ ) {
++			strcat( buf, " " );
++			strcat( buf, argv[i] );
++		}
+-
+ 		syslog( LOG_ALERT, "args: (%s)", buf );
++		free ( buf );
+ 	}
+ 
+ 	tolist = NULL;

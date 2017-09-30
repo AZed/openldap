@@ -1,0 +1,15 @@
+The OpenLDAP on-disk format has changed between the 1.2.x and 2.0.x releases.
+
+You will very likely need to dump out your directory to a text file using
+"ldbmcat -n" before upgrading and re-import the entries into the new format
+using "slapadd" after the upgrade.
+
+Because schema checking is now available and enabled by default, some entries
+may not import cleanly.  In particular, if you have used previous versions of
+the migration scripts, some of the entries (particularly oncRpc objects) may
+be missing "description" attributes which are now required by the schema.
+
+If this is the case, you will need to either edit the LDIF files prior to
+importing them, or add "schemacheck off" to your new slapd.conf file to disable
+schema checking while the entries are being imported.  (Disabling schema
+checking on your server is strongly discouraged, however.)

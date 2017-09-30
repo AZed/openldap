@@ -1,0 +1,31 @@
+--- openldap-2.0.11/build/lib-shared.mk	Fri Jul  6 02:26:52 2001
++++ openldap-2.0.11/build/lib-shared.mk	Fri Jul  6 02:26:58 2001
+@@ -31,7 +31,7 @@
+ DYN_EXT=@DYN_EXT@
+ 
+ $(LIBRARY):  version.lo
+-	$(LTLIBLINK) -o $@ $(OBJS) version.lo $(EXTRA_LIBS)
++	$(LTLIBLINK) -o $@ $(OBJS) version.lo $(EXTRA_LIBS) $(EXTRA_DEPS)
+ 	$(RM) ../$@
+ 	d=`$(PWD)`; d=`$(BASENAME) $$d`; cd ..; $(LN_S) $$d/$@ $@; \
+ 	t=`$(BASENAME) $@ .la`.a; $(RM) $$t; $(LN_S) $$d/.libs/$$t $$t
+--- openldap-2.0.11/libraries/libldap/Makefile.in	Fri Jul  6 02:26:31 2001
++++ openldap-2.0.11/libraries/libldap/Makefile.in	Fri Jul  6 02:26:20 2001
+@@ -50,6 +50,7 @@
+ # Extras for building the library
+ EXTRA_DEFS = $(@PLAT@_@LIB_LINKAGE@_LIB_DEFS)
+ EXTRA_LIBS = $(@PLAT@_@LIB_LINKAGE@_LIB_LIBS) $(@PLAT@_XXLIBS)
++EXTRA_DEPS = ../liblber/liblber.la
+ 
+ # Only the test programs will pick up these defs.
+ CPPFLAGS = $(@PLAT@_@LIB_LINKAGE@_TEST_DEFS)
+--- openldap-2.0.11/libraries/libldap_r/Makefile.in	Fri Jul  6 02:26:31 2001
++++ openldap-2.0.11/libraries/libldap_r/Makefile.in	Fri Jul  6 02:26:20 2001
+@@ -50,6 +50,7 @@
+ # Extras for building the library
+ EXTRA_DEFS = $(@PLAT@_@LIB_LINKAGE@_LIB_DEFS)
+ EXTRA_LIBS = $(@PLAT@_@LIB_LINKAGE@_LIB_LIBS) $(@PLAT@_XXLIBS)
++EXTRA_DEPS = ../liblber/liblber.la
+ 
+ # Only the test programs will pick up these defs.
+ CPPFLAGS = $(@PLAT@_@LIB_LINKAGE@_TEST_DEFS)

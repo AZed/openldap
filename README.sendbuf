@@ -1,0 +1,34 @@
+The slapd standalone server has been compiled to run single-threaded to
+improve stability.  Unfortunately, this means that if the server becomes
+busy while fulfilling one request, other connections and queries will
+effectively be ignored until the current request has been satisfied.
+
+This happens when queries which produce large result sets are performed
+against the directory, and the client abandons the request before all of
+the results have reached it.
+
+Because the client is no longer reading the results it is receiving, the
+OS kernel's receive buffer on the client side of the connection fills up,
+and then the OS kernel's send buffer on the server side fills up, and
+then the server goes into a busy loop, attempting to send entries over a
+connection to a client which is no longer reading them.  The server's CPU
+load spikes until the timelimit (specified in /etc/openldap/slapd.conf)
+is reached.
+
+We've added an experimental patch to slapd which attempts to provide a
+workaround for this.  It does this by requesting that the OS kernel
+provide a larger send buffer for the server's connections to its clients.
+The client will then send a query, the server will succeed in sending
+the data to the kernel (leaving the kernel to handle making sure the data
+is actually sent to the client) and then proceed with handling other
+requests and client connections.
+
+In order for this to work, the system administrator will need to tune the
+kernel's net.core.wmem_max parameter to a sufficiently-high value.  This
+value can be specified in the /etc/sysctl.conf file like so:
+
+net.core.wmem_max = 2048000
+
+Modifying this file and then running "/sbin/sysctl -p" will apply the
+settings to your running system and ensure that they will also be applied
+if and when the system is rebooted.
