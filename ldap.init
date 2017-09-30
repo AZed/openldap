@@ -37,10 +37,10 @@ function start() {
 	prog=`basename ${slapd}`
         echo -n $"Starting $prog: "
 	if grep -q ^TLS /etc/openldap/slapd.conf ; then
-	    daemon ${slapd} -u ldap -h '"ldap:/// ldaps:///"' $OPTIONS $SLAPD_OPTIONS
+	    daemon ${slapd} -u ldap -h '"ldap:/// ldaps:///"' -l daemon $OPTIONS $SLAPD_OPTIONS
 	    RETVAL=$?
 	else
-	    daemon ${slapd} -u ldap $OPTIONS $SLAPD_OPTIONS
+	    daemon ${slapd} -u ldap -h "ldap:///" -l daemon $OPTIONS $SLAPD_OPTIONS
 	    RETVAL=$?
 	fi
 	echo
@@ -94,6 +94,16 @@ case "$1" in
     restart)
 	stop
 	start
+	;;
+    reload)
+    	killproc ${slapd} -HUP
+	RETVAL=$?
+	if [ $RETVAL -eq 0 ]; then
+	    if grep -q "^replogfile" /etc/openldap/slapd.conf; then
+		killproc ${slurpd} -HUP
+		RETVAL=$?
+	    fi
+	fi
 	;;
     condrestart)
         if [ -f /var/lock/subsys/ldap ] ; then

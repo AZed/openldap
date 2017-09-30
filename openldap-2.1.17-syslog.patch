@@ -1,0 +1,12 @@
+Lets us specify a logging user of "daemon" in addition to the local users.
+
+--- openldap-2.1.17/servers/slapd/main.c	2003-04-30 21:57:16.000000000 -0400
++++ openldap-2.1.17/servers/slapd/main.c	2003-04-30 21:57:07.000000000 -0400
+@@ -75,6 +75,7 @@
+ 	{ "LOCAL5", sizeof("LOCAL5"), LOG_LOCAL5 },
+ 	{ "LOCAL6", sizeof("LOCAL6"), LOG_LOCAL6 },
+ 	{ "LOCAL7", sizeof("LOCAL7"), LOG_LOCAL7 },
++	{ "DAEMON", sizeof("DAEMON"), LOG_DAEMON },
+ 	{ NULL, 0, 0 }
+ };
+ 

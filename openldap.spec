@@ -1,63 +1,46 @@
-%define migtools_ver 44
-%define db_version 4.0.14
-
-# For RHL 7.x, 8.0, RHEL 2.1, we use "gdbm" (.gdbm).
-# For RHL 9, RHEL 3, we use "berkeley" (.dbb).
+%define migtools_version 45
+%define db_version 4.1.25
+%define db_version_40 4.0.14
 %define ldbm_backend berkeley
-
-%define nss_ldap_prefix %{_libdir}/nss_ldap-openldap
-%define nss_ldap_includedir %{nss_ldap_prefix}/include
-%define nss_ldap_libdir %{nss_ldap_prefix}/%{_lib}
-
+%define version_20 2.0.27
+%define nptl_arches %{ix86} ia64 ppc ppc64 s390 s390x sparcv9 x86_64
 Summary: The configuration files, libraries, and documentation for OpenLDAP.
 Name: openldap
-Version: 2.0.27
-Release: 23
+Version: 2.1.22
+Release: 8
 License: OpenLDAP
 Group: System Environment/Daemons
 Source0: ftp://ftp.OpenLDAP.org/pub/OpenLDAP/openldap-release/openldap-%{version}.tgz
-Source1: http://www.sleepycat.com/update/%{db_version}/db-%{db_version}.tar.gz
-Source2: ldap.init
-Source3: ftp://ftp.padl.com/pub/MigrationTools-%{migtools_ver}.tar.gz
-Source4: migration-tools.txt
-Source6: autofs.schema
-Source7: kerberosobject.schema
-Source8: README.upgrading
-Source9: README.sendbuf
-Source10: http://www.OpenLDAP.org/doc/admin/guide.html
-Patch0: openldap-2.0.16-config.patch
-Patch1: openldap-2.0.12-redhat.patch
+Source1: ftp://ftp.OpenLDAP.org/pub/OpenLDAP/openldap-release/openldap-%{version_20}.tgz
+Source2: ftp://ftp.OpenLDAP.org/pub/tools/autoconf-2.13.1.tar.gz
+Source3: ftp://ftp.OpenLDAP.org/pub/tools/automake-1.4a.tar.gz
+Source4: http://www.sleepycat.com/update/snapshot/db-%{db_version}.tar.gz
+Source5: http://www.sleepycat.com/update/snapshot/db-%{db_version_40}.tar.gz
+Source6: ldap.init
+Source7: ftp://ftp.padl.com/pub/MigrationTools-%{migtools_version}.tar.gz
+Source8: migration-tools.txt
+Source10: autofs.schema
+Source11: README.upgrading
+Source12: http://www.OpenLDAP.org/doc/admin/guide.html
+Source13: nptl-abi-note.S
+Patch0: openldap-2.1.17-config.patch
+Patch1: openldap-2.1.17-string.patch
 Patch2: openldap-1.2.11-cldap.patch
-Patch3: openldap-2.0.3-syslog.patch
-Patch6: openldap-2.0.23-sendbuf.patch
-Patch7: openldap-2.0.11-ldaprc.patch
-Patch8: openldap-2.0.11-debug.patch
-Patch9: openldap-2.0.11-libtool.patch
-Patch10: openldap-2.0.11-linkage.patch
+Patch3: openldap-2.1.17-syslog.patch
+Patch4: openldap-2.0.11-ldaprc.patch
+Patch5: openldap-2.1.17-susesec.patch
+Patch11: http://www.sleepycat.com/update/4.1.25/patch.4.1.25.1
+Patch12: db-4.0.14-disable-mutex.patch
+Patch13: db-4.0.14-libobjs.patch
 Patch21: MigrationTools-38-instdir.patch
 Patch22: MigrationTools-36-mktemp.patch
 Patch23: MigrationTools-27-simple.patch
 Patch24: MigrationTools-26-suffix.patch
 Patch25: MigrationTools-44-schema.patch
-Patch26: openldap-2.0.27-susesec.patch
-Patch27: openldap-2.0.27-messages-references.patch
-Patch28: openldap-2.0.27-openssl-0.9.7.patch
-Patch29: openldap-2.0.27-hostnamecheck.patch
-Patch30: openldap-2.0.27-64.patch
-Patch31: openldap-2.0.27-hop.patch
-Patch32: openldap-2.0.27-start_tls-async.patch
-Patch33: openldap-2.0.27-lutil-passwd.patch
-Patch34: openldap-2.2.13-tls-fix-connection-test.patch
-Patch35: openldap-2.0.27-tls-cache.patch
-Patch36: openldap-2.0.27-hang.patch
-Patch37: openldap-2.0.27-selfwrite.patch
-Patch38: openldap-2.0.27-start_tls-leak.patch
-Patch39: openldap-2.0.27-ppc64.patch
 URL: http://www.openldap.org/
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
-BuildPreReq: cyrus-sasl-devel, gdbm-devel, krb5-devel, openssl-devel
-BuildPreReq: pam-devel, perl, pkgconfig, tcp_wrappers, readline-devel
-BuildPreReq: libtool >= 1.4
+BuildPreReq: cyrus-sasl-devel >= 2.1, gdbm-devel, libtool >= 1.5, krb5-devel
+BuildPreReq: openssl-devel, pam-devel, perl, pkgconfig, tcp_wrappers
 Requires: cyrus-sasl, cyrus-sasl-md5, mktemp
 
 %description
@@ -72,7 +55,7 @@ libraries, and documentation for OpenLDAP.
 %package devel
 Summary: OpenLDAP development libraries and header files.
 Group: Development/Libraries
-Requires: openldap = %{version}-%{release}
+Requires: openldap = %{version}-%{release}, cyrus-sasl-devel >= 2.1
 
 %description devel
 The openldap-devel package includes the development libraries and
@@ -111,9 +94,26 @@ over the Internet. The openldap-clients package contains the client
 programs needed for accessing and modifying OpenLDAP directories.
 
 %prep
-%setup -q -a 1 -a 3 -c
+%setup -q -a 1 -a 2 -a 3 -a 4 -a 5 -a 7
 
-pushd MigrationTools-%{migtools_ver}
+%patch0 -p1 -b .config
+%patch1 -p1 -b .redhat
+%patch2 -p1 -b .cldap
+%patch3 -p1 -b .syslog
+%patch4 -p1 -b .ldaprc
+%patch5 -p1 -b .susesec
+
+pushd db-%{db_version}
+%patch11 -p0 -b .bdb
+popd
+pushd db-%{db_version_40}
+%patch12 -p1 -b .disable-mutex
+%patch13 -p1 -b .libobj
+cd dist
+./s_config
+popd
+
+pushd MigrationTools-%{migtools_version}
 %patch21 -p1 -b .instdir
 %patch22 -p1 -b .mktemp
 %patch23 -p1 -b .simple
@@ -121,72 +121,158 @@ pushd MigrationTools-%{migtools_ver}
 %patch25 -p1 -b .schema
 popd
 
-pushd %{name}-%{version}
-%patch0 -p1 -b .config
-%patch1 -p1 -b .redhat
-%patch2 -p1 -b .cldap
-%patch3 -p1 -b .syslog
-%patch6 -p1 -b .sendbuf
-%patch7 -p1 -b .ldaprc
-%patch8 -p1 -b .debug
-%patch9 -p1 -b .libtool
-%patch10 -p1 -b .linkage
-%patch26 -p0 -b .susesec
-%patch27 -p1 -b .messages-references
-%patch28 -p1 -b .openssl-0.9.7
-%patch29 -p1 -b .hostnamecheck
-%patch30 -p1 -b .64
-%patch31 -p1 -b .hop
-%patch33 -p1 -b .lutil-passwd
-%patch34 -p1 -b .CAN-2005-2069
-%patch35 -p1 -b .tls-cache
-%patch36 -p1 -b .hang
-%patch37 -p1 -b .selfwrite
-%patch38 -p1 -b .start_tls-leak
-%patch39 -p1 -b .ppc64
+pushd openldap-%{version_20}
+	for subdir in build-gdbm build-db ; do
+		mkdir $subdir
+		ln -s ../configure $subdir
+	done
+popd
+
+for subdir in build-servers build-clients ; do
+	mkdir $subdir
+	ln -s ../configure $subdir
+done
+
 cp %{_datadir}/libtool/config.{sub,guess} build/
+
+autodir=`pwd`/auto-instroot
+pushd autoconf-2.13.1
+./configure --prefix=$autodir
+make all install
 popd
-
-cp -a %{name}-%{version} %{name}-%{version}-build-nss_ldap
-
-pushd %{name}-%{version}
-mkdir build-gdbm
-ln -s ../configure build-gdbm
-mkdir build-berkeley
-ln -s ../configure build-berkeley
-mkdir build-krb5
-ln -s ../configure build-krb5
-mkdir build-clients
-ln -s ../configure build-clients
-popd
-
-pushd %{name}-%{version}-build-nss_ldap
-%patch32 -p0 -b .start_tls
-mkdir build-clients
-ln -s ../configure build-clients
+pushd automake-1.4a
+./configure --prefix=$autodir
+make all install
 popd
 
 %build
+autodir=`pwd`/auto-instroot
 dbdir=`pwd`/db-instroot
+dbdir40=`pwd`/db-instroot-4.0
+libtool='%{_bindir}/libtool'
+tagname=CC; export tagname
+
+PATH=${autodir}/bin:${PATH}
+
 %ifarch ia64
 RPM_OPT_FLAGS="$RPM_OPT_FLAGS -O0"
 %endif
+
+# Set CFLAGS to incorporate RPM_OPT_FLAGS.
+CFLAGS="$RPM_OPT_FLAGS -D_REENTRANT -fPIC"; export CFLAGS
+
+# Build the 2.0 server tools for dumping out old on-disk databases.  This
+# requires Berkeley DB 4.0.x (which we must build) and gdbm.
+pushd db-%{db_version_40}/dist
+./configure -C \
+	--with-pic \
+	--disable-shared \
+	--with-uniquename=_openldap_rhl_40 \
+	--prefix=${dbdir40} \
+	--libdir=${dbdir40}/%{_lib}
+make %{_smp_mflags}
+make install
+popd
+
+CPPFLAGS="-I${dbdir40}/include" ; export CPPFLAGS
+LDFLAGS="-L${dbdir40}/%{_lib}" ; export LDFLAGS
+
+pushd openldap-%{version_20}
+	pushd build-gdbm
+	./configure \
+		--prefix=%{_prefix} \
+		--disable-shared \
+		--without-cyrus-sasl \
+		--without-kerberos \
+		--without-threads \
+		--without-tls \
+		--enable-ldbm \
+		--with-ldbm-api=gdbm \
+		--program-suffix=-slapd-2.0-gdbm
+	make %{_smp_mflags}
+	popd
+
+	pushd build-db
+	LIBS=-lpthread \
+	./configure \
+		--prefix=%{_prefix} \
+		--disable-shared \
+		--without-cyrus-sasl \
+		--without-kerberos \
+		--without-threads \
+		--without-tls \
+		--enable-ldbm \
+		--with-ldbm-api=berkeley \
+		--program-suffix=-slapd-2.0-dbb
+	make %{_smp_mflags}
+	popd
+popd
+
+# Build Berkeley DB and install it into a temporary area, isolating OpenLDAP
+# from any future changes to the system-wide Berkeley DB library.
+buildbdb() {
+	subdir=$1
+	shift
+	install -d db-%{db_version}/build-rpm${subdir:+-${subdir}}
+	pushd db-%{db_version}/build-rpm${subdir:+-${subdir}}
+	echo "${1:+db_cv_mutex=$1}" > config.cache
+	shift
+	../dist/configure -C \
+		--with-pic \
+		--disable-static \
+		--enable-shared \
+		--with-uniquename=_openldap_slapd_rhl \
+		--prefix=${dbdir} \
+		--libdir=${dbdir}/%{_lib}${subdir:+/${subdir}}
+	# XXX hack out O_DIRECT support in db4 for now.
+	perl -pi -e 's/#define HAVE_O_DIRECT 1/#undef HAVE_O_DIRECT/' db_config.h
+	if test -n "$nptl_lo" ; then
+		./libtool --mode=compile %{__cc} -o $nptl_lo -c $nptl_s
+	fi
+	make %{_smp_mflags} libso_base=libslapd_db LIBSO_LIBS="$nptl_lo"
+	make install libso_base=libslapd_db LIBSO_LIBS="$nptl_lo"
+	ln -sf libslapd_db.so ${dbdir}/%{_lib}/${subdir}/libdb.so
+	popd
+}
+
+# Build an NPTL libdb if we're on a Linux arch with NPTL.  NPTL gives us the
+# ability to share mutexes between threads in different processes, and to have
+# threads in both honor those locks.  We have to do this because if you build
+# libdb with support for intra-process locks, it dies if you don't have it and
+# the application has specified to libdb that it's multi-threaded (as slapd
+# does).
+%ifarch %{nptl_arches}
+unset nptl_s nptl_lo
+case %{_os} in
+linux|Linux)
+	nptl_s=$RPM_SOURCE_DIR/nptl-abi-note.S
+	nptl_lo=nptl-abi-note.lo
+	;;
+esac
+buildbdb tls POSIX/pthreads/library
+unset nptl_s nptl_lo
+%endif
+
+# Build a non-NPTL libdb and tools, able to only use intra-process thread
+# locks.  Useless for bdb's purposes (bdb requires shared env support), but
+# acceptable for ldbm.
+buildbdb "" POSIX/pthreads/library/private
+
+# Find OpenSSL's header and library dependencies.
 if pkg-config openssl ; then
-	OPENSSL_CPPFLAGS=`pkg-config --cflags openssl`
+	OPENSSL_CPPFLAGS=`pkg-config --cflags-only-I openssl`
 	CPPFLAGS="$OPENSSL_CPPFLAGS" ; export CPPFLAGS
 	OPENSSL_LDFLAGS=`pkg-config --libs-only-L openssl`
 	LDFLAGS="$OPENSSL_LDFLAGS" ; export LDFLAGS
 fi
-CFLAGS="$CPPFLAGS $RPM_OPT_FLAGS -D_REENTRANT -fPIC"; export CFLAGS
-TARGET_PLATFORM=%{_target_platform}
-%define _target_platform --target=${TARGET_PLATFORM}
+
 build() {
-cat << _EOF | sed -e 's,--host=[^ ]*,,g' -e 's,--build=[^ ]*,,g' -e 's,--target=[^ ]*,,g' -e 's,%{_target_platform},,g' > run-build
+CFLAGS="$CPPFLAGS $RPM_OPT_FLAGS -D_REENTRANT -fPIC"; export CFLAGS
 %configure \
 	--with-slapd --with-slurpd --without-ldapd \
-	--with-threads=posix --enable-static \
+	--with-threads=posix --enable-static --enable-dynamic \
 	\
-	--enable-local --enable-cldap --disable-rlookups \
+	--enable-local --enable-cldap --enable-rlookups \
 	\
 	--with-tls \
 	--with-cyrus-sasl \
@@ -194,7 +280,7 @@ cat << _EOF | sed -e 's,--host=[^ ]*,,g' -e 's,--build=[^ ]*,,g' -e 's,--target=
 	--enable-wrappers \
 	\
 	--enable-passwd \
-	--enable-shell \
+	\
 	--enable-cleartext \
 	--enable-crypt \
 	--enable-spasswd \
@@ -203,132 +289,119 @@ cat << _EOF | sed -e 's,--host=[^ ]*,,g' -e 's,--build=[^ ]*,,g' -e 's,--target=
 	\
 	--libexecdir=%{_sbindir} \
 	--localstatedir=/%{_var}/run \
-	$@ \$@
-_EOF
-sh -x ./run-build %{_target_platform}
-make depend %{_smp_mflags}
-make %{_smp_mflags}
+	$@
+make %{_smp_mflags} LIBTOOL="$libtool"
 }
-# Build Berkeley DB and install it into a temporary area, isolating OpenLDAP
-# from any future changes to the system-wide Berkeley DB library.
-pushd db-%{db_version}/dist
-./configure --with-pic --disable-shared --with-uniquename=_openldap_rhl --prefix=${dbdir} --libdir=${dbdir}/%{_lib}
-make %{_smp_mflags}
-make install
+
+# Build the servers with Kerberos support (for password checking, mainly).
+CPPFLAGS="$OPENSSL_CPPFLAGS -I${dbdir}/include" ; export CPPFLAGS
+LDFLAGS="$OPENSSL_LDFLAGS -L${dbdir}/%{_lib}" ; export LDFLAGS
+pushd build-servers
+build \
+	--enable-ldbm \
+	--with-ldbm-api=%{ldbm_backend} \
+	--enable-bdb \
+	--enable-ldap \
+	--enable-meta \
+	--enable-monitor \
+	--enable-null \
+	--enable-rewrite \
+	--disable-shared \
+	--with-kerberos=k5only \
+	--with-cyrus-sasl \
+	--enable-kpasswd
 popd
-# Build one for tools which use gdbm.
-CPPFLAGS="$OPENSSL_CPPFLAGS" ; export CPPFLAGS
-LDFLAGS="$OPENSSL_LDFLAGS" ; export LDFLAGS
-pushd %{name}-%{version}/build-gdbm
-build --enable-ldbm --with-ldbm-api=gdbm --disable-shared --without-kerberos
-popd
-# Build one for tools which use db.
-CPPFLAGS="$OPENSSL_CPPFLAGS" ; export CPPFLAGS
-LDFLAGS="$OPENSSL_LDFLAGS" ; export LDFLAGS
-LIBS="-lpthread"; export LIBS
-CPPFLAGS="$CPPFLAGS -I${dbdir}/include"
-LDFLAGS="$LDFLAGS -L${dbdir}/%{_lib}"
-pushd %{name}-%{version}/build-berkeley
-build --enable-ldbm --with-ldbm-api=berkeley --disable-shared --without-kerberos
-popd
-# Build the servers with Kerberos support and whichever backend we want.  Even
-# enable the bdb backend, which doesn't exist yet.
-CPPFLAGS="$OPENSSL_CPPFLAGS" ; export CPPFLAGS
-LDFLAGS="$OPENSSL_LDFLAGS" ; export LDFLAGS
-LIBS="-lpthread"; export LIBS
-pushd %{name}-%{version}/build-krb5
-CPPFLAGS="$CPPFLAGS -I${dbdir}/include -I%{_prefix}/kerberos/include -DHAVE_KERBEROS_V"
-LDFLAGS="$LDFLAGS -L${dbdir}/%{_lib} -L%{_prefix}/kerberos/%{_lib}"
-build --enable-ldbm --with-ldbm-api=%{ldbm_backend} --enable-bdb --disable-shared --with-kerberos=k5only --enable-kpasswd
-popd
+
 # Build clients without Kerberos password-checking support, which is only
-# useful in the server anyway.
+# useful in the server anyway, to avoid stray dependencies.
 CPPFLAGS="$OPENSSL_CPPFLAGS" ; export CPPFLAGS
 LDFLAGS="$OPENSSL_LDFLAGS" ; export LDFLAGS
 unset LIBS
-pushd %{name}-%{version}/build-clients
-build --disable-ldbm --enable-shared --without-kerberos
-popd
-pushd %{name}-%{version}-build-nss_ldap/build-clients
-build --disable-ldbm --enable-shared --without-kerberos --includedir=%{nss_ldap_includedir} --libdir=%{nss_ldap_libdir}
+pushd build-clients
+build \
+	--disable-slapd \
+	--disable-slurpd \
+	--enable-shared \
+	--enable-static \
+	--without-kerberos \
+	--with-cyrus-sasl \
+	--with-pic
 popd
 
 %install
 [ "$RPM_BUILD_ROOT" != "/" ] && rm -rf $RPM_BUILD_ROOT
-mkdir $RPM_BUILD_ROOT
-makeinstall() {
-%makeinstall \
-	datadir=$RPM_BUILD_ROOT%{_datadir}/openldap \
-	libexecdir=$RPM_BUILD_ROOT%{_sbindir} \
-	localstatedir=/%{_var}/run \
-	sysconfdir=$RPM_BUILD_ROOT%{_sysconfdir}/openldap $@
-}
-
-# Install compatibility binaries.
-pushd %{name}-%{version}/build-gdbm
-makeinstall -C servers/slapd/tools
-mv $RPM_BUILD_ROOT%{_sbindir}/slapadd $RPM_BUILD_ROOT%{_sbindir}/slapadd-gdbm
-mv $RPM_BUILD_ROOT%{_sbindir}/slapcat $RPM_BUILD_ROOT%{_sbindir}/slapcat-gdbm
-popd
-if [ %{ldbm_backend} != gdbm ] ; then
-	pushd %{name}-%{version}/build-berkeley
-	makeinstall -C servers/slapd/tools
-	mv $RPM_BUILD_ROOT%{_sbindir}/slapadd $RPM_BUILD_ROOT%{_sbindir}/slapadd-berkeley
-	mv $RPM_BUILD_ROOT%{_sbindir}/slapcat $RPM_BUILD_ROOT%{_sbindir}/slapcat-berkeley
+libtool='%{_bindir}/libtool'
+tagname=CC; export tagname
+# Install the 2.0 server tools for dumping out old on-disk databases.
+mkdir -p $RPM_BUILD_ROOT/%{_sbindir}/
+pushd openldap-%{version_20}
+	pushd build-gdbm/servers/slapd/tools
+	for bin in slapadd slapcat ; do
+		$libtool --mode=install install -m755 $bin $RPM_BUILD_ROOT/%{_sbindir}/$bin-slapd-2.0-gdbm
+	done
 	popd
-fi
 
-# Install clients and libraries.
-pushd %{name}-%{version}/build-clients
-makeinstall
+	pushd build-db/servers/slapd/tools
+	for bin in slapadd slapcat ; do
+		$libtool --mode=install install -m755 $bin $RPM_BUILD_ROOT/%{_sbindir}/$bin-slapd-2.0-dbb
+	done
+	popd
 popd
 
-pushd %{name}-%{version}-build-nss_ldap/build-clients
-makeinstall
+# Install servers.
+%ifarch %{nptl_arches}
+pushd db-instroot/%{_lib}/tls/
+install -d $RPM_BUILD_ROOT/%{_libdir}/tls/
+install -m755 libslapd_db-*.*.so $RPM_BUILD_ROOT/%{_libdir}/tls/
+popd
+%endif
+
+pushd db-instroot/%{_lib}/
+install -d $RPM_BUILD_ROOT/%{_libdir}/
+install -m755 libslapd_db-*.*.so $RPM_BUILD_ROOT/%{_libdir}/
 popd
 
-# Install servers with Kerberos support.
-pushd %{name}-%{version}/build-krb5
-makeinstall -C servers
+pushd build-servers
+make install DESTDIR=$RPM_BUILD_ROOT libdir=%{_libdir} LIBTOOL="$libtool"
 popd
 
-# Set the right set of slap... tools for the server.
-ln -f $RPM_BUILD_ROOT%{_sbindir}/slapadd-%{ldbm_backend} $RPM_BUILD_ROOT%{_sbindir}/slapadd
-ln -f $RPM_BUILD_ROOT%{_sbindir}/slapcat-%{ldbm_backend} $RPM_BUILD_ROOT%{_sbindir}/slapcat
+# Install the bdb maintenance tools.
+pushd db-instroot/bin
+for binary in db_* ; do
+	install -m755 ${binary} $RPM_BUILD_ROOT/%{_sbindir}/slapd_${binary}
+done
+popd
+
+# Install clients and shared libraries.
+pushd build-clients
+make install DESTDIR=$RPM_BUILD_ROOT libdir=%{_libdir} LIBTOOL="$libtool"
+popd
 
 # Install the padl.com migration tools.
 mkdir -p $RPM_BUILD_ROOT%{_datadir}/openldap/migration
-install -m 755 MigrationTools-%{migtools_ver}/migrate_* \
-	$RPM_BUILD_ROOT%{_datadir}/openldap/migration
-install -m 644 MigrationTools-%{migtools_ver}/README %{SOURCE4} \
-	$RPM_BUILD_ROOT%{_datadir}/openldap/migration
-cp MigrationTools-%{migtools_ver}/README README.migration
-cp %{SOURCE4} TOOLS.migration
-
-# try to build saucer, but don't fret if we can't
-pushd %{name}-%{version}/build-clients
-if make -C contrib/saucer ; then
-	./libtool install -m755 contrib/saucer/saucer $RPM_BUILD_ROOT/%{_bindir}/
-	./libtool install -m644 ../contrib/saucer/saucer.1 $RPM_BUILD_ROOT/%{_mandir}/man1/
-fi
-popd
+install -m 755 MigrationTools-%{migtools_version}/migrate_* \
+	$RPM_BUILD_ROOT%{_datadir}/openldap/migration/
+install -m 644 MigrationTools-%{migtools_version}/README \
+	$RPM_SOURCE_DIR/migration-tools.txt \
+	$RPM_BUILD_ROOT%{_datadir}/openldap/migration/
+cp MigrationTools-%{migtools_version}/README README.migration
+cp $RPM_SOURCE_DIR/migration-tools.txt TOOLS.migration
 
 # Create the data directory.
 mkdir -p $RPM_BUILD_ROOT/var/lib/ldap
 
 # Hack the build root out of the default config files.
-perl -pi -e "s|$RPM_BUILD_ROOT||g" $RPM_BUILD_ROOT/%{_sysconfdir}/openldap/slapd.conf
+perl -pi -e "s|$RPM_BUILD_ROOT||g" $RPM_BUILD_ROOT/%{_sysconfdir}/openldap/*.conf
 
 # Get the buildroot out of the man pages.
 perl -pi -e "s|$RPM_BUILD_ROOT||g" $RPM_BUILD_ROOT%{_mandir}/*/*.*
 
 # We don't need the default files -- RPM handles changes.
 rm -f $RPM_BUILD_ROOT/%{_sysconfdir}/openldap/*.default
-#rm -f $RPM_BUILD_ROOT/%{_sysconfdir}/openldap/schema/*.default
 
 # Install an init script for the server.
 mkdir -p $RPM_BUILD_ROOT/etc/rc.d/init.d
-install -m 755 %{SOURCE2} $RPM_BUILD_ROOT/etc/rc.d/init.d/ldap
+install -m 755 $RPM_SOURCE_DIR/ldap.init $RPM_BUILD_ROOT/etc/rc.d/init.d/ldap
 
 # If ldapadd and ldapmodify are the same binary, make them a hard link
 if cmp $RPM_BUILD_ROOT%{_bindir}/ldapadd $RPM_BUILD_ROOT%{_bindir}/ldapmodify ; then
@@ -337,16 +410,16 @@ fi
 
 # Add some more schema for the sake of migration scripts.
 install -d -m755 $RPM_BUILD_ROOT%{_sysconfdir}/openldap/schema/redhat
-install -m644 %{SOURCE6} %{SOURCE7} $RPM_BUILD_ROOT%{_sysconfdir}/openldap/schema/redhat/
+install -m644 \
+	$RPM_SOURCE_DIR/autofs.schema \
+	$RPM_BUILD_ROOT%{_sysconfdir}/openldap/schema/redhat/
 
 # Tweak permissions on the libraries to make sure they're correct.
 chmod 755 $RPM_BUILD_ROOT/%{_libdir}/lib*.so*
 chmod 644 $RPM_BUILD_ROOT/%{_libdir}/lib*.*a
 
-# Remove files we don't want packaged.
+# Remove files which we don't want packaged.
 rm -f $RPM_BUILD_ROOT/%{_datadir}/openldap/migration/*.{instdir,simple,schema,mktemp,suffix}
-rm -f $RPM_BUILD_ROOT/%{_datadir}/openldap/*-
-rm -f $RPM_BUILD_ROOT/%{_bindir}/*-
 rm -f $RPM_BUILD_ROOT/%{_libdir}/*.la
 
 %clean 
@@ -370,6 +443,7 @@ if /usr/sbin/useradd -c "LDAP User" -u 55 \
 fi
 
 %post servers
+/sbin/ldconfig
 /sbin/chkconfig --add ldap
 exec > /dev/null 2> /dev/null
 if [ ! -f %{_datadir}/ssl/certs/slapd.pem ] ; then
@@ -404,27 +478,28 @@ fi
 
 %files
 %defattr(-,root,root)
-%doc %{name}-%{version}/{ANNOUNCEMENT,CHANGES,COPYRIGHT,LICENSE,README} %{name}-%{version}/doc/rfc
+%doc ANNOUNCEMENT CHANGES COPYRIGHT LICENSE README doc/rfc
 %attr(0755,root,root) %dir /etc/openldap
 %attr(0644,root,root) %config(noreplace) /etc/openldap/ldap*.conf
-%attr(0755,root,root) %{_libdir}/lib*.so.*
+%attr(0755,root,root) %{_libdir}/libl*.so.*
 %attr(0644,root,root) %{_mandir}/man5/*
 %attr(0755,root,root) %dir %{_datadir}/openldap
-%attr(0644,root,root) %{_datadir}/openldap/ldapfriendly
+%attr(0755,root,root) %dir %{_datadir}/openldap/ucdata
+%attr(0644,root,root) %dir %{_datadir}/openldap/ucdata/*
 
 %files servers
 %defattr(-,root,root)
 %doc README.migration TOOLS.migration
-%doc $RPM_SOURCE_DIR/README.upgrading $RPM_SOURCE_DIR/README.sendbuf $RPM_SOURCE_DIR/guide.html
+%doc $RPM_SOURCE_DIR/README.upgrading $RPM_SOURCE_DIR/guide.html
 %attr(0755,root,root) %config /etc/rc.d/init.d/ldap
 %attr(0640,root,ldap) %config(noreplace) /etc/openldap/slapd.conf
 %attr(0755,root,root) %dir /etc/openldap/schema
+%attr(0644,root,root) %dir /etc/openldap/schema/README*
 %attr(0644,root,root) %config(noreplace) /etc/openldap/schema/*.schema*
 %attr(0755,root,root) %dir /etc/openldap/schema/redhat
 %attr(0644,root,root) %config(noreplace) /etc/openldap/schema/redhat/*.schema*
 %attr(0755,root,root) %{_sbindir}/*
 %attr(0644,root,root) %{_mandir}/man8/*
-%attr(0644,root,root) %{_datadir}/openldap/*.help
 %attr(0755,root,root) %dir %{_datadir}/openldap/migration
 %attr(0644,root,root) %{_datadir}/openldap/migration/README
 %attr(0644,root,root) %config(noreplace) %{_datadir}/openldap/migration/*.ph
@@ -432,6 +507,10 @@ fi
 %attr(0755,root,root) %{_datadir}/openldap/migration/*.sh
 %attr(0644,root,root) %{_datadir}/openldap/migration/*.txt
 %attr(0700,ldap,ldap) %dir /var/lib/ldap
+%attr(0755,root,root) %{_libdir}/libslapd_db-*.*.so
+%ifarch %{nptl_arches}
+%attr(0755,root,root) %{_libdir}/tls/libslapd_db-*.*.so
+%endif
 
 %files clients
 %defattr(-,root,root)
@@ -440,77 +519,85 @@ fi
 
 %files devel
 %defattr(-,root,root)
-%doc %{name}-%{version}/doc/drafts
-%attr(0755,root,root) %{_libdir}/lib*.so
-%attr(0644,root,root) %{_libdir}/lib*.a
+%doc doc/drafts
+%attr(0755,root,root) %{_libdir}/libl*.so
+%attr(0644,root,root) %{_libdir}/libl*.a
 %attr(0644,root,root) %{_includedir}/*
 %attr(0644,root,root) %{_mandir}/man3/*
 
 %changelog
-* Wed Mar 28 2007 Jay Fenlason <fenlason@redhat.com> 2.0.27-23
-- Include the -ppc64 patch to fix a ppc64-specific build failure.
-- Put back smp_mflags
+* Thu Oct 23 2003 Nalin Dahyabhai <nalin@redhat.com> 2.1.22-8
+- add another section to the ABI note for the TLS libdb so that it's marked as
+  not needing an executable stack (from Arjan Van de Ven)
 
-* Tue Mar 27 2007 Jay Fenlason <fenlason@redhat.com> 2.0.27-22
-- remove smp_mflags to work around a build-time race condition
-- backport the -selfwrite patch
-  Resolves: rhbz#234222 CVE-2006-4600 openldap improper selfwrite access
-- Include the start_tls-leak patch
-  Resolves: rhbz#174830: ldap_start_tls_s() leaks
+* Thu Oct 16 2003 Nalin Dahyabhai <nalin@redhat.com> 2.1.22-7
+- force bundled libdb to not use O_DIRECT by making it forget that we have it
 
-* Thu Mar 2 2006 Jay Fenlason <fenlason@redhat.com> 2.0.27-22
-- Add -hang patch (backported from 2.2.13) to finish fixing
-  bz#177570 SSL session caching causes client hangs when doing multiple
-   connections
+* Wed Oct 15 2003 Nalin Dahyabhai <nalin@redhat.com>
+- build bundled libdb for slapd dynamically to make the package smaller,
+  among other things
+- on tls-capable arches, build libdb both with and without shared posix
+  mutexes, otherwise just without
+- disable posix mutexes unconditionally for db 4.0, which shouldn't need
+  them for the migration cases where it's used
+- update to MigrationTools 45
 
-* Thu Jan 12 2006 Jay Fenlason <fenlason@redhat.com> 2.0.27-21
-- Add -tls-cache.patch from upstream (rev 1.92 of
-  /repo/OpenLDAP/pkg/ldap/libraries/libldap/tls.c,v) to close
-  bz#177570 SSL session caching causes client hangs when doing multiple
-   connections
+* Fri Sep 12 2003 Nalin Dahyabhai <nalin@redhat.com> 2.1.22-6
+- drop rfc822-MailMember.schema, merged into upstream misc.schema at some point
 
-* Fri Aug 19 2005 Jay Fenlason <fenlason@redhat.com> 2.0.27-20
-- Fix packaging error that left usr/bin/ud- in the -clients rpm.
-- Add readline-devel to BuildPreReq so that saucer always gets built.
+* Wed Aug 27 2003 Nalin Dahyabhai <nalin@redhat.com>
+- actually require newer libtool, as was intended back in 2.1.22-0, noted as
+  missed by Jim Richardson
 
-* Tue Aug 9 2005 Jay Fenlason <fenlason@redhat.com> 2.0.27-19
-- Backport tls-fix-connection-test patch (CAN-2005-2069) for
-  bz#161990 openldap password disclosure issue
+* Fri Jul 25 2003 Nalin Dahyabhai <nalin@redhat.com> 2.1.22-5
+- enable rlookups, they don't cost anything unless also enabled in slapd's
+  configuration file
 
-* Wed May  4 2005 Nalin Dahyabhai <nalin@redhat.com> 2.0.27-18
-- backport fix to hashed-passwords-can-be-treated-as-plaintext (CAN-2004-0823)
-  (#156386)
-- ITS #3578, stop chasing v3 referrals at some point
-
-* Thu Sep  2 2004 Jonathan Blandford <jrb@redhat.com> 2.0.27-17
-- Change ldbm_backend to berkeley.  Patch from Warren Togami.
-
-* Fri Aug 27 2004 Nalin Dahyabhai <nalin@redhat.com> 2.0.27-15
-- incorporate fix for implicit declarations of some functions which return
-  pointers
-
-* Wed May 26 2004 Nalin Dahyabhai <nalin@redhat.com> 2.0.27-14
-- incorporate patch to perform SSL certificate name check if and only if
-  the certificate is being validated (more of #111492)
-
-* Tue May 18 2004 Nalin Dahyabhai <nalin@redhat.com> 2.0.27-13
-- incorporate fix for client crash when server certs include a subjectAltName
-  field (#111492)
-
-* Wed Mar 10 2004 Nalin Dahyabhai <nalin@redhat.com> 2.0.27-4.7
+* Tue Jul 22 2003 Nalin Dahyabhai <nalin@redhat.com> 2.1.22-4
 - rebuild
 
-* Tue Feb 10 2004 Nalin Dahyabhai <nalin@redhat.com> 2.0.27-12
-- remove 'reload' from the init script -- it never worked as intended (#115310)
+* Thu Jul 17 2003 Nalin Dahyabhai <nalin@redhat.com> 2.1.22-3
+- rebuild
 
-* Fri Sep 19 2003 Nalin Dahyabhai <nalin@redhat.com> 2.0.27-11
-- include messages.lo and references.lo in libldap_r (#104691)
+* Wed Jul 16 2003 Nalin Dahyabhai <nalin@redhat.com> 2.1.22-2
+- rebuild
 
-* Fri Sep 12 2003 Nalin Dahyabhai <nalin@redhat.com> 2.0.27-10
-- remove rfc822-MailMember.schema, contents merged into upstream misc.schema
+* Tue Jul 15 2003 Nalin Dahyabhai <nalin@redhat.com> 2.1.22-1
+- build
 
-* Tue Jun 17 2003 Nalin Dahyabhai <nalin@redhat.com> 2.0.27-9
-- don't use the system libtool
+* Mon Jul 14 2003 Nalin Dahyabhai <nalin@redhat.com> 2.1.22-0
+- 2.1.22 now badged stable
+- be more aggressive in what we index by default
+- use/require libtool 1.5
+
+* Mon Jun 30 2003 Nalin Dahyabhai <nalin@redhat.com>
+- update to 2.1.22
+
+* Wed Jun 04 2003 Elliot Lee <sopwith@redhat.com>
+- rebuilt
+
+* Tue Jun  3 2003 Nalin Dahyabhai <nalin@redhat.com> 2.1.21-1
+- update to 2.1.21
+- enable ldap, meta, monitor, null, rewrite in slapd
+
+* Mon May 19 2003 Nalin Dahyabhai <nalin@redhat.com> 2.1.20-1
+- update to 2.1.20
+
+* Thu May  8 2003 Nalin Dahyabhai <nalin@redhat.com> 2.1.19-1
+- update to 2.1.19
+
+* Mon May  5 2003 Nalin Dahyabhai <nalin@redhat.com> 2.1.17-1
+- switch to db with crypto
+
+* Fri May  2 2003 Nalin Dahyabhai <nalin@redhat.com>
+- install the db utils for the bundled libdb as %%{_sbindir}/slapd_db_*
+- install slapcat/slapadd from 2.0.x for migration purposes
+
+* Wed Apr 30 2003 Nalin Dahyabhai <nalin@redhat.com>
+- update to 2.1.17
+- disable the shell backend, not expected to work well with threads
+- drop the kerberosSecurityObject schema, the krbName attribute it
+  contains is only used if slapd is built with v2 kbind support
 
 * Mon Feb 10 2003 Nalin Dahyabhai <nalin@redhat.com> 2.0.27-8
 - back down to db 4.0.x, which 2.0.x can compile with in ldbm-over-db setups

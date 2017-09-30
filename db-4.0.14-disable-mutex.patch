@@ -1,0 +1,20 @@
+Give us some way to disable mutex-based locking (which requires libpthread)
+and fall back to fcntl locking.  This copy of libdb can't require libpthread
+because it will be included in a module which will be opened using dlopen(),
+and opening a module which needs libpthread from an application which can
+create instability (and that's the good scenario).
+--- db-4.0.14/dist/aclocal/mutex.ac	2003-06-04 19:15:53.000000000 -0400
++++ db-4.0.14/dist/aclocal/mutex.ac	2003-06-04 19:15:36.000000000 -0400
+@@ -339,7 +339,7 @@
+ fi
+ ])
+ 
+-if test "$db_cv_mutex" = no; then
++if test "$db_cv_mutex" = no -o "$db_cv_mutex" = disabled ; then
+ 	AC_MSG_WARN(
+ 	    [THREAD MUTEXES NOT AVAILABLE FOR THIS COMPILER/ARCHITECTURE.])
+ 	ADDITIONAL_OBJS="mut_fcntl${o} $ADDITIONAL_OBJS"
+--- db-4.0.14/dist/config.cache	2003-06-04 19:18:50.000000000 -0400
++++ db-4.0.14/dist/config.cache	2003-06-04 19:19:00.000000000 -0400
+@@ -0,0 +1 @@
++db_cv_mutex=disabled
