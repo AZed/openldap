@@ -1,5 +1,5 @@
 /* Generic unistd.h */
-/* $OpenLDAP: pkg/ldap/include/ac/unistd.h,v 1.16.8.5 2002/01/04 20:38:17 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/include/ac/unistd.h,v 1.16.8.6 2002/09/12 19:40:50 kurt Exp $ */
 /*
  * Copyright 1998-2002 The OpenLDAP Foundation, Redwood City, California, USA
  * All rights reserved.

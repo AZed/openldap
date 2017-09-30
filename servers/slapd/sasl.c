@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/sasl.c,v 1.5.2.17 2002/01/04 20:38:29 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/sasl.c,v 1.5.2.18 2002/08/28 06:29:15 hyc Exp $ */
 /*
  * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file

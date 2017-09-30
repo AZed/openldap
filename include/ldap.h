@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/include/ldap.h,v 1.65.2.38 2002/01/15 19:08:28 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/include/ldap.h,v 1.65.2.43 2002/09/19 20:11:46 kurt Exp $ */
 /*
  * Copyright 1998-2002 The OpenLDAP Foundation, Redwood City, California, USA
  * All rights reserved.

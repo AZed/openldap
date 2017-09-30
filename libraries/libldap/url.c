@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/url.c,v 1.29.2.14 2002/01/04 20:38:22 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/url.c,v 1.29.2.16 2002/08/26 11:10:16 hyc Exp $ */
 /*
  * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file

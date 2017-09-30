@@ -1,4 +1,4 @@
-# $OpenLDAP: pkg/ldap/tests/progs/Makefile.in,v 1.3.2.4 2002/01/04 20:38:37 kurt Exp $
+# $OpenLDAP: pkg/ldap/tests/progs/Makefile.in,v 1.3.2.5 2002/09/20 17:09:49 kurt Exp $
 ## Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
 ## COPYING RESTRICTIONS APPLY, see COPYRIGHT file
 ##

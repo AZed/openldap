@@ -1,5 +1,5 @@
 /* passwd.c - ldbm backend password routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/passwd.c,v 1.16.2.10 2002/01/04 20:38:34 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/passwd.c,v 1.16.2.12 2002/06/06 09:09:00 hyc Exp $ */
 /*
  * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file

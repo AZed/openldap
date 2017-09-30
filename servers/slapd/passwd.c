@@ -1,5 +1,5 @@
 /* passwd.c - passwd routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/passwd.c,v 1.14.2.8 2002/01/04 20:38:29 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/passwd.c,v 1.14.2.9 2002/06/10 18:03:48 kurt Exp $ */
 /*
  * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file

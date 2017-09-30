@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap_r/thr_nt.c,v 1.8.2.6 2002/01/04 20:38:23 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap_r/thr_nt.c,v 1.8.2.8 2002/06/08 01:55:37 hyc Exp $ */
 /*
  * Copyright 1998-2002 The OpenLDAP Foundation, Redwood City, California, USA
  * All rights reserved.

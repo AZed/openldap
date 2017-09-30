@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/clients/ud/auth.c,v 1.19.6.7 2002/01/04 20:38:10 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/clients/ud/auth.c,v 1.19.6.8 2002/01/31 21:55:03 kurt Exp $ */
 /*
  * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file

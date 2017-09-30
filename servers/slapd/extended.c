@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/extended.c,v 1.3.2.5 2002/01/04 20:38:28 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/extended.c,v 1.3.2.8 2002/06/10 17:40:50 kurt Exp $ */
 /* 
  * Copyright 1999-2002 The OpenLDAP Foundation.
  * All rights reserved.

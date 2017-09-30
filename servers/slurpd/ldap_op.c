@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slurpd/ldap_op.c,v 1.13.2.12 2002/01/12 20:23:03 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slurpd/ldap_op.c,v 1.13.2.13 2002/04/26 06:58:01 ando Exp $ */
 /*
  * Copyright (c) 1996 Regents of the University of Michigan.
  * All rights reserved.

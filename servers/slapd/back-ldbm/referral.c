@@ -1,5 +1,5 @@
 /* referral.c - LDBM backend referral handler */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/referral.c,v 1.1.2.2 2002/01/04 20:38:34 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/referral.c,v 1.1.2.3 2002/01/29 19:29:39 kurt Exp $ */
 /*
  * Copyright 2000-2002 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file

@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slurpd/reject.c,v 1.4.8.2 2000/06/13 17:57:41 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slurpd/reject.c,v 1.4.8.3 2002/08/26 06:48:40 hyc Exp $ */
 /*
  * Copyright (c) 1996 Regents of the University of Michigan.
  * All rights reserved.
