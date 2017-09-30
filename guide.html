@@ -7,7 +7,7 @@
      available from http://www.mincom.com/mtr/sdf. -->
 
 <HEAD>
-<TITLE>OpenLDAP 2.1 Administrator's Guide</TITLE>
+<TITLE>OpenLDAP 2.2 Administrator's Guide</TITLE>
 </HEAD>
 <BODY>
 
@@ -21,9 +21,9 @@
 <BR CLEAR="Left">
 </DIV>
 <DIV CLASS="title">
-<H1 CLASS="doc-title">OpenLDAP 2.1 Administrator's Guide</H1>
+<H1 CLASS="doc-title">OpenLDAP 2.2 Administrator's Guide</H1>
 <ADDRESS CLASS="doc-author">The OpenLDAP Project &lt;<A HREF="http://www.openldap.org/">http://www.openldap.org/</A>&gt;</ADDRESS>
-<ADDRESS CLASS="doc-modified">10 January 2003</ADDRESS>
+<ADDRESS CLASS="doc-modified">25 February 2004</ADDRESS>
 <BR CLEAR="All">
 </DIV>
 <DIV CLASS="contents">
@@ -136,12 +136,26 @@
 <BR>
 <A HREF="#Advanced slurpd Operation">13.5. Advanced slurpd Operation</A></UL>
 <BR>
+<A HREF="#LDAP Sync Replication">14. LDAP Sync Replication</A><UL>
+<A HREF="#The LDAP Content Synchronization Protocol">14.1. The LDAP Content Synchronization Protocol</A>
+<BR>
+<A HREF="#Syncrepl Details">14.2. Syncrepl Details</A>
+<BR>
+<A HREF="#Configuring Syncrepl">14.3. Configuring Syncrepl</A></UL>
+<BR>
+<A HREF="#The Proxy Cache Engine">15. The Proxy Cache Engine</A><UL>
+<A HREF="#Overview">15.1. Overview</A>
+<BR>
+<A HREF="#Proxy Cache Configuration">15.2. Proxy Cache Configuration</A></UL>
+<BR>
 <A HREF="#Generic configure Instructions">A. Generic configure Instructions</A>
 <BR>
 <A HREF="#OpenLDAP Software Copyright Notices">B. OpenLDAP Software Copyright Notices</A><UL>
 <A HREF="#OpenLDAP Copyright Notice">B.1. OpenLDAP Copyright Notice</A>
 <BR>
-<A HREF="#University of Michigan Copyright Notice">B.2. University of Michigan Copyright Notice</A></UL>
+<A HREF="#Additional Copyright Notice">B.2. Additional Copyright Notice</A>
+<BR>
+<A HREF="#University of Michigan Copyright Notice">B.3. University of Michigan Copyright Notice</A></UL>
 <BR>
 <A HREF="#OpenLDAP Public License">C. OpenLDAP Public License</A></UL>
 </DIV>
@@ -222,7 +236,7 @@ Support Pages
 <H2>Amendments</H2>
 <P>Suggested enhancements and corrections to this document should be submitted using the <A HREF="http://www.openldap.org/">OpenLDAP</A> <EM><TERM>Issue Tracking System</TERM></EM> (<A HREF="http://www.openldap.org/its/">http://www.openldap.org/its/</A>).</P>
 <H2>About this document</H2>
-<P>This document was produced using the <EM>Simple Document Format</EM> (<A HREF="http://www.mincom.com/mtr/sdf/">http://www.mincom.com/mtr/sdf/</A>) documentation system developed by <EM>Ian Clatworthy</EM>.  Tools for <EM>SDF</EM> are available from CPAN (<A HREF="http://search.cpan.org/search?query=SDF">http://search.cpan.org/search?query=SDF</A>).</P>
+<P>This document was produced using the <EM>Simple Document Format</EM> (<A HREF="http://search.cpan.org/src/IANC/sdf-2.001/doc/">http://search.cpan.org/src/IANC/sdf-2.001/doc/</A>) documentation system developed by <EM>Ian Clatworthy</EM>.  Tools for <EM>SDF</EM> are available from CPAN (<A HREF="http://search.cpan.org/search?query=SDF">http://search.cpan.org/search?query=SDF</A>).</P>
 <P></P>
 <HR>
 <H1><A NAME="Introduction to OpenLDAP Directory Services">1. Introduction to OpenLDAP Directory Services</A></H1>
@@ -231,7 +245,7 @@ Support Pages
 <P>A directory is a specialized database optimized for reading, browsing and searching.  Directories tend to contain descriptive, attribute-based information and support sophisticated filtering capabilities. Directories generally do not support complicated transaction or roll-back schemes found in database management systems designed for handling high-volume complex updates.  Directory updates are typically simple all-or-nothing changes, if they are allowed at all.  Directories are tuned to give quick response to high-volume lookup or search operations. They may have the ability to replicate information widely in order to increase availability and reliability, while reducing response time.  When directory information is replicated, temporary inconsistencies between the replicas may be okay, as long as they get in sync eventually.</P>
 <P>There are many different ways to provide a directory service. Different methods allow different kinds of information to be stored in the directory, place different requirements on how that information can be referenced, queried and updated, how it is protected from unauthorized access, etc.  Some directory services are <EM>local</EM>, providing service to a restricted context (e.g., the finger service on a single machine). Other services are global, providing service to a much broader context (e.g., the entire Internet).  Global services are usually <EM>distributed</EM>, meaning that the data they contain is spread across many machines, all of which cooperate to provide the directory service. Typically a global service defines a uniform <EM>namespace</EM> which gives the same view of the data no matter where you are in relation to the data itself.  The Internet <TERM>Domain Name System</TERM> (DNS) is an example of a globally distributed directory service.</P>
 <H2><A NAME="What is LDAP">1.2. What is LDAP?</A></H2>
-<P><TERM>LDAP</TERM> stands for <TERM>Lightweight Directory Access Protocol</TERM>.  As the name suggests, it is a lightweight protocol for accessing directory services, specifically <TERM>X.500</TERM>-based directory services.  LDAP runs over <TERM>TCP</TERM>/<TERM>IP</TERM> or other connection oriented transfer services.  The nitty-gritty details of LDAP are defined in <A HREF="ftp://ftp.isi.edu/in-notes/rfc2251.txt">RFC2251</A> &quot;The Lightweight Directory Access Protocol (v3)&quot; and other documents comprising the technical specification <REF>RFC3377</REF>.  This section gives an overview of LDAP from a user's perspective.</P>
+<P><TERM>LDAP</TERM> stands for <TERM>Lightweight Directory Access Protocol</TERM>.  As the name suggests, it is a lightweight protocol for accessing directory services, specifically <TERM>X.500</TERM>-based directory services.  LDAP runs over <TERM>TCP</TERM>/<TERM>IP</TERM> or other connection oriented transfer services.  The nitty-gritty details of LDAP are defined in <A HREF="http://www.rfc-editor.org/rfc/rfc2251.txt">RFC2251</A> &quot;The Lightweight Directory Access Protocol (v3)&quot; and other documents comprising the technical specification <A HREF="http://www.rfc-editor.org/rfc/rfc3377.txt">RFC3377</A>.  This section gives an overview of LDAP from a user's perspective.</P>
 <P><EM>What kind of information can be stored in the directory?</EM> The LDAP information model is based on <EM>entries</EM>. An entry is a collection of attributes that has a globally-unique <TERM>Distinguished Name</TERM> (DN).  The DN is used to refer to the entry unambiguously. Each of the entry's attributes has a <EM>type</EM> and one or more <EM>values</EM>. The types are typically mnemonic strings, like &quot;<TT>cn</TT>&quot; for common name, or &quot;<TT>mail</TT>&quot; for email address. The syntax of values depend on the attribute type.  For example, a <TT>cn</TT> attribute might contain the value <TT>Babs Jensen</TT>.  A <TT>mail</TT> attribute might contain the value &quot;<TT>babs@example.com</TT>&quot;. A <TT>jpegPhoto</TT> attribute would contain a photograph in the JPEG (binary) format.</P>
 <P><EM>How is the information arranged?</EM> In LDAP, directory entries are arranged in a hierarchical tree-like structure.  Traditionally, this structure reflected the geographic and/or organizational boundaries.  Entries representing countries appear at the top of the tree. Below them are entries representing states and national organizations. Below them might be entries representing organizational units, people, printers, documents, or just about anything else you can think of.  Figure 1.1 shows an example LDAP directory tree using traditional naming.</P>
 <P><CENTER><IMG SRC="intro_tree.gif" ALIGN="center"></CENTER></P>
@@ -240,7 +254,7 @@ Support Pages
 <P><CENTER><IMG SRC="intro_dctree.gif" ALIGN="center"></CENTER></P>
 <P ALIGN="Center">Figure 1.2: LDAP directory tree (Internet naming)</P>
 <P>In addition, LDAP allows you to control which attributes are required and allowed in an entry through the use of a special attribute called <TT>objectClass</TT>.  The values of the <TT>objectClass</TT> attribute determine the <EM>schema</EM> rules the entry must obey.</P>
-<P><EM>How is the information referenced?</EM> An entry is referenced by its distinguished name, which is constructed by taking the name of the entry itself (called the <TERM>Relative Distinguished Name</TERM> or RDN) and concatenating the names of its ancestor entries. For example, the entry for Barbara Jensen in the Internet naming example above has an RDN of <TT>uid=babs</TT> and a DN of <TT>uid=babs,ou=People,dc=example,dc=com</TT>. The full DN format is described in <A HREF="ftp://ftp.isi.edu/in-notes/rfc2253.txt">RFC2253</A>, &quot;Lightweight Directory Access Protocol (v3):  UTF-8 String Representation of Distinguished Names.&quot;</P>
+<P><EM>How is the information referenced?</EM> An entry is referenced by its distinguished name, which is constructed by taking the name of the entry itself (called the <TERM>Relative Distinguished Name</TERM> or RDN) and concatenating the names of its ancestor entries. For example, the entry for Barbara Jensen in the Internet naming example above has an RDN of <TT>uid=babs</TT> and a DN of <TT>uid=babs,ou=People,dc=example,dc=com</TT>. The full DN format is described in <A HREF="http://www.rfc-editor.org/rfc/rfc2253.txt">RFC2253</A>, &quot;Lightweight Directory Access Protocol (v3):  UTF-8 String Representation of Distinguished Names.&quot;</P>
 <P><EM>How is the information accessed?</EM> LDAP defines operations for interrogating and updating the directory.  Operations are provided for adding and deleting an entry from the directory, changing an existing entry, and changing the name of an entry. Most of the time, though, LDAP is used to search for information in the directory. The LDAP search operation allows some portion of the directory to be searched for entries that match some criteria specified by a search filter. Information can be requested from each entry that matches the criteria.</P>
 <P>For example, you might want to search the entire directory subtree at and below <TT>dc=example,dc=com</TT> for people with the name <TT>Barbara Jensen</TT>, retrieving the email address of each entry found. LDAP lets you do this easily.  Or you might want to search the entries directly below the <TT>st=California,c=US</TT> entry for organizations with the string <TT>Acme</TT> in their name, and that have a fax number. LDAP lets you do this too. The next section describes in more detail what you can do with LDAP and how it might be useful to you.</P>
 <P><EM>How is the information protected from unauthorized access?</EM> Some directory services provide no protection, allowing anyone to see the information. LDAP provides a mechanism for a client to authenticate, or prove its identity to a directory server, paving the way for rich access control to protect the information the server contains.  LDAP also supports privacy and integrity security services.</P>
@@ -261,25 +275,26 @@ Support Pages
 <LI>Referrals and Continuations
 <LI>Schema Discovery
 <LI>Extensibility (controls, extended operations, and more)</UL></UL>
-<P>LDAPv2 is considered historical.  As deploying both LDAPv2 and LDAPv3 simultaneously can be quite problematic, LDAPv2 should be avoided.  LDAPv2 is disabled by default.</P>
+<P>LDAPv2 is historic (<A HREF="http://www.rfc-editor.org/rfc/rfc3494.txt">RFC3494</A>).  As most implementations (including <EM>slapd</EM>(8)) of LDAPv2 do not conform to the LDAPv2 technical specification, interoperatibility amongst implementations claiming LDAPv2 support will be limited.  As LDAPv2 differs significantly from LDAPv3, deploying both LDAPv2 and LDAPv3 simultaneously can be quite problematic.  LDAPv2 should be avoided. LDAPv2 is disabled by default.</P>
 <H2><A NAME="What is slapd and what can it do">1.6. What is slapd and what can it do?</A></H2>
 <P><EM>slapd</EM>(8) is an LDAP directory server that runs on many different platforms. You can use it to provide a directory service of your very own.  Your directory can contain pretty much anything you want to put in it. You can connect it to the global LDAP directory service, or run a service all by yourself. Some of slapd's more interesting features and capabilities include:</P>
-<P><B>LDAPv3</B>: <EM>slapd</EM> implements version 3 of <TERM>Lightweight Directory Access Protocol</TERM>. <EM>slapd</EM> supports LDAP over both IPv4 and IPv6.</P>
+<P><B>LDAPv3</B>: <EM>slapd</EM> implements version 3 of <TERM>Lightweight Directory Access Protocol</TERM>. <EM>slapd</EM> supports LDAP over both IPv4 and IPv6 and Unix IPC.</P>
 <P><B><TERM>Simple Authentication and Security Layer</TERM></B>: <EM>slapd</EM> supports strong authentication services through the use of SASL.  <EM>slapd</EM>'s SASL implementation utilizes <A HREF="http://asg.web.cmu.edu/cyrus/">Cyrus</A> <A HREF="http://asg.web.cmu.edu/sasl/sasl-library.html">SASL</A> software which supports a number of mechanisms including DIGEST-MD5, EXTERNAL, and GSSAPI.</P>
 <P><B><TERM>Transport Layer Security</TERM></B>: <EM>slapd</EM> provides privacy and integrity protections through the use of TLS (or SSL).  <EM>slapd</EM>'s TLS implementation utilizes <A HREF="http://www.openssl.org/">OpenSSL</A> software.</P>
-<P><B>Topology control</B>: <EM>slapd</EM> allows one to restrict access to the server based upon network topology.  This feature utilizes <EM>TCP wrappers</EM>.</P>
+<P><B>Topology control</B>: <EM>slapd</EM> can be configured to restrict access at the socket layer based upon network topology information. This feature utilizes <EM>TCP wrappers</EM>.</P>
 <P><B>Access control</B>: <EM>slapd</EM> provides a rich and powerful access control facility, allowing you to control access to the information in your database(s). You can control access to entries based on LDAP authorization information, <TERM>IP</TERM> address, domain name and other criteria.  <EM>slapd</EM> supports both <EM>static</EM> and <EM>dynamic</EM> access control information.</P>
 <P><B>Internationalization</B>: <EM>slapd</EM> supports Unicode and language tags.</P>
-<P><B>Choice of database backends</B>: <EM>slapd</EM> comes with a variety of different database backends you can choose from. They include <TERM>BDB</TERM>, a high-performance transactional database backend; <TERM>LDBM</TERM>, a lightweight DBM based backend; <EM>SHELL</EM>, a backend interface to arbitrary shell scripts; and PASSWD, a simple backend interface to the <EM>passwd</EM>(5) file.  BDB utilizes <A HREF="http://www.sleepycat.com/">Sleepycat</A> <A HREF="http://www.sleepycat.com/">Berkeley DB</A>.  LDBM utilizes either <A HREF="http://www.sleepycat.com/">Berkeley DB</A> or <A HREF="http://www.gnu.org/software/gdbm/">GDBM</A>.</P>
+<P><B>Choice of database backends</B>: <EM>slapd</EM> comes with a variety of different database backends you can choose from. They include <TERM>BDB</TERM>, a high-performance transactional database backend; <TERM>LDBM</TERM>, a lightweight DBM based backend; <EM>SHELL</EM>, a backend interface to arbitrary shell scripts; and PASSWD, a simple backend interface to the <EM>passwd</EM>(5) file.  The BDB backend utilizes <A HREF="http://www.sleepycat.com/">Sleepycat</A> <A HREF="http://www.sleepycat.com/">Berkeley DB</A>.  The LDBM utilizes either <A HREF="http://www.sleepycat.com/">Berkeley DB</A> or <A HREF="http://www.gnu.org/software/gdbm/">GDBM</A>.</P>
 <P><B>Multiple database instances</B>: <EM>slapd</EM> can be configured to serve multiple databases at the same time. This means that a single <EM>slapd</EM> server can respond to requests for many logically different portions of the LDAP tree, using the same or different database backends.</P>
-<P><B>Generic modules API</B>: If you require even more customization, <EM>slapd</EM> lets you write your own modules easily. <EM>slapd</EM> consists of two distinct parts: a front end that handles protocol communication with LDAP clients; and modules which handle specific tasks such as database operations. Because these two pieces communicate via a well-defined <TERM>C</TERM> <TERM>API</TERM>, you can write your own customized modules which extend <EM>slapd</EM> in numerous ways.  Also, a number of <EM>programmable database</EM> modules are provided.  These allow you to expose external data sources to <EM>slapd</EM> using popular programming languages (<A HREF="http://www.perl.com/">Perl</A>, <EM>shell</EM>, <A HREF="http://www.jcc.com/SQLPages/jccs_sql.htm">SQL</A>, and <A HREF="http://tcl.activestate.com/">TCL</A>).</P>
+<P><B>Generic modules API</B>:  If you require even more customization, <EM>slapd</EM> lets you write your own modules easily. <EM>slapd</EM> consists of two distinct parts: a front end that handles protocol communication with LDAP clients; and modules which handle specific tasks such as database operations. Because these two pieces communicate via a well-defined <TERM>C</TERM> <TERM>API</TERM>, you can write your own customized modules which extend <EM>slapd</EM> in numerous ways.  Also, a number of <EM>programmable database</EM> modules are provided.  These allow you to expose external data sources to <EM>slapd</EM> using popular programming languages (<A HREF="http://www.perl.com/">Perl</A>, <EM>shell</EM>, <A HREF="http://www.jcc.com/SQLPages/jccs_sql.htm">SQL</A>, and <A HREF="http://tcl.activestate.com/">TCL</A>).</P>
 <P><B>Threads</B>: <EM>slapd</EM> is threaded for high performance.  A single multi-threaded <EM>slapd</EM> process handles all incoming requests using a pool of threads.  This reduces the amount of system overhead required while providing high performance.</P>
-<P><B>Replication</B>: <EM>slapd</EM> can be configured to maintain replica copies of its database. This <EM>single-master/multiple-slave</EM> replication scheme is vital in high-volume environments where a single <EM>slapd</EM> just doesn't provide the necessary availability or reliability.  <EM>slapd</EM> also includes experimental support for <EM>multi-master</EM> replication.</P>
+<P><B>Replication</B>: <EM>slapd</EM> can be configured to maintain shadow copies of directory information.  This <EM>single-master/multiple-slave</EM> replication scheme is vital in high-volume environments where a single <EM>slapd</EM> just doesn't provide the necessary availability or reliability.  <EM>slapd</EM> also includes experimental support for <EM>multi-master</EM> replication (for use where strong ACID properties are not required).  <EM>slapd</EM> supports two replication methods: <EM>LDAP Sync</EM>-based and <EM>slurpd</EM>(8)-based replication .</P>
+<P><B>Proxy Cache</B>: <EM>slapd</EM> can be configured as a caching LDAP proxy service.</P>
 <P><B>Configuration</B>: <EM>slapd</EM> is highly configurable through a single configuration file which allows you to change just about everything you'd ever want to change.  Configuration options have reasonable defaults, making your job much easier.</P>
-<P><EM>slapd</EM> also has its limitations, of course.  The main BDB backend does not handle range queries or negation queries very well.</P>
 <H2><A NAME="What is slurpd and what can it do">1.7. What is slurpd and what can it do?</A></H2>
-<P><EM>slurpd</EM>(8) is a daemon that helps <EM>slapd</EM> provide replicated service. It is responsible for distributing changes made to the master <EM>slapd</EM> database out to the various <EM>slapd</EM> replicas. It frees <EM>slapd</EM> from having to worry that some replicas might be down or unreachable when a change comes through; <EM>slurpd</EM> handles retrying failed requests automatically.  <EM>slapd</EM> and <EM>slurpd</EM> communicate through a simple text file that is used to log changes.</P>
+<P><EM>slurpd</EM>(8) is a daemon that, with <EM>slapd</EM> help, provides replicated service.  It is responsible for distributing changes made to the master <EM>slapd</EM> database out to the various <EM>slapd</EM> replicas.  It frees <EM>slapd</EM> from having to worry that some replicas might be down or unreachable when a change comes through; <EM>slurpd</EM> handles retrying failed requests automatically.  <EM>slapd</EM> and <EM>slurpd</EM> communicate through a simple text file that is used to log changes.</P>
 <P>See the <A HREF="#Replication with slurpd">Replication with slurpd</A> chapter for information about how to configure and run <EM>slurpd</EM>(8).</P>
+<P>Alternatively, <EM>LDAP-Sync</EM>-based replication may be used to provide a replicated service.  See the <A HREF="#LDAP Sync Replication">LDAP Sync Replication</A> chapter for details.</P>
 <P></P>
 <HR>
 <H1><A NAME="A Quick-Start Guide">2. A Quick-Start Guide</A></H1>
@@ -528,7 +543,7 @@ This command will search for and retrieve every entry in the database.</OL>
 <H3><A NAME="Database Software">4.2.4. Database Software</A></H3>
 <P>OpenLDAP's <EM>slapd</EM>(8) primary database backend, <TERM>BDB</TERM>, requires <A HREF="http://www.sleepycat.com/">Sleepycat Software</A> <A HREF="http://www.sleepycat.com/">Berkeley DB</A>, version 4. If not available at configure time, you will not be able build <EM>slapd</EM>(8) with this primary database backend.</P>
 <P>Your operating system may provide <A HREF="http://www.sleepycat.com/">Berkeley DB</A>, version 4, in the base system or as an optional software component.  If not, you'll have to obtain and install it yourself.</P>
-<P><A HREF="http://www.sleepycat.com/">Berkeley DB</A> is available from <A HREF="http://www.sleepycat.com/">Sleepycat Software</A>'s download page <A HREF="http://www.sleepycat.com/download.html">http://www.sleepycat.com/download.html</A>. There are several versions available.  At the time of this writing, the latest release, version 4.1, is recommended. This package is required if you wish to use the <TERM>BDB</TERM> database backend.</P>
+<P><A HREF="http://www.sleepycat.com/">Berkeley DB</A> is available from <A HREF="http://www.sleepycat.com/">Sleepycat Software</A>'s download page <A HREF="http://www.sleepycat.com/download/">http://www.sleepycat.com/download/</A>. There are several versions available.  At the time of this writing, the latest release, version 4.1, is recommended. This package is required if you wish to use the <TERM>BDB</TERM> database backend.</P>
 <P>OpenLDAP's <EM>slapd</EM>(8) LDBM backend supports a variety of data base managers including <A HREF="http://www.sleepycat.com/">Berkeley DB</A> and <A HREF="http://www.gnu.org/software/gdbm/">GDBM</A>. <A HREF="http://www.gnu.org/software/gdbm/">GDBM</A> is available from <A HREF="http://www.fsf.org/">FSF</A>'s download site <A HREF="ftp://ftp.gnu.org/pub/gnu/gdbm/">ftp://ftp.gnu.org/pub/gnu/gdbm/</A>.</P>
 <H3><A NAME="Threads">4.2.5. Threads</A></H3>
 <P>OpenLDAP is designed to take advantage of threads.  OpenLDAP supports POSIX <EM>pthreads</EM>, Mach <EM>CThreads</EM>, and a number of other varieties.  <TT>configure</TT> will complain if it cannot find a suitable thread subsystem.   If this occurs, please consult the <TT>Software|Installation|Platform Hints</TT> section of the OpenLDAP FAQ <A HREF="http://www.openldap.org/faq/">http://www.openldap.org/faq/</A>.</P>
@@ -645,7 +660,8 @@ Specify additional libraries
 <P>An alternate configuration file can be specified via a command-line option to <EM>slapd</EM>(8) or <EM>slurpd</EM>(8). This chapter describes the general format of the config file, followed by a detailed description of commonly used config file directives.</P>
 <H2><A NAME="Configuration File Format">5.1. Configuration File Format</A></H2>
 <P>The <EM>slapd.conf</EM>(5) file consists of three types of configuration information: global, backend specific, and database specific.  Global information is specified first, followed by information associated with a particular backend type, which is then followed by information associated with a particular database instance.  Global directives can be overridden in backend and/or database directives, and backend directives can be overridden by database directives.</P>
-<P>Blank lines and comment lines beginning with a '<TT>#</TT>' character are ignored.  If a line begins with white space, it is considered a continuation of the previous line. The general format of slapd.conf is as follows:</P>
+<P>Blank lines and comment lines beginning with a '<TT>#</TT>' character are ignored.  If a line begins with white space, it is considered a continuation of the previous line (even if the previous line is a comment).</P>
+<P>The general format of slapd.conf is as follows:</P>
 <PRE>
         # global configuration directives
         &lt;global config directives&gt;
@@ -680,7 +696,7 @@ Specify additional libraries
 <P><HR WIDTH="80%" ALIGN="Left">
 <STRONG>Note: </STRONG>If no <TT>access</TT> directives are specified, the default access control policy, <TT>access to * by * read</TT>, allows all both authenticated and anonymous users read access.
 <HR WIDTH="80%" ALIGN="Left"></P>
-<H4><A NAME="attributetype &lt;{{REF:RFC2252}} Attribute Type Description&gt;"> </A>5.2.1.2. attributetype &lt;<A HREF="ftp://ftp.isi.edu/in-notes/rfc2252.txt">RFC2252</A> Attribute Type Description&gt;</H4>
+<H4><A NAME="attributetype &lt;{{REF:RFC2252}} Attribute Type Description&gt;"> </A>5.2.1.2. attributetype &lt;<A HREF="http://www.rfc-editor.org/rfc/rfc2252.txt">RFC2252</A> Attribute Type Description&gt;</H4>
 <P>This directive defines an attribute type. Please see the <A HREF="#Schema Specification">Schema Specification</A> chapter for information regarding how to use this directive.</P>
 <H4><A NAME="idletimeout &lt;integer&gt;">5.2.1.3. idletimeout &lt;integer&gt;</A></H4>
 <P>Specify the number of seconds to wait before forcibly closing an idle client connection.  An idletimeout of 0, the default, disables this feature.</P>
@@ -824,7 +840,7 @@ print entry parsing debugging
 <PRE>
  loglevel 256
 </PRE>
-<H4><A NAME="objectclass &lt;{{REF:RFC2252}} Object Class Description&gt;"> </A>5.2.1.6. objectclass &lt;<A HREF="ftp://ftp.isi.edu/in-notes/rfc2252.txt">RFC2252</A> Object Class Description&gt;</H4>
+<H4><A NAME="objectclass &lt;{{REF:RFC2252}} Object Class Description&gt;"> </A>5.2.1.6. objectclass &lt;<A HREF="http://www.rfc-editor.org/rfc/rfc2252.txt">RFC2252</A> Object Class Description&gt;</H4>
 <P>This directive defines an object class. Please see the <A HREF="#Schema Specification">Schema Specification</A> chapter for information regarding how to use this directive.</P>
 <H4><A NAME="referral &lt;URI&gt;">5.2.1.7. referral &lt;URI&gt;</A></H4>
 <P>This directive specifies the referral to pass back when slapd cannot find a local database to handle a request.</P>
@@ -963,26 +979,28 @@ SQL Programmable backend
 </PRE>
 <H4><A NAME="replica">5.2.3.3. replica</A></H4>
 <PRE>
-        replica host=&lt;hostname&gt;[:&lt;port&gt;]
-                [bindmethod={ simple | kerberos | sasl }]
+        replica uri=ldap[s]://&lt;hostname&gt;[:&lt;port&gt;] | host=&lt;hostname&gt;[:&lt;port&gt;]
+                [bindmethod={simple|kerberos|sasl}]
                 [&quot;binddn=&lt;DN&gt;&quot;]
-                [mech=&lt;mech&gt;]
+                [saslmech=&lt;mech&gt;]
                 [authcid=&lt;identity&gt;]
                 [authzid=&lt;identity&gt;]
                 [credentials=&lt;password&gt;]
                 [srvtab=&lt;filename&gt;]
 </PRE>
-<P>This directive specifies a replication site for this database. The <TT>host=</TT> parameter specifies a host and optionally a port where the slave slapd instance can be found. Either a domain name or IP address may be used for &lt;hostname&gt;. If &lt;port&gt; is not given, the standard LDAP port number (389) is used.</P>
-<P>The <TT>binddn=</TT> parameter gives the DN to bind as for updates to the slave slapd. It should be a DN which has read/write access to the slave slapd's database, typically given as a <TT>rootdn</TT> in the slave's config file. It must also match the <TT>updatedn</TT> directive in the slave slapd's config file. Since DNs are likely to contain embedded spaces, the entire <TT>&quot;binddn=&lt;DN&gt;&quot;</TT> string should be enclosed in double quotes.</P>
+<P>This directive specifies a replication site for this database. The <TT>uri=</TT> parameter specifies a scheme, a host and optionally a port where the slave slapd instance can be found. Either a domain name or IP address may be used for &lt;hostname&gt;. If &lt;port&gt; is not given, the standard LDAP port number (389 or 636) is used.</P>
+<P><TT>host</TT> is deprecated in favor of the <TT>uri</TT> parameter.</P>
+<P><TT>uri</TT> allows the replica LDAP server to be specified as an LDAP URI such as <TT>ldap://slave.example.com:389</TT> or <TT>ldaps://slave.example.com:636</TT>.</P>
+<P>The <TT>binddn=</TT> parameter gives the DN to bind as for updates to the slave slapd. It should be a DN which has read/write access to the slave slapd's database.  It must also match the <TT>updatedn</TT> directive in the slave slapd's config file.  Generally, this DN <EM>should not</EM> be the same as the <TT>rootdn</TT> of the master database.  Since DNs are likely to contain embedded spaces, the entire <TT>&quot;binddn=&lt;DN&gt;&quot;</TT> string should be enclosed in double quotes.</P>
 <P>The <TT>bindmethod</TT> is <TT>simple</TT> or <TT>kerberos</TT> or <TT>sasl</TT>, depending on whether simple password-based authentication or Kerberos authentication or <TERM>SASL</TERM> authentication is to be used when connecting to the slave slapd.</P>
 <P>Simple authentication should not be used unless adequate integrity and privacy protections are in place (e.g. TLS or IPSEC).  Simple authentication requires specification of <TT>binddn</TT> and <TT>credentials</TT> parameters.</P>
 <P>Kerberos authentication is deprecated in favor of SASL authentication mechanisms, in particular the <TT>KERBEROS_V4</TT> and <TT>GSSAPI</TT> mechanisms.  Kerberos authentication requires <TT>binddn</TT> and <TT>srvtab</TT> parameters.</P>
-<P>SASL authentication is generally recommended.  SASL authentication requires specification of a mechanism using the <TT>mech</TT> parameter. Depending on the mechanism, an authentication identity and/or credentials can be specified using <TT>authcid</TT> and <TT>credentials</TT> respectively.  The <TT>authzid</TT> parameter may be used to specify an authorization identity.</P>
+<P>SASL authentication is generally recommended.  SASL authentication requires specification of a mechanism using the <TT>saslmech</TT> parameter. Depending on the mechanism, an authentication identity and/or credentials can be specified using <TT>authcid</TT> and <TT>credentials</TT> respectively.  The <TT>authzid</TT> parameter may be used to specify an authorization identity.</P>
 <P>See the chapter entitled <A HREF="#Replication with slurpd">Replication with slurpd</A> for more information on how to use this directive.</P>
 <H4><A NAME="replogfile &lt;filename&gt;">5.2.3.4. replogfile &lt;filename&gt;</A></H4>
 <P>This directive specifies the name of the replication log file to which slapd will log changes. The replication log is typically written by slapd and read by slurpd. Normally, this directive is only used if slurpd is being used to replicate the database. However, you can also use it to generate a transaction log, if slurpd is not running. In this case, you will need to periodically truncate the file, since it will grow indefinitely otherwise.</P>
 <P>See the chapter entitled <A HREF="#Replication with slurpd">Replication with slurpd</A> for more information on how to use this directive.</P>
-<H4><A NAME="rootdn &lt;dn&gt;">5.2.3.5. rootdn &lt;dn&gt;</A></H4>
+<H4><A NAME="rootdn &lt;DN&gt;">5.2.3.5. rootdn &lt;DN&gt;</A></H4>
 <P>This directive specifies the DN that is not subject to access control or administrative limit restrictions for operations on this database.  The DN need not refer to an entry in this database or even in the directory. The DN may refer to a SASL identity.</P>
 <P>Entry-based Example:</P>
 <PRE>
@@ -1015,7 +1033,45 @@ SQL Programmable backend
 <P><HR WIDTH="80%" ALIGN="Left">
 <STRONG>Note: </STRONG>When the backend to pass a query to is selected, slapd looks at the suffix line(s) in each database definition in the order they appear in the file. Thus, if one database suffix is a prefix of another, it must appear after it in the config file.
 <HR WIDTH="80%" ALIGN="Left"></P>
-<H4><A NAME="updatedn &lt;dn&gt;">5.2.3.8. updatedn &lt;dn&gt;</A></H4>
+<H4><A NAME="syncrepl">5.2.3.8. syncrepl</A></H4>
+<PRE>
+        syncrepl rid=&lt;replica ID&gt;
+                provider=ldap[s]://&lt;hostname&gt;[:port]
+                [type=refreshOnly|refreshAndPersist]
+                [interval=dd:hh:mm:ss]
+                [searchbase=&lt;base DN&gt;]
+                [filter=&lt;filter str&gt;]
+                [scope=sub|one|base]
+                [attrs=&lt;attr list&gt;]
+                [attrsonly]
+                [sizelimit=&lt;limit&gt;]
+                [timelimit=&lt;limit&gt;]
+                [schemachecking=on|off]
+                [updatedn=&lt;DN&gt;]
+                [bindmethod=simple|sasl]
+                [binddn=&lt;DN&gt;]
+                [saslmech=&lt;mech&gt;]
+                [authcid=&lt;identity&gt;]
+                [authzid=&lt;identity&gt;]
+                [credentials=&lt;passwd&gt;]
+                [realm=&lt;realm&gt;]
+                [secprops=&lt;properties&gt;]
+</PRE>
+<P>This directive specifies the current database as a replica of the master content by establishing the current <EM>slapd</EM>(8) as a replication consumer site running a syncrepl replication engine. The master database is located at the replication provider site specified by the <TT>provider</TT> parameter. The replica database is kept up-to-date with the master content using the LDAP Content Synchronization protocol. See <TT>draft-zeilenga-ldup-sync-xx.txt</TT> (<EM>a work in progress</EM>) for more information on the protocol.</P>
+<P>The <TT>rid</TT> parameter is used for identification of the current <TT>syncrepl</TT> directive within the replication consumer server, where <TT>&lt;replica ID&gt;</TT> uniquely identifies the syncrepl specification described by the current <TT>syncrepl</TT> directive. <TT>&lt;replica ID&gt;</TT> is non-negative and is no more than three decimal digits in length.</P>
+<P>The <TT>provider</TT> parameter specifies the replication provider site containing the master content as an LDAP URI. The <TT>provider</TT> parameter specifies a scheme, a host and optionally a port where the provider slapd instance can be found. Either a domain name or IP address may be used for &lt;hostname&gt;. Examples are <TT>ldap://provider.example.com:389</TT> or <TT>ldaps://192.168.1.1:636</TT>. If &lt;port&gt; is not given, the standard LDAP port number (389 or 636) is used. Note that the syncrepl uses a consumer-initiated protocol, and hence its specification is located at the consumer site, whereas the <TT>replica</TT> specification is located at the provider site. <TT>syncrepl</TT> and <TT>replica</TT> directives define two independent replication mechanisms. They do not represent the replication peers of each other.</P>
+<P>The content of the syncrepl replica is defined using a search specification as its result set. The consumer slapd will send search requests to the provider slapd according to the search specification. The search specification includes <TT>searchbase</TT>, <TT>scope</TT>, <TT>filter</TT>, <TT>attrs</TT>, <TT>attrsonly</TT>, <TT>sizelimit</TT>, and <TT>timelimit</TT> parameters as in the normal search specification. The syncrepl search specification has the same value syntax and the same default values as in the <EM>ldapsearch</EM>(1) client search tool.</P>
+<P>The LDAP Content Synchronization protocol has two operation types: <TT>refreshOnly</TT> and <TT>refreshAndPersist</TT>. The operation type is specified by the <TT>type</TT> parameter. In the <TT>refreshOnly</TT> operation, the next synchronization search operation is periodically rescheduled at an interval time after each synchronization operation finishes. The interval is specified by the <TT>interval</TT> parameter. It is set to one day by default. In the <TT>refreshAndPersist</TT> operation, a synchronization search remains persistent in the provider slapd. Further updates to the master replica will generate <TT>searchResultEntry</TT> to the consumer slapd as the search responses to the persistent synchronization search.</P>
+<P>The schema checking can be enforced at the LDAP Sync consumer site by turning on the <TT>schemachecking</TT> parameter. If it is turned on, every replicated entry will be checked for its schema as the entry is stored into the replica content. Every entry in the replica should contain those attributes required by the schema definition. If it is turned off, entries will be stored without checking schema conformance. The default is off.</P>
+<P>The <TT>updatedn</TT> parameter specifies the DN in the consumer site which is allowed to make changes to the replica. This DN is used locally by the syncrepl engine when updating the replica with the entries received from the provider site by using the internal operation mechanism. The update of the replica content is subject to the access control privileges of the DN.  The DN should have read/write access to the replica database.  Generally, this DN <EM>should not</EM> be the same as <TT>rootdn</TT>.</P>
+<P>The <TT>binddn</TT> parameter gives the DN to bind as for the syncrepl searches to the provider slapd. It should be a DN which has read access to the replication content in the master database.</P>
+<P>The <TT>bindmethod</TT> is <TT>simple</TT> or <TT>sasl</TT>, depending on whether simple password-based authentication or <TERM>SASL</TERM> authentication is to be used when connecting to the provider slapd.</P>
+<P>Simple authentication should not be used unless adequate integrity and privacy protections are in place (e.g. TLS or IPSEC). Simple authentication requires specification of <TT>binddn</TT> and <TT>credentials</TT> parameters.</P>
+<P>SASL authentication is generally recommended.  SASL authentication requires specification of a mechanism using the <TT>saslmech</TT> parameter. Depending on the mechanism, an authentication identity and/or credentials can be specified using <TT>authcid</TT> and <TT>credentials</TT>, respectively.  The <TT>authzid</TT> parameter may be used to specify an authorization identity.</P>
+<P>The <TT>realm</TT> parameter specifies a realm which a certain mechanisms authenticate the identity within. The <TT>secprops</TT> parameter specifies Cyrus SASL security properties.</P>
+<P>The syncrepl replication mechanism is supported by the three native backends: back-bdb, back-hdb, and back-ldbm.</P>
+<P>See the <A HREF="#LDAP Sync Replication">LDAP Sync Replication</A> chapter of the admin guide for more information on how to use this directive.</P>
+<H4><A NAME="updatedn &lt;DN&gt;">5.2.3.9. updatedn &lt;DN&gt;</A></H4>
 <P>This directive is only applicable in a slave slapd. It specifies the DN allowed to make changes to the replica.  This may be the DN <EM>slurpd</EM>(8) binds as when making changes to the replica or the DN associated with a SASL identity.</P>
 <P>Entry-based Example:</P>
 <PRE>
@@ -1026,7 +1082,7 @@ SQL Programmable backend
         updatedn &quot;uid=slurpd,cn=example.com,cn=digest-md5,cn=auth&quot;
 </PRE>
 <P>See the <A HREF="#Replication with slurpd">Replication with slurpd</A> chapter for more information on how to use this directive.</P>
-<H4><A NAME="updateref &lt;URL&gt;">5.2.3.9. updateref &lt;URL&gt;</A></H4>
+<H4><A NAME="updateref &lt;URL&gt;">5.2.3.10. updateref &lt;URL&gt;</A></H4>
 <P>This directive is only applicable in a slave slapd. It specifies the URL to return to clients which submit update requests upon the replica. If specified multiple times, each <TERM>URL</TERM> is provided.</P>
 <P>Example:</P>
 <PRE>
@@ -1040,6 +1096,9 @@ SQL Programmable backend
 <PRE>
         directory /usr/local/var/openldap-data
 </PRE>
+<H4><A NAME="sessionlog &lt;sid&gt; &lt;limit&gt;">5.2.4.2. sessionlog &lt;sid&gt; &lt;limit&gt;</A></H4>
+<P>This directive specifies a session log store in the syncrepl replication provider server which contains information on the entries that have been scoped out of the replication content identified by <TT>&lt;sid&gt;</TT>. The first syncrepl search request having the same <TT>&lt;sid&gt;</TT> value in the cookie establishes the session log store in the provider server. The number of the entries in the session log store is limited by <TT>&lt;limit&gt;</TT>. Excessive entries are removed from the store in the FIFO order. Both <TT>&lt;sid&gt;</TT> and <TT>&lt;limit&gt;</TT> are non-negative integers. <TT>&lt;sid&gt;</TT> has no more than three decimal digits.</P>
+<P>The LDAP Content Synchronization operation that falls into a pre-existing session can use the session log store in order to reduce the amount of synchronization traffic. If the replica is not so outdated that it can be made up-to-date by the information in the session store, the provider slapd will send the consumer slapd the identities of the scoped-out entries together with the in-scope entries added to or modified within the replication content. If the replica status is outdated too much and beyond the coverage of the history store, then the provider slapd will send the identities of the unchanged in-scope entries along with the changed in-scope entries. The consumer slapd will then remove those entries in the replica which are not identified as present in the provider content.</P>
 <H3><A NAME="LDBM Database Directives">5.2.5. LDBM Database Directives</A></H3>
 <P>Directives in this category only apply to a <TERM>LDBM</TERM> database. That is, they must follow a &quot;database ldbm&quot; line and come before any subsequent &quot;backend&quot; or &quot;database&quot; line.  For a complete reference of LDBM configuration directives, see <EM>slapd-ldbm</EM>(5).</P>
 <H4><A NAME="cachesize &lt;integer&gt;">5.2.5.1. cachesize &lt;integer&gt;</A></H4>
@@ -1094,7 +1153,7 @@ SQL Programmable backend
                 [filter=&lt;ldapfilter&gt;] [attrs=&lt;attrlist&gt;]
         &lt;basic-style&gt; ::= regex | exact
         &lt;scope-style&gt; ::= base | one | subtree | children
-        &lt;attrlist&gt; ::= &lt;attr&gt; | &lt;attr&gt; , &lt;attrlist&gt;
+        &lt;attrlist&gt; ::= &lt;attr&gt; [val[.&lt;basic-style&gt;]=&lt;regex&gt;] | &lt;attr&gt; , &lt;attrlist&gt;
         &lt;attr&gt; ::= &lt;attrname&gt; | entry | children
         &lt;who&gt; ::= * | [anonymous | users | self
                         | dn[.&lt;basic-style&gt;]=&lt;regex&gt; | dn.&lt;scope-style&gt;=&lt;DN&gt;]
@@ -1108,18 +1167,18 @@ SQL Programmable backend
                 [aci=&lt;attrname&gt;]
         &lt;access&gt; ::= [self]{&lt;level&gt;|&lt;priv&gt;}
         &lt;level&gt; ::= none | auth | compare | search | read | write
-        &lt;priv&gt; ::= {=|+|-}{w|r|s|c|x}+
+        &lt;priv&gt; ::= {=|+|-}{w|r|s|c|x|0}+
         &lt;control&gt; ::= [stop | continue | break]
 </PRE>
 <P>where the &lt;what&gt; part selects the entries and/or attributes to which the access applies, the <TT>&lt;who&gt;</TT> part specifies which entities are granted access, and the <TT>&lt;access&gt;</TT> part specifies the access granted. Multiple <TT>&lt;who&gt; &lt;access&gt; &lt;control&gt;</TT> triplets are supported, allowing many entities to be granted different access to the same set of entries and attributes. Not all of these access control options are described here; for more details see the <EM>slapd.access</EM>(5) man page.</P>
 <H3><A NAME="What to control access to">5.3.1. What to control access to</A></H3>
 <P>The &lt;what&gt; part of an access specification determines the entries and attributes to which the access control applies.  Entries are commonly selected in two ways: by DN and by filter.  The following qualifiers select entries by DN:</P>
 <PRE>
-        by *
-        by dn[.&lt;basic-style&gt;]=&lt;regex&gt;
-        by dn.&lt;scope-style&gt;=&lt;DN&gt;
+        to *
+        to dn[.&lt;basic-style&gt;]=&lt;regex&gt;
+        to dn.&lt;scope-style&gt;=&lt;DN&gt;
 </PRE>
-<P>The first form is used to select all entries.  The second form may be used to select entries by matching a regular expression against the target entry's <EM>normalized DN</EM>.   (The second form is not discussed further in this document.)  The third form is used to select entries which are within the requested scope of DN.  The &lt;DN&gt; is a string representation of the Distinguished Name, as described in <A HREF="ftp://ftp.isi.edu/in-notes/rfc2253.txt">RFC2253</A>.</P>
+<P>The first form is used to select all entries.  The second form may be used to select entries by matching a regular expression against the target entry's <EM>normalized DN</EM>.   (The second form is not discussed further in this document.)  The third form is used to select entries which are within the requested scope of DN.  The &lt;DN&gt; is a string representation of the Distinguished Name, as described in <A HREF="http://www.rfc-editor.org/rfc/rfc2253.txt">RFC2253</A>.</P>
 <P>The scope can be either <TT>base</TT>, <TT>one</TT>, <TT>subtree</TT>, or <TT>children</TT>.  Where <TT>base</TT> matches only the entry with provided DN, <TT>one</TT> matches the entries whose parent is the provided DN, <TT>subtree</TT> matches all entries in the subtree whose root is the provided DN, and <TT>children</TT> matches all entries under the DN (but not the entry named by the DN).</P>
 <P>For example, if the directory contained entries named:</P>
 <PRE>
@@ -1141,21 +1200,25 @@ SQL Programmable backend
 <TT>dn.children=&quot;ou=people,o=suffix&quot;</TT> match 3, 4, and 5.</UL>
 <P>Entries may also be selected using a filter:</P>
 <PRE>
-        by filter=&lt;ldap filter&gt;
+        to filter=&lt;ldap filter&gt;
 </PRE>
-<P>where &lt;ldap filter&gt; is a string representation of an LDAP search filter, as described in <A HREF="ftp://ftp.isi.edu/in-notes/rfc2254.txt">RFC2254</A>.  For example:</P>
+<P>where &lt;ldap filter&gt; is a string representation of an LDAP search filter, as described in <A HREF="http://www.rfc-editor.org/rfc/rfc2254.txt">RFC2254</A>.  For example:</P>
 <PRE>
-        by filter=(objectClass=person)
+        to filter=(objectClass=person)
 </PRE>
-<P>Note that entries by be select by both DN and filter by include both qualifiers in the &lt;what&gt; clause.</P>
+<P>Note that entries may be selected by both DN and filter by including both qualifiers in the &lt;what&gt; clause.</P>
 <PRE>
-        by dn.one=&quot;ou=people,o=suffix&quot; filter=(objectClass=person)
+        to dn.one=&quot;ou=people,o=suffix&quot; filter=(objectClass=person)
 </PRE>
 <P>Attributes within an entry are selected by including a comma-separated list of attribute names in the &lt;what&gt; selector:</P>
 <PRE>
         attrs=&lt;attribute list&gt;
 </PRE>
-<P>There are two special <EM>psuedo</EM> attributes <TT>entry</TT> and <TT>children</TT>.  To read (and hence return) an target entry, the subject must have <TT>read</TT> access to the target's <EM>entry</EM> attribute.  To add or delete an entry, the subject must have <TT>write</TT> access to the entry's <TT>entry</TT> attribute AND must have <TT>write</TT> access to the entry's parent's <TT>children</TT> attribute.  To rename an entry, the subject must have <TT>write</TT> access to entry's <TT>entry</TT> attribute AND have <TT>write</TT> access to both the old parent's and new parent's <TT>children</TT> attributes.  The complete examples at the end of this section should help clear things up.</P>
+<P>A specific value of an attribute is selected by using a single attribute name and also using a value selector:</P>
+<PRE>
+        attrs=&lt;attribute&gt; val[.&lt;style&gt;]=&lt;regex&gt;
+</PRE>
+<P>There are two special <EM>pseudo</EM> attributes <TT>entry</TT> and <TT>children</TT>.  To read (and hence return) a target entry, the subject must have <TT>read</TT> access to the target's <EM>entry</EM> attribute.  To add or delete an entry, the subject must have <TT>write</TT> access to the entry's <TT>entry</TT> attribute AND must have <TT>write</TT> access to the entry's parent's <TT>children</TT> attribute.  To rename an entry, the subject must have <TT>write</TT> access to entry's <TT>entry</TT> attribute AND have <TT>write</TT> access to both the old parent's and new parent's <TT>children</TT> attributes.  The complete examples at the end of this section should help clear things up.</P>
 <P>Lastly, there is a special entry selector <TT>&quot;*&quot;</TT> that is used to select any entry.  It is used when no other <TT>&lt;what&gt;</TT> selector has been provided.  It's equivalent to &quot;<TT>dn=.*</TT>&quot;</P>
 <H3><A NAME="Who to grant access to">5.3.2. Who to grant access to</A></H3>
 <P>The &lt;who&gt; part identifies the entity or entities being granted access. Note that access is granted to &quot;entities&quot; not &quot;entries.&quot; The following table summarizes entity specifiers:</P>
@@ -1220,15 +1283,12 @@ Users within scope of a DN
 </TABLE>
 
 <P>The DN specifier behaves much like &lt;what&gt; clause DN specifiers.</P>
-<P>Other control factors are also supported. For example, a <TT>&lt;who&gt;</TT> can be restricted by a regular expression matching the client's domain name:</P>
-<PRE>
-        domain=&lt;regular expression&gt;
-</PRE>
-<P>or by an entry listed in a DN-valued attribute in the entry to which the access applies:</P>
+<P>Other control factors are also supported.  For example, a <TT>&lt;who&gt;</TT> can be restricted by an entry listed in a DN-valued attribute in the entry to which the access applies:</P>
 <PRE>
         dnattr=&lt;dn-valued attribute name&gt;
 </PRE>
 <P>The dnattr specification is used to give access to an entry whose DN is listed in an attribute of the entry (e.g., give access to a group entry to whoever is listed as the owner of the group entry).</P>
+<P>Some factors may not be appropriate in all environments (or any). For example, the domain factor relies on IP to domain name lookups. As these can easily spoofed, the domain factor should not be avoided.</P>
 <H3><A NAME="The access to grant">5.3.3. The access to grant</A></H3>
 <P>The kind of &lt;access&gt; granted can be one of the following:</P>
 <TABLE CLASS="columns" BORDER ALIGN='Center'>
@@ -1249,7 +1309,7 @@ Users within scope of a DN
 <TT>none</TT>
 </TD>
 <TD ALIGN='Right'>
-<TT>&nbsp;</TT>
+<TT>=0</TT>
 </TD>
 <TD ALIGN='Left'>
 no access
@@ -1330,7 +1390,7 @@ needed to modify/rename
                 by anonymous auth
                 by * read
 </PRE>
-<P>This directive allows users to modify their own entries, allows authenticate, and allows all others to read.  Note that only the first <TT>by &lt;who&gt;</TT> clause which matches applies.  Hence, the anonymous users are granted <TT>auth</TT>, not <TT>read</TT>.  The last clause could just as well have been &quot;<TT>by users read</TT>&quot;.</P>
+<P>This directive allows the user to modify their entry, allows anonymous to authentication against these entries, and allows all others to read these entries.  Note that only the first <TT>by &lt;who&gt;</TT> clause which matches applies.  Hence, the anonymous users are granted <TT>auth</TT>, not <TT>read</TT>.  The last clause could just as well have been &quot;<TT>by users read</TT>&quot;.</P>
 <P>It is often desirable to restrict operations based upon the level of protection in place.  The following shows how security strength factors (SSF) can be used.</P>
 <PRE>
         access to *
@@ -1338,8 +1398,8 @@ needed to modify/rename
                 by ssf=64 anonymous auth
                 by ssf=64 users read
 </PRE>
-<P>This directive allows users to modify their own entries if security protections have of strength 128 or better have been established, allows simple authentication and read access when 64 or better security protections have been established.</P>
-<P>The following example shows the use of a regular expression to select the entries by DN in two access directives where ordering is significant.</P>
+<P>This directive allows users to modify their own entries if security protections have of strength 128 or better have been established, allows authentication access to anonymous users, and read access when 64 or better security protections have been established.  If client has not establish sufficient security protections, the implicit <TT>by * none</TT> clause would be applied.</P>
+<P>The following example shows the use of a style specifiers to select the entries by DN in two access directives where ordering is significant.</P>
 <PRE>
         access to dn.children=&quot;dc=example,dc=com&quot;
                 by * search
@@ -1353,13 +1413,13 @@ needed to modify/rename
         access to dn.subtree=&quot;dc=example,dc=com&quot; attr=homePhone
                 by self write
                 by dn.children=dc=example,dc=com&quot; search
-                by domain=.*\.example\.com read
+                by peername=IP:10\..+ read
         access to dn.subtree=&quot;dc=example,dc=com&quot;
                 by self write
                 by dn.children=&quot;dc=example,dc=com&quot; search
                 by anonymous auth
 </PRE>
-<P>This example applies to entries in the &quot;<TT>dc=example,dc=com</TT>&quot; subtree. To all attributes except <TT>homePhone</TT>, an entry can write to itself, entries under <TT>example.com</TT> entries can search by them, anybody else has no access (implicit <TT>by * none</TT>) excepting for authentication/authorization (which is always done anonymously).  The <TT>homePhone</TT> attribute is writable by the entry, searchable by entries under <TT>example.com</TT>, readable by clients connecting from somewhere in the <TT>example.com</TT> domain, and otherwise not readable (implicit <TT>by * none</TT>).  All other access is denied by the implicit <TT>access to * by * none</TT>.</P>
+<P>This example applies to entries in the &quot;<TT>dc=example,dc=com</TT>&quot; subtree. To all attributes except <TT>homePhone</TT>, an entry can write to itself, entries under <TT>example.com</TT> entries can search by them, anybody else has no access (implicit <TT>by * none</TT>) excepting for authentication/authorization (which is always done anonymously).  The <TT>homePhone</TT> attribute is writable by the entry, searchable by entries under <TT>example.com</TT>, readable by clients connecting from network 10, and otherwise not readable (implicit <TT>by * none</TT>).  All other access is denied by the implicit <TT>access to * by * none</TT>.</P>
 <P>Sometimes it is useful to permit a particular DN to add or remove itself from an attribute. For example, if you would like to create a group and allow people to add and remove only their own DN from the member attribute, you could accomplish it with an access directive like this:</P>
 <PRE>
         access to attr=member,entry
@@ -1386,10 +1446,10 @@ needed to modify/rename
  10.    rootpw secret
  11.    # replication directives
  12.    replogfile /usr/local/var/openldap/slapd.replog
- 13.    replica host=slave1.example.com:389
+ 13.    replica uri=ldap://slave1.example.com:389
  14.            binddn=&quot;cn=Replicator,dc=example,dc=com&quot;
  15.            bindmethod=simple credentials=secret
- 16.    replica host=slave2.example.com
+ 16.    replica uri=ldaps://slave2.example.com:636
  17.            binddn=&quot;cn=Replicator,dc=example,dc=com&quot;
  18.            bindmethod=simple credentials=secret
  19.    # indexed attribute definitions
@@ -1733,7 +1793,7 @@ print entry parsing debugging
 </PRE>
 <P>where <TT>-n</TT> or <TT>-b</TT> is used to select the database in the <EM>slapd.conf</EM>(5) specified using <TT>-f</TT>.  The corresponding <TERM>LDIF</TERM> output is written to standard output or to the file specified using the <TT>-l</TT> option.</P>
 <H2><A NAME="The LDIF text entry format">7.3. The LDIF text entry format</A></H2>
-<P>The <TERM>LDAP Data Interchange Format</TERM> (LDIF) is used to represent LDAP entries in a simple text format.  This section provides a brief description of the LDIF entry format which complements <EM>ldif</EM>(5) and the technical specification <A HREF="ftp://ftp.isi.edu/in-notes/rfc2849.txt">RFC2849</A>.</P>
+<P>The <TERM>LDAP Data Interchange Format</TERM> (LDIF) is used to represent LDAP entries in a simple text format.  This section provides a brief description of the LDIF entry format which complements <EM>ldif</EM>(5) and the technical specification <A HREF="http://www.rfc-editor.org/rfc/rfc2849.txt">RFC2849</A>.</P>
 <P>The basic form of an entry is:</P>
 <PRE>
         # comment
@@ -1805,7 +1865,8 @@ print entry parsing debugging
 <P></P>
 <HR>
 <H1><A NAME="Schema Specification">8. Schema Specification</A></H1>
-<P>This chapter describes how to extend the user schema used by <EM>slapd</EM>(8). The first section, <A HREF="#Distributed Schema Files">Distributed Schema Files</A> details optional schema definitions provided in the distribution and where to obtain other definitions. The second section, <A HREF="#Extending Schema">Extending Schema</A>, details how to define new schema items.</P>
+<P>This chapter describes how to extend the user schema used by <EM>slapd</EM>(8).  The chapter assumes the reader is familar with the <TERM>LDAP</TERM>/<TERM>X.500</TERM> information model.</P>
+<P>The first section, <A HREF="#Distributed Schema Files">Distributed Schema Files</A> details optional schema definitions provided in the distribution and where to obtain other definitions. The second section, <A HREF="#Extending Schema">Extending Schema</A>, details how to define new schema items.</P>
 <P>This chapter does not discuss how to extend system schema used by <EM>slapd</EM>(8) as this requires source code modification.  System schema includes all operational attribute types or any object class which allows or requires an operational attribute (directly or indirectly).</P>
 <H2><A NAME="Distributed Schema Files">8.1. Distributed Schema Files</A></H2>
 <P>OpenLDAP is distributed with a set of schema specifications for your use.  Each set is defined in a file suitable for inclusion (using the <TT>include</TT> directive) in your <EM>slapd.conf</EM>(5) file.  These schema files are normally installed in the <TT>/usr/local/etc/openldap/schema</TT> directory.</P>
@@ -1984,9 +2045,9 @@ myObjectClass
         include /usr/local/etc/openldap/schema/local.schema
 </PRE>
 <H3><A NAME="Attribute Type Specification">8.2.4. Attribute Type Specification</A></H3>
-<P>The <EM>attributetype</EM> directive is used to define a new attribute type.  The directive uses the same Attribute Type Description (as defined in <A HREF="ftp://ftp.isi.edu/in-notes/rfc2252.txt">RFC2252</A>) used by the attributeTypes attribute found in the subschema subentry, e.g.:</P>
+<P>The <EM>attributetype</EM> directive is used to define a new attribute type.  The directive uses the same Attribute Type Description (as defined in <A HREF="http://www.rfc-editor.org/rfc/rfc2252.txt">RFC2252</A>) used by the attributeTypes attribute found in the subschema subentry, e.g.:</P>
 <PRE>
-        attributetype &lt;<A HREF="ftp://ftp.isi.edu/in-notes/rfc2252.txt">RFC2252</A> Attribute Type Description&gt;
+        attributetype &lt;<A HREF="http://www.rfc-editor.org/rfc/rfc2252.txt">RFC2252</A> Attribute Type Description&gt;
 </PRE>
 <P>where Attribute Type Description is defined by the following <TERM>BNF</TERM>:</P>
 <PRE>
@@ -2054,40 +2115,29 @@ boolean value
 </TR>
 <TR>
 <TD>
-<TT>distinguishedName</TT>
-</TD>
-<TD>
-<TT>1.3.6.1.4.1.1466.115.121.1.12</TT>
-</TD>
-<TD>
-DN
-</TD>
-</TR>
-<TR>
-<TD>
 <TT>directoryString</TT>
 </TD>
 <TD>
 <TT>1.3.6.1.4.1.1466.115.121.1.15</TT>
 </TD>
 <TD>
-UTF-8 string
+Unicode (UTF-8) string
 </TD>
 </TR>
 <TR>
 <TD>
-<TT>IA5String</TT>
+<TT>distinguishedName</TT>
 </TD>
 <TD>
-<TT>1.3.6.1.4.1.1466.115.121.1.26</TT>
+<TT>1.3.6.1.4.1.1466.115.121.1.12</TT>
 </TD>
 <TD>
-ASCII string
+LDAP DN
 </TD>
 </TR>
 <TR>
 <TD>
-<TT>Integer</TT>
+<TT>integer</TT>
 </TD>
 <TD>
 <TT>1.3.6.1.4.1.1466.115.121.1.27</TT>
@@ -2098,18 +2148,7 @@ integer
 </TR>
 <TR>
 <TD>
-<TT>Name and Optional UID</TT>
-</TD>
-<TD>
-<TT>1.3.6.1.4.1.1466.115.121.1.34</TT>
-</TD>
-<TD>
-DN plus UID
-</TD>
-</TR>
-<TR>
-<TD>
-<TT>Numeric String</TT>
+<TT>numericString</TT>
 </TD>
 <TD>
 <TT>1.3.6.1.4.1.1466.115.121.1.36</TT>
@@ -2131,24 +2170,13 @@ object identifier
 </TR>
 <TR>
 <TD>
-<TT>Octet String</TT>
+<TT>octetString</TT>
 </TD>
 <TD>
 <TT>1.3.6.1.4.1.1466.115.121.1.40</TT>
 </TD>
 <TD>
 arbitary octets
-</TD>
-</TR>
-<TR>
-<TD>
-<TT>Printable String</TT>
-</TD>
-<TD>
-<TT>1.3.6.1.4.1.1466.115.121.1.44</TT>
-</TD>
-<TD>
-printable string
 </TD>
 </TR>
 </TABLE>
@@ -2178,83 +2206,6 @@ equality
 </TD>
 <TD>
 boolean
-</TD>
-</TR>
-<TR>
-<TD>
-<TT>octetStringMatch</TT>
-</TD>
-<TD>
-equality
-</TD>
-<TD>
-octet string
-</TD>
-</TR>
-<TR>
-<TD>
-<TT>objectIdentiferMatch</TT>
-</TD>
-<TD>
-equality
-</TD>
-<TD>
-OID
-</TD>
-</TR>
-<TR>
-<TD>
-<TT>distinguishedNameMatch</TT>
-</TD>
-<TD>
-equality
-</TD>
-<TD>
-DN
-</TD>
-</TR>
-<TR>
-<TD>
-<TT>uniqueMemberMatch</TT>
-</TD>
-<TD>
-equality
-</TD>
-<TD>
-Name with optional UID
-</TD>
-</TR>
-<TR>
-<TD>
-<TT>numericStringMatch</TT>
-</TD>
-<TD>
-equality
-</TD>
-<TD>
-numerical
-</TD>
-</TR>
-<TR>
-<TD>
-<TT>numericStringOrderingMatch</TT>
-</TD>
-<TD>
-ordering
-</TD>
-<TD>
-numerical
-</TD>
-</TR>
-<TR>
-<TD>
-<TT>numericStringSubstringsMatch</TT>
-</TD>
-<TD>
-substrings
-</TD>
-<TD>
-numerical
 </TD>
 </TR>
 <TR>
@@ -2325,68 +2276,112 @@ case sensitive, space insensitive
 </TR>
 <TR>
 <TD>
-<TT>caseIgnoreIA5Match</TT>
+<TT>distinguishedNameMatch</TT>
 </TD>
 <TD>
 equality
 </TD>
 <TD>
-case insensitive, space insensitive
+distinguished name
 </TD>
 </TR>
 <TR>
 <TD>
-<TT>caseIgnoreIA5OrderingMatch</TT>
-</TD>
-<TD>
-ordering
-</TD>
-<TD>
-case insensitive, space insensitive
-</TD>
-</TR>
-<TR>
-<TD>
-<TT>caseIgnoreIA5SubstringsMatch</TT>
-</TD>
-<TD>
-substrings
-</TD>
-<TD>
-case insensitive, space insensitive
-</TD>
-</TR>
-<TR>
-<TD>
-<TT>caseExactIA5Match</TT>
+<TT>integerMatch</TT>
 </TD>
 <TD>
 equality
 </TD>
 <TD>
-case sensitive, space insensitive
+integer
 </TD>
 </TR>
 <TR>
 <TD>
-<TT>caseExactIA5OrderingMatch</TT>
+<TT>integerOrderingMatch</TT>
 </TD>
 <TD>
 ordering
 </TD>
 <TD>
-case sensitive, space insensitive
+integer
 </TD>
 </TR>
 <TR>
 <TD>
-<TT>caseExactIA5SubstringsMatch</TT>
+<TT>numericStringMatch</TT>
+</TD>
+<TD>
+equality
+</TD>
+<TD>
+numerical
+</TD>
+</TR>
+<TR>
+<TD>
+<TT>numericStringOrderingMatch</TT>
+</TD>
+<TD>
+ordering
+</TD>
+<TD>
+numerical
+</TD>
+</TR>
+<TR>
+<TD>
+<TT>numericStringSubstringsMatch</TT>
 </TD>
 <TD>
 substrings
 </TD>
 <TD>
-case sensitive, space insensitive
+numerical
+</TD>
+</TR>
+<TR>
+<TD>
+<TT>octetStringMatch</TT>
+</TD>
+<TD>
+equality
+</TD>
+<TD>
+octet string
+</TD>
+</TR>
+<TR>
+<TD>
+<TT>octetStringOrderingStringMatch</TT>
+</TD>
+<TD>
+ordering
+</TD>
+<TD>
+octet string
+</TD>
+</TR>
+<TR>
+<TD>
+<TT>octetStringSubstringsStringMatch</TT>
+</TD>
+<TD>
+ordering
+</TD>
+<TD>
+octet string
+</TD>
+</TR>
+<TR>
+<TD>
+<TT>objectIdentiferMatch</TT>
+</TD>
+<TD>
+equality
+</TD>
+<TD>
+object identifier
 </TD>
 </TR>
 </TABLE>
@@ -2395,7 +2390,7 @@ case sensitive, space insensitive
 <P>Neither attribute is restricted to a single value.  Both are meant for usage by user applications.  Neither is obsolete nor collective.</P>
 <P>The following subsections provide a couple of examples.</P>
 <H4><A NAME="myUniqueName">8.2.4.1. myUniqueName</A></H4>
-<P>Many organizations maintain a single unique name for each user. Though one could use <TT>displayName</TT> (<A HREF="ftp://ftp.isi.edu/in-notes/rfc2798.txt">RFC2798</A>), this attribute is really meant to be controlled by the user, not the organization.  We could just copy the definition of <TT>displayName</TT> from <TT>inetorgperson.schema</TT> and replace the OID, name, and description, e.g:</P>
+<P>Many organizations maintain a single unique name for each user. Though one could use <TT>displayName</TT> (<A HREF="http://www.rfc-editor.org/rfc/rfc2798.txt">RFC2798</A>), this attribute is really meant to be controlled by the user, not the organization.  We could just copy the definition of <TT>displayName</TT> from <TT>inetorgperson.schema</TT> and replace the OID, name, and description, e.g:</P>
 <PRE>
         attributetype ( 1.1.2.1.1 NAME 'myUniqueName'
                 DESC 'unique name with my organization'
@@ -2411,7 +2406,7 @@ case sensitive, space insensitive
                 SUP name )
 </PRE>
 <H4><A NAME="myPhoto">8.2.4.2. myPhoto</A></H4>
-<P>Many organizations maintain a photo of each each user.  A <TT>myPhoto</TT> attribute type could be defined to hold a photo. Of course, one could use just use <TT>jpegPhoto</TT> (<A HREF="ftp://ftp.isi.edu/in-notes/rfc2798.txt">RFC2798</A>) (or a subtype) to hold the photo.  However, you can only do this if the photo is in <EM>JPEG File Interchange Format</EM>. Alternatively, an attribute type which uses the <EM>Octet String</EM> syntax can be defined, e.g.:</P>
+<P>Many organizations maintain a photo of each each user.  A <TT>myPhoto</TT> attribute type could be defined to hold a photo. Of course, one could use just use <TT>jpegPhoto</TT> (<A HREF="http://www.rfc-editor.org/rfc/rfc2798.txt">RFC2798</A>) (or a subtype) to hold the photo.  However, you can only do this if the photo is in <EM>JPEG File Interchange Format</EM>. Alternatively, an attribute type which uses the <EM>Octet String</EM> syntax can be defined, e.g.:</P>
 <PRE>
         attributetype ( 1.1.2.1.2 NAME 'myPhoto'
                 DESC 'a photo (application defined format)'
@@ -2420,16 +2415,16 @@ case sensitive, space insensitive
 </PRE>
 <P>In this case, the syntax doesn't specify the format of the photo. It's assumed (maybe incorrectly) that all applications accessing this attribute agree on the handling of values.</P>
 <P>If you wanted to support multiple photo formats, you could define a separate attribute type for each format, prefix the photo with some typing information, or describe the value using <TERM>ASN.1</TERM> and use the <TT>;binary</TT> transfer option.</P>
-<P>Another alternative is for the attribute to hold a <TERM>URI</TERM> pointing to the photo.  You can model such an attribute after <TT>labeledURI</TT> (<A HREF="ftp://ftp.isi.edu/in-notes/rfc2079.txt">RFC2079</A>) or simply create a subtype, e.g.:</P>
+<P>Another alternative is for the attribute to hold a <TERM>URI</TERM> pointing to the photo.  You can model such an attribute after <TT>labeledURI</TT> (<A HREF="http://www.rfc-editor.org/rfc/rfc2079.txt">RFC2079</A>) or simply create a subtype, e.g.:</P>
 <PRE>
         attributetype ( 1.1.2.1.3 NAME 'myPhotoURI'
                 DESC 'URI and optional label referring to a photo'
                 SUP labeledURI )
 </PRE>
 <H3><A NAME="Object Class Specification">8.2.5. Object Class Specification</A></H3>
-<P>The <EM>objectclasses</EM> directive is used to define a new object class.  The directive uses the same Object Class Description (as defined in <A HREF="ftp://ftp.isi.edu/in-notes/rfc2252.txt">RFC2252</A>) used by the objectClasses attribute found in the subschema subentry, e.g.:</P>
+<P>The <EM>objectclasses</EM> directive is used to define a new object class.  The directive uses the same Object Class Description (as defined in <A HREF="http://www.rfc-editor.org/rfc/rfc2252.txt">RFC2252</A>) used by the objectClasses attribute found in the subschema subentry, e.g.:</P>
 <PRE>
-        objectclass &lt;<A HREF="ftp://ftp.isi.edu/in-notes/rfc2252.txt">RFC2252</A> Object Class Description&gt;
+        objectclass &lt;<A HREF="http://www.rfc-editor.org/rfc/rfc2252.txt">RFC2252</A> Object Class Description&gt;
 </PRE>
 <P>where Object Class Description is defined by the following <TERM>BNF</TERM>:</P>
 <PRE>
@@ -2455,7 +2450,7 @@ case sensitive, space insensitive
                 MAY myPhoto )
 </PRE>
 <H4><A NAME="myPerson">8.2.5.2. myPerson</A></H4>
-<P>If your organization would like have a private <EM>structural</EM> object class to instantiate users, you can subclass one of the existing person classes, such as <TT>inetOrgPerson</TT> (<A HREF="ftp://ftp.isi.edu/in-notes/rfc2798.txt">RFC2798</A>), and add any additional attributes which you desire.</P>
+<P>If your organization would like have a private <EM>structural</EM> object class to instantiate users, you can subclass one of the existing person classes, such as <TT>inetOrgPerson</TT> (<A HREF="http://www.rfc-editor.org/rfc/rfc2798.txt">RFC2798</A>), and add any additional attributes which you desire.</P>
 <PRE>
         objectclass ( 1.1.2.2.2 NAME 'myPerson'
                 DESC 'my person'
@@ -2541,21 +2536,45 @@ case sensitive, space insensitive
 <P></P>
 <HR>
 <H1><A NAME="Using SASL">10. Using SASL</A></H1>
-<P>OpenLDAP clients and servers are capable of authenticating via the <TERM>Simple Authentication and Security Layer</TERM> (<TERM>SASL</TERM>) framework, which is detailed in <A HREF="ftp://ftp.isi.edu/in-notes/rfc2222.txt">RFC2222</A>.   This chapter describes how to make use of SASL in OpenLDAP.</P>
-<P>There are several industry standard authentication mechanisms that can be used with SASL, including <TERM>Kerberos</TERM> V4, <TERM>GSSAPI</TERM>, and DIGEST-MD.  The standard client tools provided with OpenLDAP, such as <EM>ldapsearch</EM>(1) and <EM>ldapmodify</EM>(1), will by default attempt to authenticate the user to the <EM>slapd</EM>(8) server using SASL. Basic authentication service can be set up by the LDAP administrator with a few steps, allowing users to be authenticated to the slapd server as their LDAP entry.  With a few extra steps, some users and services can be allowed to exploit SASL's proxy authorization feature, allowing them to authenticate themselves and then switch their identity to that of another user or service.</P>
-<P>This chapter assumes you have read <EM>Cyrus SASL for System Administrators</EM>, provided with the <A HREF="http://asg.web.cmu.edu/cyrus/">Cyrus</A> <A HREF="http://asg.web.cmu.edu/sasl/sasl-library.html">SASL</A> package (in <TT>doc/sysadmin.html</TT>) and have a working Cyrus SASL installation.  You should use the Cyrus SASL <TT>sample_client</TT> and <TT>sample_server</TT> to test your SASL installation before attempting to make use of it in OpenLDAP.</P>
+<P>OpenLDAP clients and servers are capable of authenticating via the <TERM>Simple Authentication and Security Layer</TERM> (<TERM>SASL</TERM>) framework, which is detailed in <A HREF="http://www.rfc-editor.org/rfc/rfc2222.txt">RFC2222</A>.   This chapter describes how to make use of SASL in OpenLDAP.</P>
+<P>There are several industry standard authentication mechanisms that can be used with SASL, including <TERM>GSSAPI</TERM> for <TERM>Kerberos</TERM> V, DIGEST-MD5, and PLAIN and EXTERNAL for use with <TERM>Transport Layer Security</TERM> (TLS).</P>
+<P>The standard client tools provided with OpenLDAP Software, such as <EM>ldapsearch</EM>(1) and <EM>ldapmodify</EM>(1), will by default attempt to authenticate the user to the <EM>slapd</EM>(8) server using SASL. Basic authentication service can be set up by the LDAP administrator with a few steps, allowing users to be authenticated to the slapd server as their LDAP entry.  With a few extra steps, some users and services can be allowed to exploit SASL's proxy authorization feature, allowing them to authenticate themselves and then switch their identity to that of another user or service.</P>
+<P>This chapter assumes you have read <EM>Cyrus SASL for System Administrators</EM>, provided with the <A HREF="http://asg.web.cmu.edu/cyrus/">Cyrus</A> <A HREF="http://asg.web.cmu.edu/sasl/sasl-library.html">SASL</A> package (in <TT>doc/sysadmin.html</TT>) and have a working Cyrus SASL installation.  You should use the Cyrus SASL <TT>sample_client</TT> and <TT>sample_server</TT> to test your SASL installation before attempting to make use of it with OpenLDAP Software.</P>
 <P>Note that in the following text the term <EM>user</EM> is used to describe a person or application entity who is connecting to the LDAP server via an LDAP client, such as <EM>ldapsearch</EM>(1).  That is, the term <EM>user</EM> not only applies to both an individual using an LDAP client, but to an application entity which issues LDAP client operations without direct user control.  For example, an e-mail server which uses LDAP operations to access information held in an LDAP server is an application entity.</P>
 <H2><A NAME="SASL Security Considerations">10.1. SASL Security Considerations</A></H2>
 <P>SASL offers many different authentication mechanisms.  This section briefly outlines security considerations.</P>
-<P>Some mechanisms, such as PLAIN and LOGIN, offer no greater security over LDAP &quot;simple&quot; authentication.  Like &quot;simple&quot; authentication, such mechanisms should not be used unless you have adequate security protections in place.  It is recommended that these mechanisms be used only in conjunction with <TERM>Transport Layer Security</TERM> (TLS).  Use of PLAIN and LOGIN are not discussed further in this document.</P>
-<P>The DIGEST-MD5 mechanism is the mandatory-to-implement authentication mechanism for LDAPv3.  Though DIGEST-MD5 is not a strong authentication mechanism in comparison with trusted third party authentication systems (such as Kerberos or public key systems), yet it does offer significant protections against a number of attacks.  Unlike the CRAM-MD5 mechanism, it prevents chosen plaintext attacks.  DIGEST-MD5 is favored over the weaker and even more dangerous use of plaintext password mechanisms.  The CRAM-MD5 mechanism is deprecated in favor of DIGEST-MD5.  Use of <A HREF="#DIGEST-MD5">DIGEST-MD5</A> is discussed below.</P>
-<P>The KERBEROS_V4 mechanism utilizes Kerberos IV to provide secure authentication services.  There is also a GSSAPI based mechanism which is generally used in conjunction with Kerberos V.  Kerberos is viewed as a secure, distributed authentication system suitable for both small and large enterprises.  Use of <A HREF="#KERBEROS_V4">KERBEROS_V4</A> and <A HREF="#GSSAPI">GSSAPI</A> are discussed below.</P>
+<P>Some mechanisms, such as PLAIN and LOGIN, offer no greater security over LDAP <EM>simple</EM> authentication.  Like LDAP <EM>simple</EM> authentication, such mechanisms should not be used unless you have adequate security protections in place.  It is recommended that these mechanisms be used only in conjunction with <TERM>Transport Layer Security</TERM> (TLS).  Use of PLAIN and LOGIN are not discussed further in this document.</P>
+<P>The DIGEST-MD5 mechanism is the mandatory-to-implement authentication mechanism for LDAPv3.  Though DIGEST-MD5 is not a strong authentication mechanism in comparison with trusted third party authentication systems (such as Kerberos or public key systems), it does offer significant protections against a number of attacks.  Unlike the CRAM-MD5 mechanism, it prevents chosen plaintext attacks.  DIGEST-MD5 is favored over the use of plaintext password mechanisms.  The CRAM-MD5 mechanism is deprecated in favor of DIGEST-MD5.  Use of <A HREF="#DIGEST-MD5">DIGEST-MD5</A> is discussed below.</P>
+<P>The GSSAPI mechanism utilizes Kerberos V to provide secure authentication services.  The KERBEROS_V4 mechanism is available for those using Kerberos IV.  Kerberos is viewed as a secure, distributed authentication system suitable for both small and large enterprises.  Use of <A HREF="#GSSAPI">GSSAPI</A> and <A HREF="#KERBEROS_V4">KERBEROS_V4</A> are discussed below.</P>
 <P>The EXTERNAL mechanism utilizes authentication services provided by lower level network services such as <TERM>TLS</TERM> (TLS).  When used in conjunction with <TERM>TLS</TERM> <TERM>X.509</TERM>-based public key technology, EXTERNAL offers strong authentication.  Use of EXTERNAL is discussed in the <A HREF="#Using TLS">Using TLS</A> chapter.</P>
-<P>There are other strong authentication mechanisms to choose from, including OTP (one time passwords) and SRP (secure remote passwords). These mechanisms are not discussed in this document.</P>
+<P>There are other strong authentication mechanisms to choose from, including <TERM>OTP</TERM> (one time passwords) and <TERM>SRP</TERM> (secure remote passwords).  These mechanisms are not discussed in this document.</P>
 <H2><A NAME="SASL Authentication">10.2. SASL Authentication</A></H2>
 <P>Getting basic SASL authentication running involves a few steps. The first step configures your slapd server environment so that it can communicate with client programs using the security system in place at your site. This usually involves setting up a service key, a public key, or other form of secret. The second step concerns mapping authentication identities to LDAP DN's, which depends on how entries are laid out in your directory. An explanation of the first step will be given in the next section using Kerberos V4 as an example mechanism. The steps necessary for your site's authentication mechanism will be similar, but a guide to every mechanism available under SASL is beyond the scope of this chapter. The second step is described in the section <A HREF="#Mapping Authentication identities to LDAP entries">Mapping Authentication identities to LDAP entries</A>.</P>
-<H3><A NAME="KERBEROS_V4">10.2.1. KERBEROS_V4</A></H3>
+<H3><A NAME="GSSAPI">10.2.1. GSSAPI</A></H3>
+<P>This section describes the use of the SASL GSSAPI mechanism and Kerberos V with OpenLDAP.  It will be assumed that you have Kerberos V deployed, you are familiar with the operation of the system, and that your users are trained in its use.  This section also assumes you have familiarized yourself with the use of the GSSAPI mechanism by reading <EM>Configuring GSSAPI and Cyrus SASL</EM> (provided with Cyrus SASL in the <TT>doc/gssapi</TT> file) and successfully experimented with the Cyrus provided <TT>sample_server</TT> and <TT>sample_client</TT> applications.  General information about Kerberos is available at <A HREF="http://web.mit.edu/kerberos/www/">http://web.mit.edu/kerberos/www/</A>.</P>
+<P>To use the GSSAPI mechanism with <EM>slapd</EM>(8) one must create a service key with a principal for <EM>ldap</EM> service within the realm for the host on which the service runs.  For example, if you run <EM>slapd</EM> on <TT>directory.example.com</TT> and your realm is <TT>EXAMPLE.COM</TT>, you need to create a service key with the principal:</P>
+<PRE>
+        ldap/directory.example.com@EXAMPLE.COM
+</PRE>
+<P>When <EM>slapd</EM>(8) runs, it must have access to this key.  This is generally done by placing the key into a keytab, such as <TT>/etc/krb5.keytab</TT>.</P>
+<P>To use the GSSAPI mechanism to authenticate to the directory, the user obtains a Ticket Granting Ticket (TGT) prior to running the LDAP client.  When using OpenLDAP client tools, the user may mandate use of the GSSAPI mechanism by specifying <TT>-Y GSSAPI</TT> as a command option.</P>
+<P>For the purposes of authentication and authorization, <EM>slapd</EM>(8) associates a non-mapped authentication request DN of the form:</P>
+<PRE>
+        uid=&lt;primary[/instance]&gt;,cn=&lt;realm&gt;,cn=gssapi,cn=auth
+</PRE>
+<P>Continuing our example, a user with the Kerberos principal <TT>kurt@EXAMPLE.COM</TT> would have the associated DN:</P>
+<PRE>
+        uid=kurt,cn=example.com,cn=gssapi,cn=auth
+</PRE>
+<P>and the principal <TT>ursula/admin@FOREIGN.REALM</TT> would have the associated DN:</P>
+<PRE>
+        uid=ursula/admin,cn=foreign.realm,cn=gssapi,cn=auth
+</PRE>
+<H3><A NAME="KERBEROS_V4">10.2.2. KERBEROS_V4</A></H3>
 <P>This section describes the use of the SASL KERBEROS_V4 mechanism with OpenLDAP.  It will be assumed that you are familiar with the workings of the Kerberos IV security system, and that your site has Kerberos IV deployed.  Your users should be familiar with authentication policy, how to receive credentials in a Kerberos ticket cache, and how to refresh expired credentials.</P>
+<P><HR WIDTH="80%" ALIGN="Left">
+<STRONG>Note: </STRONG>KERBEROS_V4 and Kerberos IV are deprecated in favor of GSSAPI and Kerberos V.
+<HR WIDTH="80%" ALIGN="Left"></P>
 <P>Client programs will need to be able to obtain a session key for use when connecting to your LDAP server. This allows the LDAP server to know the identity of the user, and allows the client to know it is connecting to a legitimate server. If encryption layers are to be used, the session key can also be used to help negotiate that option.</P>
 <P>The slapd server runs the service called &quot;<EM>ldap</EM>&quot;, and the server will require a srvtab file with a service key.  SASL aware client programs will be obtaining an &quot;ldap&quot; service ticket with the user's ticket granting ticket (TGT), with the instance of the ticket matching the hostname of the OpenLDAP server. For example, if your realm is named <TT>EXAMPLE.COM</TT> and the slapd server is running on the host named <TT>directory.example.com</TT>, the <TT>/etc/srvtab</TT> file on the server will have a service key</P>
 <PRE>
@@ -2575,30 +2594,10 @@ case sensitive, space insensitive
 </PRE>
 <P>This authentication request DN by itself could be placed into ACL's and <TT>groupOfNames</TT> &quot;member&quot; attributes, since it is of legitimate LDAP DN format. The section <A HREF="#Mapping Authentication identities to LDAP entries">Mapping Authentication identities to LDAP entries</A>, however, tells how to map that DN into the DN of a person's own LDAP entry.</P>
 <P>Also note that this example, being for Kerberos, shows the &lt;realm&gt; portion of the DN being filled in with the Kerberos realm of the company. Several other authentication mechanisms do not employ the concept of a realm, so the &quot;,cn=&lt;realm&gt;&quot; portion of the authentication request DN would not appear.</P>
-<H3><A NAME="GSSAPI">10.2.2. GSSAPI</A></H3>
-<P>This section describes the use of the SASL GSSAPI mechanism and Kerberos V with OpenLDAP. Since Kerberos V is being used, the information is very similar to the previous section.  It will be assumed that you have Kerberos V deployed, you are familiar with the operation of the system, and that your users are trained in its use.  This section also assumes you have familiarized yourself with the use of the GSSAPI mechanism by reading <EM>Configuring GSSAPI and Cyrus SASL</EM> (provided with Cyrus SASL in the <TT>doc/gssapi</TT> file) and successfully experimented with the Cyrus provided <TT>sample_server</TT> and <TT>sample_client</TT> applications.  General information about Kerberos is available at <A HREF="http://web.mit.edu/kerberos/www/">http://web.mit.edu/kerberos/www/</A>.</P>
-<P>To use the GSSAPI mechanism with <EM>slapd</EM>(8) one must create a service key with a principal for <EM>ldap</EM> service within the realm for the host on which the service runs.  For example, if you run <EM>slapd</EM> on <TT>directory.example.com</TT> and your realm is <TT>EXAMPLE.COM</TT>, you need to create a service key with the principal:</P>
-<PRE>
-        ldap/directory.example.com@EXAMPLE.COM
-</PRE>
-<P>When <EM>slapd</EM>(8) runs, it must have access to this key.  This is generally done by placing the key into a keytab, such as <TT>/etc/krb5.keytab</TT>.</P>
-<P>To use the GSSAPI mechanism to authenticate to the directory, the user obtains a Ticket Granting Ticket (TGT) prior to running the LDAP client.  When using OpenLDAP client tools, the user may mandate use of the GSSAPI mechanism by specifying <TT>-Y GSSAPI</TT> as a command option.</P>
-<P>For the purposes of authentication and authorization, <EM>slapd</EM>(8) associates a non-mapped authentication request DN of the form:</P>
-<PRE>
-        uid=&lt;principal&gt;,cn=&lt;realm&gt;,cn=gssapi,cn=auth
-</PRE>
-<P>Continuing our example, a user with the Kerberos principal <TT>kurt@EXAMPLE.COM</TT> would have the associated DN:</P>
-<PRE>
-        uid=kurt,cn=example.com,cn=gssapi,cn=auth
-</PRE>
-<P>and the principal <TT>ursula@FOREIGN.REALM</TT> would have the associated DN:</P>
-<PRE>
-        uid=ursula,cn=foreign.realm,cn=gssapi,cn=auth
-</PRE>
 <H3><A NAME="DIGEST-MD5">10.2.3. DIGEST-MD5</A></H3>
 <P>This section describes the use of the SASL DIGEST-MD5 mechanism using secrets stored either in the directory itself or in Cyrus SASL's own database. DIGEST-MD5 relies on the client and the server sharing a &quot;secret&quot;, usually a password. The server generates a challenge and the client a response proving that it knows the shared secret. This is much more secure than simply sending the secret over the wire.</P>
 <P>Cyrus SASL supports several shared-secret mechanisms. To do this, it needs access to the plaintext password (unlike mechanisms which pass plaintext passwords over the wire, where the server can store a hashed version of the password).</P>
-<P>Secret passwords are normally stored in Cyrus SASL's own <EM>sasldb</EM> database, but if OpenLDAP has been compiled with Cyrus SASL 2.1 it is possible to store the secrets in the LDAP database itself. With Cyrus SASL 1.5, secrets may only be stored in the <EM>sasldb</EM>.  In either case it is very important to apply file access controls and LDAP access controls to prevent exposure of the passwords.</P>
+<P>Secret passwords are normally stored in Cyrus SASL's own <EM>sasldb</EM> database, but if OpenLDAP Software has been compiled with Cyrus SASL 2.1 it is possible to store the secrets in the LDAP database itself. With Cyrus SASL 1.5, secrets may only be stored in the <EM>sasldb</EM>.  In either case it is very important to apply file access controls and LDAP access controls to prevent exposure of the passwords.</P>
 <P>The configuration and commands discussed in this section assume the use of Cyrus SASL 2.1. If you are using version 1.5 then certain features will not be available, and the command names will not have the trailing digit &quot;2&quot;.</P>
 <P>To use secrets stored in <EM>sasldb</EM>, simply add users with the <EM>saslpasswd2</EM> command:</P>
 <PRE>
@@ -2768,9 +2767,9 @@ case sensitive, space insensitive
         dn: cn=WebUpdate,dc=example,dc=com
         saslAuthzTo: ldap:///dc=example,dc=com??sub?(objectclass=Person)
 </PRE>
-<P>then any user who authenticated as cn=WebUpdate,dc=example,dc=com could authorize to any other LDAP entry under the search base &quot;dc=example,dc=com&quot; which has an objectClass of &quot;Person&quot;.</P>
+<P>then any user who authenticated as <TT>cn=WebUpdate,dc=example,dc=com</TT> could authorize to any other LDAP entry under the search base <TT>dc=example,dc=com</TT> which has an objectClass of <TT>Person</TT>.</P>
 <H4><A NAME="Notes on Proxy Authorization Rules">10.3.3.1. Notes on Proxy Authorization Rules</A></H4>
-<P>An LDAP URL in a <TT>saslAuthzTo</TT> or <TT>saslAuthzFrom</TT> attribute will return a set of DNs.  Each DN returned will be checked. Searches which return a large set can cause the authorization process to take an uncomfortably long time. Also, searches should be performed on attributes that have been indexed by slapd.</P>
+<P>An LDAP URL in a <TT>saslAuthzTo</TT> or <TT>saslAuthzFrom</TT> attribute will return a set of DNs.  Each DN returned will be checked.  Searches which return a large set can cause the authorization process to take an uncomfortably long time. Also, searches should be performed on attributes that have been indexed by slapd.</P>
 <P>To help produce more sweeping rules for <TT>saslAuthzFrom</TT> and <TT>saslAuthzTo</TT>, the values of these attributes are allowed to be DNs with regular expression characters in them. This means a source rule like</P>
 <PRE>
         saslAuthzTo: uid=.*,dc=example,dc=com
@@ -2780,7 +2779,7 @@ case sensitive, space insensitive
 <H4><A NAME="Policy Configuration">10.3.3.2. Policy Configuration</A></H4>
 <P>The decision of which type of rules to use, <TT>saslAuthzFrom</TT> or <TT>saslAuthzTo</TT>, will depend on the site's situation. For example, if the set of people who may become a given identity can easily be written as a search filter, then a single destination rule could be written. If the set of people is not easily defined by a search filter, and the set of people is small, it may be better to write a source rule in the entries of each of those people who should be allowed to perform the proxy authorization.</P>
 <P>By default, processing of proxy authorization rules is disabled. The <TT>sasl-authz-policy</TT> directive must be set in the <EM>slapd.conf</EM>(5) file to enable authorization. This directive can be set to <TT>none</TT> for no rules (the default), <TT>from</TT> for source rules, <TT>to</TT> for destination rules, or <TT>both</TT> for both source and destination rules.</P>
-<P>Destination rules are extremely powerful. If ordinary users have access to write the <TT>saslAuthzTo</TT> attribute in their own entries, then they can write rules that would allow them to authorize as anyone else. As such, when using destination rules, the <TT>saslAuthzTo</TT> attribute should be protected with an ACL that only allows privileged users to set its values.</P>
+<P>Destination rules are extremely powerful. If ordinary users have access to write the <TT>saslAuthzTo</TT> attribute in their own entries, then they can write rules that would allow them to authorize as anyone else.  As such, when using destination rules, the <TT>saslAuthzTo</TT> attribute should be protected with an ACL that only allows privileged users to set its values.</P>
 <P></P>
 <HR>
 <H1><A NAME="Using TLS">11. Using TLS</A></H1>
@@ -2788,7 +2787,7 @@ case sensitive, space insensitive
 <H2><A NAME="TLS Certificates">11.1. TLS Certificates</A></H2>
 <P>TLS uses <TERM>X.509</TERM> certificates to carry client and server identities. All servers are required to have valid certificates, whereas client certificates are optional. Clients must have a valid certificate in order to authenticate via SASL EXTERNAL. For more information on creating and managing certificates, see the <A HREF="http://www.openssl.org/">OpenSSL</A> documentation.</P>
 <H3><A NAME="Server Certificates">11.1.1. Server Certificates</A></H3>
-<P>The DN of a server certificate must use the CN attribute to name the server, and the <TT>CN</TT> must carry the server's fully qualified domain name. Additional alias names and wildcards may be present in the <TT>subjectAltName</TT> certificate extension. More details on server certificate names are in <A HREF="ftp://ftp.isi.edu/in-notes/rfc2830.txt">RFC2830</A>.</P>
+<P>The DN of a server certificate must use the CN attribute to name the server, and the <TT>CN</TT> must carry the server's fully qualified domain name. Additional alias names and wildcards may be present in the <TT>subjectAltName</TT> certificate extension. More details on server certificate names are in <A HREF="http://www.rfc-editor.org/rfc/rfc2830.txt">RFC2830</A>.</P>
 <H3><A NAME="Client Certificates">11.1.2. Client Certificates</A></H3>
 <P>The DN of a client certificate can be used directly as an authentication DN. Since X.509 is a part of the <TERM>X.500</TERM> standard and LDAP is also based on X.500, both use the same DN formats and generally the DN in a user's X.509 certificate should be identical to the DN of their LDAP entry. However, sometimes the DNs may not be exactly the same, and so the mapping facility described in <A HREF="#Mapping Authentication identities to LDAP entries">Mapping Authentication identities to LDAP entries</A> can be applied to these DNs as well.</P>
 <H2><A NAME="TLS Configuration">11.2. TLS Configuration</A></H2>
@@ -2819,6 +2818,8 @@ case sensitive, space insensitive
 <HR WIDTH="80%" ALIGN="Left"></P>
 <H3><A NAME="Client Configuration">11.2.2. Client Configuration</A></H3>
 <P>Most of the client configuration directives parallel the server directives. The names of the directives are different, and they go into <EM>ldap.conf</EM>(5) instead of <EM>slapd.conf</EM>(5), but their functionality is mostly the same. Also, while most of these options may be configured on a system-wide basis, they may all be overridden by individual users in their <EM>.ldaprc</EM> files.</P>
+<P>The LDAP Start TLS operation is used in LDAP to initiate TLS negotatation.  All OpenLDAP command line tools support a <E>-Z</E> and <E>-ZZ</E> flag to indicate whether a Start TLS operation is to be issued.  The latter flag indicates that the tool is to cease processing if TLS cannot be started while the former allows the command to continue.</P>
+<P>In LDAPv2 environments, TLS is normally started using the LDAP Secure URI scheme (<TT>ldaps://</TT>) instead of the normal LDAP URI scheme (<TT>ldap://</TT>).  OpenLDAP command line tools allow either scheme to used with the <TT>-U</TT> flag and with the <TT>URI</TT> <EM>ldap.conf</EM>(5) option.</P>
 <H4><A NAME="TLS_CACERT &lt;filename&gt;">11.2.2.1. TLS_CACERT &lt;filename&gt;</A></H4>
 <P>This is equivalent to the server's <TT>TLSCACertificateFile</TT> option. As noted in the <A HREF="#TLS Configuration">TLS Configuration</A> section, a client typically may need to know about more CAs than a server, but otherwise the same considerations apply.</P>
 <H4><A NAME="TLS_CACERTDIR &lt;path&gt;">11.2.2.2. TLS_CACERTDIR &lt;path&gt;</A></H4>
@@ -2831,13 +2832,11 @@ case sensitive, space insensitive
 <P>This directive is the same as the server's <TT>TLSRandFile</TT> option.</P>
 <H4><A NAME="TLS_REQCERT { never | allow | try | demand }">11.2.2.6. TLS_REQCERT { never | allow | try | demand }</A></H4>
 <P>This directive is equivalent to the server's <TT>TLSVerifyClient</TT> option. However, for clients the default value is <TT>demand</TT> and there generally is no good reason to change this setting.</P>
-<H4><A NAME="TLS { never | hard }">11.2.2.7. TLS { never | hard }</A></H4>
-<P>This directive specifies whether client connections should use TLS by default. The default setting is <TT>never</TT> which specifies that connections will be opened in the clear unless TLS is explicitly specified using an &quot;ldaps://&quot; URL. When set to <TT>hard</TT> all connections will be established with TLS, as if an &quot;ldaps://&quot; URL was specified. Note that the use of ldaps is a holdover from LDAPv2 and this setting is incompatible with the LDAPv3 StartTLS request. As such, it's best not to use this option.</P>
 <P></P>
 <HR>
 <H1><A NAME="Constructing a Distributed Directory Service">12. Constructing a Distributed Directory Service</A></H1>
 <P>For many sites, running one or more <EM>slapd</EM>(8) that hold an entire subtree of data is sufficient. But often it is desirable to have one <EM>slapd</EM> refer to other directory services for a certain part of the tree (which may or may not be running <EM>slapd</EM>).</P>
-<P><EM>slapd</EM> supports <EM>subordinate</EM> and <EM>superior</EM> knowledge information. Subordinate knowledge information is held in <TT>referral</TT> objects (<A HREF="ftp://ftp.isi.edu/in-notes/rfc3296.txt">RFC3296</A>).</P>
+<P><EM>slapd</EM> supports <EM>subordinate</EM> and <EM>superior</EM> knowledge information. Subordinate knowledge information is held in <TT>referral</TT> objects (<A HREF="http://www.rfc-editor.org/rfc/rfc3296.txt">RFC3296</A>).</P>
 <H2><A NAME="Subordinate Knowledge Information">12.1. Subordinate Knowledge Information</A></H2>
 <P>Subordinate knowledge information may be provided to delegate a subtree. Subordinate knowledge information is maintained in the directory as a special <EM>referral</EM> object at the delegate point. The referral object acts as a delegation point, gluing two services together. This mechanism allows for hierarchical directory services to be constructed.</P>
 <P>A referral object has a structural object class of <TT>referral</TT> and has the same <TERM>Distinguished Name</TERM> as the delegated subtree.  Generally, the referral object will also provide the auxiliary object class <TT>extensibleObject</TT>. This allows the entry to contain appropriate <TERM>Relative Distinguished Name</TERM> values.  This is best demonstrated by example.</P>
@@ -2976,15 +2975,15 @@ enable all debugging
 <H3><A NAME="Set up the master {{slapd}}">13.4.1. Set up the master <EM>slapd</EM></A></H3>
 <P>The following section assumes you have a properly working <EM>slapd</EM>(8) instance. To configure your working <EM>slapd</EM>(8) server as a replication master, you need to make the following changes to your <EM>slapd.conf</EM>(5).</P>
 <OL>
-<LI>Add a <TT>replica</TT> directive for each replica. The <TT>binddn=</TT> parameter should match the <TT>updatedn</TT> option in the corresponding slave slapd configuration file, and should name an entry with write permission to the slave database (e.g., an entry listed as <TT>rootdn</TT>, or allowed access via <TT>access</TT> directives in the slave slapd configuration file).
+<LI>Add a <TT>replica</TT> directive for each replica. The <TT>binddn=</TT> parameter should match the <TT>updatedn</TT> option in the corresponding slave slapd configuration file, and should name an entry with write permission to the slave database (e.g., an entry allowed access via <TT>access</TT> directives in the slave slapd configuration file). This DN generally <EM>should not</EM> be the same as the master's <TT>rootdn</TT>.
 <LI>Add a <TT>replogfile</TT> directive, which tells slapd where to log changes. This file will be read by slurpd.</OL>
 <H3><A NAME="Set up the slave {{slapd}}">13.4.2. Set up the slave <EM>slapd</EM></A></H3>
 <P>Install the slapd software on the host which is to be the slave slapd server. The configuration of the slave server should be identical to that of the master, with the following exceptions:</P>
 <OL>
 <LI>Do not include a <TT>replica</TT> directive. While it is possible to create &quot;chains&quot; of replicas, in most cases this is inappropriate.
 <LI>Do not include a <TT>replogfile</TT> directive.
-<LI>Do include an <TT>updatedn</TT> line. The DN given should match the DN given in the <TT>binddn=</TT> parameter of the corresponding <TT>replica=</TT> directive in the master slapd config file.
-<LI>Make sure the DN given in the <TT>updatedn</TT> directive has permission to write the database (e.g., it is listed as <TT>rootdn</TT> or is allowed <TT>access</TT> by one or more access directives).
+<LI>Do include an <TT>updatedn</TT> line. The DN given should match the DN given in the <TT>binddn=</TT> parameter of the corresponding <TT>replica=</TT> directive in the master slapd config file.  The <TT>updatedn</TT> generally <EM>should not</EM> be the same as the <TT>rootdn</TT> of the master database.
+<LI>Make sure the DN given in the <TT>updatedn</TT> directive has permission to write the database (e.g., it is is allowed <TT>access</TT> by one or more access directives).
 <LI>Use the <TT>updateref</TT> directive to define the URL the slave should return if an update request is received.</OL>
 <H3><A NAME="Shut down the master server">13.4.3. Shut down the master server</A></H3>
 <P>In order to ensure that the slave starts with an exact copy of the master's data, you must shut down the master slapd. Do this by sending the master slapd process an interrupt signal with <TT>kill -INT &lt;pid&gt;</TT>, where <TT>&lt;pid&gt;</TT> is the process-id of the master slapd process.</P>
@@ -2997,11 +2996,24 @@ enable all debugging
 <H3><A NAME="Configure the master slapd for replication">13.4.5. Configure the master slapd for replication</A></H3>
 <P>To configure slapd to generate a replication logfile, you add a &quot;<TT> replica</TT>&quot; configuration option to the master slapd's config file. For example, if we wish to propagate changes to the slapd instance running on host <TT>slave.example.com</TT>:</P>
 <PRE>
+        replica uri=ldap://slave.example.com:389
+                binddn=&quot;cn=Replicator,dc=example,dc=com&quot;
+                bindmethod=simple credentials=secret
+</PRE>
+<P>In this example, changes will be sent to port 389 (the standard LDAP port) on host slave.example.com. The slurpd process will bind to the slave slapd as &quot;<TT>cn=Replicator,dc=example,dc=com</TT>&quot; using simple authentication with password &quot;<TT>secret</TT>&quot;.</P>
+<P>If we wish to perform the same replication using ldaps on port 636:</P>
+<PRE>
+        replica uri=ldaps://slave.example.com:636
+                binddn=&quot;cn=Replicator,dc=example,dc=com&quot;
+                bindmethod=simple credentials=secret
+</PRE>
+<P>The host option is deprecated in favor of uri, but the following replica configuration is still supported:</P>
+<PRE>
         replica host=slave.example.com:389
                 binddn=&quot;cn=Replicator,dc=example,dc=com&quot;
                 bindmethod=simple credentials=secret
 </PRE>
-<P>In this example, changes will be sent to port 389 (the standard LDAP port) on host slave.example.com. The slurpd process will bind to the slave slapd as &quot;<TT>cn=Replicator,dc=example,dc=com</TT>&quot; using simple authentication with password &quot;<TT>secret</TT>&quot;.  Note that the DN given by the <TT>binddn=</TT> directive must exist in the slave slapd's database (or be the rootdn specified in the slapd config file) in order for the bind operation to succeed.  The DN should also be listed as the <TT>updatedn</TT> for the database in the slave's slapd.conf(5).</P>
+<P>Note that the DN given by the <TT>binddn=</TT> directive must exist in the slave slapd's database (or be the rootdn specified in the slapd config file) in order for the bind operation to succeed.  The DN should also be listed as the <TT>updatedn</TT> for the database in the slave's slapd.conf(5).  It is generally recommended that this DN be different than the <TT>rootdn</TT> of the master database.</P>
 <P><HR WIDTH="80%" ALIGN="Left">
 <STRONG>Note: </STRONG>The use of strong authentication and transport security is highly recommended.
 <HR WIDTH="80%" ALIGN="Left"></P>
@@ -3041,6 +3053,117 @@ enable all debugging
 <P>To use one-shot mode, specify the name of the rejection log on the command line as the argument to the -r flag, and specify one-shot mode with the -o flag. For example, to process the rejection log file <TT>/usr/local/var/openldap/replog.slave.example.com:389</TT> and exit, use the command</P>
 <PRE>
         slurpd -r /usr/tmp/replog.slave.example.com:389 -o
+</PRE>
+<P></P>
+<HR>
+<H1><A NAME="LDAP Sync Replication">14. LDAP Sync Replication</A></H1>
+<P>The LDAP Sync replication engine, syncrepl for short, is a consumer-side replication engine that enables the consumer LDAP server to maintain a shadow copy of a DIT fragment. A syncrepl engine resides at the consumer-side as one of the <EM>slapd</EM> (8) threads. It creates and maintains a consumer replica by connecting to the replication provider to perform the initial DIT content load followed either by periodic content polling or by timely updates upon content changes.</P>
+<P>Syncrepl uses the LDAP Content Synchronization (or LDAP Sync for short) protocol as the replica synchronization protocol.</P>
+<P>Syncrepl provides a stateful replication which supports both the pull-based and the push-based synchronizations and does not mandate the use of the history store.</P>
+<P>Syncrepl keeps track of the status of the replication content by maintaining and exchanging synchronization cookies. Because the syncrepl consumer and provider maintain their content status, the consumer can poll the provider content to perform incremental synchronization by asking the entries required to make the consumer replica up-to-date with the provider content. Syncrepl also enables convenient management of replicas by maintaining replica status. The consumer replica can be constructed from a consumer-side or a provider-side backup at any synchronization status. Syncrepl can automatically resynchronize the consumer replica up-to-date with the current provider content.</P>
+<P>Syncrepl supports both the pull-based and the push-based synchronization. In its basic refreshOnly mode synchronization, the provider uses a pull-based synchronization where the consumer servers need not be tracked and no history information is maintained. The information required for the provider to process periodic polling requests is contained in the synchronization cookie of the request itself. To optimize the pull-based synchronization, syncrepl utilizes the present phase of the LDAP Sync protocol as well as its delete phase, instead of falling back on frequent full reloads. To further optimize the pull-based synchronization, the provider can maintain a per-scope session log as the history store. In its refreshAndPersist mode of synchronization, the provider uses a push-based synchronization. The provider keeps track of the consumer servers that have requested the persistent search and sends them necessary updates as the provider replication content gets modified.</P>
+<P>With syncrepl, a consumer server can create a replica without changing provider's configurations and without restarting the provider server, if the consumer server has appropriate access privileges for the DIT fragment to be replicated. The consumer server can stop the replication also without the need for provider-side changes and restart.</P>
+<P>Syncrepl supports both partial and sparse replications. The shadow DIT fragment is defined by a general search criteria consisting of base, scope, filter, and attribute list. The replica content is also subject to the access privileges of the bind identity of the syncrepl replication connection.</P>
+<H2><A NAME="The LDAP Content Synchronization Protocol">14.1. The LDAP Content Synchronization Protocol</A></H2>
+<P>The LDAP Sync protocol allows a client to maintain a synchronized copy of a DIT fragment. The LDAP Sync operation is defined as a set of controls and other protocol elements which extend the LDAP search operation. This section introduces the LDAP Content Sync protocol only briefly. For more information, refer to the Internet Draft <EM>The LDAP Content Synchronization Operation &lt;draft-zeilenga-ldup-sync-05.txt&gt;</EM>.</P>
+<P>The LDAP Sync protocol supports both polling and listening for changes by defining two respective synchronization operations: <EM>refreshOnly</EM> and <EM>refreshAndPersist</EM>. The polling is implemented by the <EM>refreshOnly</EM> operation. The client copy is synchronized to the server copy at the time of polling. The server finishes the search operation by returning <EM>SearchResultDone</EM> at the end of the search operation as in the normal search. The listening is implemented by the <EM>refreshAndPersist</EM> operation. Instead of finishing the search after returning all entries currently matching the search criteria, the synchronization search remains persistent in the server. Subsequent updates to the synchronization content in the server have additional entry updates be sent to the client.</P>
+<P>The <EM>refreshOnly</EM> operation and the refresh stage of the <EM>refreshAndPersist</EM> operation can be performed by a present phase or a delete phase.</P>
+<P>In the present phase, the server sends the client the entries updated within the search scope since the last synchronization. The server sends all requested attributes, be it changed or not, of the updated entries. For each unchanged entry which remains in the scope, the server sends a present message consisting only of the name of the entry and the synchronization control representing state present. The present message does not contain any attributes of the entry. After the client receives all update and present entries, it can reliably determine the new client copy by adding the entries added to the server, by replacing the entries modified at the server, and by deleting entries in the client copy which have not been updated nor specified as being present at the server.</P>
+<P>The transmission of the updated entries in the delete phase is the same as in the present phase. The server sends all the requested attributes of the entries updated within the search scope since the last synchronization to the client. In the delete phase, however, the server sends a delete message for each entry deleted from the search scope, instead of sending present messages. The delete message consists only of the name of the entry and the synchronization control representing state delete. The new client copy can be determined by adding, modifying, and removing entries according to the synchronization control attached to the <EM>SearchResultEntry</EM> message.</P>
+<P>In the case that the LDAP Sync server maintains a history store and can determine which entries are scoped out of the client copy since the last synchronization time, the server can use the delete phase. If the server does not maintain any history store, cannot determine the scoped-out entries from the history store, or the history store does not cover the outdated synchronization state of the client, the server should use the present phase. The use of the present phase is much more efficient than a full content reload in terms of the synchronization traffic. To reduce the synchronization traffic further, the LDAP Sync protocol also provides several optimizations such as the transmission of the normalized <TT>entryUUID</TT>s and the transmission of the multiple <TT>entryUUIDs</TT> in a single <EM>syncIdSet</EM> message.</P>
+<P>At the end of the <EM>refreshOnly</EM> synchronization, the server sends a synchronization cookie to the client as a state indicator of the client copy after the synchronization is completed. The client will present the received cookie when it requests the next incremental synchronization to the server.</P>
+<P>When <EM>refreshAndPersist</EM> synchronization is used, the server sends a synchronization cookie at the end of the refresh stage by sending a Sync Info message with TRUE refreshDone. It also sends a synchronization cookie by attaching it to <EM>SearchResultEntry</EM> generated in the persist stage of the synchronization search. During the persist stage, the server can also send a Sync Info message containing the synchronization cookie at any time the server wants to update the client-side state indicator.  The server also updates a synchronization indicator of the client at the end of the persist stage.</P>
+<P>In the LDAP Sync protocol, entries are uniquely identified by the <TT>entryUUID</TT> attribute value. It can function as a reliable identifier of the entry. The DN of the entry, on the other hand, can be changed over time and hence cannot be considered as the reliable identifier.  The <TT>entryUUID</TT> is attached to each <EM>SearchResultEntry</EM> or <EM>SearchResultReference</EM> as a part of the synchronization control.</P>
+<H2><A NAME="Syncrepl Details">14.2. Syncrepl Details</A></H2>
+<P>The syncrepl engine utilizes both the <EM>refreshOnly</EM> and the <EM>refreshAndPersist</EM> operations of the LDAP Sync protocol. If a syncrepl specification is included in a database definition, <EM>slapd</EM> (8) launches a syncrepl engine as a <EM>slapd</EM> (8) thread and schedules its execution. If the <EM>refreshOnly</EM> operation is specified, the syncrepl engine will be rescheduled at the interval time after a synchronization operation is completed. If the <EM>refreshAndPersist</EM> operation is specified, the engine will remain active and process the persistent synchronization messages from the provider.</P>
+<P>The syncrepl engine utilizes both the present phase and the delete phase of the refresh synchronization. It is possible to configure a per-scope session log in the provider server which stores the <TT>entryUUID</TT>s and the names of a finite number of entries deleted from a replication content. Multiple replicas of single provider content share the same per-scope session log. The syncrepl engine uses the delete phase if the session log is present and the state of the consumer server is recent enough that no session log entries are truncated after the last synchronization of the client. The syncrepl engine uses the present phase if no session log is configured for the replication content or if the consumer replica is too outdated to be covered by the session log. The current design of the session log store is memory based, so the information contained in the session log is not persistent over multiple provider invocations. It is not currently supported to access the session log store by using LDAP operations. It is also not currently supported to impose access control to the session log.</P>
+<P>As a further optimization, even in the case the synchronization search is not associated with any session log, no entries will be transmitted to the consumer server when there has been no update in the replication context.</P>
+<P>While <EM>slapd</EM> (8) can function as the LDAP Sync provider only when it is configured with either <EM>back-bdb</EM> or <EM>back-hdb</EM> backend, the syncrepl engine, which is a consumer-side replication engine, can work with any backends.</P>
+<P>The LDAP Sync provider maintains <TT>contextCSN</TT> for each database as the current synchronization state indicator of the provider content.  It is the largest <TT>entryCSN</TT> in the provider context such that no transactions for an entry having smaller <TT>entryCSN</TT> value remains outstanding. <TT>contextCSN</TT> could not just be set to the largest issued <TT>entryCSN</TT> because <TT>entryCSN</TT> is obtained before a transaction starts and transactions are not committed in the issue order.</P>
+<P>The provider stores the <TT>contextCSN</TT> of a context in the <TT>syncreplCookie</TT> attribute of the immediate child entry of the context suffix whose DN is <EM>cn=ldapsync,&lt;suffix&gt;</EM> and object class is <TT>syncProviderSubentry</TT>.</P>
+<P>The consumer stores its replica state, which is the provider's <TT>contextCSN</TT> received as a synchronization cookie, in the <TT>syncreplCookie</TT> attribute of the immediate child of the context suffix whose DN is <EM>cn=syncrepl&lt;rid&gt;,&lt;suffix&gt;</EM> and object class is <TT>syncConsumerSubentry</TT>. The replica state maintained by a consumer server is used as the synchronization state indicator when it performs subsequent incremental synchronization with the provider server. It is also used as a provider-side synchronization state indicator when it functions as a secondary provider server in a cascading replication configuration. &lt;rid&gt; is the replica ID uniquely identifying the replica locally in the syncrepl consumer server. &lt;rid&gt; is an integer which has no more than three decimal digits.</P>
+<P>Because a general search filter can be used in the syncrepl specification, not all entries in the context will be returned as the synchronization content. The syncrepl engine creates a glue entry to fill in the holes in the replica context if any part of the replica content is subordinate to the holes. The glue entries will not be returned as the search result unless <EM>ManageDsaIT</EM> control is provided.</P>
+<P>It is possible to retrieve <TT>syncProviderSubentry</TT> and <TT>syncConsumerSubentry</TT> by performing an LDAP search with the respective entries as the base object and with the base scope.</P>
+<H2><A NAME="Configuring Syncrepl">14.3. Configuring Syncrepl</A></H2>
+<P>Because syncrepl is a consumer-side replication engine, the syncrepl specification is defined in <EM>slapd.conf</EM> (5) of the consumer server, not in the provider server's configuration file. The initial loading of the replica content can be performed either by starting the syncrepl engine with no synchronization cookie or by populating the consumer replica by adding and demoting an <TERM>LDIF</TERM> file dumped as a backup at the provider. <EM>slapadd</EM> (8) supports the replica promotion and demotion.</P>
+<P>When loading from a backup, it is not required to perform the initial loading from the up-to-date backup of the provider content. The syncrepl engine will automatically synchronize the initial consumer replica to the current provider content. As a result, it is not required to stop the provider server in order to avoid the replica inconsistency caused by the updates to the provider content during the content backup and loading process.</P>
+<P>When replicating a large scale directory, especially in a bandwidth constrained environment, it is advised to load the consumer replica from a backup instead of performing a full initial load using syncrepl.</P>
+<H3><A NAME="Set up the provider slapd">14.3.1. Set up the provider slapd</A></H3>
+<P>There is no special <EM>slapd.conf</EM> (5) directive for the provider syncrepl server except for the session log directive.  Because the LDAP Sync search is subject to access control, proper access control privileges should be set up for the replicated content.</P>
+<P>When creating a provider database from the <TERM>LDIF</TERM> file using <EM>slapadd</EM> (8), <TT>contextCSN</TT> and the <TT>syncProviderSubentry</TT> entry must be created. <EM>slapadd -p -w</EM> will create a new <TT>contextCSN</TT> from the <TT>entryCSN</TT>s of the added entries. It is also possible to create the <TT>syncProviderSubentry</TT> with an appropriate <TT>contextCSN</TT> value by directly including it in the ldif file. <EM>slapadd -p</EM> will preserve the provider's contextCSN or will change it to the consumer's contextCSN if it is to promote a replica to the provider's content. The <TT>syncProviderSubentry</TT> can be included in the ldif output when <EM>slapcat</EM> (8) is given the <EM>-m</EM> flag; the <TT>syncConsumerSubentry</TT> can be retrieved by the <EM>-k</EM> flag of <EM>slapcat</EM> (8).</P>
+<P>The session log is configured by</P>
+<PRE>
+        sessionlog &lt;sid&gt; &lt;limit&gt;
+</PRE>
+<P>directive, where <EM>&lt;sid&gt;</EM> is the ID of the per-scope session log in the provider server and <EM>&lt;limit&gt;</EM> is the maximum number of session log entries the session log store can record. <EM>&lt;sid&gt;</EM> is an integer no longer than 3 decimal digits. If the consumer server sends a synchronization cookie containing <EM>sid=&lt;sid&gt;</EM> where <EM>&lt;sid&gt;</EM> matches the session log ID specified in the directive, the LDAP Sync search is to utilize the session log store.</P>
+<H3><A NAME="Set up the consumer slapd">14.3.2. Set up the consumer slapd</A></H3>
+<P>The syncrepl replication is specified in the database section of <EM>slapd.conf</EM> (5) for the replica context. The syncrepl engine is backend independent and the directive can be defined with any database type.</P>
+<PRE>
+        syncrepl rid=123
+                provider=ldap://provider.example.com:389
+                type=refreshOnly
+                interval=01:00:00:00
+                searchbase=&quot;dc=example,dc=com&quot;
+                filter=&quot;(objectClass=organizationalPerson)&quot;
+                scope=sub
+                attrs=&quot;cn,sn,ou,telephoneNumber,title,l&quot;
+                schemachecking=off
+                updatedn=&quot;cn=replica,dc=example,dc=com&quot;
+                bindmethod=simple
+                binddn=&quot;cn=syncuser,dc=example,dc=com&quot;
+                credentials=secret
+</PRE>
+<P>In this example, the consumer will connect to the provider slapd at port 389 of <A HREF="ldap://provider.example.com">ldap://provider.example.com</A> to perform a polling (<EM>refreshOnly</EM>) mode of synchronization once a day.  It will bind as <TT>cn=syncuser,dc=example,dc=com</TT> using simple authentication with password &quot;secret&quot;.  Note that the access control privilege of <TT>cn=syncuser,dc=example,dc=com</TT> should be set appropriately in the provider to retrieve the desired replication content. The consumer will write to its database with the privilege of the <TT>cn=replica,dc=example,dc=com</TT> entry as specified in the <TT>updatedn=</TT> directive. The <TT>updatedn</TT> entry should have write permission to the replica content.</P>
+<P>The synchronization search in the above example will search for the entries whose objectClass is organizationalPerson in the entire subtree rooted at <TT>dc=example,dc=com</TT>. The requested attributes are <TT>cn</TT>, <TT>sn</TT>, <TT>ou</TT>, <TT>telephoneNumber</TT>, <TT>title</TT>, and <TT>l</TT>. The schema checking is turned off, so that the consumer <EM>slapd</EM> (8) will not enforce entry schema checking when it process updates from the provider <EM>slapd</EM> (8).</P>
+<P>For more detailed information on the syncrepl directive, see the <A HREF="#syncrepl">syncrepl</A> section of <A HREF="#The slapd Configuration File">The slapd Configuration File</A> chapter of this admin guide.</P>
+<H3><A NAME="Start the provider and the consumer slapd">14.3.3. Start the provider and the consumer slapd</A></H3>
+<P>The provider <EM>slapd</EM> (8) is not required to be restarted. <EM>contextCSN</EM> is automatically generated as needed: it might originally contained in the <TERM>LDIF</TERM> file, generated by <EM>slapadd</EM> (8), generated upon changes in the context, or generated when the first LDAP Sync search arrived at the provider.</P>
+<P>When starting a consumer <EM>slapd</EM> (8), it is possible to provide a synchronization cookie as the <EM>-c cookie</EM> command line option in order to start the synchronization from a specific state. The cookie is a comma separated list of name=value pairs. Currently supported syncrepl cookie fields are <EM>csn=&lt;csn&gt;</EM>, <EM>sid=&lt;sid&gt;</EM>, and <EM>rid=&lt;rid&gt;</EM>. <EM>&lt;csn&gt;</EM> represents the current synchronization state of the consumer replica. <EM>&lt;sid&gt;</EM> is the identity of the per-scope session log to which this consumer will be associated. <EM>&lt;rid&gt;</EM> identifies a consumer replica locally within the consumer server. It is used to relate the cookie to the syncrepl definition in <EM>slapd.conf</EM> (5) which has the matching replica identifier. Both <EM>&lt;sid&gt;</EM> and <EM>&lt;rid&gt;</EM> have no more than 3 decimal digits. The command line cookie overrides the synchronization cookie stored in the consumer replica database.</P>
+<P></P>
+<HR>
+<H1><A NAME="The Proxy Cache Engine">15. The Proxy Cache Engine</A></H1>
+<P>LDAP servers typically hold one or more subtrees of a DIT. Replica (or shadow) servers hold shadow copies of entries held by one or more master servers.  Changes are propagated from the master server to replica (slave) servers using LDAP Sync or <EM>slurpd</EM>(8). An LDAP cache is a special type of replica which holds entries corresponding to search filters instead of subtrees.</P>
+<H2><A NAME="Overview">15.1. Overview</A></H2>
+<P>The proxy cache extension of slapd is designed to improve the responseiveness of the ldap and meta backends. It handles a search request (query) by first determining whether it is contained in any cached search filter. Contained requests are answered from the proxy cache's local database. Other requests are passed on to the underlying ldap or meta backend and processed as usual.</P>
+<P>E.g. <TT>(shoesize&gt;=9)</TT> is contained in <TT>(shoesize&gt;=8)</TT> and <TT>(sn=Richardson)</TT> is contained in <TT>(sn=Richards*)</TT></P>
+<P>Correct matching rules and syntaxes are used while comparing assertions for query containment. To simplify the query containment problem, a list of cacheable &quot;templates&quot; (defined below) is specified at configuration time. A query is cached or answered only if it belongs to one of these templates. The entries corresponding to cached queries are stored in the proxy cache local database while its associated meta information (filter, scope, base, attributes) is stored in main memory.</P>
+<P>A template is a prototype for generating LDAP search requests. Templates are described by a prototype search filter and a list of attributes which are required in queries generated from the template. The representation for prototype filter is similar to RFC 2254, except that the assertion values are missing. Examples of prototype filters are: (sn=),(&amp;(sn=)(givenname=)) which are instantiated by search filters (sn=Doe) and (&amp;(sn=Doe)(givenname=John)) respectively.</P>
+<P>The cache replacement policy removes the least recently used (LRU) query and entries belonging to only that query. Queries are allowed a maximum time to live (TTL) in the cache thus providing weak consistency. A background task periodically checks the cache for expired queries and removes them.</P>
+<P>The Proxy Cache paper (<A HREF="http://www.openldap.org/pub/kapurva/proxycaching.pdf">http://www.openldap.org/pub/kapurva/proxycaching.pdf</A>) provides design and implementation details.</P>
+<H2><A NAME="Proxy Cache Configuration">15.2. Proxy Cache Configuration</A></H2>
+<P>The cache configuration specific directives described below must appear after a <TT>overlay proxycache</TT> directive within a <TT>&quot;database meta&quot;</TT> or <TT>database ldap</TT> section of the server's <EM>slapd.conf</EM>(5) file.</P>
+<H3><A NAME="Setting cache parameters">15.2.1. Setting cache parameters</A></H3>
+<PRE>
+ proxyCache &lt;DB&gt; &lt;maxentries&gt; &lt;nattrsets&gt; &lt;entrylimit&gt; &lt;period&gt;
+</PRE>
+<P>This directive enables proxy caching and sets general cache parameters. The &lt;DB&gt; parameter specifies which underlying database is to be used to hold cached entries.  It should be set to <TT>bdb</TT>, <TT>hdb</TT>, or <TT>ldbm</TT>.  The &lt;maxentries&gt; parameter specifies the total number of entries which may be held in the cache.  The &lt;nattrsets&gt; parameter specifies the total number of attribute sets (as specified by the <TT>proxyAttrSet</TT> directive) that may be defined. The &lt;entrylimit&gt; parameter specifies the maximum number of entries in a cachable query.  The &lt;period&gt; specifies the consistency check period (in seconds).  In each period, queries with expired TTLs are removed.</P>
+<H3><A NAME="Defining attribute sets">15.2.2. Defining attribute sets</A></H3>
+<PRE>
+ proxyAttrset &lt;index&gt; &lt;attrs...&gt;
+</PRE>
+<P>Used to associate a set of attributes to an index. Each attribute set is associated with an index number from 0 to &lt;numattrsets&gt;-1. These indices are used by the addtemplate directive to define cacheable templates.</P>
+<H3><A NAME="Specifying cacheable templates">15.2.3. Specifying cacheable templates</A></H3>
+<PRE>
+ proxyTemplate &lt;prototype_string&gt; &lt;attrset_index&gt; &lt;TTL&gt;
+</PRE>
+<P>Specifies a cacheable template and the &quot;time to live&quot; (in sec) &lt;TTL&gt; for queries belonging to the template. A template is described by its prototype filter string and set of required attributes identified by &lt;attrset_index&gt;.</P>
+<H3><A NAME="Example">15.2.4. Example</A></H3>
+<P>An example <EM>slapd.conf</EM>(5) database section for a caching server which proxies for the <TT>&quot;dc=example,dc=com&quot;</TT> subtree held at server <TT>ldap.example.com</TT>.</P>
+<PRE>
+        database        ldap
+        suffix          &quot;dc=example,dc=com&quot;
+        uri             ldap://ldap.example.com/dc=example%2cdc=com
+        overlay proxycache
+        proxycache    bdb 100000 1 1000 100
+        proxyAttrset  0 mail postaladdress telephonenumber
+        proxyTemplate (sn=) 0 3600
+        proxyTemplate (&amp;(sn=)(givenName=)) 0 3600
+        proxyTemplate (&amp;(departmentNumber=)(secretary=*)) 0 3600
+
+        cachesize 20
+        directory ./testrun/db.2.a
+        index       objectClass eq
+        index       cn,sn,uid,mail  pres,eq,sub
 </PRE>
 <P></P>
 <HR>
@@ -3234,28 +3357,34 @@ operates.
 <HR>
 <H1><A NAME="OpenLDAP Software Copyright Notices">B. OpenLDAP Software Copyright Notices</A></H1>
 <H2><A NAME="OpenLDAP Copyright Notice">B.1. OpenLDAP Copyright Notice</A></H2>
-<P>Copyright 1998-2003 The OpenLDAP Foundation, Redwood City, California, USA All rights reserved.</P>
-<P>Redistribution and use in source and binary forms are permitted <EM>only as authorized</EM> by the <A HREF="#OpenLDAP Public License">OpenLDAP Public License</A>.  A copy of this license is available at <A HREF="http://www.OpenLDAP.org/license.html">http://www.OpenLDAP.org/license.html</A> or in file <TT>LICENSE</TT> in the top-level directory of the distribution.</P>
+<P>Copyright 1998-2003 The OpenLDAP Foundation.<BR><EM>All rights reserved.</EM></P>
+<P>Redistribution and use in source and binary forms, with or without modification, are permitted <EM>only as authorized</EM> by the <A HREF="#OpenLDAP Public License">OpenLDAP Public License</A>.</P>
+<P>A copy of this license is available in file <TT>LICENSE</TT> in the top-level directory of the distribution or, alternatively, at &lt;<A HREF="http://www.OpenLDAP.org/license.html">http://www.OpenLDAP.org/license.html</A>&gt;.</P>
 <P>OpenLDAP is a registered trademark of the OpenLDAP Foundation.</P>
 <P>Individual files and/or contributed packages may be copyright by other parties and their use subject to additional restrictions.</P>
 <P>This work is derived from the University of Michigan LDAP v3.3 distribution.  Information concerning this software is available at &lt;<A HREF="http://www.umich.edu/~dirsvcs/ldap/">http://www.umich.edu/~dirsvcs/ldap/</A>&gt;.</P>
 <P>This work also contains materials derived from public sources.</P>
 <P>Additional information about OpenLDAP software can be obtained at &lt;<A HREF="http://www.OpenLDAP.org/">http://www.OpenLDAP.org/</A>&gt;.</P>
-<H2><A NAME="University of Michigan Copyright Notice">B.2. University of Michigan Copyright Notice</A></H2>
-<P>Portions Copyright 1992-1996 Regents of the University of Michigan. All rights reserved.</P>
+<H2><A NAME="Additional Copyright Notice">B.2. Additional Copyright Notice</A></H2>
+<P>Portions Copyright 1998-2003 Kurt D. Zeilenga.<BR>Portions Copyright 1998-2003 Net Boolean Incorporated.<BR>Portions Copyright 2001-2003 IBM Corporation.<BR><EM>All rights reserved.</EM></P>
+<P>Redistribution and use in source and binary forms, with or without modification, are permitted only as authorized by the <A HREF="#OpenLDAP Public License">OpenLDAP Public License</A>.</P>
+<P>Portions Copyright 1999-2003 Howard Y.H. Chu.<BR>Portions Copyright 1999-2003 Symas Corporation.<BR>Portions Copyright 1998-2003 Hallvard B. Furuseth.<BR><EM>All rights reserved.</EM></P>
+<P>Redistribution and use in source and binary forms, with or without modification, are permitted provided that this notice is preserved. The names of the copyright holders may not be used to endorse or promote products derived from this software without their specific prior written permission.  This software is provided ``as is'' without express or implied warranty.</P>
+<H2><A NAME="University of Michigan Copyright Notice">B.3. University of Michigan Copyright Notice</A></H2>
+<P>Portions Copyright 1992-1996 Regents of the University of Michigan.<BR><EM>All rights reserved.</EM></P>
 <P>Redistribution and use in source and binary forms are permitted provided that this notice is preserved and that due credit is given to the University of Michigan at Ann Arbor. The name of the University may not be used to endorse or promote products derived from this software without specific prior written permission. This software is provided ``as is'' without express or implied warranty.</P>
 <P></P>
 <HR>
 <H1><A NAME="OpenLDAP Public License">C. OpenLDAP Public License</A></H1>
 <PRE>
 The OpenLDAP Public License
-  Version 2.7, 7 September 2001
+  Version 2.8.1, 25 November 2003
 
 Redistribution and use of this software and associated documentation
 (&quot;Software&quot;), with or without modification, are permitted provided
 that the following conditions are met:
 
-1. Redistributions of source code must retain copyright statements
+1. Redistributions in source form must retain copyright statements
    and notices,
 
 2. Redistributions in binary form must reproduce applicable copyright
@@ -3287,13 +3416,13 @@ POSSIBILITY OF SUCH DAMAGE.
 The names of the authors and copyright holders must not be used in
 advertising or otherwise to promote the sale, use or other dealing
 in this Software without specific, written prior permission.  Title
-to copyright in this Software shall at all times remain with
-copyright holders.
+to copyright in this Software shall at all times remain with copyright
+holders.
 
 OpenLDAP is a registered trademark of the OpenLDAP Foundation.
 
-Copyright 1999-2001 The OpenLDAP Foundation, Redwood City,
-California, USA.  All Rights Reserved.  Permission to copy and
+Copyright 1999-2003 The OpenLDAP Foundation, Redwood City,
+California, USA.  All rights reserved.  Permission to copy and
 distribute verbatim copies of this document is granted.
 </PRE>
 </DIV>
@@ -3305,7 +3434,7 @@ distribute verbatim copies of this document is granted.
 <P>
 <FONT COLOR="#808080" FACE="Arial,Verdana,Helvetica" SIZE="1"><B>
 ________________<BR>
-<SMALL>&copy; Copyright 2003, <A HREF="http://www.OpenLDAP.org/foundation/">OpenLDAP Foundation</A>, <A HREF="mailto:info@OpenLDAP.org">info@OpenLDAP.org</A></SMALL></B></FONT>
+<SMALL>&copy; Copyright 2004, <A HREF="http://www.OpenLDAP.org/foundation/">OpenLDAP Foundation</A>, <A HREF="mailto:info@OpenLDAP.org">info@OpenLDAP.org</A></SMALL></B></FONT>
 
 </DIV>
 

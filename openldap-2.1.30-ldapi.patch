@@ -1,0 +1,12 @@
+Match the location default used in OpenLDAP 2.2.
+--- openldap-2.1.30/include/ldap_defaults.h	2004-06-16 14:08:17.000000000 -0400
++++ openldap-2.1.30/include/ldap_defaults.h	2004-06-16 14:08:12.000000000 -0400
+@@ -37,7 +37,7 @@
+ #define LDAP_ENV_PREFIX "LDAP"
+ 
+ /* default ldapi:// socket */
+-#define LDAPI_SOCK LDAP_RUNDIR LDAP_DIRSEP "ldapi"
++#define LDAPI_SOCK LDAP_RUNDIR LDAP_DIRSEP "run" LDAP_DIRSEP "ldapi"
+ 
+ /*
+  * MAIL500 MAILER DEFINITIONS

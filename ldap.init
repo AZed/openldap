@@ -27,6 +27,7 @@ fi
 
 slapd=/usr/sbin/slapd
 slurpd=/usr/sbin/slurpd
+slaptest=/usr/sbin/slaptest
 [ -x ${slapd} ] || exit 0
 [ -x ${slurpd} ] || exit 0
 
@@ -42,6 +43,16 @@ function start() {
 			echo -n $"$file is not owned by \"$user\"" ; warning ; echo
 		done
 	done
+	# Check the configuration file.
+        echo -n $"Checking configuration files for $prog: "
+	$slaptest
+	RETVAL=$?
+	if test $RETVAL -eq 0 ; then
+	    success
+	else
+	    failure
+	    exit 1
+	fi
         # Start daemons.
 	prog=`basename ${slapd}`
         echo -n $"Starting $prog: "
