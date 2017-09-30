@@ -1,49 +1,44 @@
-# $OpenLDAP: pkg/ldap/libraries/liblber/Makefile.in,v 1.14.8.5 2002/01/04 20:38:18 kurt Exp $
-## Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+# $OpenLDAP$
+## Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
 ## COPYING RESTRICTIONS APPLY, see COPYRIGHT file
 ##
 ## LIBLBER
 ##
 
 LIBRARY = liblber.la
-XLIBRARY = ../liblber.a
 
 NT_SRCS = nt_err.c
 NT_OBJS = nt_err.lo
 
-SRCS= assert.c decode.c encode.c io.c bprint.c \
+UNIX_SRCS = stdio.c
+UNIX_OBJS = stdio.lo
+
+LIB_DEFS = -DLBER_LIBRARY
+
+SRCS= assert.c decode.c encode.c io.c bprint.c debug.c \
 	memory.c options.c sockbuf.c $(@PLAT@_SRCS)
-OBJS= assert.lo decode.lo encode.lo io.lo bprint.lo \
+OBJS= assert.lo decode.lo encode.lo io.lo bprint.lo debug.lo \
 	memory.lo options.lo sockbuf.lo $(@PLAT@_OBJS)
 XSRCS= version.c
 
 PROGRAMS= dtest etest idtest
 
-LDAP_INCDIR= ../../include       
-LDAP_LIBDIR= ../../libraries       
+LDAP_INCDIR= ../../include
+LDAP_LIBDIR= ../../libraries
 
-XLIBS = -llber
+XLIBS = $(LIBRARY) $(LDAP_LIBLUTIL_A)
 XXLIBS = 
+NT_LINK_LIBS = $(AC_LIBS)
 
-LINKAGE = @LT_LIB_LINKAGE@
-
-NT_DYN_TEST_DEFS = -DLBER_DECL=dllimport
-
-# Extras for building the library
-EXTRA_DEFS = $(@PLAT@_@LIB_LINKAGE@_LIB_DEFS)
-EXTRA_LIBS =
-
-# Only the test programs will pick up these defs.
-CPPFLAGS = $(@PLAT@_@LIB_LINKAGE@_TEST_DEFS)
-
-dtest:    $(LIBRARY) dtest.o
+dtest:    $(XLIBS) dtest.o
 	$(LTLINK) -o $@ dtest.o $(LIBS)
-etest:  $(LIBRARY) etest.o
+etest:  $(XLIBS) etest.o
 	$(LTLINK) -o $@ etest.o $(LIBS)
-idtest:  $(LIBRARY) idtest.o
+idtest:  $(XLIBS) idtest.o
 	$(LTLINK) -o $@ idtest.o $(LIBS)
 
 install-local: FORCE
 	-$(MKDIR) $(DESTDIR)$(libdir)
 	$(LTINSTALL) $(INSTALLFLAGS) -m 644 $(LIBRARY) $(DESTDIR)$(libdir)
+	$(LTFINISH) $(DESTDIR)$libdir
 

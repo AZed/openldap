@@ -1,7 +1,7 @@
 /* avl.c - routines to implement an avl tree */
-/* $OpenLDAP: pkg/ldap/libraries/libavl/avl.c,v 1.13.6.5 2002/01/04 20:38:17 kurt Exp $ */
+/* $OpenLDAP$ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 /*
@@ -20,6 +20,14 @@
 
 #include <stdio.h>
 #include <ac/stdlib.h>
+
+#ifdef CSRIMALLOC
+#define ber_memalloc malloc
+#define ber_memrealloc realloc
+#define ber_memfree free
+#else
+#include "lber.h"
+#endif
 
 #define AVL_INTERNAL
 #include "avl.h"
@@ -64,7 +72,7 @@ ravl_insert(
 	Avlnode	*l, *r;
 
 	if ( *iroot == 0 ) {
-		if ( (*iroot = (Avlnode *) malloc( sizeof( Avlnode ) ))
+		if ( (*iroot = (Avlnode *) ber_memalloc( sizeof( Avlnode ) ))
 		    == NULL ) {
 			return( -1 );
 		}
@@ -370,13 +378,13 @@ ravl_delete( Avlnode **root, void* data, AVL_CMP fcmp, int *shorter )
 		if ( (*root)->avl_left == 0 ) {
 			*root = (*root)->avl_right;
 			*shorter = 1;
-			free( (char *) savenode );
+			ber_memfree( (char *) savenode );
 			return( savedata );
 		/* no right child */
 		} else if ( (*root)->avl_right == 0 ) {
 			*root = (*root)->avl_left;
 			*shorter = 1;
-			free( (char *) savenode );
+			ber_memfree( (char *) savenode );
 			return( savedata );
 		}
 
@@ -609,7 +617,7 @@ avl_free( Avlnode *root, AVL_FREE dfree )
 
 	if ( dfree )
 		(*dfree)( root->avl_data );
-	free( root );
+	ber_memfree( root );
 
 	return( nleft + nright + 1 );
 }
@@ -680,12 +688,12 @@ avl_buildlist( void* data, void* arg )
 	static int	slots;
 
 	if ( avl_list == (void* *) 0 ) {
-		avl_list = (void* *) malloc(AVL_GRABSIZE * sizeof(void*));
+		avl_list = (void* *) ber_memalloc(AVL_GRABSIZE * sizeof(void*));
 		slots = AVL_GRABSIZE;
 		avl_maxlist = 0;
 	} else if ( avl_maxlist == slots ) {
 		slots += AVL_GRABSIZE;
-		avl_list = (void* *) realloc( (char *) avl_list,
+		avl_list = (void* *) ber_memrealloc( (char *) avl_list,
 		    (unsigned) slots * sizeof(void*));
 	}
 
@@ -710,7 +718,7 @@ void*
 avl_getfirst( Avlnode *root )
 {
 	if ( avl_list ) {
-		free( (char *) avl_list);
+		ber_memfree( (char *) avl_list);
 		avl_list = (void* *) 0;
 	}
 	avl_maxlist = 0;
@@ -731,7 +739,7 @@ avl_getnext( void )
 		return( 0 );
 
 	if ( avl_nextlist == avl_maxlist ) {
-		free( (void*) avl_list);
+		ber_memfree( (void*) avl_list);
 		avl_list = (void* *) 0;
 		return( 0 );
 	}

@@ -1,6 +1,6 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap_r/thr_cthreads.c,v 1.6.8.4 2002/01/04 20:38:23 kurt Exp $ */
+/* $OpenLDAP$ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, Redwood City, California, USA
+ * Copyright 1998-2003 The OpenLDAP Foundation, Redwood City, California, USA
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms are permitted only
@@ -144,6 +144,12 @@ int
 ldap_pvt_thread_mutex_trylock( ldap_pvt_thread_mutex_t *mutex )
 {
 	return mutex_try_lock( mutex );
+}
+
+ldap_pvt_thread_t
+ldap_pvt_thread_self( void )
+{
+	return cthread_self();
 }
 
 #endif /* HAVE_MACH_CTHREADS */

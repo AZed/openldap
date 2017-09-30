@@ -1,5 +1,5 @@
-# $OpenLDAP: pkg/ldap/build/dir.mk,v 1.6.2.4 2002/01/04 20:38:06 kurt Exp $
-## Copyright 1998-2002 The OpenLDAP Foundation
+# $OpenLDAP$
+## Copyright 1998-2003 The OpenLDAP Foundation
 ## COPYING RESTRICTIONS APPLY.  See COPYRIGHT File in top level directory
 ## of this package for details.
 ##---------------------------------------------------------------------------

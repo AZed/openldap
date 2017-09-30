@@ -1,7 +1,7 @@
 /* line64.c - routines for dealing with the slapd line format */
-/* $OpenLDAP: pkg/ldap/libraries/libldif/line64.c,v 1.18.2.8 2002/01/04 20:38:24 kurt Exp $ */
+/* $OpenLDAP$ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 
@@ -114,16 +114,10 @@ ldif_parse_line(
 	url = 0;
 	b64 = 0;
 
-	if ( *s == '\0' ) {
-		/* no value */
-		value = "";
-		vlen = 0;
-		goto done;
-	}
-		
 	if ( *s == '<' ) {
 		s++;
 		url = 1;
+
 	} else if ( *s == ':' ) {
 		/* base 64 encoded value */
 		s++;
@@ -142,20 +136,18 @@ ldif_parse_line(
 	}
 	*d = '\0';
 
-	/* if no value is present, error out */
-	if ( *s == '\0' ) {
-		ber_pvt_log_printf( LDAP_DEBUG_PARSE, ldif_debug,
-			"ldif_parse_line: %s missing %svalue\n", type,
-				url ? "URL " : b64 ? "base64 " : "" );
-		value = NULL;
-		vlen = 0;
-		goto done;
-	}
-
 	if ( b64 ) {
 		char *byte = s;
 
-		value = s;
+		if ( *s == '\0' ) {
+			/* no value is present, error out */
+			ber_pvt_log_printf( LDAP_DEBUG_PARSE, ldif_debug,
+				"ldif_parse_line: %s missing base64 value\n", type );
+			ber_memfree( freeme );
+			return( -1 );
+		}
+
+		byte = value = s;
 
 		for ( p = s, vlen = 0; p < d; p += 4, vlen += 3 ) {
 			int i;
@@ -199,6 +191,14 @@ ldif_parse_line(
 		s[ vlen ] = '\0';
 
 	} else if ( url ) {
+		if ( *s == '\0' ) {
+			/* no value is present, error out */
+			ber_pvt_log_printf( LDAP_DEBUG_PARSE, ldif_debug,
+				"ldif_parse_line: %s missing URL value\n", type );
+			ber_memfree( freeme );
+			return( -1 );
+		}
+
 		if( ldif_fetch_url( s, &value, &vlen ) ) {
 			ber_pvt_log_printf( LDAP_DEBUG_ANY, ldif_debug,
 				"ldif_parse_line: %s: URL \"%s\" fetch failed\n",
@@ -212,17 +212,17 @@ ldif_parse_line(
 		vlen = (int) (d - s);
 	}
 
-done:
 	type = ber_strdup( type );
 
 	if( type == NULL ) {
 		ber_pvt_log_printf( LDAP_DEBUG_ANY, ldif_debug,
 			"ldif_parse_line: type malloc failed\n");
+		if( url ) ber_memfree( value );
 		ber_memfree( freeme );
 		return( -1 );
 	}
 
-	if( !url && value != NULL ) {
+	if( !url ) {
 		p = ber_memalloc( vlen + 1 );
 		if( p == NULL ) {
 			ber_pvt_log_printf( LDAP_DEBUG_ANY, ldif_debug,
@@ -313,6 +313,7 @@ ldif_sput(
 	unsigned long	bits;
 	char		*save;
 	int		pad;
+	int		namelen = 0;
 
 	ber_len_t savelen;
 	ber_len_t len=0;
@@ -339,10 +340,10 @@ ldif_sput(
 	/* name (attribute type) */
 	if( name != NULL ) {
 		/* put the name + ":" */
-		for ( i=0 ; name[i]; i++ ) {
-			*(*out)++ = name[i];
-			len++;
-		}
+		namelen = strlen(name);
+		strcpy(*out, name);
+		*out += namelen;
+		len += namelen;
 
 		if( type != LDIF_PUT_COMMENT ) {
 			*(*out)++ = ':';
@@ -410,14 +411,16 @@ ldif_sput(
 	stop = (const unsigned char *) (val + vlen);
 
 	if ( type == LDIF_PUT_VALUE
-		&& isgraph( val[0] ) && val[0] != ':' && val[0] != '<'
-		&& isgraph( val[vlen-1] )
+		&& isgraph( (unsigned char) val[0] ) && val[0] != ':' && val[0] != '<'
+		&& isgraph( (unsigned char) val[vlen-1] )
 #ifndef LDAP_BINARY_DEBUG
 		&& strstr( name, ";binary" ) == NULL
 #endif
 #ifndef LDAP_PASSWD_DEBUG
-		&& strcasecmp( name, "userPassword" ) != 0	/* encode userPassword */
-		&& strcasecmp( name, "2.5.4.35" ) != 0		/* encode userPassword */
+		&& (namelen != (sizeof("userPassword")-1)
+		|| strcasecmp( name, "userPassword" ) != 0)	/* encode userPassword */
+		&& (namelen != (sizeof("2.5.4.35")-1) 
+		|| strcasecmp( name, "2.5.4.35" ) != 0)		/* encode userPassword */
 #endif
 	) {
 		int b64 = 0;
@@ -539,8 +542,8 @@ int ldif_is_not_printable(
 		return -1;
 	}
 
-	if( isgraph( val[0] ) && val[0] != ':' && val[0] != '<' &&
-		isgraph( val[vlen-1] ) )
+	if( isgraph( (unsigned char) val[0] ) && val[0] != ':' && val[0] != '<' &&
+		isgraph( (unsigned char) val[vlen-1] ) )
 	{
 		ber_len_t i;
 

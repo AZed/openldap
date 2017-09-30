@@ -1,6 +1,6 @@
-/* $OpenLDAP: pkg/ldap/include/lber_pvt.h,v 1.3.8.5 2002/01/04 20:38:14 kurt Exp $ */
+/* $OpenLDAP$ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, Redwood City, California, USA
+ * Copyright 1998-2003 The OpenLDAP Foundation, Redwood City, California, USA
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,7 +31,7 @@ typedef struct sockbuf_buf {
 /*
  * bprint.c
  */
-LBER_F( BER_LOG_PRINT_FN ) ber_pvt_log_print;
+LBER_V( BER_LOG_PRINT_FN ) ber_pvt_log_print;
 
 LBER_F( int )
 ber_pvt_log_printf LDAP_P((
@@ -60,6 +60,34 @@ ber_pvt_sb_copy_out LDAP_P(( Sockbuf_Buf *sbb, char *buf, ber_len_t len ));
 
 LBER_F( int )
 ber_pvt_socket_set_nonblock LDAP_P(( ber_socket_t sd, int nb ));
+
+
+#if 0
+#define ber_bvstrcmp(v1,v2) \
+	((v1)->bv_len < (v2)->bv_len \
+		? -1 : ((v1)->bv_len > (v2)->bv_len \
+			? 1 : strncmp((v1)->bv_val, (v2)->bv_val, (v1)->bv_len) ))
+#else
+	/* avoid strncmp() */
+#define ber_bvstrcmp(v1,v2)	ber_bvcmp((v1),(v2))
+#endif
+
+#define ber_bvstrcasecmp(v1,v2) \
+	((v1)->bv_len < (v2)->bv_len \
+		? -1 : ((v1)->bv_len > (v2)->bv_len \
+			? 1 : strncasecmp((v1)->bv_val, (v2)->bv_val, (v1)->bv_len) ))
+
+#define ber_bvccmp(v1,c) \
+	( (v1)->bv_len == 1 && (v1)->bv_val[0] == (c) )
+
+#define ber_strccmp(s,c) \
+	( (s)[0] == (c) && (s)[1] == '\0' )
+
+#define ber_bvchr(bv,c) \
+	memchr( (bv)->bv_val, (c), (bv)->bv_len )
+
+#define BER_BVC(x)	{ sizeof( (x) ) - 1, (x) }
+#define BER_BVNULL	{ 0L, NULL }
 
 LDAP_END_DECL
 

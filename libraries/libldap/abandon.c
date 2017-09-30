@@ -1,6 +1,6 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/abandon.c,v 1.15.6.9 2002/01/04 20:38:19 kurt Exp $ */
+/* $OpenLDAP$ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 /*  Portions
@@ -57,7 +57,11 @@ ldap_abandon_ext(
 	LDAPControl **cctrls )
 {
 	int rc;
+#ifdef NEW_LOGGING
+	LDAP_LOG ( OPERATION, ARGS, "ldap_abandon_ext %d\n", msgid, 0, 0 );
+#else
 	Debug( LDAP_DEBUG_TRACE, "ldap_abandon_ext %d\n", msgid, 0, 0 );
+#endif
 
 	/* check client controls */
 	rc = ldap_int_client_controls( ld, cctrls );
@@ -81,7 +85,11 @@ ldap_abandon_ext(
 int
 ldap_abandon( LDAP *ld, int msgid )
 {
+#ifdef NEW_LOGGING
+	LDAP_LOG ( OPERATION, ARGS, "ldap_abandon %d\n", msgid, 0, 0 );
+#else
 	Debug( LDAP_DEBUG_TRACE, "ldap_abandon %d\n", msgid, 0, 0 );
+#endif
 	return ldap_abandon_ext( ld, msgid, NULL, NULL ) == LDAP_SUCCESS
 		? 0 : -1;
 }
@@ -101,8 +109,12 @@ do_abandon(
 	Sockbuf		*sb;
 	LDAPRequest	*lr;
 
+#ifdef NEW_LOGGING
+	LDAP_LOG ( OPERATION, ARGS, "do_abandon %d, msgid %d\n", origid, msgid, 0 );
+#else
 	Debug( LDAP_DEBUG_TRACE, "do_abandon origid %d, msgid %d\n",
 		origid, msgid, 0 );
+#endif
 
 	sendabandon = 1;
 
@@ -147,10 +159,26 @@ do_abandon(
 			ld->ld_errno = LDAP_NO_MEMORY;
 
 		} else {
-			/* create a message to send */
-			err = ber_printf( ber, "{iti",  /* '}' */
+#ifdef LDAP_CONNECTIONLESS
+			if ( LDAP_IS_UDP(ld) ) {
+			    err = ber_write( ber, ld->ld_options.ldo_peer,
+				sizeof(struct sockaddr), 0);
+			}
+			if ( LDAP_IS_UDP(ld) && ld->ld_options.ldo_version ==
+				LDAP_VERSION2) {
+			    char *dn = ld->ld_options.ldo_cldapdn;
+			    if (!dn) dn = "";
+			    err = ber_printf( ber, "{isti",  /* '}' */
+				++ld->ld_msgid, dn,
+				LDAP_REQ_ABANDON, msgid );
+			} else
+#endif
+			{
+			    /* create a message to send */
+			    err = ber_printf( ber, "{iti",  /* '}' */
 				++ld->ld_msgid,
-			    LDAP_REQ_ABANDON, msgid );
+				LDAP_REQ_ABANDON, msgid );
+			}
 
 			if( err == -1 ) {
 				/* encoding error */
@@ -196,7 +224,7 @@ do_abandon(
 	}
 
 	if ( lr != NULL ) {
-		if ( sendabandon ) {
+		if ( sendabandon || lr->lr_status == LDAP_REQST_WRITING ) {
 			ldap_free_connection( ld, lr->lr_conn, 0, 1 );
 		}
 		if ( origid == msgid ) {

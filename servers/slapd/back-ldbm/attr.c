@@ -1,7 +1,7 @@
 /* attr.c - backend routines for dealing with attributes */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/attr.c,v 1.7.2.5 2002/01/04 20:38:33 kurt Exp $ */
+/* $OpenLDAP$ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 
@@ -15,61 +15,42 @@
 #include "slap.h"
 #include "back-ldbm.h"
 
-
 /* for the cache of attribute information (which are indexed, etc.) */
 typedef struct ldbm_attrinfo {
-#ifdef SLAPD_USE_AD
-	AttributeDescription *ai_desc; /* attribute description cn;lang-en	*/
-#else
-	char *ai_desc;
-#endif
+	AttributeDescription *ai_desc; /* attribute description cn;lang-en */
 	slap_mask_t ai_indexmask;	/* how the attr is indexed	*/
 } AttrInfo;
 
 static int
 ainfo_type_cmp(
-#ifdef SLAPD_USE_AD
-	AttributeDescription *desc,
-#else
-    char		*desc,
-#endif
-    AttrInfo	*a
+	const void *v_desc,
+	const void *v_a
 )
 {
-#ifdef SLAPD_USE_AD
-	return ad_cmp( desc, a->ai_desc );
-#else
-	return( strcasecmp( desc, a->ai_desc ) );
-#endif
+	const AttributeDescription *desc = v_desc;
+	const AttrInfo             *a    = v_a;
+	return SLAP_PTRCMP(desc, a->ai_desc);
 }
 
 static int
 ainfo_cmp(
-    AttrInfo	*a,
-    AttrInfo	*b
+	const void	*v_a,
+	const void	*v_b
 )
 {
-#ifdef SLAPD_USE_AD
-	return ad_cmp( a->ai_desc, b->ai_desc );
-#else
-	return( strcasecmp( a->ai_desc, b->ai_desc ) );
-#endif
+	const AttrInfo *a = v_a, *b = v_b;
+	return SLAP_PTRCMP(a->ai_desc, b->ai_desc);
 }
 
 void
 attr_mask(
     struct ldbminfo	*li,
-#ifdef SLAPD_USE_AD
-	AttributeDescription *desc,
-#else
-    const char *desc,
-#endif
+    AttributeDescription *desc,
     slap_mask_t *indexmask )
 {
 	AttrInfo	*a;
 
-	a = (AttrInfo *) avl_find( li->li_attrs, desc,
-	    (AVL_CMP) ainfo_type_cmp );
+	a = avl_find( li->li_attrs, desc, ainfo_type_cmp );
 	
 	*indexmask = a != NULL ? a->ai_indexmask : 0;
 }
@@ -88,7 +69,7 @@ attr_index_config(
 	char **attrs;
 	char **indexes = NULL;
 
-	attrs = str2charray( argv[0], "," );
+	attrs = ldap_str2charray( argv[0], "," );
 
 	if( attrs == NULL ) {
 		fprintf( stderr, "%s: line %d: "
@@ -98,7 +79,7 @@ attr_index_config(
 	}
 
 	if ( argc > 1 ) {
-		indexes = str2charray( argv[1], "," );
+		indexes = ldap_str2charray( argv[1], "," );
 
 		if( indexes == NULL ) {
 			fprintf( stderr, "%s: line %d: "
@@ -201,20 +182,22 @@ attr_index_config(
 			return LDAP_INAPPROPRIATE_MATCHING;
 		}
 
-		Debug( LDAP_DEBUG_CONFIG, "index %s 0x%04x\n",
-			ad->ad_cname->bv_val, mask, 0 ); 
-
-#ifdef SLAPD_USE_AD
-		a->ai_desc = ad;
+#ifdef NEW_LOGGING
+		LDAP_LOG( BACK_LDBM, DETAIL1, 
+			"attr_index_config: index %s 0x%04lx\n", 
+			ad->ad_cname.bv_val, mask, 0 );
 #else
-		a->ai_desc = ch_strdup( ad->ad_cname->bv_val );
-		ad_free( ad, 1 );
+		Debug( LDAP_DEBUG_CONFIG, "index %s 0x%04lx\n",
+			ad->ad_cname.bv_val, mask, 0 ); 
 #endif
+
+
+		a->ai_desc = ad;
 
 		a->ai_indexmask = mask;
 
 		rc = avl_insert( &li->li_attrs, (caddr_t) a,
-			(AVL_CMP) ainfo_cmp, (AVL_DUP) avl_dup_error );
+		                 ainfo_cmp, avl_dup_error );
 
 		if( rc ) {
 			fprintf( stderr, "%s: line %d: duplicate index definition "
@@ -225,10 +208,16 @@ attr_index_config(
 		}
 	}
 
-	charray_free( attrs );
-	if ( indexes != NULL ) charray_free( indexes );
+	ldap_charray_free( attrs );
+	if ( indexes != NULL ) ldap_charray_free( indexes );
 
 	return LDAP_SUCCESS;
+}
+
+void
+attr_index_destroy( Avlnode *tree )
+{
+	avl_free( tree, free );
 }
 
 

@@ -1,7 +1,7 @@
 /* Generic wait.h */
-/* $OpenLDAP: pkg/ldap/include/ac/wait.h,v 1.5.8.4 2002/01/04 20:38:17 kurt Exp $ */
+/* $OpenLDAP$ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, Redwood City, California, USA
+ * Copyright 1998-2003 The OpenLDAP Foundation, Redwood City, California, USA
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

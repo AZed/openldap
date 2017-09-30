@@ -1,7 +1,7 @@
 /* dn2id.c - routines to deal with the dn2id index */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/dn2id.c,v 1.24.2.7 2002/01/04 20:38:34 kurt Exp $ */
+/* $OpenLDAP$ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 
@@ -19,29 +19,46 @@
 int
 dn2id_add(
     Backend	*be,
-    const char	*dn,
+    struct berval *dn,
     ID		id
 )
 {
 	int		rc, flags;
 	DBCache	*db;
 	Datum		key, data;
-	struct ldbminfo *li = (struct ldbminfo *) be->be_private;
+	char		*buf;
+	struct berval	ptr, pdn;
 
-	Debug( LDAP_DEBUG_TRACE, "=> dn2id_add( \"%s\", %ld )\n", dn, id, 0 );
+#ifdef NEW_LOGGING
+	LDAP_LOG( BACK_LDBM, ENTRY, "dn2id_add: (%s):%ld\n", dn->bv_val, id, 0 );
+#else
+	Debug( LDAP_DEBUG_TRACE, "=> dn2id_add( \"%s\", %ld )\n", dn->bv_val, id, 0 );
+#endif
+
 	assert( id != NOID );
 
-	if ( (db = ldbm_cache_open( be, "dn2id", LDBM_SUFFIX, LDBM_WRCREAT ))
-	    == NULL ) {
+	db = ldbm_cache_open( be, "dn2id", LDBM_SUFFIX, LDBM_WRCREAT );
+	if ( db == NULL ) {
+#ifdef NEW_LOGGING
+		LDAP_LOG( BACK_LDBM, ERR, 
+			"dn2id_add: couldn't open/create dn2id%s\n", LDBM_SUFFIX, 0, 0 );
+#else
 		Debug( LDAP_DEBUG_ANY, "Could not open/create dn2id%s\n",
 		    LDBM_SUFFIX, 0, 0 );
+#endif
+
 		return( -1 );
 	}
 
 	ldbm_datum_init( key );
-	key.dsize = strlen( dn ) + 2;
-	key.dptr = ch_malloc( key.dsize );
-	sprintf( key.dptr, "%c%s", DN_BASE_PREFIX, dn );
+	key.dsize = dn->bv_len + 2;
+	buf = ch_malloc( key.dsize );
+	key.dptr = buf;
+	buf[0] = DN_BASE_PREFIX;
+	ptr.bv_val = buf + 1;
+	ptr.bv_len = dn->bv_len;
+	AC_MEMCPY( ptr.bv_val, dn->bv_val, dn->bv_len );
+	ptr.bv_val[ dn->bv_len ] = '\0';
 
 	ldbm_datum_init( data );
 	data.dptr = (char *) &id;
@@ -50,79 +67,93 @@ dn2id_add(
 	flags = LDBM_INSERT;
 	rc = ldbm_cache_store( db, key, data, flags );
 
-	free( key.dptr );
+	if ( rc != -1 && !be_issuffix( be, &ptr )) {
+		buf[0] = DN_SUBTREE_PREFIX;
+		ldap_pvt_thread_mutex_lock( &db->dbc_write_mutex );
+		rc = idl_insert_key( be, db, key, id );
+		ldap_pvt_thread_mutex_unlock( &db->dbc_write_mutex );
 
-	if ( rc != -1 ) {
-		char *pdn = dn_parent( NULL, dn );
+		if ( rc != -1 ) {
+			dnParent( &ptr, &pdn );
 
-		if( pdn != NULL ) {
-			ldbm_datum_init( key );
-			key.dsize = strlen( pdn ) + 2;
-			key.dptr = ch_malloc( key.dsize );
-			sprintf( key.dptr, "%c%s", DN_ONE_PREFIX, pdn );
+			pdn.bv_val[-1] = DN_ONE_PREFIX;
+			key.dsize = pdn.bv_len + 2;
+			key.dptr = pdn.bv_val - 1;
+			ptr = pdn;
 			ldap_pvt_thread_mutex_lock( &db->dbc_write_mutex );
 			rc = idl_insert_key( be, db, key, id );
 			ldap_pvt_thread_mutex_unlock( &db->dbc_write_mutex );
-			free( key.dptr );
-			free( pdn );
 		}
 	}
 
-	if ( rc != -1 ) {
-		char **subtree = dn_subtree( NULL, dn );
+	while ( rc != -1 && !be_issuffix( be, &ptr )) {
+		ptr.bv_val[-1] = DN_SUBTREE_PREFIX;
 
-		if( subtree != NULL ) {
-			int i;
-			for( i=0; subtree[i] != NULL; i++ ) {
-				ldbm_datum_init( key );
-				key.dsize = strlen( subtree[i] ) + 2;
-				key.dptr = ch_malloc( key.dsize );
-				sprintf( key.dptr, "%c%s",
-					DN_SUBTREE_PREFIX, subtree[i] );
-				ldap_pvt_thread_mutex_lock( &db->dbc_write_mutex );
-				rc = idl_insert_key( be, db, key, id );
-				ldap_pvt_thread_mutex_unlock( &db->dbc_write_mutex );
-				free( key.dptr );
+		ldap_pvt_thread_mutex_lock( &db->dbc_write_mutex );
+		rc = idl_insert_key( be, db, key, id );
+		ldap_pvt_thread_mutex_unlock( &db->dbc_write_mutex );
 
-				if(rc == -1) break;
-			}
-
-			charray_free( subtree );
-		}
+		if( rc != 0 ) break;
+		dnParent( &ptr, &pdn );
+		key.dsize = pdn.bv_len + 2;
+		key.dptr = pdn.bv_val - 1;
+		ptr = pdn;
 	}
 
+	free( buf );
 	ldbm_cache_close( be, db );
 
+#ifdef NEW_LOGGING
+	LDAP_LOG( BACK_LDBM, ENTRY, "dn2id_add: return %d\n", rc, 0, 0 );
+#else
 	Debug( LDAP_DEBUG_TRACE, "<= dn2id_add %d\n", rc, 0, 0 );
+#endif
+
 	return( rc );
 }
 
 int
 dn2id(
     Backend	*be,
-    const char	*dn,
+    struct berval *dn,
     ID          *idp
 )
 {
 	struct ldbminfo	*li = (struct ldbminfo *) be->be_private;
 	DBCache	*db;
 	Datum		key, data;
+	unsigned char	*tmp;
 
-	Debug( LDAP_DEBUG_TRACE, "=> dn2id( \"%s\" )\n", dn, 0, 0 );
+#ifdef NEW_LOGGING
+	LDAP_LOG( BACK_LDBM, ENTRY, "dn2id: (%s)\n", dn->bv_val, 0, 0 );
+#else
+	Debug( LDAP_DEBUG_TRACE, "=> dn2id( \"%s\" )\n", dn->bv_val, 0, 0 );
+#endif
 
 	assert( idp );
 
 	/* first check the cache */
-	if ( (*idp = cache_find_entry_ndn2id( be, &li->li_cache, dn )) != NOID ) {
+	*idp = cache_find_entry_ndn2id( be, &li->li_cache, dn );
+	if ( *idp != NOID ) {
+#ifdef NEW_LOGGING
+		LDAP_LOG( BACK_LDBM, DETAIL1, "dn2id: (%s)%ld in cache.\n", dn, *idp, 0 );
+#else
 		Debug( LDAP_DEBUG_TRACE, "<= dn2id %ld (in cache)\n", *idp,
 			0, 0 );
+#endif
+
 		return( 0 );
 	}
 
-	if ( (db = ldbm_cache_open( be, "dn2id", LDBM_SUFFIX, LDBM_WRCREAT ))
-		== NULL ) {
+	db = ldbm_cache_open( be, "dn2id", LDBM_SUFFIX, LDBM_WRCREAT );
+	if ( db == NULL ) {
+#ifdef NEW_LOGGING
+		LDAP_LOG( BACK_LDBM, ERR, 
+			   "dn2id: couldn't open dn2id%s\n", LDBM_SUFFIX, 0, 0 );
+#else
 		Debug( LDAP_DEBUG_ANY, "<= dn2id could not open dn2id%s\n",
 			LDBM_SUFFIX, 0, 0 );
+#endif
 		/*
 		 * return code !0 if ldbm cache open failed;
 		 * callers should handle this
@@ -133,9 +164,13 @@ dn2id(
 
 	ldbm_datum_init( key );
 
-	key.dsize = strlen( dn ) + 2;
+	key.dsize = dn->bv_len + 2;
 	key.dptr = ch_malloc( key.dsize );
-	sprintf( key.dptr, "%c%s", DN_BASE_PREFIX, dn );
+	tmp = (unsigned char *)key.dptr;
+	tmp[0] = DN_BASE_PREFIX;
+	tmp++;
+	AC_MEMCPY( tmp, dn->bv_val, dn->bv_len );
+	tmp[dn->bv_len] = '\0';
 
 	data = ldbm_cache_fetch( db, key );
 
@@ -144,7 +179,12 @@ dn2id(
 	free( key.dptr );
 
 	if ( data.dptr == NULL ) {
+#ifdef NEW_LOGGING
+		LDAP_LOG( BACK_LDBM, INFO, "dn2id: (%s) NOID\n", dn, 0, 0 );
+#else
 		Debug( LDAP_DEBUG_TRACE, "<= dn2id NOID\n", 0, 0, 0 );
+#endif
+
 		*idp = NOID;
 		return( 0 );
 	}
@@ -155,7 +195,11 @@ dn2id(
 
 	ldbm_datum_free( db->dbc_db, data );
 
+#ifdef NEW_LOGGING
+	LDAP_LOG( BACK_LDBM, ENTRY, "dn2id: %ld\n", *idp, 0, 0 );
+#else
 	Debug( LDAP_DEBUG_TRACE, "<= dn2id %ld\n", *idp, 0, 0 );
+#endif
 
 	return( 0 );
 }
@@ -163,31 +207,51 @@ dn2id(
 int
 dn2idl(
     Backend	*be,
-    const char	*dn,
+    struct berval	*dn,
     int		prefix,
     ID_BLOCK    **idlp
 )
 {
 	DBCache	*db;
 	Datum		key;
+	unsigned char	*tmp;
 
-	Debug( LDAP_DEBUG_TRACE, "=> dn2idl( \"%c%s\" )\n", prefix, dn, 0 );
+#ifdef NEW_LOGGING
+	LDAP_LOG( BACK_LDBM, ENTRY, "dn2idl: \"%c%s\"\n", prefix, dn->bv_val, 0 );
+#else
+	Debug( LDAP_DEBUG_TRACE, "=> dn2idl( \"%c%s\" )\n", prefix, dn->bv_val, 0 );
+#endif
 
 	assert( idlp != NULL );
 	*idlp = NULL;
 
-	if ( (db = ldbm_cache_open( be, "dn2id", LDBM_SUFFIX, LDBM_WRCREAT ))
-		== NULL ) {
+	if ( prefix == DN_SUBTREE_PREFIX && be_issuffix(be, dn) ) {
+		*idlp = idl_allids( be );
+		return 0;
+	}
+
+	db = ldbm_cache_open( be, "dn2id", LDBM_SUFFIX, LDBM_WRCREAT );
+	if ( db == NULL ) {
+#ifdef NEW_LOGGING
+		LDAP_LOG( BACK_LDBM, ERR, 
+			   "dn2idl: could not open dn2id%s\n", LDBM_SUFFIX, 0, 0 );
+#else
 		Debug( LDAP_DEBUG_ANY, "<= dn2idl could not open dn2id%s\n",
 			LDBM_SUFFIX, 0, 0 );
+#endif
+
 		return -1;
 	}
 
 	ldbm_datum_init( key );
 
-	key.dsize = strlen( dn ) + 2;
+	key.dsize = dn->bv_len + 2;
 	key.dptr = ch_malloc( key.dsize );
-	sprintf( key.dptr, "%c%s", prefix, dn );
+	tmp = (unsigned char *)key.dptr;
+	tmp[0] = prefix;
+	tmp++;
+	AC_MEMCPY( tmp, dn->bv_val, dn->bv_len );
+	tmp[dn->bv_len] = '\0';
 
 	*idlp = idl_fetch( be, db, key );
 
@@ -202,81 +266,95 @@ dn2idl(
 int
 dn2id_delete(
     Backend	*be,
-    const char	*dn,
+    struct berval *dn,
 	ID id
 )
 {
 	DBCache	*db;
 	Datum		key;
 	int		rc;
+	char		*buf;
+	struct berval	ptr, pdn;
 
-	Debug( LDAP_DEBUG_TRACE, "=> dn2id_delete( \"%s\", %ld )\n", dn, id, 0 );
+#ifdef NEW_LOGGING
+	LDAP_LOG( BACK_LDBM, ENTRY, 
+		   "dn2id_delete: (%s)%ld\n", dn->bv_val, id, 0 );
+#else
+	Debug( LDAP_DEBUG_TRACE, "=> dn2id_delete( \"%s\", %ld )\n", dn->bv_val, id, 0 );
+#endif
+
 
 	assert( id != NOID );
 
-	if ( (db = ldbm_cache_open( be, "dn2id", LDBM_SUFFIX, LDBM_WRCREAT ))
-	    == NULL ) {
+	db = ldbm_cache_open( be, "dn2id", LDBM_SUFFIX, LDBM_WRCREAT );
+	if ( db == NULL ) {
+#ifdef NEW_LOGGING
+		LDAP_LOG( BACK_LDBM, ERR, 
+			   "dn2id_delete: couldn't open db2id%s\n", LDBM_SUFFIX, 0, 0 );
+#else
 		Debug( LDAP_DEBUG_ANY,
 		    "<= dn2id_delete could not open dn2id%s\n", LDBM_SUFFIX,
 		    0, 0 );
+#endif
+
 		return( -1 );
 	}
 
-
-	{
-		char *pdn = dn_parent( NULL, dn );
-
-		if( pdn != NULL ) {
-			ldbm_datum_init( key );
-			key.dsize = strlen( pdn ) + 2;
-			key.dptr = ch_malloc( key.dsize );
-			sprintf( key.dptr, "%c%s", DN_ONE_PREFIX, pdn );
-
-			ldap_pvt_thread_mutex_lock( &db->dbc_write_mutex );
-			(void) idl_delete_key( be, db, key, id );
-			ldap_pvt_thread_mutex_unlock( &db->dbc_write_mutex );
-
-			free( key.dptr );
-			free( pdn );
-		}
-	}
-
-	{
-		char **subtree = dn_subtree( NULL, dn );
-
-		if( subtree != NULL ) {
-			int i;
-			for( i=0; subtree[i] != NULL; i++ ) {
-				ldbm_datum_init( key );
-				key.dsize = strlen( subtree[i] ) + 2;
-				key.dptr = ch_malloc( key.dsize );
-				sprintf( key.dptr, "%c%s",
-					DN_SUBTREE_PREFIX, subtree[i] );
-
-				ldap_pvt_thread_mutex_lock( &db->dbc_write_mutex );
-				(void) idl_delete_key( be, db, key, id );
-				ldap_pvt_thread_mutex_unlock( &db->dbc_write_mutex );
-
-				free( key.dptr );
-			}
-
-			charray_free( subtree );
-		}
-	}
-
 	ldbm_datum_init( key );
-
-	key.dsize = strlen( dn ) + 2;
-	key.dptr = ch_malloc( key.dsize );
-	sprintf( key.dptr, "%c%s", DN_BASE_PREFIX, dn );
+	key.dsize = dn->bv_len + 2;
+	buf = ch_malloc( key.dsize );
+	key.dptr = buf;
+	buf[0] = DN_BASE_PREFIX;
+	ptr.bv_val = buf + 1;
+	ptr.bv_len = dn->bv_len;
+	AC_MEMCPY( ptr.bv_val, dn->bv_val, dn->bv_len );
+	ptr.bv_val[dn->bv_len] = '\0';
 
 	rc = ldbm_cache_delete( db, key );
+	
+	if( !be_issuffix( be, &ptr )) {
+		buf[0] = DN_SUBTREE_PREFIX;
+		ldap_pvt_thread_mutex_lock( &db->dbc_write_mutex );
+		(void) idl_delete_key( be, db, key, id );
+		ldap_pvt_thread_mutex_unlock( &db->dbc_write_mutex );
+
+		dnParent( &ptr, &pdn );
+
+		pdn.bv_val[-1] = DN_ONE_PREFIX;
+		key.dsize = pdn.bv_len + 2;
+		key.dptr = pdn.bv_val - 1;
+		ptr = pdn;
+
+		ldap_pvt_thread_mutex_lock( &db->dbc_write_mutex );
+		(void) idl_delete_key( be, db, key, id );
+		ldap_pvt_thread_mutex_unlock( &db->dbc_write_mutex );
+	}
+
+	while ( rc != -1 && !be_issuffix( be, &ptr )) {
+		ptr.bv_val[-1] = DN_SUBTREE_PREFIX;
+
+		ldap_pvt_thread_mutex_lock( &db->dbc_write_mutex );
+		(void) idl_delete_key( be, db, key, id );
+		ldap_pvt_thread_mutex_unlock( &db->dbc_write_mutex );
+
+		dnParent( &ptr, &pdn );
+		key.dsize = pdn.bv_len + 2;
+		key.dptr = pdn.bv_val - 1;
+		ptr = pdn;
+	}
+
+	free( buf );
 
 	free( key.dptr );
 
 	ldbm_cache_close( be, db );
 
+#ifdef NEW_LOGGING
+	LDAP_LOG( BACK_LDBM, ENTRY, "dn2id_delete: return %d\n", rc, 0, 0 );
+#else
 	Debug( LDAP_DEBUG_TRACE, "<= dn2id_delete %d\n", rc, 0, 0 );
+#endif
+
 	return( rc );
 }
 
@@ -288,17 +366,23 @@ dn2id_delete(
 Entry *
 dn2entry_rw(
     Backend	*be,
-    const char	*dn,
+    struct berval *dn,
     Entry	**matched,
-    int         rw
+    int		rw
 )
 {
 	ID		id;
 	Entry		*e = NULL;
-	char		*pdn;
+	struct berval	pdn;
 
+#ifdef NEW_LOGGING
+	LDAP_LOG( BACK_LDBM, ENTRY, 
+		   "dn2entry_rw: %s entry %s\n", rw ? "w" : "r", dn->bv_val, 0 );
+#else
 	Debug(LDAP_DEBUG_TRACE, "dn2entry_%s: dn: \"%s\"\n",
-		rw ? "w" : "r", dn, 0);
+		rw ? "w" : "r", dn->bv_val, 0);
+#endif
+
 
 	if( matched != NULL ) {
 		/* caller cares about match */
@@ -309,15 +393,24 @@ dn2entry_rw(
 		/* something bad happened to ldbm cache */
 		return( NULL );
 
-	} else if ( id != NOID ) {
+	}
+	
+	if ( id != NOID ) {
 		/* try to return the entry */
 		if ((e = id2entry_rw( be, id, rw )) != NULL ) {
 			return( e );
 		}
 
+#ifdef NEW_LOGGING
+		LDAP_LOG( BACK_LDBM, ERR, 
+			"dn2entry_rw: no entry for valid id (%ld), dn (%s)\n", 
+			id, dn->bv_val, 0 );
+#else
 		Debug(LDAP_DEBUG_ANY,
 			"dn2entry_%s: no entry for valid id (%ld), dn \"%s\"\n",
-			rw ? "w" : "r", id, dn);
+			rw ? "w" : "r", id, dn->bv_val);
+#endif
+
 		/* must have been deleted from underneath us */
 		/* treat as if NOID was found */
 	}
@@ -326,10 +419,9 @@ dn2entry_rw(
 	if( matched == NULL ) return NULL;
 
 	/* entry does not exist - see how much of the dn does exist */
-	/* dn_parent checks returns NULL if dn is suffix */
-	if ( (pdn = dn_parent( be, dn )) != NULL ) {
+	if ( !be_issuffix( be, dn ) && (dnParent( dn, &pdn ), pdn.bv_len) ) {
 		/* get entry with reader lock */
-		if ( (e = dn2entry_r( be, pdn, matched )) != NULL ) {
+		if ( (e = dn2entry_r( be, &pdn, matched )) != NULL ) {
 			*matched = e;
 		}
 		free( pdn );

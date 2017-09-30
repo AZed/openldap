@@ -1,6 +1,6 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/starttls.c,v 1.10.2.6 2002/01/04 20:38:31 kurt Exp $ */
+/* $OpenLDAP$ */
 /* 
- * Copyright 1999-2002 The OpenLDAP Foundation.
+ * Copyright 1999-2003 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms are permitted only
@@ -13,6 +13,8 @@
 
 #include <stdio.h>
 #include <ac/socket.h>
+
+#include <ldap_pvt.h>
 
 #include "slap.h"
 
@@ -28,7 +30,7 @@ starttls_extop (
 	struct berval ** rspdata,
 	LDAPControl ***rspctrls,
 	const char ** text,
-	struct berval *** refs )
+	BerVarray * refs )
 {
 	void *ctx;
 	int rc;
@@ -50,28 +52,33 @@ starttls_extop (
 	}
 
 	/* can't start TLS if there are other op's around */
-	if (( conn->c_ops != NULL &&
-			(conn->c_ops != op || op->o_next != NULL)) ||
-		( conn->c_pending_ops != NULL))
+	if (( !LDAP_STAILQ_EMPTY(&conn->c_ops) &&
+			(LDAP_STAILQ_FIRST(&conn->c_ops) != op ||
+			LDAP_STAILQ_NEXT(op, o_next) != NULL)) ||
+		( !LDAP_STAILQ_EMPTY(&conn->c_pending_ops) ))
 	{
-		*text = "cannot start TLS when operations our outstanding";
+		*text = "cannot start TLS when operations are outstanding";
 		rc = LDAP_OPERATIONS_ERROR;
 		goto done;
 	}
 
+	if ( !( global_disallows & SLAP_DISALLOW_TLS_2_ANON ) &&
+		( conn->c_dn.bv_len != 0 ) )
+	{
+		Statslog( LDAP_DEBUG_STATS,
+			"conn=%lu op=%lu AUTHZ anonymous mech=starttls ssf=0\n",
+			op->o_connid, op->o_opid, 0, 0, 0 );
+
+		/* force to anonymous */
+		connection2anonymous( conn );
+	}
+
 	if ( ( global_disallows & SLAP_DISALLOW_TLS_AUTHC ) &&
-		( conn->c_dn != NULL ) )
+		( conn->c_dn.bv_len != 0 ) )
 	{
 		*text = "cannot start TLS after authentication";
 		rc = LDAP_OPERATIONS_ERROR;
 		goto done;
-	}
-
-	if ( ( global_allows & SLAP_ALLOW_TLS_2_ANON ) &&
-		( conn->c_dn != NULL ) )
-	{
-		/* force to anonymous */
-		connection2anonymous( conn );
 	}
 
 	/* fail if TLS could not be initialized */

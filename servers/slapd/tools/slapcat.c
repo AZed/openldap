@@ -1,6 +1,6 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/tools/slapcat.c,v 1.3.2.5 2002/01/04 20:38:36 kurt Exp $ */
+/* $OpenLDAP$ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 #include "portable.h"
@@ -59,7 +59,7 @@ main( int argc, char **argv )
 		}
 
 		data = entry2str( e, &len );
-		entry_free( e );
+		be_entry_release_r( be, 0L, 0L, e );
 
 		if ( data == NULL ) {
 			printf("# bad data for entry id=%08lx\n\n", (long) id );

@@ -1,5 +1,5 @@
-# $OpenLDAP: pkg/ldap/libraries/liblutil/Makefile.in,v 1.9.4.6 2002/01/04 20:38:24 kurt Exp $
-## Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+# $OpenLDAP$
+## Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
 ## COPYING RESTRICTIONS APPLY, see COPYRIGHT file
 ##
 ## Makefile for -llutil
@@ -13,19 +13,16 @@ NT_OBJS = ntservice.o slapdmsg.res
 UNIX_SRCS = detach.c
 UNIX_OBJS = detach.o
 
-SRCS	= base64.c debug.c entropy.c sasl.c signal.c \
-	md5.c passwd.c sha1.c getpass.c lockf.c utils.c sockpair.c \
+SRCS	= base64.c csn.c entropy.c sasl.c signal.c hash.c passfile.c \
+	md5.c passwd.c sha1.c getpass.c lockf.c utils.c uuid.c sockpair.c \
 	@LIBSRCS@ $(@PLAT@_SRCS)
 
-OBJS	= base64.o debug.o entropy.o sasl.o signal.o \
-	md5.o passwd.o sha1.o getpass.o lockf.o utils.o sockpair.o \
+OBJS	= base64.o csn.o entropy.o sasl.o signal.o hash.o passfile.o \
+	md5.o passwd.o sha1.o getpass.o lockf.o utils.o uuid.o sockpair.o \
 	@LIBOBJS@ $(@PLAT@_OBJS)
 
 LDAP_INCDIR= ../../include       
 LDAP_LIBDIR= ../../libraries
-
-NT_DYN_LIB_DEFS = -DLDAP_DECL=dllimport
-CPPFLAGS = $(@PLAT@_@LIB_LINKAGE@_LIB_DEFS)
 
 # These rules are for a Mingw32 build, specifically.
 # It's ok for them to be here because the clean rule is harmless, and

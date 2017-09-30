@@ -1,6 +1,6 @@
-/* $OpenLDAP: pkg/ldap/libraries/liblutil/ptest.c,v 1.5.2.2 2002/01/04 20:38:25 kurt Exp $ */
+/* $OpenLDAP$ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 
@@ -20,13 +20,11 @@
 
 #include "lutil.h"
 
-// #define SLAP_AUTHPASSWD 1
-
 /*
  * Password Test Program
  */
 
-char *hash[] = {
+static char *hash[] = {
 #ifdef SLAP_AUTHPASSWD
 	"SHA1", "MD5",
 #else

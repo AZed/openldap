@@ -1,7 +1,7 @@
 /* result.c - shell backend result reading function */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-shell/result.c,v 1.5.2.5 2002/01/04 20:38:35 kurt Exp $ */
+/* $OpenLDAP$ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 
@@ -23,7 +23,7 @@ read_and_send_results(
     Connection	*conn,
     Operation	*op,
     FILE	*fp,
-    char	**attrs,
+    AttributeName *attrs,
     int		attrsonly
 )
 {
@@ -82,8 +82,8 @@ read_and_send_results(
 				Debug( LDAP_DEBUG_ANY, "str2entry(%s) failed\n",
 				    buf, 0, 0 );
 			} else {
-				send_search_entry( be, conn, op, e, attrs,
-				    attrsonly, NULL );
+				send_search_entry( be, conn, op, e,
+					attrs, attrsonly, NULL );
 				entry_free( e );
 			}
 
@@ -110,7 +110,7 @@ print_suffixes(
 {
 	int	i;
 
-	for ( i = 0; be->be_suffix[i] != NULL; i++ ) {
-		fprintf( fp, "suffix: %s\n", be->be_suffix[i] );
+	for ( i = 0; be->be_suffix[i].bv_val != NULL; i++ ) {
+		fprintf( fp, "suffix: %s\n", be->be_suffix[i].bv_val );
 	}
 }

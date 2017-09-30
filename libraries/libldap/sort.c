@@ -1,6 +1,6 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/sort.c,v 1.13.8.3 2002/01/04 20:38:22 kurt Exp $ */
+/* $OpenLDAP$ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 /* Portions
@@ -90,13 +90,11 @@ ldap_sort_entries(
 	LDAPMessage		*e, *last;
 	LDAPMessage		**ep;
 
+	assert( ld != NULL );
+
 	count = ldap_count_entries( ld, *chain );
 
-
 	if ( count < 0 ) {
-		if( ld != NULL ) {
-			ld->ld_errno = LDAP_PARAM_ERROR;
-		}
 		return -1;
 
 	} else if ( count < 2 ) {

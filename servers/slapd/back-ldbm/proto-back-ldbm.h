@@ -1,6 +1,6 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/proto-back-ldbm.h,v 1.25.2.9 2002/01/04 20:38:34 kurt Exp $ */
+/* $OpenLDAP$ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 
@@ -19,7 +19,7 @@ LDAP_BEGIN_DECL
 Entry *deref_internal_r LDAP_P((
 	Backend *be,
 	Entry *e,
-	const char *dn,
+	struct berval *dn,
 	int *err,
 	Entry **matched,
 	const char **text ));
@@ -34,7 +34,7 @@ Entry *deref_internal_r LDAP_P((
  */
 
 void attr_mask LDAP_P(( struct ldbminfo *li,
-	const char *desc,
+	AttributeDescription *desc,
 	slap_mask_t *indexmask ));
 
 int attr_index_config LDAP_P(( struct ldbminfo *li,
@@ -53,8 +53,7 @@ void cache_return_entry_rw LDAP_P(( Cache *cache, Entry *e, int rw ));
 #define cache_return_entry_w(c, e) cache_return_entry_rw((c), (e), 1)
 void cache_entry_commit LDAP_P(( Entry *e ));
 
-ID cache_find_entry_dn2id LDAP_P(( Backend *be, Cache *cache, const char *dn ));
-ID cache_find_entry_ndn2id LDAP_P(( Backend *be, Cache *cache, const char *ndn ));
+ID cache_find_entry_ndn2id LDAP_P(( Backend *be, Cache *cache, struct berval *ndn ));
 Entry * cache_find_entry_id LDAP_P(( Cache *cache, ID id, int rw ));
 int cache_delete_entry LDAP_P(( Cache *cache, Entry *e ));
 void cache_release_all LDAP_P(( Cache *cache ));
@@ -69,7 +68,11 @@ void ldbm_cache_close LDAP_P(( Backend *be, DBCache *db ));
 void ldbm_cache_really_close LDAP_P(( Backend *be, DBCache *db ));
 void ldbm_cache_flush_all LDAP_P(( Backend *be ));
 void ldbm_cache_sync LDAP_P(( Backend *be ));
+#if 0 /* replaced by macro */
 Datum ldbm_cache_fetch LDAP_P(( DBCache *db, Datum key ));
+#else /* 1 */
+#define ldbm_cache_fetch( db, key )	ldbm_fetch( (db)->dbc_db, (key) )
+#endif /* 1 */
 int ldbm_cache_store LDAP_P(( DBCache *db, Datum key, Datum data, int flags ));
 int ldbm_cache_delete LDAP_P(( DBCache *db, Datum key ));
 void *ldbm_cache_sync_daemon LDAP_P(( void *));
@@ -78,19 +81,21 @@ void *ldbm_cache_sync_daemon LDAP_P(( void *));
  * dn2id.c
  */
 
-int dn2id_add LDAP_P(( Backend *be, const char *dn, ID id ));
-int dn2id LDAP_P(( Backend *be, const char *dn, ID *idp ));
-int dn2idl LDAP_P(( Backend *be, const char *dn, int prefix, ID_BLOCK **idlp ));
-int dn2id_delete LDAP_P(( Backend *be, const char *dn, ID id ));
+int dn2id_add LDAP_P(( Backend *be, struct berval *dn, ID id ));
+int dn2id LDAP_P(( Backend *be, struct berval *dn, ID *idp ));
+int dn2idl LDAP_P(( Backend *be, struct berval *dn, int prefix, ID_BLOCK **idlp ));
+int dn2id_delete LDAP_P(( Backend *be, struct berval *dn, ID id ));
 
-Entry * dn2entry_rw LDAP_P(( Backend *be, const char *dn, Entry **matched, int rw ));
+Entry * dn2entry_rw LDAP_P(( Backend *be, struct berval *dn, Entry **matched, int rw ));
 #define dn2entry_r(be, dn, m) dn2entry_rw((be), (dn), (m), 0)
 #define dn2entry_w(be, dn, m) dn2entry_rw((be), (dn), (m), 1)
 
 /*
  * entry.c
  */
-int ldbm_back_entry_release_rw LDAP_P(( Backend *be, Entry *e, int rw ));
+int ldbm_back_entry_release_rw LDAP_P(( Backend *be,
+	Connection *conn, Operation *op,
+	Entry *e, int rw ));
 
 /*
  * filterindex.c
@@ -138,19 +143,24 @@ ID idl_nextid LDAP_P(( ID_BLOCK *idl, ID *cursor ));
  * index.c
  */
 extern int
+index_is_indexed LDAP_P((
+	Backend *be,
+	AttributeDescription *desc ));
+
+extern int
 index_param LDAP_P((
 	Backend *be,
 	AttributeDescription *desc,
 	int ftype,
 	char **dbname,
 	slap_mask_t *mask,
-	struct berval **prefix ));
+	struct berval *prefix ));
 
 extern int
 index_values LDAP_P((
 	Backend *be,
 	AttributeDescription *desc,
-	struct berval **vals,
+	BerVarray vals,
 	ID id,
 	int op ));
 
@@ -179,16 +189,7 @@ key_read LDAP_P((
 /*
  * passwd.c
  */
-extern int ldbm_back_exop_passwd LDAP_P(( BackendDB *bd,
-	Connection *conn, Operation *op,
-	const char *reqoid,
-	struct berval *reqdata,
-	char **rspoid,
-	struct berval **rspdata,
-	LDAPControl ***rspctrls,
-	const char **text,
-	struct berval *** refs ));
- 
+extern BI_op_extended ldbm_back_exop_passwd;
 
 /*
  * modify.c

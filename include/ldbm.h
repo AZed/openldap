@@ -1,6 +1,6 @@
-/* $OpenLDAP: pkg/ldap/include/ldbm.h,v 1.17.8.8 2002/01/04 20:38:16 kurt Exp $ */
+/* $OpenLDAP$ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, Redwood City, California, USA
+ * Copyright 1998-2003 The OpenLDAP Foundation, Redwood City, California, USA
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -127,8 +127,6 @@ typedef datum		Datum;
 typedef Datum LDBMCursor;
 typedef GDBM_FILE	LDBM;
 
-extern gdbm_error	gdbm_errno;
-
 LDAP_END_DECL
 
 /* for ldbm_open */
@@ -179,7 +177,7 @@ typedef int LDBMCursor;
 typedef MDBM		*LDBM;
 
 LDAP_END_DECL
-    
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>

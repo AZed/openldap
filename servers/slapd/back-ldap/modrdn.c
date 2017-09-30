@@ -1,7 +1,7 @@
 /* modrdn.c - ldap backend modrdn function */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/modrdn.c,v 1.1.8.4 2002/01/04 20:38:32 kurt Exp $ */
+/* $OpenLDAP$ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 /* This is an altered version */
@@ -24,6 +24,15 @@
  *    ever read sources, credits should appear in the documentation.
  * 
  * 4. This notice may not be removed or altered.
+ *
+ *
+ *
+ * Copyright 2000, Pierangelo Masarati, All rights reserved. <ando@sys-net.it>
+ * 
+ * This software is being modified by Pierangelo Masarati.
+ * The previously reported conditions apply to the modified code as well.
+ * Changes in the original code are highlighted where required.
+ * Credits for the original code go to the author, Howard Chu.
  */
 
 #include "portable.h"
@@ -41,31 +50,111 @@ ldap_back_modrdn(
     Backend	*be,
     Connection	*conn,
     Operation	*op,
-    const char	*dn,
-    const char	*ndn,
-    const char	*newrdn,
+    struct berval	*dn,
+    struct berval	*ndn,
+    struct berval	*newrdn,
+    struct berval	*nnewrdn,
     int		deleteoldrdn,
-    const char	*newSuperior
+    struct berval	*newSuperior,
+    struct berval	*nnewSuperior
 )
 {
 	struct ldapinfo	*li = (struct ldapinfo *) be->be_private;
 	struct ldapconn *lc;
 
+	struct berval mdn = { 0, NULL }, mnewSuperior = { 0, NULL };
+
 	lc = ldap_back_getconn( li, conn, op );
-	if (!lc)
+	if ( !lc || !ldap_back_dobind(lc, op) ) {
 		return( -1 );
+	}
 
 	if (newSuperior) {
 		int version = LDAP_VERSION3;
 		ldap_set_option( lc->ld, LDAP_OPT_PROTOCOL_VERSION, &version);
-	}
+		
+		/*
+		 * Rewrite the new superior, if defined and required
+	 	 */
+#ifdef ENABLE_REWRITE
+		switch ( rewrite_session( li->rwinfo, "newSuperiorDn",
+					newSuperior->bv_val, conn, &mnewSuperior.bv_val ) ) {
+		case REWRITE_REGEXEC_OK:
+			if ( mnewSuperior.bv_val == NULL ) {
+				mnewSuperior.bv_val = ( char * )newSuperior;
+			}
+#ifdef NEW_LOGGING
+			LDAP_LOG( BACK_LDAP, DETAIL1, 
+				"[rw] newSuperiorDn:" " \"%s\" -> \"%s\"\n",
+				newSuperior, mnewSuperior.bv_val, 0 );
+#else /* !NEW_LOGGING */
+			Debug( LDAP_DEBUG_ARGS, "rw> newSuperiorDn:"
+					" \"%s\" -> \"%s\"\n%s",
+					newSuperior->bv_val, mnewSuperior.bv_val, "" );
+#endif /* !NEW_LOGGING */
+			break;
 
-	if (!lc->bound) {
-		ldap_back_dobind(lc, op);
-		if (!lc->bound)
+		case REWRITE_REGEXEC_UNWILLING:
+			send_ldap_result( conn, op, LDAP_UNWILLING_TO_PERFORM,
+					NULL, "Operation not allowed",
+					NULL, NULL );
 			return( -1 );
+
+		case REWRITE_REGEXEC_ERR:
+			send_ldap_result( conn, op, LDAP_OTHER,
+					NULL, "Rewrite error",
+					NULL, NULL );
+			return( -1 );
+		}
+#else /* !ENABLE_REWRITE */
+		ldap_back_dn_massage( li, newSuperior, &mnewSuperior, 0, 1 );
+		if ( mnewSuperior.bv_val == NULL ) {
+			return( -1 );
+		}
+#endif /* !ENABLE_REWRITE */
 	}
 
-	ldap_rename2_s( lc->ld, dn, newrdn, newSuperior, deleteoldrdn );
+#ifdef ENABLE_REWRITE
+	/*
+	 * Rewrite the modrdn dn, if required
+	 */
+	switch ( rewrite_session( li->rwinfo, "modrDn", dn->bv_val, conn, &mdn.bv_val ) ) {
+	case REWRITE_REGEXEC_OK:
+		if ( mdn.bv_val == NULL ) {
+			mdn.bv_val = ( char * )dn->bv_val;
+		}
+#ifdef NEW_LOGGING
+		LDAP_LOG( BACK_LDAP, DETAIL1, 
+			"[rw] modrDn: \"%s\" -> \"%s\"\n", dn->bv_val, mdn.bv_val, 0 );
+#else /* !NEW_LOGGING */
+		Debug( LDAP_DEBUG_ARGS, "rw> modrDn: \"%s\" -> \"%s\"\n%s",
+				dn->bv_val, mdn.bv_val, "" );
+#endif /* !NEW_LOGGING */
+		break;
+		
+	case REWRITE_REGEXEC_UNWILLING:
+		send_ldap_result( conn, op, LDAP_UNWILLING_TO_PERFORM,
+				NULL, "Operation not allowed", NULL, NULL );
+		return( -1 );
+
+	case REWRITE_REGEXEC_ERR:
+		send_ldap_result( conn, op, LDAP_OTHER,
+				NULL, "Rewrite error", NULL, NULL );
+		return( -1 );
+	}
+#else /* !ENABLE_REWRITE */
+	ldap_back_dn_massage( li, dn, &mdn, 0, 1 );
+#endif /* !ENABLE_REWRITE */
+
+	ldap_rename2_s( lc->ld, mdn.bv_val, newrdn->bv_val, mnewSuperior.bv_val, deleteoldrdn );
+
+	if ( mdn.bv_val != dn->bv_val ) {
+		free( mdn.bv_val );
+	}
+	if ( mnewSuperior.bv_val != NULL
+		&& mnewSuperior.bv_val != newSuperior->bv_val ) {
+		free( mnewSuperior.bv_val );
+	}
+	
 	return( ldap_back_op_result( lc, op ) );
 }

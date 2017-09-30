@@ -1,7 +1,7 @@
 /* bind.c - ldbm backend bind and unbind routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/bind.c,v 1.27.2.9 2002/01/29 19:29:39 kurt Exp $ */
+/* $OpenLDAP$ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 
@@ -23,11 +23,11 @@ ldbm_back_bind(
     Backend		*be,
     Connection		*conn,
     Operation		*op,
-    const char		*dn,
-    const char		*ndn,
+    struct berval	*dn,
+    struct berval	*ndn,
     int			method,
     struct berval	*cred,
-	char**	edn
+    struct berval	*edn
 )
 {
 	struct ldbminfo	*li = (struct ldbminfo *) be->be_private;
@@ -43,9 +43,13 @@ ldbm_back_bind(
 
 	AttributeDescription *password = slap_schema.si_ad_userPassword;
 
-	Debug(LDAP_DEBUG_ARGS, "==> ldbm_back_bind: dn: %s\n", dn, 0, 0);
+#ifdef NEW_LOGGING
+	LDAP_LOG( BACK_LDBM, ENTRY, 
+		"ldbm_back_bind: dn: %s.\n", dn->bv_val, 0, 0 );
+#else
+	Debug(LDAP_DEBUG_ARGS, "==> ldbm_back_bind: dn: %s\n", dn->bv_val, 0, 0);
+#endif
 
-	*edn = NULL;
 	dn = ndn;
 
 	/* grab giant lock for reading */
@@ -54,7 +58,7 @@ ldbm_back_bind(
 	/* get entry with reader lock */
 	if ( (e = dn2entry_r( be, dn, &matched )) == NULL ) {
 		char *matched_dn = NULL;
-		struct berval **refs = NULL;
+		BerVarray refs = NULL;
 
 		if( matched != NULL ) {
 			matched_dn = ch_strdup( matched->e_dn );
@@ -64,8 +68,10 @@ ldbm_back_bind(
 				: NULL;
 
 			cache_return_entry_r( &li->li_cache, matched );
+
 		} else {
-			refs = default_referral;
+			refs = referral_rewrite( default_referral,
+				NULL, dn, LDAP_SCOPE_DEFAULT );
 		}
 
 		ldap_pvt_thread_rdwr_runlock(&li->li_giant_rwlock);
@@ -74,7 +80,7 @@ ldbm_back_bind(
 		rc = 1;
 		if ( method == LDAP_AUTH_SIMPLE ) {
 			if ( be_isroot_pw( be, conn, dn, cred ) ) {
-				*edn = ch_strdup( be_root_dn( be ) );
+				ber_dupbv( edn, be_root_dn( be ) );
 				rc = 0; /* front end will send result */
 
 			} else if ( refs != NULL ) {
@@ -95,21 +101,25 @@ ldbm_back_bind(
 				NULL, NULL, NULL, NULL );
 		}
 
-		if ( matched != NULL ) {
-			ber_bvecfree( refs );
-			free( matched_dn );
-		}
+		if ( refs ) ber_bvarray_free( refs );
+		if ( matched_dn ) free( matched_dn );
 		return( rc );
 	}
 
-	*edn = ch_strdup( e->e_dn );
+	ber_dupbv( edn, &e->e_name );
 
 	/* check for deleted */
 
 	if ( is_entry_alias( e ) ) {
 		/* entry is an alias, don't allow bind */
+#ifdef NEW_LOGGING
+		LDAP_LOG( BACK_LDBM, INFO, 
+			"ldbm_back_bind: entry (%s) is an alias.\n", e->e_dn, 0, 0 );
+#else
 		Debug( LDAP_DEBUG_TRACE, "entry is alias\n", 0,
 		    0, 0 );
+#endif
+
 
 		send_ldap_result( conn, op, LDAP_ALIAS_PROBLEM,
 		    NULL, "entry is alias", NULL, NULL );
@@ -120,11 +130,17 @@ ldbm_back_bind(
 
 	if ( is_entry_referral( e ) ) {
 		/* entry is a referral, don't allow bind */
-		struct berval **refs = get_entry_referrals( be,
+		BerVarray refs = get_entry_referrals( be,
 			conn, op, e );
 
+#ifdef NEW_LOGGING
+		LDAP_LOG( BACK_LDBM, INFO, 
+			   "ldbm_back_bind: entry(%s) is a referral.\n", e->e_dn, 0, 0 );
+#else
 		Debug( LDAP_DEBUG_TRACE, "entry is referral\n", 0,
 		    0, 0 );
+#endif
+
 
 		if( refs != NULL ) {
 			send_ldap_result( conn, op, LDAP_REFERRAL,
@@ -135,7 +151,7 @@ ldbm_back_bind(
 				NULL, NULL, NULL, NULL );
 		}
 
-		ber_bvecfree( refs );
+		ber_bvarray_free( refs );
 
 		rc = 1;
 		goto return_results;
@@ -146,14 +162,14 @@ ldbm_back_bind(
 		/* check for root dn/passwd */
 		if ( be_isroot_pw( be, conn, dn, cred ) ) {
 			/* front end will send result */
-			if(*edn != NULL) free( *edn );
-			*edn = ch_strdup( be_root_dn( be ) );
+			if(edn->bv_val != NULL) free( edn->bv_val );
+			ber_dupbv( edn, be_root_dn( be ) );
 			rc = 0;
 			goto return_results;
 		}
 
 		if ( ! access_allowed( be, conn, op, e,
-			password, NULL, ACL_AUTH ) )
+			password, NULL, ACL_AUTH, NULL ) )
 		{
 			send_ldap_result( conn, op, LDAP_INSUFFICIENT_ACCESS,
 				NULL, NULL, NULL, NULL );
@@ -191,7 +207,7 @@ ldbm_back_bind(
 		}
 
 		if ( ! access_allowed( be, conn, op, e,
-			krbattr, NULL, ACL_AUTH ) )
+			krbattr, NULL, ACL_AUTH, NULL ) )
 		{
 			send_ldap_result( conn, op, LDAP_INSUFFICIENT_ACCESS,
 				NULL, NULL, NULL, NULL );
@@ -206,7 +222,7 @@ ldbm_back_bind(
 			/*
 			 * no krbname values present:  check against DN
 			 */
-			if ( strcasecmp( dn, krbname ) == 0 ) {
+			if ( strcasecmp( dn->bv_val, krbname ) == 0 ) {
 				rc = 0;
 				break;
 			}
@@ -253,7 +269,7 @@ return_results:;
 	cache_return_entry_r( &li->li_cache, e );
 	ldap_pvt_thread_rdwr_runlock(&li->li_giant_rwlock);
 
-	/* front end with send result on success (rc==0) */
+	/* front end will send result on success (rc==0) */
 	return( rc );
 }
 

@@ -1,6 +1,6 @@
-/* $OpenLDAP: pkg/ldap/include/lber.h,v 1.32.6.9 2002/01/04 20:38:14 kurt Exp $ */
+/* $OpenLDAP$ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, Redwood City, California, USA
+ * Copyright 1998-2003 The OpenLDAP Foundation, Redwood City, California, USA
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -83,7 +83,6 @@ LDAP_BEGIN_DECL
 
 /* LBER BerElement options */
 #define LBER_USE_DER		0x01
-#define LBER_USE_INDEFINITE_LEN	0x02
 
 /* get/set options for BerElement */
 #define LBER_OPT_BER_OPTIONS			0x01
@@ -104,6 +103,7 @@ LDAP_BEGIN_DECL
 
 /* get/set Memory Debug options */
 #define LBER_OPT_MEMORY_INUSE		0x8005	/* for memory debugging */
+#define LBER_OPT_LOG_PROC           0x8006  /* for external logging function */
 
 typedef int* (*BER_ERRNO_FN) LDAP_P(( void ));
 
@@ -121,7 +121,7 @@ typedef struct lber_memory_fns {
 	BER_MEMFREE_FN bmf_free;
 } BerMemoryFunctions;
 
-/* LBER Sockbuf_IO options */ 
+/* LBER Sockbuf_IO options */
 #define LBER_SB_OPT_GET_FD		1
 #define LBER_SB_OPT_SET_FD		2
 #define LBER_SB_OPT_HAS_IO		3
@@ -132,8 +132,8 @@ typedef struct lber_memory_fns {
 #define LBER_SB_OPT_DRAIN		10
 #define LBER_SB_OPT_NEEDS_READ		11
 #define LBER_SB_OPT_NEEDS_WRITE		12
-#define LBER_SB_OPT_GET_MAX_INCOMING 13
-#define LBER_SB_OPT_SET_MAX_INCOMING 14
+#define LBER_SB_OPT_GET_MAX_INCOMING	13
+#define LBER_SB_OPT_SET_MAX_INCOMING	14
 /* Largest option used by the library */
 #define LBER_SB_OPT_OPT_MAX		14
 
@@ -154,6 +154,7 @@ typedef struct lber_memory_fns {
 #define LBER_OPT_SUCCESS	(0)
 #define LBER_OPT_ERROR		(-1)
 
+#define LBER_ELEMENT_SIZEOF (256) /* must be >= sizeof(BerElement) */
 typedef struct berelement BerElement;
 typedef struct sockbuf Sockbuf;
 typedef struct seqorset Seqorset;
@@ -174,12 +175,12 @@ struct sockbuf_io {
 	int (*sbi_setup)( Sockbuf_IO_Desc *sbiod, void *arg );
 	int (*sbi_remove)( Sockbuf_IO_Desc *sbiod );
 	int (*sbi_ctrl)( Sockbuf_IO_Desc *sbiod, int opt, void *arg);
-	
+
 	ber_slen_t (*sbi_read)( Sockbuf_IO_Desc *sbiod, void *buf,
 		ber_len_t len );
 	ber_slen_t (*sbi_write)( Sockbuf_IO_Desc *sbiod, void *buf,
 		ber_len_t len );
-	
+
 	int (*sbi_close)( Sockbuf_IO_Desc *sbiod );
 };
 
@@ -201,6 +202,8 @@ typedef struct berval {
 	char		*bv_val;
 } BerValue;
 
+typedef BerValue *BerVarray;	/* To distinguish from a single bv */
+
 /* this should be moved to lber-int.h */
 
 /*
@@ -221,7 +224,6 @@ ber_dump LDAP_P((
 LBER_F( void )
 ber_sos_dump LDAP_P((
 	Seqorset *sos ));
-
 
 /*
  * in decode.c:
@@ -262,6 +264,12 @@ ber_get_stringb LDAP_P((
 	ber_len_t *len ));
 
 LBER_F( ber_tag_t )
+ber_get_stringbv LDAP_P((
+	BerElement *ber,
+	struct berval *bv,
+	int alloc ));
+
+LBER_F( ber_tag_t )
 ber_get_stringa LDAP_P((
 	BerElement *ber,
 	char **buf ));
@@ -299,7 +307,7 @@ ber_next_element LDAP_P((
 	LDAP_CONST char *last ));
 
 LBER_F( ber_tag_t )
-ber_scanf LDAP_P((								  
+ber_scanf LDAP_P((
 	BerElement *ber,
 	LDAP_CONST char *fmt,
 	... ));
@@ -333,7 +341,7 @@ ber_put_ostring LDAP_P((
 LBER_F( int )
 ber_put_berval LDAP_P((
 	BerElement *ber,
-	LDAP_CONST struct berval *bv,
+	struct berval *bv,
 	ber_tag_t tag ));
 
 LBER_F( int )
@@ -407,6 +415,9 @@ ber_free LDAP_P((
 	BerElement *ber,
 	int freebuf ));
 
+LBER_F( void )
+ber_free_buf LDAP_P(( BerElement *ber ));
+
 LBER_F( int )
 ber_flush LDAP_P((
 	Sockbuf *sb,
@@ -434,6 +445,12 @@ ber_get_next LDAP_P((
 	BerElement *ber ));
 
 LBER_F( void )
+ber_init2 LDAP_P((
+	BerElement *ber,
+	struct berval *bv,
+	int options ));
+
+LBER_F( void )
 ber_init_w_nullc LDAP_P((	/* DEPRECATED */
 	BerElement *ber,
 	int options ));
@@ -451,6 +468,12 @@ LBER_F( int )
 ber_flatten LDAP_P((
 	BerElement *ber,
 	struct berval **bvPtr ));
+
+LBER_F( int )
+ber_flatten2 LDAP_P((
+	BerElement *ber,
+	struct berval *bv,
+	int alloc ));
 
 /*
  * LBER ber accessor functions
@@ -499,10 +522,13 @@ ber_sockbuf_ctrl LDAP_P((
 	int opt,
 	void *arg ));
 
-LBER_F( Sockbuf_IO ) ber_sockbuf_io_tcp;
-LBER_F( Sockbuf_IO ) ber_sockbuf_io_readahead;
-LBER_F( Sockbuf_IO ) ber_sockbuf_io_fd;
-LBER_F( Sockbuf_IO ) ber_sockbuf_io_debug;
+LBER_V( Sockbuf_IO ) ber_sockbuf_io_tcp;
+LBER_V( Sockbuf_IO ) ber_sockbuf_io_readahead;
+LBER_V( Sockbuf_IO ) ber_sockbuf_io_fd;
+LBER_V( Sockbuf_IO ) ber_sockbuf_io_debug;
+#ifdef LDAP_CONNECTIONLESS
+LBER_V( Sockbuf_IO ) ber_sockbuf_io_udp;
+#endif
 
 /*
  * LBER memory.c
@@ -543,20 +569,38 @@ ber_bvecadd LDAP_P((
 	struct berval *bv ));
 
 LBER_F( struct berval * )
+ber_dupbv LDAP_P((
+	struct berval *dst, struct berval *src ));
+
+LBER_F( struct berval * )
 ber_bvdup LDAP_P((
-	LDAP_CONST struct berval *bv ));
+	struct berval *src ));
 
 LBER_F( struct berval * )
-ber_bvstr LDAP_P((
-	LDAP_CONST char * ));
+ber_str2bv LDAP_P((
+	LDAP_CONST char *, ber_len_t len, int dup, struct berval *bv));
 
 LBER_F( struct berval * )
-ber_bvstrdup LDAP_P((
-	LDAP_CONST char * ));
+ber_mem2bv LDAP_P((
+	LDAP_CONST char *, ber_len_t len, int dup, struct berval *bv));
+
+#define	ber_bvstr(a)	ber_str2bv(a, 0, 0, NULL)
+#define	ber_bvstrdup(a)	ber_str2bv(a, 0, 1, NULL)
 
 LBER_F( char * )
 ber_strdup LDAP_P((
 	LDAP_CONST char * ));
+
+LBER_F( void )
+ber_bvarray_free LDAP_P(( BerVarray p ));
+
+LBER_F( int )
+ber_bvarray_add LDAP_P(( BerVarray *p, BerValue *bv ));
+
+#define ber_bvcmp(v1,v2) \
+	((v1)->bv_len < (v2)->bv_len \
+		? -1 : ((v1)->bv_len > (v2)->bv_len \
+			? 1 : memcmp((v1)->bv_val, (v2)->bv_val, (v1)->bv_len) ))
 
 /*
  * error.c

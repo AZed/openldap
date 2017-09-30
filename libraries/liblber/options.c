@@ -1,16 +1,14 @@
-/* $OpenLDAP: pkg/ldap/libraries/liblber/options.c,v 1.13.2.6 2002/01/04 20:38:19 kurt Exp $ */
+/* $OpenLDAP$ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 #include "portable.h"
 
 #include <ac/stdlib.h>
 #include <ac/string.h>
-
+#include <ac/stdarg.h>
 #include "lber-int.h"
-
-extern void * ber_pvt_err_file;	/* bprint.c */
 
 struct lber_options ber_int_options = {
 	LBER_UNINITIALIZED, 0, 0 };
@@ -21,8 +19,8 @@ ber_get_option(
 	int		option,
 	void	*outvalue)
 {
-	LDAP_CONST BerElement *ber;
-	LDAP_CONST Sockbuf *sb;
+	const BerElement *ber;
+	const Sockbuf *sb;
 
 	ber_int_options.lbo_valid = LBER_INITIALIZED;
 
@@ -50,6 +48,9 @@ ber_get_option(
 #else
 			return LBER_OPT_ERROR;
 #endif
+		} else if(option == LBER_OPT_LOG_PRINT_FILE) {
+			*((FILE**)outvalue) = (FILE*)ber_pvt_err_file;
+			return LBER_OPT_SUCCESS;
 		}
 
 		ber_errno = LBER_ERROR_PARAM;
@@ -61,24 +62,27 @@ ber_get_option(
 
 	switch(option) {
 	case LBER_OPT_BER_OPTIONS:
-		assert( BER_VALID( ber ) );
+		assert( LBER_VALID( ber ) );
 		* (int *) outvalue = ber->ber_options;
 		return LBER_OPT_SUCCESS;
 
 	case LBER_OPT_BER_DEBUG:
-		assert( BER_VALID( ber ) );
+		assert( LBER_VALID( ber ) );
 		* (int *) outvalue = ber->ber_debug;
 		return LBER_OPT_SUCCESS;
 
 	case LBER_OPT_BER_REMAINING_BYTES:
+		assert( LBER_VALID( ber ) );
 		*((ber_len_t *) outvalue) = ber_pvt_ber_remaining(ber);
 		return LBER_OPT_SUCCESS;
 
 	case LBER_OPT_BER_TOTAL_BYTES:
+		assert( LBER_VALID( ber ) );
 		*((ber_len_t *) outvalue) = ber_pvt_ber_total(ber);
 		return LBER_OPT_SUCCESS;
 
 	case LBER_OPT_BER_BYTES_TO_WRITE:
+		assert( LBER_VALID( ber ) );
 		*((ber_len_t *) outvalue) = ber_pvt_ber_write(ber);
 		return LBER_OPT_SUCCESS;
 
@@ -163,6 +167,8 @@ ber_set_option(
 #else
 			return LBER_OPT_ERROR;
 #endif
+		} else if(option == LBER_OPT_LOG_PROC) {
+			ber_int_log_proc = (BER_LOG_FN)invalue;
 		}
 
 		ber_errno = LBER_ERROR_PARAM;
@@ -174,24 +180,27 @@ ber_set_option(
 
 	switch(option) {
 	case LBER_OPT_BER_OPTIONS:
-		assert( BER_VALID( ber ) );
+		assert( LBER_VALID( ber ) );
 		ber->ber_options = * (const int *) invalue;
 		return LBER_OPT_SUCCESS;
 
 	case LBER_OPT_BER_DEBUG:
-		assert( BER_VALID( ber ) );
+		assert( LBER_VALID( ber ) );
 		ber->ber_debug = * (const int *) invalue;
 		return LBER_OPT_SUCCESS;
 
 	case LBER_OPT_BER_REMAINING_BYTES:
+		assert( LBER_VALID( ber ) );
 		ber->ber_end = &ber->ber_ptr[* (const ber_len_t *) invalue];
 		return LBER_OPT_SUCCESS;
 
 	case LBER_OPT_BER_TOTAL_BYTES:
+		assert( LBER_VALID( ber ) );
 		ber->ber_end = &ber->ber_buf[* (const ber_len_t *) invalue];
 		return LBER_OPT_SUCCESS;
 
 	case LBER_OPT_BER_BYTES_TO_WRITE:
+		assert( LBER_VALID( ber ) );
 		ber->ber_ptr = &ber->ber_buf[* (const ber_len_t *) invalue];
 		return LBER_OPT_SUCCESS;
 

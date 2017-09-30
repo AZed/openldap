@@ -1,5 +1,5 @@
-# $OpenLDAP: pkg/ldap/include/Makefile.in,v 1.10.4.4 2002/01/04 20:38:14 kurt Exp $
-## Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+# $OpenLDAP$
+## Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
 ## COPYING RESTRICTIONS APPLY, See COPYRIGHT file
 ##
 ## include Makefile.in for OpenLDAP
@@ -8,9 +8,11 @@ all-local: ldap_config.h FORCE
 
 install-local: FORCE
 	-$(MKDIR) $(DESTDIR)$(includedir)
-	for header in $(srcdir)/lber.h lber_types.h $(srcdir)/ldap.h \
-	  $(srcdir)/ldap_cdefs.h ldap_features.h $(srcdir)/ldap_schema.h \
-	  $(srcdir)/disptmpl.h $(srcdir)/srchpref.h; do \
+	for header in $(srcdir)/lber.h lber_types.h \
+		$(srcdir)/ldap.h $(srcdir)/ldap_cdefs.h \
+		$(srcdir)/ldap_schema.h $(srcdir)/ldap_utf8.h \
+		ldap_features.h; \
+	do \
 		$(INSTALL) $(INSTALLFLAGS) -m 644 $$header $(DESTDIR)$(includedir); \
 	done
 
@@ -28,16 +30,34 @@ ldap_config.h: $(LDAP_CONFIG) Makefile
 	@$(RM) $@
 	@echo "Making $@"
 	@echo "/* Generated from $(LDAP_CONFIG) on `date` */" > $@;  \
+	if test $(PLAT) = NT; then \
+	    sysconfdir=`cygpath -w $(sysconfdir) | \
+		$(SED) -e 's/\\\\/\\\\\\\\\\\\\\\\/g'`; \
+	    datadir=`cygpath -w $(datadir) | \
+		$(SED) -e 's/\\\\/\\\\\\\\\\\\\\\\/g'`; \
+	    bindir=`cygpath -w $(bindir) | \
+		$(SED) -e 's/\\\\/\\\\\\\\\\\\\\\\/g'`; \
+	    sbindir=`cygpath -w $(sbindir) | \
+		$(SED) -e 's/\\\\/\\\\\\\\\\\\\\\\/g'`; \
+	    libexecdir=`cygpath -w $(libexecdir) | \
+		$(SED) -e 's/\\\\/\\\\\\\\\\\\\\\\/g'`; \
+	    localstatedir=`cygpath -w $(localstatedir) | \
+		$(SED) -e 's/\\\\/\\\\\\\\\\\\\\\\/g'`; \
+	else \
+	    sysconfdir=$(sysconfdir); \
+	    datadir=$(datadir); \
+	    bindir=$(bindir); \
+	    sbindir=$(sbindir); \
+	    libexecdir=$(libexecdir); \
+	    localstatedir=$(localstatedir); \
+	fi; \
 	$(SED) \
-			-e 's;%SYSCONFDIR%;$(sysconfdir);' \
-			-e 's;%DATADIR%;$(datadir);' \
-			-e 's;%BINDIR%;$(bindir);' \
-			-e 's;%SBINDIR%;$(sbindir);' \
-			-e 's;%LIBEXECDIR%;$(libexecdir);' \
-			-e 's;%RUNDIR%;$(localstatedir);' \
-			-e 's;%EDITOR%;$(EDITOR);' \
-			-e 's;%FINGER%;$(FINGER);' \
-			-e 's;%SENDMAIL%;$(SENDMAIL);' \
+			-e "s;%SYSCONFDIR%;$$sysconfdir;" \
+			-e "s;%DATADIR%;$$datadir;" \
+			-e "s;%BINDIR%;$$bindir;" \
+			-e "s;%SBINDIR%;$$sbindir;" \
+			-e "s;%LIBEXECDIR%;$$libexecdir;" \
+			-e "s;%RUNDIR%;$$localstatedir;" \
 			 $(LDAP_CONFIG) >> $@; \
 	$(CHMOD) 444 $@
 
@@ -46,3 +66,4 @@ install-common:		all-common install-local
 clean-common:		clean-local
 veryclean-common:	veryclean-local
 depend-common:		depend-local
+

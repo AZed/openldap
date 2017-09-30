@@ -1,4 +1,4 @@
-# $OpenLDAP: pkg/ldap/servers/slapd/schema/misc.schema,v 1.2.8.11 2002/01/08 20:19:06 kurt Exp $
+# $OpenLDAP$
 #
 # Assorted definitions from several sources, including
 # ''works in progress''.  Contents of this file are
@@ -30,16 +30,9 @@ attributetype ( 2.16.840.1.113730.3.1.47
 	SYNTAX 1.3.6.1.4.1.1466.115.121.1.26{256}
 	SINGLE-VALUE )
 
-# OID needs to be determined
-#objectclass ( 2.16.840.1.113730.3.2.TBD
-#	NAME 'inetLocalMailRecipient'
-#	DESC 'Internet local mail recipient'
-#	SUP top AUXILIARY
-#	MAY	( mailLocalAddress $ mailHost $ mailRoutingAddress ) )
-
 # I-D leaves this OID TBD.
-# iPlanet uses 2.16.840.1.113.730.3.2.147 but that appears to be
-# an improperly delegated OID.  A typo is suspected.
+# iPlanet uses 2.16.840.1.113.730.3.2.147 but that is an
+# improperly delegated OID.  A typo is likely.
 objectclass ( 2.16.840.1.113730.3.2.147
 	NAME 'inetLocalMailRecipient'
 	DESC 'Internet local mail recipient'

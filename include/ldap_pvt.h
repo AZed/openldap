@@ -1,6 +1,6 @@
-/* $OpenLDAP: pkg/ldap/include/ldap_pvt.h,v 1.7.4.15 2002/01/04 20:38:15 kurt Exp $ */
+/* $OpenLDAP$ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, Redwood City, California, USA
+ * Copyright 1998-2003 The OpenLDAP Foundation, Redwood City, California, USA
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -17,7 +17,6 @@
 #ifndef _LDAP_PVT_H
 #define _LDAP_PVT_H 1
 
-#include <ldap_cdefs.h>
 #include <lber.h>				/* get ber_slen_t */
 
 LDAP_BEGIN_DECL
@@ -40,13 +39,6 @@ ldap_url_parse_ext LDAP_P((
 	LDAP_CONST char *url,
 	struct ldap_url_desc **ludpp ));
 
-LDAP_F ( int )
-ldap_pvt_domain2dn LDAP_P((
-	LDAP_CONST char *domain,
-	char **dn ));
-
-struct hostent;	/* avoid pulling in <netdb.h> */
-
 LDAP_F( char * )
 ldap_pvt_ctime LDAP_P((
 	const time_t *tp,
@@ -54,9 +46,11 @@ ldap_pvt_ctime LDAP_P((
 
 LDAP_F( char *) ldap_pvt_get_fqdn LDAP_P(( char * ));
 
+struct hostent;	/* avoid pulling in <netdb.h> */
+
 LDAP_F( int )
 ldap_pvt_gethostbyname_a LDAP_P((
-	const char *name, 
+	const char *name,
 	struct hostent *resbuf,
 	char **buf,
 	struct hostent **result,
@@ -71,6 +65,16 @@ ldap_pvt_gethostbyaddr_a LDAP_P((
 	char **buf,
 	struct hostent **result,
 	int *herrno_ptr ));
+
+struct sockaddr;
+
+LDAP_F( int )
+ldap_pvt_get_hname LDAP_P((
+	const struct sockaddr * sa,
+	int salen,
+	char *name,
+	int namelen,
+	char **herr ));
 
 
 /* charray.c */
@@ -107,28 +111,34 @@ ldap_charray2str LDAP_P((
 
 /* url.c */
 LDAP_F (void) ldap_pvt_hex_unescape LDAP_P(( char *s ));
-LDAP_F (int) ldap_pvt_unhex( int c );
 
-/* these macros assume 'x' is an ASCII x */
-#define LDAP_DNSEPARATOR(c)	((c) == ',' || (c) == ';')
-#define LDAP_SEPARATOR(c)	((c) == ',' || (c) == ';' || (c) == '+')
+/*
+ * these macros assume 'x' is an ASCII x
+ * and assume the "C" locale
+ */
+#define LDAP_ASCII(c)		(!((c) & 0x80))
 #define LDAP_SPACE(c)		((c) == ' ' || (c) == '\t' || (c) == '\n')
+#define LDAP_DIGIT(c)		((c) >= '0' && (c) <= '9')
+#define LDAP_LOWER(c)		((c) >= 'a' && (c) <= 'z')
+#define LDAP_UPPER(c)		((c) >= 'A' && (c) <= 'Z')
+#define LDAP_ALPHA(c)		(LDAP_LOWER(c) || LDAP_UPPER(c))
+#define LDAP_ALNUM(c)		(LDAP_ALPHA(c) || LDAP_DIGIT(c))
 
-#define LDAP_LOWER(c)		( (c) >= 'a' && (c) <= 'z' )
-#define LDAP_UPPER(c)		( (c) >= 'A' && (c) <= 'Z' )
-#define LDAP_ALPHA(c)		( LDAP_LOWER(c) || LDAP_UPPER(c) )
-#define LDAP_DIGIT(c)		( (c) >= '0' && (c) <= '9' )
-#define LDAP_ALNUM(c)		( LDAP_ALPHA(c) || LDAP_DIGIT(c) )
+#define LDAP_LDH(c)			(LDAP_ALNUM(c) || (c) == '-')
 
-#define LDAP_LEADKEYCHAR(c)	( LDAP_ALPHA(c) )
-#define LDAP_KEYCHAR(c)		( LDAP_ALNUM(c) || (c) == '-' )
-#define LDAP_LEADOIDCHAR(c)	( LDAP_DIGIT(c) )
-#define LDAP_OIDCHAR(c)		( LDAP_DIGIT(c) || (c) == '.' )
+#define LDAP_HEXLOWER(c)	((c) >= 'a' && (c) <= 'f')
+#define LDAP_HEXUPPER(c)	((c) >= 'A' && (c) <= 'F')
+#define LDAP_HEX(c)			(LDAP_DIGIT(c) || \
+								LDAP_HEXLOWER(c) || LDAP_HEXUPPER(c))
 
-#define LDAP_LEADATTRCHAR(c)	( LDAP_LEADKEYCHAR(c) || LDAP_LEADOIDCHAR(c) )
-#define LDAP_ATTRCHAR(c)		( LDAP_KEYCHAR(c) || LDAP_OIDCHAR(c) )
+/* controls.c */
+struct ldapcontrol;
+LDAP_F (struct ldapcontrol *) ldap_control_dup LDAP_P((
+	const struct ldapcontrol *ctrl ));
 
-#define LDAP_NEEDSESCAPE(c)	((c) == '\\' || (c) == '"')
+LDAP_F (struct ldapcontrol **) ldap_controls_dup LDAP_P((
+	struct ldapcontrol *const *ctrls ));
+
 
 #ifdef HAVE_CYRUS_SASL
 /* cyrus.c */
@@ -154,6 +164,10 @@ LDAP_F (int) ldap_open_internal_connection LDAP_P((
 	struct ldap **ldp, ber_socket_t *fdp ));
 
 /* search.c */
+LDAP_F( int ) ldap_pvt_put_filter LDAP_P((
+	BerElement *ber,
+	const char *str ));
+
 LDAP_F( char * )
 ldap_pvt_find_wildcard LDAP_P((	const char *s ));
 
@@ -167,87 +181,40 @@ ldap_pvt_str2upper LDAP_P(( char *str ));
 LDAP_F( char * )
 ldap_pvt_str2lower LDAP_P(( char *str ));
 
+LDAP_F( struct berval * )
+ldap_pvt_str2upperbv LDAP_P(( char *str, struct berval *bv ));
+
+LDAP_F( struct berval * )
+ldap_pvt_str2lowerbv LDAP_P(( char *str, struct berval *bv ));
+
 /* tls.c */
-LDAP_F (int) ldap_pvt_tls_init LDAP_P(( void ));
-LDAP_F (void) ldap_pvt_tls_destroy LDAP_P(( void ));
-LDAP_F (int) ldap_pvt_tls_connect LDAP_P(( struct ldap *ld,
-	Sockbuf *sb, void *ctx_arg ));
-LDAP_F (int) ldap_pvt_tls_accept LDAP_P(( Sockbuf *sb, void *ctx_arg ));
-LDAP_F (void *) ldap_pvt_tls_sb_handle LDAP_P(( Sockbuf *sb ));
-LDAP_F (void *) ldap_pvt_tls_get_handle LDAP_P(( struct ldap *ld ));
-LDAP_F (char *) ldap_pvt_tls_get_peer LDAP_P(( void *handle ));
-LDAP_F (int) ldap_pvt_tls_get_strength LDAP_P(( void *handle ));
-LDAP_F (int) ldap_pvt_tls_inplace LDAP_P(( Sockbuf *sb ));
-LDAP_F (int) ldap_pvt_tls_start LDAP_P(( struct ldap *ld,
-	Sockbuf *sb, void *ctx_arg ));
+LDAP_F (int) ldap_int_tls_config LDAP_P(( struct ldap *ld,
+	int option, const char *arg ));
 LDAP_F (int) ldap_pvt_tls_get_option LDAP_P(( struct ldap *ld,
 	int option, void *arg ));
 LDAP_F (int) ldap_pvt_tls_set_option LDAP_P(( struct ldap *ld,
 	int option, void *arg ));
 
-/*  
- * UTF-8 (in utf-8.c)
- */
+LDAP_F (void) ldap_pvt_tls_destroy LDAP_P(( void ));
+LDAP_F (int) ldap_pvt_tls_init LDAP_P(( void ));
+LDAP_F (int) ldap_pvt_tls_init_def_ctx LDAP_P(( void ));
+LDAP_F (int) ldap_pvt_tls_accept LDAP_P(( Sockbuf *sb, void *ctx_arg ));
+LDAP_F (int) ldap_pvt_tls_inplace LDAP_P(( Sockbuf *sb ));
+LDAP_F (void *) ldap_pvt_tls_sb_ctx LDAP_P(( Sockbuf *sb ));
 
-typedef ber_int_t ldap_ucs4_t;
-typedef short ldap_ucs2_t;
-typedef ldap_ucs2_t ldap_unicode_t;
+LDAP_F (int) ldap_pvt_tls_init_default_ctx LDAP_P(( void ));
 
-/* returns the number of bytes in the UTF-8 string */
-LDAP_F (ber_len_t) ldap_utf8_bytes( const char * );
-/* returns the number of UTF-8 characters in the string */
-LDAP_F (ber_len_t) ldap_utf8_chars( const char * );
-/* returns the length (in bytes) of the UTF-8 character */
-LDAP_F (int) ldap_utf8_offset( const char * );
-/* returns the length (in bytes) indicated by the UTF-8 character */
-LDAP_F (int) ldap_utf8_charlen( const char * );
-/* copies a UTF-8 character and returning number of bytes copied */
-LDAP_F (int) ldap_utf8_copy( char *, const char *);
+typedef int LDAPDN_rewrite_dummy LDAP_P (( void *dn, unsigned flags ));
 
-/* returns pointer of next UTF-8 character in string */
-LDAP_F (char*) ldap_utf8_next( const char * );
-/* returns pointer of previous UTF-8 character in string */
-LDAP_F (char*) ldap_utf8_prev( const char * );
-
-/* primitive ctype routines -- not aware of non-ascii characters */
-LDAP_F (int) ldap_utf8_isascii( const char * );
-LDAP_F (int) ldap_utf8_isalpha( const char * );
-LDAP_F (int) ldap_utf8_isalnum( const char * );
-LDAP_F (int) ldap_utf8_isdigit( const char * );
-LDAP_F (int) ldap_utf8_isxdigit( const char * );
-LDAP_F (int) ldap_utf8_isspace( const char * );
-
-/* span characters not in set, return bytes spanned */
-LDAP_F (ber_len_t) ldap_utf8_strcspn( const char* str, const char *set);
-/* span characters in set, return bytes spanned */
-LDAP_F (ber_len_t) ldap_utf8_strspn( const char* str, const char *set);
-/* return first occurance of character in string */
-LDAP_F (char *) ldap_utf8_strchr( const char* str, const char *chr);
-/* return first character of set in string */
-LDAP_F (char *) ldap_utf8_strpbrk( const char* str, const char *set);
-/* reentrant tokenizer */
-LDAP_F (char*) ldap_utf8_strtok( char* sp, const char* sep, char **last);
-
-/* Optimizations */
-#define LDAP_UTF8_ISASCII(p) ( * (const unsigned char *) (p) < 0x80 )
-#define LDAP_UTF8_CHARLEN(p) ( LDAP_UTF8_ISASCII(p) \
-	? 1 : ldap_utf8_charlen((p)) )
-#define LDAP_UTF8_OFFSET(p) ( LDAP_UTF8_ISASCII(p) \
-	? 1 : ldap_utf8_offset((p)) )
-
-#define LDAP_UTF8_COPY(d,s) (	LDAP_UTF8_ISASCII(s) \
-	? (*(d) = *(s), 1) : ldap_utf8_copy((d),(s)) )
-
-#define LDAP_UTF8_NEXT(p) (	LDAP_UTF8_ISASCII(p) \
-	? (char *)(p)+1 : ldap_utf8_next((p)) )
-
-#define LDAP_UTF8_INCR(p) ((p) = LDAP_UTF8_NEXT(p))
-
-/* For symmetry */
-#define LDAP_UTF8_PREV(p) (ldap_utf8_prev((p)))
-#define LDAP_UTF8_DECR(p) ((p)=LDAP_UTF8_PREV((p)))
+LDAP_F (int) ldap_pvt_tls_get_my_dn LDAP_P(( void *ctx, struct berval *dn,
+	LDAPDN_rewrite_dummy *func, unsigned flags ));
+LDAP_F (int) ldap_pvt_tls_get_peer_dn LDAP_P(( void *ctx, struct berval *dn,
+	LDAPDN_rewrite_dummy *func, unsigned flags ));
+LDAP_F (int) ldap_pvt_tls_get_strength LDAP_P(( void *ctx ));
 
 LDAP_END_DECL
+
+#include "ldap_pvt_uc.h"
 
 #endif
 

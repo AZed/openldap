@@ -1,6 +1,6 @@
-/* $OpenLDAP: pkg/ldap/include/lutil.h,v 1.12.2.9 2002/09/10 01:16:50 hyc Exp $ */
+/* $OpenLDAP$ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, Redwood City, California, USA
+ * Copyright 1998-2003 The OpenLDAP Foundation, Redwood City, California, USA
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -56,9 +56,15 @@ lutil_entropy LDAP_P((
 	unsigned char *buf,
 	ber_len_t nbytes ));
 
-/* passwd.c */
+/* passfile.c */
 struct berval; /* avoid pulling in lber.h */
 
+LDAP_LUTIL_F( int )
+lutil_get_filed_password LDAP_P((
+	const char *filename,
+	struct berval * ));
+
+/* passwd.c */
 LDAP_LUTIL_F( int )
 lutil_authpasswd LDAP_P((
 	const struct berval *passwd,	/* stored password */
@@ -74,7 +80,7 @@ lutil_authpasswd_hash LDAP_P((
 
 #if defined( SLAPD_SPASSWD ) && defined( HAVE_CYRUS_SASL )
 	/* cheat to avoid pulling in <sasl.h> */
-LDAP_LUTIL_F( struct sasl_conn * ) lutil_passwd_sasl_conn;
+LDAP_LUTIL_V( struct sasl_conn * ) lutil_passwd_sasl_conn;
 #endif
 
 LDAP_LUTIL_F( int )
@@ -106,9 +112,94 @@ lutil_progname LDAP_P((
 	int argc,
 	char *argv[] ));
 
+LDAP_LUTIL_F( char* )
+lutil_strcopy LDAP_P(( char *dst, const char *src ));
+
+LDAP_LUTIL_F( char* )
+lutil_strncopy LDAP_P(( char *dst, const char *src, size_t n ));
+
+struct tm;
+
+/* use this macro to statically allocate buffer for lutil_gentime */
+#define LDAP_LUTIL_GENTIME_BUFSIZE	22
+LDAP_LUTIL_F( size_t )
+lutil_gentime LDAP_P(( char *s, size_t max, const struct tm *tm ));
+
+#ifndef HAVE_MKSTEMP
+LDAP_LUTIL_F( int )
+mkstemp LDAP_P (( char * template ));
+#endif
+
 /* sockpair.c */
 LDAP_LUTIL_F( int )
-lutil_pair( LBER_SOCKET_T sd[2] );
+lutil_pair( ber_socket_t sd[2] );
+
+/* uuid.c */
+/* use this macro to allocate buffer for lutil_uuidstr */
+#define LDAP_LUTIL_UUIDSTR_BUFSIZE	40
+LDAP_LUTIL_F( size_t )
+lutil_uuidstr( char *buf, size_t len );
+
+/* csn.c */
+/* use this macro to allocate buffer for lutil_csnstr */
+#define LDAP_LUTIL_CSNSTR_BUFSIZE	64
+LDAP_LUTIL_F( size_t )
+lutil_csnstr( char *buf, size_t len, unsigned int replica, unsigned int mod );
+
+/*
+ * Sometimes not all declarations in a header file are needed.
+ * An indicator to this is whether or not the symbol's type has
+ * been defined. Thus, we don't need to include a symbol if
+ * its type has not been defined through another header file.
+ */
+
+#ifdef HAVE_NT_SERVICE_MANAGER
+LDAP_LUTIL_V (int) is_NT_Service;
+
+#ifdef _LDAP_PVT_THREAD_H
+LDAP_LUTIL_V (ldap_pvt_thread_cond_t) started_event;
+#endif /* _LDAP_PVT_THREAD_H */
+
+/* macros are different between Windows and Mingw */
+#if defined(_WINSVC_H) || defined(_WINSVC_)
+LDAP_LUTIL_V (SERVICE_STATUS) lutil_ServiceStatus;
+LDAP_LUTIL_V (SERVICE_STATUS_HANDLE) hlutil_ServiceStatus;
+#endif /* _WINSVC_H */
+
+LDAP_LUTIL_F (void)
+lutil_CommenceStartupProcessing( char *serverName, void (*stopper)(int)) ;
+
+LDAP_LUTIL_F (void)
+lutil_ReportShutdownComplete( void );
+
+LDAP_LUTIL_F (void *)
+lutil_getRegParam( char *svc, char *value );
+
+LDAP_LUTIL_F (int)
+lutil_srv_install( char* service, char * displayName, char* filename,
+		 int auto_start );
+LDAP_LUTIL_F (int)
+lutil_srv_remove ( char* service, char* filename );
+
+#endif /* HAVE_NT_SERVICE_MANAGER */
+
+#ifdef HAVE_NT_EVENT_LOG
+LDAP_LUTIL_F (void)
+lutil_LogStartedEvent( char *svc, int slap_debug, char *configfile, char *urls );
+
+LDAP_LUTIL_F (void)
+lutil_LogStoppedEvent( char *svc );
+#endif
+
+#ifdef HAVE_EBCDIC
+/* Generally this has only been used to put '\n' to stdout. We need to
+ * make sure it is output in EBCDIC.
+ */
+#undef putchar
+#undef putc
+#define putchar(c)     putc((c), stdout)
+#define putc(c,fp)     do { char x=(c); __atoe_l(&x,1); putc(x,fp); } while(0)
+#endif
 
 LDAP_END_DECL
 

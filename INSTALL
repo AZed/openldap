@@ -38,7 +38,7 @@ Making and Installing the OpenLDAP Distribution
         Variable        Description     Example
         CC              C compiler      gcc
         CFLAGS          C flags         -O -g
-        CPPFLAGS        cpp flags       -I/path/include -Ddef
+        CPPFLAGS        cpp flags       -I/path/include -DFOO=42
         LDFLAGS         ld flags        -L/usr/local/lib
         LIBS            libraries       -llib
         PATH            command path    /usr/local/bin:/usr/bin:/bin
@@ -67,7 +67,7 @@ Making and Installing the OpenLDAP Distribution
 6.   Test the standalone system
 
      This step requires the standalone LDAP server, slapd(8), with
-     LDBM support.
+     BDB and/or LDBM support.
 
         % make test
 
@@ -91,14 +91,11 @@ components.  These configuration files are located in the OpenLDAP
 configuration directory (normally /usr/local/etc/openldap).
 
         ldap.conf               client defaults
-        ldapfilter.conf         search filter configuration
-        ldapsearchprefs.conf    search object definitions
-        ldaptemplates.conf      display template definitions
         slapd.conf              Standalone LDAP daemon
         schema/*.schema         Schema Definitions
 
 End of OpenLDAP INSTALL file.
 
-$OpenLDAP: pkg/openldap-guide/release/install.sdf,v 1.15 2002/02/18
-17:05:11 kurt Exp $
+$OpenLDAP: pkg/openldap-guide/release/install.sdf,v 1.16 2002/02/18
+17:09:26 kurt Exp $
 

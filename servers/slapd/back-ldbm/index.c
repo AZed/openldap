@@ -1,7 +1,7 @@
 /* index.c - routines for dealing with attribute indexes */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/index.c,v 1.30.2.7 2002/01/04 20:38:34 kurt Exp $ */
+/* $OpenLDAP$ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 
@@ -19,57 +19,66 @@ static slap_mask_t index_mask(
 	Backend *be,
 	AttributeDescription *desc,
 	char **dbname,
-	char **atname )
+	struct berval *atname )
 {
 	AttributeType *at;
 	slap_mask_t mask = 0;
 
-	/* we do support indexing of binary attributes */
-	if( slap_ad_is_binary( desc ) ) return 0;
-
-	attr_mask( be->be_private, desc->ad_cname->bv_val, &mask );
+	attr_mask( be->be_private, desc, &mask );
 
 	if( mask ) {
-		*atname = desc->ad_cname->bv_val;
-		*dbname = desc->ad_cname->bv_val;
+		*atname = desc->ad_cname;
+		*dbname = desc->ad_cname.bv_val;
 		return mask;
 	}
 
-	if( slap_ad_is_lang( desc ) ) {
-		/* has language tag */
-		attr_mask( be->be_private, desc->ad_type->sat_cname, &mask );
+	/* If there is a tagging option, did we ever index the base
+	 * type? If so, check for mask, otherwise it's not there.
+	 */
+	if( slap_ad_is_tagged( desc ) && desc != desc->ad_type->sat_ad ) {
+		/* has tagging option */
+		attr_mask( be->be_private, desc->ad_type->sat_ad, &mask );
 
-		if( mask & SLAP_INDEX_AUTO_LANG ) {
-			*atname = desc->ad_cname->bv_val;
-			*dbname = desc->ad_type->sat_cname;
-			return mask;
-		}
-		if( mask & SLAP_INDEX_LANG ) {
+		if( mask && ( mask ^ SLAP_INDEX_NOTAGS ) ) {
 			*atname = desc->ad_type->sat_cname;
-			*dbname = desc->ad_type->sat_cname;
+			*dbname = desc->ad_type->sat_cname.bv_val;
 			return mask;
 		}
 	}
 
 	/* see if supertype defined mask for its subtypes */
-	for( at = desc->ad_type; at != NULL ; at = at->sat_sup ) {
-		attr_mask( be->be_private, at->sat_cname, &mask );
+	for( at = desc->ad_type->sat_sup; at != NULL ; at = at->sat_sup ) {
+		/* If no AD, we've never indexed this type */
+		if (!at->sat_ad)
+			continue;
+		
+		attr_mask( be->be_private, at->sat_ad, &mask );
 
-		if( mask & SLAP_INDEX_AUTO_SUBTYPES ) {
-			*atname = desc->ad_type->sat_cname;
-			*dbname = at->sat_cname;
-			return mask;
-		}
-		if( mask & SLAP_INDEX_SUBTYPES ) {
+		if( mask && ( mask ^ SLAP_INDEX_NOSUBTYPES ) ) {
 			*atname = at->sat_cname;
-			*dbname = at->sat_cname;
+			*dbname = at->sat_cname.bv_val;
 			return mask;
 		}
-
-		if( mask ) break;
 	}
 
 	return 0;
+}
+
+int index_is_indexed(
+	Backend *be,
+	AttributeDescription *desc )
+{
+	slap_mask_t mask;
+	char *dbname;
+	struct berval prefix;
+
+	mask = index_mask( be, desc, &dbname, &prefix );
+
+	if( mask == 0 ) {
+		return LDAP_INAPPROPRIATE_MATCHING;
+	}
+
+	return LDAP_SUCCESS;
 }
 
 int index_param(
@@ -78,19 +87,18 @@ int index_param(
 	int ftype,
 	char **dbnamep,
 	slap_mask_t *maskp,
-	struct berval **prefixp )
+	struct berval *prefixp )
 {
 	slap_mask_t mask;
 	char *dbname;
-	char *atname;
 
-	mask = index_mask( be, desc, &dbname, &atname );
+	mask = index_mask( be, desc, &dbname, prefixp );
 
 	if( mask == 0 ) {
 		return LDAP_INAPPROPRIATE_MATCHING;
 	}
 
-	switch(ftype) {
+	switch( ftype ) {
 	case LDAP_FILTER_PRESENT:
 		if( IS_SLAP_INDEX( mask, SLAP_INDEX_PRESENT ) ) {
 			goto done;
@@ -123,7 +131,6 @@ int index_param(
 
 done:
 	*dbnamep = dbname;
-	*prefixp = ber_bvstrdup( atname );
 	*maskp = mask;
 	return LDAP_SUCCESS;
 }
@@ -131,8 +138,8 @@ done:
 static int indexer(
 	Backend *be,
 	char *dbname,
-	char *atname,
-	struct berval **vals,
+	struct berval *atname,
+	BerVarray vals,
 	ID id,
 	int op,
 	slap_mask_t mask )
@@ -141,30 +148,31 @@ static int indexer(
 	const char *text;
     DBCache	*db;
 	AttributeDescription *ad = NULL;
-	struct berval **keys;
-	struct berval prefix;
+	struct berval *keys;
 
 	assert( mask );
 
-	rc = slap_str2ad( atname, &ad, &text );
+	rc = slap_bv2ad( atname, &ad, &text );
 
 	if( rc != LDAP_SUCCESS ) return rc;
-
-	prefix.bv_val = atname;
-	prefix.bv_len = strlen( atname );
 
 	db = ldbm_cache_open( be, dbname, LDBM_SUFFIX, LDBM_WRCREAT );
 	
 	if ( db == NULL ) {
+#ifdef NEW_LOGGING
+		LDAP_LOG( INDEX, ERR, 
+			   "index_read: Could not open db %s%s\n", dbname, LDBM_SUFFIX, 0 );
+#else
 		Debug( LDAP_DEBUG_ANY,
 		    "<= index_read NULL (could not open %s%s)\n",
 			dbname, LDBM_SUFFIX, 0 );
-		ad_free( ad, 1 );
+#endif
+
 		return LDAP_OTHER;
 	}
 
 	if( IS_SLAP_INDEX( mask, SLAP_INDEX_PRESENT ) ) {
-		key_change( be, db, &prefix, id, op );
+		key_change( be, db, atname, id, op );
 	}
 
 	if( IS_SLAP_INDEX( mask, SLAP_INDEX_EQUALITY ) ) {
@@ -173,13 +181,13 @@ static int indexer(
 			mask,
 			ad->ad_type->sat_syntax,
 			ad->ad_type->sat_equality,
-			&prefix, vals, &keys );
+			atname, vals, &keys );
 
 		if( rc == LDAP_SUCCESS && keys != NULL ) {
-			for( i=0; keys[i] != NULL; i++ ) {
-				key_change( be, db, keys[i], id, op );
- 			}
-			ber_bvecfree( keys );
+			for( i=0; keys[i].bv_val != NULL; i++ ) {
+				key_change( be, db, &keys[i], id, op );
+			}
+			ber_bvarray_free( keys );
 		}
 	}
 
@@ -189,13 +197,13 @@ static int indexer(
 			mask,
 			ad->ad_type->sat_syntax,
 			ad->ad_type->sat_approx,
-			&prefix, vals, &keys );
+			atname, vals, &keys );
 
 		if( rc == LDAP_SUCCESS && keys != NULL ) {
-			for( i=0; keys[i] != NULL; i++ ) {
-				key_change( be, db, keys[i], id, op );
- 			}
-			ber_bvecfree( keys );
+			for( i=0; keys[i].bv_val != NULL; i++ ) {
+				key_change( be, db, &keys[i], id, op );
+			}
+			ber_bvarray_free( keys );
 		}
 	}
 
@@ -205,82 +213,64 @@ static int indexer(
 			mask,
 			ad->ad_type->sat_syntax,
 			ad->ad_type->sat_substr,
-			&prefix, vals, &keys );
+			atname, vals, &keys );
 
 		if( rc == LDAP_SUCCESS && keys != NULL ) {
-			for( i=0; keys[i] != NULL; i++ ) {
-				key_change( be, db, keys[i], id, op );
- 			}
-			ber_bvecfree( keys );
+			for( i=0; keys[i].bv_val != NULL; i++ ) {
+				key_change( be, db, &keys[i], id, op );
+			}
+			ber_bvarray_free( keys );
 		}
 	}
 
 	ldbm_cache_close( be, db );
-	ad_free( ad, 1 );
 	return LDAP_SUCCESS;
 }
 
 static int index_at_values(
 	Backend *be,
 	AttributeType *type,
-	const char *lang,
-	struct berval **vals,
+	struct berval *tags,
+	BerVarray vals,
 	ID id,
-	int op,
-	char ** dbnamep,
-	slap_mask_t *maskp )
+	int op )
 {
-	slap_mask_t mask;
-	slap_mask_t tmpmask = 0;
-	int lindex = 0;
+	slap_mask_t mask = 0;
 
 	if( type->sat_sup ) {
 		/* recurse */
 		(void) index_at_values( be,
-			type->sat_sup, lang,
-			vals, id, op,
-			dbnamep, &tmpmask );
+			type->sat_sup, tags,
+			vals, id, op );
 	}
 
-	attr_mask( be->be_private, type->sat_cname, &mask );
-
-	if( mask ) {
-		*dbnamep = type->sat_cname;
-	} else if ( tmpmask & SLAP_INDEX_AUTO_SUBTYPES ) {
-		mask = tmpmask;
+	/* If this type has no AD, we've never used it before */
+	if( type->sat_ad ) {
+		attr_mask( be->be_private, type->sat_ad, &mask );
 	}
 
 	if( mask ) {
-		indexer( be, *dbnamep,
-			type->sat_cname,
+		indexer( be, type->sat_cname.bv_val,
+			&type->sat_cname,
 			vals, id, op,
 			mask );
 	}
 
-	if( lang ) {
-		char *dbname = NULL;
-		size_t tlen = strlen( type->sat_cname );
-		size_t llen = strlen( lang );
-		char *lname = ch_malloc( tlen + llen + sizeof(";") );
+	if( tags->bv_len ) {
+		AttributeDescription *desc;
 
-		sprintf( lname, "%s;%s", type->sat_cname, lang );
+		mask = 0;
 
-		attr_mask( be->be_private, lname, &tmpmask );
-
-		if( tmpmask ) {
-			dbname = lname;
-		} else if ( mask & SLAP_INDEX_AUTO_LANG ) {
-			dbname = *dbnamep;
-			tmpmask = mask;
+		desc = ad_find_tags(type, tags);
+		if( desc ) {
+			attr_mask( be->be_private, desc, &mask );
 		}
 
-		if( dbname != NULL ) {
-			indexer( be, dbname, lname,
+		if( mask ) {
+			indexer( be, desc->ad_cname.bv_val, &desc->ad_cname,
 				vals, id, op,
-				tmpmask );
+				mask );
 		}
-
-		ch_free( lname );
 	}
 
 	return LDAP_SUCCESS;
@@ -289,49 +279,46 @@ static int index_at_values(
 int index_values(
 	Backend *be,
 	AttributeDescription *desc,
-	struct berval **vals,
+	BerVarray vals,
 	ID id,
 	int op )
 {
-	char *dbname = NULL;
-	slap_mask_t mask;
-
-	if( slap_ad_is_binary( desc ) ) {
-		/* binary attributes have no index capabilities */
-		return LDAP_SUCCESS;
-	}
-
 	(void) index_at_values( be,
-		desc->ad_type, desc->ad_lang,
-		vals, id, op,
-		&dbname, &mask );
+		desc->ad_type, &desc->ad_tags,
+		vals, id, op );
 
 	return LDAP_SUCCESS;
 }
-
 
 int
 index_entry(
     Backend	*be,
 	int op,
-    Entry	*e,
-	Attribute *ap
-)
+    Entry *e,
+	Attribute *ap )
 {
-
+#ifdef NEW_LOGGING
+	LDAP_LOG( INDEX, ENTRY, 
+		"index_entry: %s (%s)%ld\n", op == SLAP_INDEX_ADD_OP ? "add" : "del",
+		e->e_dn, e->e_id );
+#else
 	Debug( LDAP_DEBUG_TRACE, "=> index_entry_%s( %ld, \"%s\" )\n",
 		op == SLAP_INDEX_ADD_OP ? "add" : "del",
 		e->e_id, e->e_dn );
-
+#endif
 
 	/* add each attribute to the indexes */
 	for ( ; ap != NULL; ap = ap->a_next ) {
 		index_values( be, ap->a_desc, ap->a_vals, e->e_id, op );
 	}
 
+#ifdef NEW_LOGGING
+	LDAP_LOG( INDEX, ENTRY, "index_entry: success\n", 0, 0, 0 );
+#else
 	Debug( LDAP_DEBUG_TRACE, "<= index_entry_%s( %ld, \"%s\" ) success\n",
 	    op == SLAP_INDEX_ADD_OP ? "add" : "del",
 		e->e_id, e->e_dn );
+#endif
 
 	return LDAP_SUCCESS;
 }

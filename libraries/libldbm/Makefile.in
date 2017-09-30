@@ -1,5 +1,5 @@
-# $OpenLDAP: pkg/ldap/libraries/libldbm/Makefile.in,v 1.4.8.5 2002/01/04 20:38:23 kurt Exp $
-## Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+# $OpenLDAP$
+## Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
 ## COPYING RESTRICTIONS APPLY, see COPYRIGHT file
 ##
 ## Makefile for -lldbm
@@ -12,9 +12,6 @@ OBJS		= ldbm.o
 LDAP_INCDIR= ../../include       
 LDAP_LIBDIR= ../../libraries
 
-NT_DYN_LIB_DEFS = -DLDAP_DECL=dllimport
-CPPFLAGS = $(@PLAT@_@LIB_LINKAGE@_LIB_DEFS)
-
-XLIBS		= -lldbm -lavl
+XLIBS		= $(LIBRARY)
 XXLIBS		= $(LDBM_LIBS)
 

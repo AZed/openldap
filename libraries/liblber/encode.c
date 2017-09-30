@@ -1,7 +1,7 @@
-/* encode.c - ber output encoding routines */
-/* $OpenLDAP: pkg/ldap/libraries/liblber/encode.c,v 1.23.4.7 2002/01/04 20:38:19 kurt Exp $ */
+/* Encode.c - ber output encoding routines */
+/* $OpenLDAP$ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 /* Portions
@@ -44,8 +44,9 @@ static int ber_put_int_or_enum LDAP_P((
 	ber_int_t num,
 	ber_tag_t tag ));
 
+#include <ac/stdlib.h>
 
-static ber_len_t
+static int
 ber_calc_taglen( ber_tag_t tag )
 {
 	int	i;
@@ -68,12 +69,12 @@ ber_put_tag(
 	int nosos )
 {
 	int rc;
-	ber_len_t	taglen;
-	ber_len_t	i;
+	int	taglen;
+	int	i;
 	unsigned char nettag[sizeof(ber_tag_t)];
 
 	assert( ber != NULL );
-	assert( BER_VALID( ber ) );
+	assert( LBER_VALID( ber ) );
 
 	taglen = ber_calc_taglen( tag );
 
@@ -125,7 +126,7 @@ ber_put_len( BerElement *ber, ber_len_t len, int nosos )
 	unsigned char netlen[sizeof(ber_len_t)];
 
 	assert( ber != NULL );
-	assert( BER_VALID( ber ) );
+	assert( LBER_VALID( ber ) );
 
 	/*
 	 * short len if it's less than 128 - one byte giving the len,
@@ -178,16 +179,16 @@ ber_put_int_or_enum(
 	ber_tag_t tag )
 {
 	int rc;
-	int	i, j, sign;
-	ber_len_t	len, lenlen, taglen;
+	int	i, j, sign, taglen, lenlen;
+	ber_len_t	len;
 	ber_uint_t	unum, mask;
 	unsigned char netnum[sizeof(ber_uint_t)];
 
 	assert( ber != NULL );
-	assert( BER_VALID( ber ) );
+	assert( LBER_VALID( ber ) );
 
 	sign = (num < 0);
-	unum = num;     /* Bit fiddling should be done with unsigned values */
+	unum = num;	/* Bit fiddling should be done with unsigned values */
 
 	/*
 	 * high bit is set - look for first non-all-one byte
@@ -244,7 +245,7 @@ ber_put_enum(
 	ber_tag_t tag )
 {
 	assert( ber != NULL );
-	assert( BER_VALID( ber ) );
+	assert( LBER_VALID( ber ) );
 
 	if ( tag == LBER_DEFAULT ) {
 		tag = LBER_ENUMERATED;
@@ -260,7 +261,7 @@ ber_put_int(
 	ber_tag_t tag )
 {
 	assert( ber != NULL );
-	assert( BER_VALID( ber ) );
+	assert( LBER_VALID( ber ) );
 
 	if ( tag == LBER_DEFAULT ) {
 		tag = LBER_INTEGER;
@@ -276,13 +277,12 @@ ber_put_ostring(
 	ber_len_t len,
 	ber_tag_t tag )
 {
-	ber_len_t	taglen, lenlen;
-	int rc;
+	int taglen, lenlen, rc;
 
 	assert( ber != NULL );
 	assert( str != NULL );
 
-	assert( BER_VALID( ber ) );
+	assert( LBER_VALID( ber ) );
 
 	if ( tag == LBER_DEFAULT ) {
 		tag = LBER_OCTETSTRING;
@@ -305,11 +305,11 @@ ber_put_ostring(
 int
 ber_put_berval(
 	BerElement *ber,
-	LDAP_CONST struct berval *bv,
+	struct berval *bv,
 	ber_tag_t tag )
 {
 	assert( ber != NULL );
-	assert( BER_VALID( ber ) );
+	assert( LBER_VALID( ber ) );
 
 	if( bv == NULL || bv->bv_len == 0 ) {
 		return ber_put_ostring( ber, "", (ber_len_t) 0, tag );
@@ -327,7 +327,7 @@ ber_put_string(
 	assert( ber != NULL );
 	assert( str != NULL );
 
-	assert( BER_VALID( ber ) );
+	assert( LBER_VALID( ber ) );
 
 	return ber_put_ostring( ber, str, strlen( str ), tag );
 }
@@ -339,13 +339,14 @@ ber_put_bitstring(
 	ber_len_t blen /* in bits */,
 	ber_tag_t tag )
 {
-	ber_len_t		taglen, lenlen, len;
+	int				taglen, lenlen;
+	ber_len_t		len;
 	unsigned char	unusedbits;
 
 	assert( ber != NULL );
 	assert( str != NULL );
 
-	assert( BER_VALID( ber ) );
+	assert( LBER_VALID( ber ) );
 
 	if ( tag == LBER_DEFAULT ) {
 		tag = LBER_BITSTRING;
@@ -379,7 +380,7 @@ ber_put_null( BerElement *ber, ber_tag_t tag )
 	ber_len_t	taglen;
 
 	assert( ber != NULL );
-	assert( BER_VALID( ber ) );
+	assert( LBER_VALID( ber ) );
 
 	if ( tag == LBER_DEFAULT ) {
 		tag = LBER_NULL;
@@ -402,12 +403,11 @@ ber_put_boolean(
 	ber_int_t boolval,
 	ber_tag_t tag )
 {
-	ber_len_t		taglen;
-	unsigned char	trueval = (unsigned char) -1;
-	unsigned char	falseval = 0;
+	int				taglen;
+	unsigned char	c;
 
 	assert( ber != NULL );
-	assert( BER_VALID( ber ) );
+	assert( LBER_VALID( ber ) );
 
 	if ( tag == LBER_DEFAULT )
 		tag = LBER_BOOLEAN;
@@ -420,7 +420,9 @@ ber_put_boolean(
 		return -1;
 	}
 
-	if ( ber_write( ber, (char *)(boolval ? &trueval : &falseval), 1, 0 )
+	c = boolval ? (unsigned char) ~0U : (unsigned char) 0U;
+
+	if ( ber_write( ber, (char *) &c, 1, 0 )
 		!= 1 )
 	{
 		return -1;
@@ -439,7 +441,7 @@ ber_start_seqorset(
 	Seqorset	*new;
 
 	assert( ber != NULL );
-	assert( BER_VALID( ber ) );
+	assert( LBER_VALID( ber ) );
 
 	new = (Seqorset *) LBER_CALLOC( 1, sizeof(Seqorset) );
 
@@ -468,7 +470,7 @@ int
 ber_start_seq( BerElement *ber, ber_tag_t tag )
 {
 	assert( ber != NULL );
-	assert( BER_VALID( ber ) );
+	assert( LBER_VALID( ber ) );
 
 	if ( tag == LBER_DEFAULT ) {
 		tag = LBER_SEQUENCE;
@@ -481,7 +483,7 @@ int
 ber_start_set( BerElement *ber, ber_tag_t tag )
 {
 	assert( ber != NULL );
-	assert( BER_VALID( ber ) );
+	assert( LBER_VALID( ber ) );
 
 	if ( tag == LBER_DEFAULT ) {
 		tag = LBER_SET;
@@ -496,17 +498,20 @@ ber_put_seqorset( BerElement *ber )
 	int rc;
 	ber_len_t	len;
 	unsigned char netlen[sizeof(ber_len_t)];
-	ber_len_t	taglen, lenlen;
+	int			taglen;
+	ber_len_t	lenlen;
 	unsigned char	ltag = 0x80U + FOUR_BYTE_LEN - 1;
 	Seqorset	*next;
 	Seqorset	**sos = &ber->ber_sos;
 
 	assert( ber != NULL );
-	assert( BER_VALID( ber ) );
+	assert( LBER_VALID( ber ) );
+
+	if( *sos == NULL ) return -1;
 
 	/*
 	 * If this is the toplevel sequence or set, we need to actually
-	 * write the stuff out.  Otherwise, it's already been put in
+	 * write the stuff out.	 Otherwise, it's already been put in
 	 * the appropriate buffer and will be written when the toplevel
 	 * one is written.  In this case all we need to do is update the
 	 * length and tag.
@@ -576,7 +581,7 @@ ber_put_seqorset( BerElement *ber )
 		(*sos)->sos_ber->ber_ptr += len;
 
 	} else {
-		ber_len_t i;
+		int i;
 		unsigned char nettag[sizeof(ber_tag_t)];
 		ber_tag_t tmptag = (*sos)->sos_tag;
 
@@ -584,7 +589,7 @@ ber_put_seqorset( BerElement *ber )
 			/* The sos_ptr exceeds the end of the BerElement
 			 * this can happen, for example, when the sos_ptr
 			 * is near the end and no data was written for the
-			 * 'V'.  We must realloc the BerElement to ensure
+			 * 'V'.	 We must realloc the BerElement to ensure
 			 * we don't overwrite the buffer when writing
 			 * the tag and length fields.
 			 */
@@ -655,7 +660,7 @@ int
 ber_put_seq( BerElement *ber )
 {
 	assert( ber != NULL );
-	assert( BER_VALID( ber ) );
+	assert( LBER_VALID( ber ) );
 
 	return ber_put_seqorset( ber );
 }
@@ -664,7 +669,7 @@ int
 ber_put_set( BerElement *ber )
 {
 	assert( ber != NULL );
-	assert( BER_VALID( ber ) );
+	assert( LBER_VALID( ber ) );
 
 	return ber_put_seqorset( ber );
 }
@@ -686,7 +691,7 @@ ber_printf( BerElement *ber, LDAP_CONST char *fmt, ... )
 	assert( ber != NULL );
 	assert( fmt != NULL );
 
-	assert( BER_VALID( ber ) );
+	assert( LBER_VALID( ber ) );
 
 	va_start( ap, fmt );
 
@@ -779,6 +784,16 @@ ber_printf( BerElement *ber, LDAP_CONST char *fmt, ... )
 			}
 			break;
 
+		case 'W':	/* BerVarray */
+			if ( (bv = va_arg( ap, BerVarray )) == NULL )
+				break;
+			for ( i = 0; bv[i].bv_val != NULL; i++ ) {
+				if ( (rc = ber_put_berval( ber, &bv[i],
+				    ber->ber_tag )) == -1 )
+					break;
+			}
+			break;
+
 		case '{':	/* begin sequence */
 			rc = ber_start_seq( ber, ber->ber_tag );
 			break;
@@ -797,8 +812,13 @@ ber_printf( BerElement *ber, LDAP_CONST char *fmt, ... )
 
 		default:
 			if( ber->ber_debug ) {
+#ifdef NEW_LOGGING
+				LDAP_LOG( BER, ERR, 
+					"ber_printf: unknown fmt %c\n", *fmt, 0, 0 );
+#else
 				ber_log_printf( LDAP_DEBUG_ANY, ber->ber_debug,
 					"ber_printf: unknown fmt %c\n", *fmt );
+#endif
 			}
 			rc = -1;
 			break;

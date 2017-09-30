@@ -1,7 +1,7 @@
 /* init.c - initialize ldbm backend */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/init.c,v 1.32.2.12 2002/01/29 19:29:39 kurt Exp $ */
+/* $OpenLDAP$ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 
@@ -37,6 +37,7 @@ ldbm_back_initialize(
 {
 	static char *controls[] = {
 		LDAP_CONTROL_MANAGEDSAIT,
+		LDAP_CONTROL_VALUESRETURNFILTER,
 		NULL
 	};
 
@@ -54,14 +55,14 @@ ldbm_back_initialize(
 	bi->bi_db_destroy = ldbm_back_db_destroy;
 
 	bi->bi_op_bind = ldbm_back_bind;
-	bi->bi_op_unbind = ldbm_back_unbind;
+	bi->bi_op_unbind = 0;
 	bi->bi_op_search = ldbm_back_search;
 	bi->bi_op_compare = ldbm_back_compare;
 	bi->bi_op_modify = ldbm_back_modify;
 	bi->bi_op_modrdn = ldbm_back_modrdn;
 	bi->bi_op_add = ldbm_back_add;
 	bi->bi_op_delete = ldbm_back_delete;
-	bi->bi_op_abandon = ldbm_back_abandon;
+	bi->bi_op_abandon = 0;
 
 	bi->bi_extended = ldbm_back_extended;
 
@@ -69,6 +70,8 @@ ldbm_back_initialize(
 	bi->bi_acl_group = ldbm_back_group;
 	bi->bi_acl_attribute = ldbm_back_attribute;
 	bi->bi_chk_referrals = ldbm_back_referrals;
+	bi->bi_operational = ldbm_back_operational;
+	bi->bi_has_subordinates = ldbm_back_hasSubordinates;
 
 	/*
 	 * hooks for slap tools
@@ -103,9 +106,6 @@ ldbm_back_open(
 {
 	int rc;
 
-	struct ldbm_backend_info *lbi
-		= (struct ldbm_backend_info *) bi->bi_private;
-
 	/* initialize the underlying database system */
 	rc = ldbm_initialize( NULL );
 	return rc;
@@ -128,6 +128,11 @@ ldbm_back_db_init(
 {
 	struct ldbminfo	*li;
 
+	/* indicate system schema supported */
+	be->be_flags |= 
+		SLAP_BFLAG_ALIASES |
+		SLAP_BFLAG_REFERRALS;
+
 	/* allocate backend-database-specific stuff */
 	li = (struct ldbminfo *) ch_calloc( 1, sizeof(struct ldbminfo) );
 
@@ -147,10 +152,10 @@ ldbm_back_db_init(
 	li->li_dbwritesync = 1;
 
 	/* default file creation mode */
-	li->li_mode = DEFAULT_MODE;
+	li->li_mode = SLAPD_DEFAULT_DB_MODE;
 
 	/* default database directory */
-	li->li_directory = ch_strdup( DEFAULT_DB_DIRECTORY );
+	li->li_directory = ch_strdup( SLAPD_DEFAULT_DB_DIR );
 
 	/* DB_ENV environment pointer for DB3 */
 	li->li_dbenv = 0;
@@ -199,8 +204,13 @@ ldbm_back_db_open(
 
 		if ( rc != 0 )
 		{
+#ifdef NEW_LOGGING
+			LDAP_LOG ( BACK_LDBM, ERR, "ldbm_back_db_open: sync "
+				"ldap_pvt_thread_create failed (%d)\n", rc, 0, 0 );
+#else	
 			Debug(	LDAP_DEBUG_ANY,
 				"sync ldap_pvt_thread_create failed (%d)\n", rc, 0, 0 );
+#endif
 			return 1;
 		}
 	}

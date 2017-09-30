@@ -1,6 +1,6 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/charray.c,v 1.1.4.4 2002/01/04 20:38:19 kurt Exp $ */
+/* $OpenLDAP$ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 /* charray.c - routines for dealing with char * arrays */
@@ -77,8 +77,9 @@ ldap_charray_merge(
 
 	aa = (char **) LDAP_REALLOC( (char *) *a, (n + nn + 1) * sizeof(char *) );
 
-	if( aa == NULL )
+	if( aa == NULL ) {
 		return -1;
+	}
 
 	*a = aa;
 
@@ -124,13 +125,15 @@ ldap_charray_inlist(
 {
 	int	i;
 
-	for ( i = 0; a[i] != NULL; i++ ) {
+	if( a == NULL ) return 0;
+
+	for ( i=0; a[i] != NULL; i++ ) {
 		if ( strcasecmp( s, a[i] ) == 0 ) {
-			return( 1 );
+			return 1;
 		}
 	}
 
-	return( 0 );
+	return 0;
 }
 
 char **
@@ -221,25 +224,26 @@ ldap_str2charray( const char *str_in, const char *brkstr )
 char * ldap_charray2str( char **a, const char *sep )
 {
 	char *s, **v, *p;
-	int len = 0;
+	int len;
 	int slen;
 
 	if( sep == NULL ) sep = " ";
 
 	slen = strlen( sep );
+	len = 0;
 
 	for ( v = a; *v != NULL; v++ ) {
-		len += strlen( *v ) + slen; /* for a space */
+		len += strlen( *v ) + slen;
 	}
 
 	if ( len == 0 ) {
 		return NULL;
 	}
 
+	/* trim extra sep len */
 	len -= slen;
-	len += 1; /* EOS */
 
-	s = LDAP_MALLOC ( len );
+	s = LDAP_MALLOC ( len + 1 );
 
 	if ( s == NULL ) {
 		return NULL;	
@@ -247,8 +251,6 @@ char * ldap_charray2str( char **a, const char *sep )
 
 	p = s;
 	for ( v = a; *v != NULL; v++ ) {
-		int len;
-
 		if ( v != a ) {
 			strncpy( p, sep, slen );
 			p += slen;

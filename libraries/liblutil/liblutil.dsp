@@ -128,10 +128,6 @@ LIB32=link.exe -lib
 # Name "liblutil - Win32 Single Release"
 # Begin Source File
 
-SOURCE=.\authpasswd.c
-# End Source File
-# Begin Source File
-
 SOURCE=.\base64.c
 # End Source File
 # Begin Source File
@@ -140,7 +136,7 @@ SOURCE=..\..\include\ac\bytes.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\debug.c
+SOURCE=.\csn.c
 # End Source File
 # Begin Source File
 
@@ -160,6 +156,10 @@ SOURCE=.\getpass.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\hash.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\include\ldap_cdefs.h
 # End Source File
 # Begin Source File
@@ -169,6 +169,10 @@ SOURCE=.\lockf.c
 # Begin Source File
 
 SOURCE=..\..\include\lutil.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\include\lutil_hash.h
 # End Source File
 # Begin Source File
 
@@ -196,11 +200,19 @@ SOURCE=.\ntservice.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\passfile.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\passwd.c
 # End Source File
 # Begin Source File
 
 SOURCE=..\..\include\portable.h
+# End Source File
+# Begin Source File
+
+SOURCE="..\..\include\queue-compat.h"
 # End Source File
 # Begin Source File
 
@@ -276,6 +288,10 @@ SOURCE=.\sockpair.c
 # Begin Source File
 
 SOURCE=.\utils.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\uuid.c
 # End Source File
 # End Target
 # End Project

@@ -1,19 +1,22 @@
-.TH LDAP_ABANDON 3 "22 September 1998" "OpenLDAP LDVERSION"
-.\" $OpenLDAP: pkg/ldap/doc/man/man3/ldap_abandon.3,v 1.2.12.2 2002/01/04 20:38:12 kurt Exp $
-.\" Copyright 1998-2002 The OpenLDAP Foundation All Rights Reserved.
+.TH LDAP_ABANDON 3 "RELEASEDATE" "OpenLDAP LDVERSION"
+.\" $OpenLDAP$
+.\" Copyright 1998-2003 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .SH NAME
-ldap_abandon \- Abandon an LDAP operation in progress
+ldap_abandon, ldap_abandon_ext \- Abandon an LDAP operation in progress
+.SH LIBRARY
+OpenLDAP LDAP (libldap, -lldap)
 .SH SYNOPSIS
 .nf
-.ft B
-#include <ldap.h>
-.LP
-.ft B
-int ldap_abandon(ld, msgid)
-.ft
-LDAP *ld;
-int msgid;
+.B #include <ldap.h>
+.sp
+.BI "int ldap_abandon(LDAP *" ld ", int " msgid ");"
+.sp
+.BI "int ldap_abandon_ext(LDAP *" ld ", int " msgid ","
+.RS
+.BI "LDAPControl *" sctrls "[], LDAPControl *" cctrls "[]);"
+.RE
+.fi
 .SH DESCRIPTION
 The
 .B ldap_abandon()
@@ -32,16 +35,32 @@ it sends an LDAP abandon operation to the the LDAP server.
 The caller can expect that the result of an abandoned operation
 will not be returned from a future call to
 .BR ldap_result (3).
+.LP
+.B ldap_abandon_ext()
+is equivalent to
+.B ldap_abandon()
+except that it allows server and client controls to be passed
+in
+.I sctrls
+and
+.IR cctrls ,
+respectively.
 .SH ERRORS
 .B ldap_abandon()
 returns 0 if everything goes ok, -1 otherwise,
-setting \fIld_errno\fP appropriately. See
+setting \fIld_errno\fP with an appropriate LDAP error code.
+.LP
+.B ldap_abandon_ext()
+directly returns an LDAP error code indicating success or failure of the
+operation.
+.LP
+See
 .BR ldap_error (3)
 for details.
 .SH SEE ALSO
-.BR ldap(3),
-.BR ldap_result(3),
-.B ldap_error(3)
+.BR ldap (3),
+.BR ldap_result (3),
+.BR ldap_error (3)
 .SH ACKNOWLEDGEMENTS
 .B	OpenLDAP
 is developed and maintained by The OpenLDAP Project (http://www.openldap.org/).

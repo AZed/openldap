@@ -1,7 +1,7 @@
 /* compare.c - DNS SRV backend compare function */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-dnssrv/compare.c,v 1.8.2.3 2002/01/04 20:38:32 kurt Exp $ */
+/* $OpenLDAP$ */
 /*
- * Copyright 2000-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 2000-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 

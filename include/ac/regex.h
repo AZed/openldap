@@ -1,7 +1,7 @@
 /* Generic Regex */
-/* $OpenLDAP: pkg/ldap/include/ac/regex.h,v 1.4.8.4 2002/01/04 20:38:16 kurt Exp $ */
+/* $OpenLDAP$ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, Redwood City, California, USA
+ * Copyright 1998-2003 The OpenLDAP Foundation, Redwood City, California, USA
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,7 +28,7 @@
 #error "No POSIX REGEX available."
 
 #elif HAVE_GNUREGEX_H
-	/* system has GNU gnuregex.h */ 
+	/* system has GNU gnuregex.h */
 #	include <gnuregex.h>
 #else
 	/* have regex.h, assume it's POSIX compliant */

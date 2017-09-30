@@ -1,4 +1,8 @@
-/* $OpenLDAP: pkg/ldap/servers/slurpd/st.c,v 1.7.8.3 2001/09/09 23:37:33 kurt Exp $ */
+/* $OpenLDAP$ */
+/*
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
+ * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
+ */
 /*
  * Copyright (c) 1996 Regents of the University of Michigan.
  * All rights reserved.
@@ -93,9 +97,15 @@ St_write (
 	if (( rc = acquire_lock( sglob->slurpd_status_file, &(st->st_fp),
 		&(st->st_lfp))) < 0 ) {
 	    if ( !st->st_err_logged ) {
+#ifdef NEW_LOGGING
+		LDAP_LOG ( SLURPD, ERR, "St_write: "
+			"Error: cannot open status file \"%s\":%s\n",
+			sglob->slurpd_status_file, sys_errlist[ errno ], 0 );
+#else
 		Debug( LDAP_DEBUG_ANY,
 			"Error: cannot open status file \"%s\": %s\n",
 			sglob->slurpd_status_file, sys_errlist[ errno ], 0 );
+#endif
 		st->st_err_logged = 1;
 		ldap_pvt_thread_mutex_unlock( &(st->st_mutex ));
 		return -1;
@@ -173,15 +183,26 @@ St_read(
 	 * File doesn't exist, so create it and return.
 	 */
 	if (( fp = fopen( sglob->slurpd_status_file, "w" )) == NULL ) {
+#ifdef NEW_LOGGING
+		LDAP_LOG ( SLURPD, ERR, "St_write: "
+			"Error: cannot create status file \"%s\"\n",
+		    sglob->slurpd_status_file, 0, 0 );
+#else
 	    Debug( LDAP_DEBUG_ANY, "Error: cannot create status file \"%s\"\n",
 		    sglob->slurpd_status_file, 0, 0 );
+#endif
 	    ldap_pvt_thread_mutex_unlock( &(st->st_mutex ));
 	    return -1;
 	}
 	(void) fclose( fp );
 	ldap_pvt_thread_mutex_unlock( &(st->st_mutex ));
+#ifdef NEW_LOGGING
+	LDAP_LOG ( SLURPD, DETAIL1, "St_write: "
+		"No status file found, defaulting values\n", 0, 0, 0 );
+#else
 	Debug( LDAP_DEBUG_ARGS, "No status file found, defaulting values\n",
 		0, 0, 0 );
+#endif
 	return 0;
     }
     if (( rc = acquire_lock( sglob->slurpd_status_file, &fp, &lfp)) < 0 ) {
@@ -226,12 +247,23 @@ St_read(
 	    char tbuf[ 255 ];
 	    sprintf( tbuf, "%s:%s (timestamp %s.%s)", hostname, port,
 		    timestamp, seq );
+#ifdef NEW_LOGGING
+		LDAP_LOG ( SLURPD, DETAIL1, "St_write: "
+			"Retrieved state information for %s\n", tbuf, 0, 0 );
+#else
 	    Debug( LDAP_DEBUG_ARGS,
 		    "Retrieved state information for %s\n", tbuf, 0, 0 );
+#endif
 	} else {
+#ifdef NEW_LOGGING
+		LDAP_LOG ( SLURPD, WARNING, "St_write: "
+			"Warning: saved state for %s:%s, not a known replica\n", 
+			hostname, port, 0 );
+#else
 	    Debug(  LDAP_DEBUG_ANY,
 		    "Warning: saved state for %s:%s, not a known replica\n",
 		    hostname, port, 0 );
+#endif
 	}
     }
     (void) relinquish_lock( sglob->slurpd_status_file, fp, lfp);

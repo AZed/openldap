@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/module.c,v 1.1.4.3 2000/06/13 17:57:28 kurt Exp $ */
+/* $OpenLDAP$ */
 #include "portable.h"
 #include <stdio.h>
 #include "slap.h"
@@ -29,7 +29,7 @@ struct module_regtable_t {
 
 typedef struct module_loaded_t {
 	struct module_loaded_t *next;
-	lt_dlhandle *lib;
+	lt_dlhandle lib;
 } module_loaded_t;
 
 module_loaded_t *module_list = NULL;
@@ -40,7 +40,13 @@ int module_init (void)
 {
 	if (lt_dlinit()) {
 		const char *error = lt_dlerror();
+#ifdef NEW_LOGGING
+		LDAP_LOG( SLAPD, CRIT, 
+			"module_init: lt_ldinit failed: %s\n", error, 0, 0 );
+#else
 		Debug(LDAP_DEBUG_ANY, "lt_dlinit failed: %s\n", error, 0, 0);
+#endif
+
 		return -1;
 	}
 	return 0;
@@ -55,7 +61,13 @@ int module_kill (void)
 
 	if (lt_dlexit()) {
 		const char *error = lt_dlerror();
+#ifdef NEW_LOGGING
+		LDAP_LOG( SLAPD, CRIT, "module_kill: lt_dlexit failed: %s\n", 
+			error, 0, 0 );
+#else
 		Debug(LDAP_DEBUG_ANY, "lt_dlexit failed: %s\n", error, 0, 0);
+#endif
+
 		return -1;
 	}
 	return 0;
@@ -70,8 +82,14 @@ int module_load(const char* file_name, int argc, char *argv[])
 
 	module = (module_loaded_t *)ch_calloc(1, sizeof(module_loaded_t));
 	if (module == NULL) {
+#ifdef NEW_LOGGING
+		LDAP_LOG( SLAPD, CRIT, 
+			"module_load:  (%s) out of memory.\n", file_name, 0, 0 );
+#else
 		Debug(LDAP_DEBUG_ANY, "module_load failed: (%s) out of memory\n", file_name,
 			0, 0);
+#endif
+
 		return -1;
 	}
 
@@ -82,17 +100,36 @@ int module_load(const char* file_name, int argc, char *argv[])
 	 */
 	if ((module->lib = lt_dlopen(file_name)) == NULL) {
 		error = lt_dlerror();
+#ifdef NEW_LOGGING
+		LDAP_LOG( SLAPD, CRIT, 
+			"module_load: lt_dlopen failed: (%s) %s.\n", 
+			file_name, error, 0 );
+#else
 		Debug(LDAP_DEBUG_ANY, "lt_dlopen failed: (%s) %s\n", file_name,
 			error, 0);
+#endif
+
 		ch_free(module);
 		return -1;
 	}
 
+#ifdef NEW_LOGGING
+	LDAP_LOG( SLAPD, INFO, "module_load: loaded module %s\n", file_name, 0, 0 );
+#else
 	Debug(LDAP_DEBUG_CONFIG, "loaded module %s\n", file_name, 0, 0);
+#endif
+
    
 	if ((initialize = lt_dlsym(module->lib, "init_module")) == NULL) {
+#ifdef NEW_LOGGING
+		LDAP_LOG( SLAPD, ERR, 
+			"module_load: module %s : no init_module() function found\n",
+		    file_name, 0, 0 );
+#else
 		Debug(LDAP_DEBUG_CONFIG, "module %s: no init_module() function found\n",
 			file_name, 0, 0);
+#endif
+
 		lt_dlclose(module->lib);
 		ch_free(module);
 		return -1;
@@ -115,26 +152,46 @@ int module_load(const char* file_name, int argc, char *argv[])
 	 */
 	rc = initialize(argc, argv);
 	if (rc == -1) {
+#ifdef NEW_LOGGING
+		LDAP_LOG( SLAPD, ERR, 
+			"module_load:  module %s init_module() failed\n", file_name, 0, 0);
+#else
 		Debug(LDAP_DEBUG_CONFIG, "module %s: init_module() failed\n",
 			file_name, 0, 0);
+#endif
+
 		lt_dlclose(module->lib);
 		ch_free(module);
 		return rc;
 	}
 
-	if (rc >= (sizeof(module_regtable) / sizeof(struct module_regtable_t))
+	if (rc >= (int)(sizeof(module_regtable) / sizeof(struct module_regtable_t))
 		|| module_regtable[rc].proc == NULL)
 	{
+#ifdef NEW_LOGGING
+		LDAP_LOG( SLAPD, ERR, 
+			"module_load: module %s: unknown registration type (%d).\n", 
+			file_name, rc, 0);
+#else
 		Debug(LDAP_DEBUG_CONFIG, "module %s: unknown registration type (%d)\n",
 			file_name, rc, 0);
+#endif
+
 		module_unload(module);
 		return -1;
 	}
 
 	rc = (module_regtable[rc].proc)(module, file_name);
 	if (rc != 0) {
+#ifdef NEW_LOGGING
+		LDAP_LOG( SLAPD, ERR, 
+			"module_load: module %s:%s could not be registered.\n",
+			file_name, module_regtable[rc].type, 0 );
+#else
 		Debug(LDAP_DEBUG_CONFIG, "module %s: %s module could not be registered\n",
 			file_name, module_regtable[rc].type, 0);
+#endif
+
 		module_unload(module);
 		return rc;
 	}
@@ -142,8 +199,15 @@ int module_load(const char* file_name, int argc, char *argv[])
 	module->next = module_list;
 	module_list = module;
 
+#ifdef NEW_LOGGING
+	LDAP_LOG( SLAPD, INFO, 
+		"module_load: module %s:%s registered\n", file_name,
+		module_regtable[rc].type, 0 );
+#else
 	Debug(LDAP_DEBUG_CONFIG, "module %s: %s module registered\n",
 		file_name, module_regtable[rc].type, 0);
+#endif
+
 	return 0;
 }
 
@@ -178,7 +242,7 @@ static int module_unload (module_loaded_t *module)
 		}
 
 		/* call module's terminate routine, if present */
-		if (terminate = lt_dlsym(module->lib, "term_module")) {
+		if ((terminate = lt_dlsym(module->lib, "term_module"))) {
 			terminate();
 		}
 
@@ -201,12 +265,12 @@ load_extop_module (
 	const char *file_name
 )
 {
-	SLAP_EXTOP_MAIN_FN ext_main;
+	SLAP_EXTOP_MAIN_FN *ext_main;
 	int (*ext_getoid)(int index, char *oid, int blen);
 	char *oid;
 	int rc;
 
-	ext_main = (SLAP_EXTOP_MAIN_FN)module_resolve(module, "ext_main");
+	ext_main = (SLAP_EXTOP_MAIN_FN *)module_resolve(module, "ext_main");
 	if (ext_main == NULL) {
 		return(-1);
 	}

@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/liblutil/detach.c,v 1.4.8.3 2000/06/13 17:57:25 kurt Exp $ */
+/* $OpenLDAP$ */
 /*
  * Copyright (c) 1990, 1994 Regents of the University of Michigan.
  * All rights reserved.
@@ -72,21 +72,26 @@ lutil_detach( int debug, int do_close )
 			break;
 		}
 
-		if ( (sd = open( "/dev/null", O_RDWR )) == -1 ) {
+		if ( (sd = open( "/dev/null", O_RDWR   )) == -1 &&
+			 (sd = open( "/dev/null", O_RDONLY )) == -1 &&
+			 /* Panic -- open *something* */
+			 (sd = open( "/",         O_RDONLY )) == -1    ) {
 			perror("/dev/null");
+		} else {
+			/* redirect stdin, stdout, stderr to /dev/null */
+			dup2( sd, STDIN_FILENO );
+			dup2( sd, STDOUT_FILENO );
+			dup2( sd, STDERR_FILENO );
+
+			switch( sd ) {
+			default:
+				close( sd );
+			case STDIN_FILENO:
+			case STDOUT_FILENO:
+			case STDERR_FILENO:
+				break;
+			}
 		}
-
-		/* close stdin, stdout, stderr */
-		close( STDIN_FILENO );
-		close( STDOUT_FILENO );
-		close( STDERR_FILENO );
-
-		/* redirect stdin, stdout, stderr to /dev/null */
-		dup2( sd, STDIN_FILENO );
-		dup2( sd, STDOUT_FILENO );
-		dup2( sd, STDERR_FILENO );
-
-		close( sd );
 
 		if ( do_close ) {
 			/* close everything else */

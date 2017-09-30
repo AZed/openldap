@@ -1,6 +1,6 @@
-.TH SLURPD 8C "20 August 2000" "OpenLDAP LDVERSION"
-.\" $OpenLDAP: pkg/ldap/doc/man/man8/slurpd.8,v 1.3.12.7 2002/01/04 20:38:14 kurt Exp $
-.\" Copyright 1998-2002 The OpenLDAP Foundation All Rights Reserved.
+.TH SLURPD 8C "RELEASEDATE" "OpenLDAP LDVERSION"
+.\" $OpenLDAP$
+.\" Copyright 1998-2003 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .SH NAME
 slurpd \- Standalone LDAP Update Replication Daemon
@@ -60,6 +60,14 @@ config file, and sends the changes.
 See
 .BR slapd (8)
 for details on the standalone LDAP daemon.
+.LP
+Note that slurpd reads
+.B replication
+directive from
+.BR slapd.conf (5),
+but uses
+.BR ldap.conf (5)
+to obtain other configuration settings (such as TLS settings).
 .SH OPTIONS
 .TP
 .BI \-d " debug\-level"
@@ -151,6 +159,8 @@ on voluminous debugging which will be printed on standard error, type:
 .LP
 .SH "SEE ALSO"
 .BR ldap (3),
+.BR ldap.conf (5),
+.BR slapd.conf (5),
 .BR slapd.replog (5),
 .BR slapd (8)
 .LP

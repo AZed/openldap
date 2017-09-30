@@ -1,7 +1,7 @@
 /* schemaparse.c - routines to parse config file objectclass definitions */
-/* $OpenLDAP: pkg/ldap/servers/slapd/schemaparse.c,v 1.12.8.14 2002/01/04 20:38:31 kurt Exp $ */
+/* $OpenLDAP$ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 
@@ -16,7 +16,7 @@
 #include "slap.h"
 #include "ldap_schema.h"
 
-int	global_schemacheck = 1; /* schemacheck on is default */
+int	global_schemacheck = 1; /* schemacheck ON is default */
 
 static void		oc_usage(void); 
 static void		at_usage(void);
@@ -25,26 +25,34 @@ static char *const err2text[] = {
 	"Success",
 	"Out of memory",
 	"ObjectClass not found",
-	"ObjectClass inappropriate SUPerior",
-	"AttributeType not found",
-	"AttributeType inappropriate USAGE",
+	"user-defined ObjectClass includes operational attributes",
+	"user-defined ObjectClass has inappropriate SUPerior",
 	"Duplicate objectClass",
+	"AttributeType not found",
+	"AttributeType inappropriate matching rule",
+	"AttributeType inappropriate USAGE",
+	"AttributeType inappropriate SUPerior",
+	"AttributeType SYNTAX or SUPerior required",
 	"Duplicate attributeType",
-	"Duplicate ldapSyntax",
-	"Duplicate matchingRule",
-	"OID or name required",
-	"SYNTAX or SUPerior required",
 	"MatchingRule not found",
+	"MatchingRule incomplete",
+	"Duplicate matchingRule",
 	"Syntax not found",
-	"Syntax required",
+	"Duplicate ldapSyntax",
+	"OID or name required",
 	"Qualifier not supported",
-	"Invalid NAME"
+	"Invalid NAME",
+	"OID could not be expanded",
+	"Duplicate Content Rule",
+	"Content Rule not for STRUCTURAL object class",
+	"Content Rule AUX contains non-AUXILIARY object class"
+	"Content Rule attribute type list contains duplicate"
 };
 
 char *
 scherr2str(int code)
 {
-	if ( code < 0 || code >= (sizeof(err2text)/sizeof(char *)) ) {
+	if ( code < 0 || SLAP_SCHERR_LAST <= code ) {
 		return "Unknown error";
 	} else {
 		return err2text[code];
@@ -88,99 +96,64 @@ dscompare(const char *s1, const char *s2, char delim)
 	return 0;
 }
 
-static OidMacro *om_list = NULL;
+#ifdef SLAP_EXTENDED_SCHEMA
 
-/* Replace an OID Macro invocation with its full numeric OID.
- * If the macro is used with "macroname:suffix" append ".suffix"
- * to the expansion.
- */
-static char *
-find_oidm(char *oid)
+static void
+cr_usage( void )
 {
-	OidMacro *om;
-
-	/* OID macros must start alpha */
-	if ( OID_LEADCHAR( *oid ) )	{
-		return oid;
-	}
-
-    for (om = om_list; om; om=om->som_next) {
-		char **names = om->som_names;
-
-		if( names == NULL ) {
-			continue;
-		}
-
-		for( ; *names != NULL ; names++ ) {
-			int pos = dscompare(*names, oid, ':');
-
-			if( pos ) {
-				int suflen = strlen(oid + pos);
-				char *new = ch_calloc(1,
-					om->som_oid.bv_len + suflen + 1);
-				strcpy(new, om->som_oid.bv_val);
-
-				if( suflen ) {
-					suflen = om->som_oid.bv_len;
-					new[suflen++] = '.';
-					strcpy(new+suflen, oid+pos+1);
-				}
-				return new;
-			}
-		}
-	}
-	return NULL;
+	fprintf( stderr,
+		"DITContentRuleDescription = \"(\" whsp\n"
+		"  numericoid whsp       ; StructuralObjectClass identifier\n"
+		"  [ \"NAME\" qdescrs ]\n"
+		"  [ \"DESC\" qdstring ]\n"
+		"  [ \"OBSOLETE\" whsp ]\n"
+		"  [ \"AUX\" oids ]      ; Auxiliary ObjectClasses\n"
+		"  [ \"MUST\" oids ]     ; AttributeTypes\n"
+		"  [ \"MAY\" oids ]      ; AttributeTypes\n"
+		"  [ \"NOT\" oids ]      ; AttributeTypes\n"
+		"  whsp \")\"\n" );
 }
 
 int
-parse_oidm(
+parse_cr(
     const char	*fname,
     int		lineno,
-    int		argc,
-    char 	**argv
+    char	*line,
+    char	**argv
 )
 {
-	char *oid;
-	OidMacro *om;
+	LDAPContentRule *cr;
+	int		code;
+	const char	*err;
 
-	if (argc != 3) {
-		fprintf( stderr, "%s: line %d: too many arguments\n",
-			fname, lineno );
-usage:	fprintf( stderr, "\tObjectIdentifier <name> <oid>\n");
+	cr = ldap_str2contentrule(line, &code, &err, LDAP_SCHEMA_ALLOW_ALL );
+	if ( !cr ) {
+		fprintf( stderr, "%s: line %d: %s before %s\n",
+			 fname, lineno, ldap_scherr2str(code), err );
+		cr_usage();
 		return 1;
 	}
 
-	oid = find_oidm( argv[1] );
-	if( oid != NULL ) {
+	if ( cr->cr_oid == NULL ) {
 		fprintf( stderr,
-			"%s: line %d: "
-			"ObjectIdentifier \"%s\" previously defined \"%s\"",
-			fname, lineno, argv[1], oid );
+			"%s: line %d: Content rule has no OID\n",
+			fname, lineno );
+		cr_usage();
 		return 1;
 	}
 
-	om = (OidMacro *) ch_malloc( sizeof(OidMacro) );
-
-	om->som_names = NULL;
-	charray_add( &om->som_names, argv[1] );
-	om->som_oid.bv_val = find_oidm( argv[2] );
-
-	if (!om->som_oid.bv_val) {
-		fprintf( stderr, "%s: line %d: OID %s not recognized\n",
-			fname, lineno, argv[2] );
-		goto usage;
+	code = cr_add(cr,1,&err);
+	if ( code ) {
+		fprintf( stderr, "%s: line %d: %s: \"%s\"\n",
+			 fname, lineno, scherr2str(code), err);
+		return 1;
 	}
 
-	if (om->som_oid.bv_val == argv[2]) {
-		om->som_oid.bv_val = ch_strdup( argv[2] );
-	}
-
-	om->som_oid.bv_len = strlen( om->som_oid.bv_val );
-	om->som_next = om_list;
-	om_list = om;
-
+	ldap_memfree(cr);
 	return 0;
 }
+
+#endif
 
 int
 parse_oc(
@@ -193,9 +166,8 @@ parse_oc(
 	LDAPObjectClass *oc;
 	int		code;
 	const char	*err;
-	char		*oid = NULL;
 
-	oc = ldap_str2objectclass(line,&code,&err,LDAP_SCHEMA_ALLOW_ALL);
+	oc = ldap_str2objectclass(line, &code, &err, LDAP_SCHEMA_ALLOW_ALL );
 	if ( !oc ) {
 		fprintf( stderr, "%s: line %d: %s before %s\n",
 			 fname, lineno, ldap_scherr2str(code), err );
@@ -211,22 +183,7 @@ parse_oc(
 		return 1;
 	}
 
-	if ( !OID_LEADCHAR( oc->oc_oid[0] )) {
-		/* Expand OID macros */
-		oid = find_oidm( oc->oc_oid );
-		if ( !oid ) {
-			fprintf( stderr,
-				"%s: line %d: OID %s not recognized\n",
-				fname, lineno, oc->oc_oid);
-			return 1;
-		}
-		if ( oid != oc->oc_oid ) {
-			ldap_memfree( oc->oc_oid );
-			oc->oc_oid = oid;
-		}
-	}
-
-	code = oc_add(oc,&err);
+	code = oc_add(oc,1,&err);
 	if ( code ) {
 		fprintf( stderr, "%s: line %d: %s: \"%s\"\n",
 			 fname, lineno, scherr2str(code), err);
@@ -236,6 +193,7 @@ parse_oc(
 	ldap_memfree(oc);
 	return 0;
 }
+
 
 static void
 oc_usage( void )
@@ -253,7 +211,6 @@ oc_usage( void )
 		"  [ \"MAY\" oids ]                ; AttributeTypes\n"
 		"  whsp \")\"\n" );
 }
-
 
 static void
 at_usage( void )
@@ -292,10 +249,8 @@ parse_at(
 	LDAPAttributeType *at;
 	int		code;
 	const char	*err;
-	char		*oid = NULL;
-	char		*soid = NULL;
 
-	at = ldap_str2attributetype(line,&code,&err,LDAP_SCHEMA_ALLOW_ALL);
+	at = ldap_str2attributetype( line, &code, &err, LDAP_SCHEMA_ALLOW_ALL );
 	if ( !at ) {
 		fprintf( stderr, "%s: line %d: %s before %s\n",
 			 fname, lineno, ldap_scherr2str(code), err );
@@ -311,36 +266,13 @@ parse_at(
 		return 1;
 	}
 
-	if ( !OID_LEADCHAR( at->at_oid[0] )) {
-		/* Expand OID macros */
-		oid = find_oidm( at->at_oid );
-		if ( !oid ) {
-			fprintf( stderr,
-				"%s: line %d: OID %s not recognized\n",
-				fname, lineno, at->at_oid);
-			return 1;
-		}
-		if ( oid != at->at_oid ) {
-			ldap_memfree( at->at_oid );
-			at->at_oid = oid;
-		}
+	/* operational attributes should be defined internally */
+	if ( at->at_usage ) {
+		fprintf( stderr, "%s: line %d: attribute type \"%s\" is operational\n",
+			 fname, lineno, at->at_oid );
+		return 1;
 	}
 
-	if ( at->at_syntax_oid && !OID_LEADCHAR( at->at_syntax_oid[0] )) {
-		/* Expand OID macros */
-		oid = find_oidm( at->at_syntax_oid );
-		if ( !oid ) {
-			fprintf(stderr,
-				"%s: line %d: OID %s not recognized\n",
-				fname, lineno, at->at_syntax_oid);
-			return 1;
-		}
-		if ( oid != at->at_syntax_oid ) {
-			ldap_memfree( at->at_syntax_oid );
-			at->at_syntax_oid = oid;
-		}
-
-	}
 	code = at_add(at,&err);
 	if ( code ) {
 		fprintf( stderr, "%s: line %d: %s: \"%s\"\n",

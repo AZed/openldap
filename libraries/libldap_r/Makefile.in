@@ -1,69 +1,53 @@
-# $OpenLDAP: pkg/ldap/libraries/libldap_r/Makefile.in,v 1.17.2.9 2002/01/04 20:38:23 kurt Exp $
-## Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+# $OpenLDAP$
+## Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
 ## COPYING RESTRICTIONS APPLY, see COPYRIGHT file
 ##
 ## Makefile.in for LDAP -lldap
 ##
 LIBRARY = libldap_r.la
-XLIBRARY = ../libldap_r.a
 
-PROGRAMS = apitest ltest ttest
+PROGRAMS = apitest ltest
 
 XXDIR = $(srcdir)/../libldap
-XXSRCS	= apitest.c test.c tmpltest.c extended.c \
-	bind.c controls.c open.c result.c error.c compare.c search.c \
-	modify.c add.c modrdn.c delete.c abandon.c cache.c cyrus.c \
-	getfilter.c sasl.c sbind.c kbind.c unbind.c friendly.c \
-	free.c disptmpl.c srchpref.c dsparse.c tmplout.c sort.c \
+XXSRCS    = apitest.c test.c \
+	bind.c open.c result.c error.c compare.c search.c \
+	controls.c messages.c references.c extended.c cyrus.c \
+	modify.c add.c modrdn.c delete.c abandon.c \
+	sasl.c sbind.c kbind.c unbind.c cancel.c cache.c \
+	filter.c free.c sort.c passwd.c whoami.c \
 	getdn.c getentry.c getattr.c getvalues.c addentry.c \
 	request.c os-ip.c url.c sortctrl.c vlvctrl.c \
 	init.c options.c print.c string.c util-int.c schema.c \
-	charray.c tls.c dn.c os-local.c dnssrv.c \
-	utf-8.c
+	charray.c tls.c os-local.c dnssrv.c utf-8.c utf-8-conv.c
 SRCS	= threads.c rdwr.c tpool.c \
 	thr_posix.c thr_cthreads.c thr_thr.c thr_lwp.c thr_nt.c \
 	thr_pth.c thr_stub.c
 OBJS	= threads.lo rdwr.lo tpool.lo  \
 	thr_posix.lo thr_cthreads.lo thr_thr.lo thr_lwp.lo thr_nt.lo \
 	thr_pth.lo thr_stub.lo \
-	extended.lo \
-	bind.lo controls.lo open.lo result.lo error.lo compare.lo search.lo \
-	modify.lo add.lo modrdn.lo delete.lo abandon.lo cache.lo cyrus.lo \
-	getfilter.lo sasl.lo sbind.lo kbind.lo unbind.lo friendly.lo \
-	free.lo disptmpl.lo srchpref.lo dsparse.lo tmplout.lo sort.lo \
+	bind.lo open.lo result.lo error.lo compare.lo search.lo \
+	controls.lo messages.lo references.lo extended.lo cyrus.lo \
+	modify.lo add.lo modrdn.lo delete.lo abandon.lo \
+	sasl.lo sbind.lo kbind.lo unbind.lo cancel.lo cache.lo \
+	filter.lo free.lo sort.lo passwd.lo whoami.lo \
 	getdn.lo getentry.lo getattr.lo getvalues.lo addentry.lo \
 	request.lo os-ip.lo url.lo sortctrl.lo vlvctrl.lo \
 	init.lo options.lo print.lo string.lo util-int.lo schema.lo \
-	charray.lo tls.lo dn.lo os-local.lo dnssrv.lo \
-	utf-8.lo
+	charray.lo tls.lo os-local.lo dnssrv.lo utf-8.lo utf-8-conv.lo
 
 LDAP_INCDIR= ../../include       
 LDAP_LIBDIR= ../../libraries
 
+LIB_DEFS = -DLDAP_LIBRARY
+
 XDEFS = -DLDAP_R_COMPILE -I$(XXDIR)
-XLIBS = -lldap_r -llber -llutil
+XLIBS = $(LIBRARY) $(LDAP_LIBLBER_LA) $(LDAP_LIBLUTIL_A)
 XXLIBS = $(SECURITY_LIBS) $(LUTIL_LIBS)
 XXXLIBS = $(LTHREAD_LIBS)
+NT_LINK_LIBS = $(LDAP_LIBLBER_LA) $(AC_LIBS) $(SECURITY_LIBS)
+UNIX_LINK_LIBS = $(LDAP_LIBLBER_LA) $(AC_LIBS) $(SECURITY_LIBS)
 
-LINKAGE = @LT_LIB_LINKAGE@
-
-NT_DYN_LIB_LIBS  = -llber -llutil $(AC_LIBS)
-NT_DYN_LIB_DEFS  = -DLBER_DECL=dllimport
-NT_DYN_TEST_DEFS = -DLBER_DECL=dllimport -DLDAP_DECL=dllimport
-
-NT_XXLIBS = $(SECURITY_LIBS)
-
-UNIX_DYN_LIB_LIBS  = -llber $(AC_LIBS)
-UNIX_XXLIBS = $(SECURITY_LIBS)
-
-# Extras for building the library
-EXTRA_DEFS = $(@PLAT@_@LIB_LINKAGE@_LIB_DEFS)
-EXTRA_LIBS = $(@PLAT@_@LIB_LINKAGE@_LIB_LIBS) $(@PLAT@_XXLIBS)
-
-# Only the test programs will pick up these defs.
-CPPFLAGS = $(@PLAT@_@LIB_LINKAGE@_TEST_DEFS)
-
-.links :
+.links : Makefile
 	@for i in $(XXSRCS); do \
 		$(RM) $$i ; \
 		$(LN_S) $(XXDIR)/$$i . ; \
@@ -77,13 +61,13 @@ clean-local: FORCE
 
 depend-common: .links
 
-apitest:	$(LIBRARY) apitest.o $(LDAP_LIBLBER_DEPEND)
+apitest:	$(XLIBS) apitest.o
 	$(LTLINK) -o $@ apitest.o $(LIBS)
-ltest:	$(LIBRARY) test.o $(LDAP_LIBLBER_DEPEND)
+ltest:	$(XLIBS) test.o
 	$(LTLINK) -o $@ test.o $(LIBS)
-ttest:	$(LIBRARY) tmpltest.o $(LDAP_LIBLBER_DEPEND)
-	$(LTLINK) -o $@ tmpltest.o $(LIBS)
 
 install-local: $(CFFILES) FORCE
 	-$(MKDIR) $(DESTDIR)$(libdir)
 	$(LTINSTALL) $(INSTALLFLAGS) -m 644 $(LIBRARY) $(DESTDIR)$(libdir)
+	$(LTFINISH) $(DESTDIR)$(libdir)
+

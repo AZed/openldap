@@ -1,13 +1,12 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/main.c,v 1.77.2.12 2002/01/04 20:38:28 kurt Exp $ */
+/* $OpenLDAP$ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 #include "portable.h"
 
 #include <stdio.h>
 
-#include <ac/signal.h>
 #include <ac/socket.h>
 #include <ac/string.h>
 #include <ac/time.h>
@@ -15,9 +14,15 @@
 #include <ac/wait.h>
 #include <ac/errno.h>
 
+#include "ldap_pvt.h"
+
 #include "slap.h"
 #include "lutil.h"
 #include "ldif.h"
+
+#ifdef LDAP_SLAPI
+#include "slapi.h"
+#endif
 
 #ifdef LDAP_SIGCHLD
 static RETSIGTYPE wait4child( int sig );
@@ -25,34 +30,18 @@ static RETSIGTYPE wait4child( int sig );
 
 #ifdef HAVE_NT_SERVICE_MANAGER
 #define MAIN_RETURN(x) return
-struct sockaddr_in	bind_addr;
-
-/* in nt_main.c */
-LDAP_LUTIL_V(SERVICE_STATUS)		SLAPDServiceStatus;
-LDAP_LUTIL_V(SERVICE_STATUS_HANDLE)	hSLAPDServiceStatus;
-extern ldap_pvt_thread_cond_t	started_event,		stopped_event;
-extern int	  is_NT_Service;
-
-void CommenceStartupProcessing( LPCTSTR serverName,
-							   void(*stopper)(int));
-void ReportSlapdShutdownComplete( void );
-void *getRegParam( char *svc, char *value );
+static struct sockaddr_in	bind_addr;
 
 #define SERVICE_EXIT( e, n )	do { \
 	if ( is_NT_Service ) { \
-		SLAPDServiceStatus.dwWin32ExitCode				= (e); \
-		SLAPDServiceStatus.dwServiceSpecificExitCode	= (n); \
+		lutil_ServiceStatus.dwWin32ExitCode				= (e); \
+		lutil_ServiceStatus.dwServiceSpecificExitCode	= (n); \
 	} \
 } while ( 0 )
 
 #else
 #define SERVICE_EXIT( e, n )
 #define MAIN_RETURN(x) return(x)
-#endif
-
-#ifdef HAVE_NT_EVENT_LOG
-void LogSlapdStartedEvent( char *svc, int slap_debug, char *configfile, char *urls );
-void LogSlapdStoppedEvent( char *svc );
 #endif
 
 /*
@@ -70,14 +59,14 @@ const char Versionstr[] =
 #define DEFAULT_SYSLOG_USER  LOG_LOCAL4
 
 typedef struct _str2intDispatch {
-	char    *stringVal;
-	int      abbr;
-	int      intVal;
+	char	*stringVal;
+	int	 abbr;
+	int	 intVal;
 } STRDISP, *STRDISP_P;
 
 
 /* table to compute syslog-options to integer */
-static STRDISP  syslog_types[] = {
+static STRDISP	syslog_types[] = {
 	{ "LOCAL0", sizeof("LOCAL0"), LOG_LOCAL0 },
 	{ "LOCAL1", sizeof("LOCAL1"), LOG_LOCAL1 },
 	{ "LOCAL2", sizeof("LOCAL2"), LOG_LOCAL2 },
@@ -86,13 +75,14 @@ static STRDISP  syslog_types[] = {
 	{ "LOCAL5", sizeof("LOCAL5"), LOG_LOCAL5 },
 	{ "LOCAL6", sizeof("LOCAL6"), LOG_LOCAL6 },
 	{ "LOCAL7", sizeof("LOCAL7"), LOG_LOCAL7 },
-	{ NULL }
+	{ NULL, 0, 0 }
 };
 
 static int   cnvt_str2int( char *, STRDISP_P, int );
 
-#endif  /* LOG_LOCAL4 */
+#endif	/* LOG_LOCAL4 */
 
+static int check_config = 0;
 
 static void
 usage( char *name )
@@ -100,22 +90,25 @@ usage( char *name )
 	fprintf( stderr,
 		"usage: %s options\n", name );
 	fprintf( stderr,
-		"\t-d level\tDebug Level" "\n"
-		"\t-f filename\tConfiguration File\n"
+		"\t-4\t\tIPv4 only\n"
+		"\t-6\t\tIPv6 only\n"
+		"\t-d level\tDebug level" "\n"
+		"\t-f filename\tConfiguration file\n"
 #if defined(HAVE_SETUID) && defined(HAVE_SETGID)
-		"\t-g group\tGroup (id or name) to ran as\n"
+		"\t-g group\tGroup (id or name) to run as\n"
 #endif
-		"\t-h URLs\tList of URLs to serve\n"
+		"\t-h URLs\t\tList of URLs to serve\n"
 #ifdef LOG_LOCAL4
-		"\t-l sysloguser\tSyslog User (default: LOCAL4)\n"
+		"\t-l facility\tSyslog facility (default: LOCAL4)\n"
 #endif
-		"\t-n serverName\tservice name\n"
+		"\t-n serverName\tService name\n"
 #ifdef HAVE_CHROOT
-		"\t-r directory\n"
+		"\t-r directory\tSandbox directory to chroot to\n"
 #endif
-		"\t-s level\tSyslog Level\n"
+		"\t-s level\tSyslog level\n"
+		"\t-t\t\tCheck configuration file and exit\n"
 #if defined(HAVE_SETUID) && defined(HAVE_SETGID)
-		"\t-u user\tUser (id or name) to ran as\n"
+		"\t-u user\t\tUser (id or name) to run as\n"
 #endif
     );
 }
@@ -127,7 +120,7 @@ int main( int argc, char **argv )
 #endif
 {
 	int		i, no_detach = 0;
-	int		rc;
+	int		rc = 1;
 	char *urls = NULL;
 #if defined(HAVE_SETUID) && defined(HAVE_SETGID)
 	char *username = NULL;
@@ -137,16 +130,19 @@ int main( int argc, char **argv )
 	char *sandbox = NULL;
 #endif
 #ifdef LOG_LOCAL4
-    int     syslogUser = DEFAULT_SYSLOG_USER;
+    int	    syslogUser = DEFAULT_SYSLOG_USER;
 #endif
+	
+	int g_argc = argc;
+	char **g_argv = argv;
 
 #ifdef HAVE_NT_SERVICE_MANAGER
 	char		*configfile = ".\\slapd.conf";
 #else
 	char		*configfile = SLAPD_DEFAULT_CONFIGFILE;
 #endif
-	char        *serverName = NULL;
-	int         serverMode = SLAP_SERVER_MODE;
+	char	    *serverName = NULL;
+	int	    serverMode = SLAP_SERVER_MODE;
 
 #ifdef CSRIMALLOC
 	FILE *leakfile;
@@ -154,9 +150,6 @@ int main( int argc, char **argv )
 		leakfile = stderr;
 	}
 #endif
-
-	g_argc = argc;
-	g_argv = argv;
 
 #ifdef HAVE_NT_SERVICE_MANAGER
 	{
@@ -167,40 +160,62 @@ int main( int argc, char **argv )
 
 		if ( is_NT_Service ) {
 			serverName = argv[0];
-			CommenceStartupProcessing( serverName, slap_sig_shutdown );
+			lutil_CommenceStartupProcessing( serverName, slap_sig_shutdown );
 			if ( strcmp(serverName, SERVICE_NAME) )
 			    regService = serverName;
 		}
 
-		i = (int*)getRegParam( regService, "DebugLevel" );
+		i = (int*)lutil_getRegParam( regService, "DebugLevel" );
 		if ( i != NULL ) 
 		{
 			slap_debug = *i;
+#ifdef NEW_LOGGING
+			lutil_log_initialize( argc, argv );
+			LDAP_LOG( SLAPD, INFO, 
+				"main: new debug level from registry is: %d\n", 
+				slap_debug, 0, 0 );
+#else
 			Debug( LDAP_DEBUG_ANY, "new debug level from registry is: %d\n", slap_debug, 0, 0 );
+#endif
 		}
 
-		newUrls = (char *) getRegParam(regService, "Urls");
+		newUrls = (char *) lutil_getRegParam(regService, "Urls");
 		if (newUrls)
 		{
 		    if (urls)
 			ch_free(urls);
 
 		    urls = ch_strdup(newUrls);
+#ifdef NEW_LOGGING
+		    LDAP_LOG( SLAPD, INFO, 
+				"main: new urls from registry: %s\n", urls, 0, 0 );
+#else
 		    Debug(LDAP_DEBUG_ANY, "new urls from registry: %s\n",
 			  urls, 0, 0);
+#endif
+
 		}
 
-		newConfigFile = (char*)getRegParam( regService, "ConfigFile" );
+		newConfigFile = (char*)lutil_getRegParam( regService, "ConfigFile" );
 		if ( newConfigFile != NULL ) 
 		{
 			configfile = newConfigFile;
+#ifdef NEW_LOGGING
+			LDAP_LOG( SLAPD, INFO, 
+				"main: new config file from registry is: %s\n", configfile, 0, 0 );
+#else
 			Debug ( LDAP_DEBUG_ANY, "new config file from registry is: %s\n", configfile, 0, 0 );
+#endif
+
 		}
 	}
 #endif
 
 	while ( (i = getopt( argc, argv,
-			     "d:f:h:s:n:"
+			     "d:f:h:s:n:t"
+#if LDAP_PF_INET6
+				"46"
+#endif
 #ifdef HAVE_CHROOT
 				"r:"
 #endif
@@ -212,10 +227,20 @@ int main( int argc, char **argv )
 #endif
 			     )) != EOF ) {
 		switch ( i ) {
+#ifdef LDAP_PF_INET6
+		case '4':
+			slap_inet4or6 = AF_INET;
+			break;
+		case '6':
+			slap_inet4or6 = AF_INET6;
+			break;
+#endif
+			break;
+
 		case 'h':	/* listen URLs */
 			if ( urls != NULL ) free( urls );
 			urls = ch_strdup( optarg );
-            break;
+	    break;
 
 		case 'd':	/* set debug level and 'do not detach' flag */
 			no_detach = 1;
@@ -231,10 +256,14 @@ int main( int argc, char **argv )
 		case 'f':	/* read config file */
 			configfile = ch_strdup( optarg );
 			break;
+#endif
 
-		case 's':	/* set syslog level */
-			ldap_syslog = atoi( optarg );
+#ifdef HAVE_CHROOT
+		case 'r':
+			if( sandbox ) free(sandbox);
+			sandbox = ch_strdup( optarg );
 			break;
+#endif
 
 #ifdef LOG_LOCAL4
 		case 'l':	/* set syslog local user */
@@ -267,6 +296,10 @@ int main( int argc, char **argv )
 			serverName = ch_strdup( optarg );
 			break;
 
+		case 't':
+			check_config++;
+			break;
+
 		default:
 			usage( argv[0] );
 			rc = 1;
@@ -275,17 +308,26 @@ int main( int argc, char **argv )
 		}
 	}
 
+#ifdef NEW_LOGGING
+	lutil_log_initialize( argc, argv );
+#else
+	lutil_set_debug_level( "slapd", slap_debug );
 	ber_set_option(NULL, LBER_OPT_DEBUG_LEVEL, &slap_debug);
 	ldap_set_option(NULL, LDAP_OPT_DEBUG_LEVEL, &slap_debug);
 	ldif_debug = slap_debug;
+#endif
 
+#ifdef NEW_LOGGING
+	LDAP_LOG( SLAPD, INFO, "%s", Versionstr, 0, 0 );
+#else
 	Debug( LDAP_DEBUG_TRACE, "%s", Versionstr, 0, 0 );
+#endif
 
 	if( serverName == NULL ) {
 		if ( (serverName = strrchr( argv[0], *LDAP_DIRSEP )) == NULL ) {
-			serverName = ch_strdup( argv[0] );
+			serverName = argv[0];
 		} else {
-			serverName = ch_strdup( serverName + 1 );
+			serverName = serverName + 1;
 		}
 	}
 
@@ -295,7 +337,7 @@ int main( int argc, char **argv )
 	openlog( serverName, OPENLOG_OPTIONS );
 #endif
 
-	if( slapd_daemon_init( urls ) != 0 ) {
+	if( !check_config && slapd_daemon_init( urls ) != 0 ) {
 		rc = 1;
 		SERVICE_EXIT( ERROR_SERVICE_SPECIFIC_ERROR, 16 );
 		goto stop;
@@ -323,6 +365,7 @@ int main( int argc, char **argv )
 #endif
 
 	extops_init();
+ 	slap_op_init();
 
 #ifdef SLAPD_MODULES
 	if ( module_init() != 0 ) {
@@ -338,32 +381,92 @@ int main( int argc, char **argv )
 		goto destroy;
 	}
 
-	if ( schema_init( ) != 0 ) {
+	if ( slap_schema_init( ) != 0 ) {
+#ifdef NEW_LOGGING
+		LDAP_LOG( OPERATION, CRIT, "main: schema initialization error\n", 0, 0, 0 );
+#else
 		Debug( LDAP_DEBUG_ANY,
 		    "schema initialization error\n",
 		    0, 0, 0 );
+#endif
+
 		goto destroy;
 	}
 
-	if ( read_config( configfile ) != 0 ) {
+#ifdef HAVE_TLS
+	/* Library defaults to full certificate checking. This is correct when
+	 * a client is verifying a server because all servers should have a
+	 * valid cert. But few clients have valid certs, so we want our default
+	 * to be no checking. The config file can override this as usual.
+	 */
+	rc = 0;
+	(void) ldap_pvt_tls_set_option( NULL, LDAP_OPT_X_TLS_REQUIRE_CERT, &rc );
+#endif
+
+#ifdef LDAP_SLAPI
+	if ( slapi_init() != 0 ) {
+#ifdef NEW_LOGGING
+		LDAP_LOG( OPERATION, CRIT, "main: slapi initialization error\n", 0, 0, 0 );
+#else
+		Debug( LDAP_DEBUG_ANY,
+		    "slapi initialization error\n",
+		    0, 0, 0 );
+#endif
+
+		goto destroy;
+	}
+#endif /* LDAP_SLAPI */
+
+	if ( read_config( configfile, 0 ) != 0 ) {
 		rc = 1;
 		SERVICE_EXIT( ERROR_SERVICE_SPECIFIC_ERROR, 19 );
+
+		if ( check_config ) {
+			fprintf( stderr, "config check failed\n" );
+		}
+
 		goto destroy;
 	}
 
-	if ( schema_prep( ) != 0 ) {
+	if ( check_config ) {
+		rc = 0;
+		fprintf( stderr, "config check succeeded\n" );
+		goto destroy;
+	}
+
+	if ( glue_sub_init( ) != 0 ) {
+#ifdef NEW_LOGGING
+		LDAP_LOG( SLAPD, CRIT, "main: subordinate config error\n", 0, 0, 0 );
+#else
+		Debug( LDAP_DEBUG_ANY,
+		    "subordinate config error\n",
+		    0, 0, 0 );
+#endif
+		goto destroy;
+	}
+
+	if ( slap_schema_check( ) != 0 ) {
+#ifdef NEW_LOGGING
+		LDAP_LOG( SLAPD, CRIT, "main: schema prep error\n", 0, 0, 0 );
+#else
 		Debug( LDAP_DEBUG_ANY,
 		    "schema prep error\n",
 		    0, 0, 0 );
+#endif
+
 		goto destroy;
 	}
 
 #ifdef HAVE_TLS
 	rc = ldap_pvt_tls_init();
 	if( rc != 0) {
+#ifdef NEW_LOGGING
+		LDAP_LOG( SLAPD, CRIT, "main: tls init failed: %d\n", rc, 0, 0 );
+#else
 		Debug( LDAP_DEBUG_ANY,
 		    "main: TLS init failed: %d\n",
 		    0, 0, 0 );
+#endif
 		rc = 1;
 		SERVICE_EXIT( ERROR_SERVICE_SPECIFIC_ERROR, 20 );
 		goto destroy;
@@ -371,9 +474,13 @@ int main( int argc, char **argv )
 
 	rc = ldap_pvt_tls_init_def_ctx();
 	if( rc != 0) {
+#ifdef NEW_LOGGING
+		LDAP_LOG( SLAPD, CRIT, "main: tls init def ctx failed: %d\n", rc, 0, 0 );
+#else
 		Debug( LDAP_DEBUG_ANY,
 		    "main: TLS init def ctx failed: %d\n",
-		    0, 0, 0 );
+		    rc, 0, 0 );
+#endif
 		rc = 1;
 		SERVICE_EXIT( ERROR_SERVICE_SPECIFIC_ERROR, 20 );
 		goto destroy;
@@ -413,32 +520,44 @@ int main( int argc, char **argv )
 		goto shutdown;
 	}
 
-	{
-		FILE *fp;
+#ifdef NEW_LOGGING
+	LDAP_LOG( SLAPD, INFO, "main: slapd starting.\n", 0, 0, 0 );
+#else
+	Debug( LDAP_DEBUG_ANY, "slapd starting\n", 0, 0, 0 );
+#endif
 
-		Debug( LDAP_DEBUG_ANY, "slapd starting\n", 0, 0, 0 );
 
-		if (( slapd_pid_file != NULL ) &&
-			(( fp = fopen( slapd_pid_file, "w" )) != NULL ))
-		{
+	if ( slapd_pid_file != NULL ) {
+		FILE *fp = fopen( slapd_pid_file, "w" );
+
+		if( fp != NULL ) {
 			fprintf( fp, "%d\n", (int) getpid() );
 			fclose( fp );
-		}
 
-		if (( slapd_args_file != NULL ) &&
-			(( fp = fopen( slapd_args_file, "w" )) != NULL ))
-		{
+		} else {
+			free(slapd_pid_file);
+			slapd_pid_file = NULL;
+		}
+	}
+
+	if ( slapd_args_file != NULL ) {
+		FILE *fp = fopen( slapd_args_file, "w" );
+
+		if( fp != NULL ) {
 			for ( i = 0; i < g_argc; i++ ) {
 				fprintf( fp, "%s ", g_argv[i] );
 			}
 			fprintf( fp, "\n" );
 			fclose( fp );
+		} else {
+			free(slapd_args_file);
+			slapd_args_file = NULL;
 		}
 	}
 
 #ifdef HAVE_NT_EVENT_LOG
 	if (is_NT_Service)
-	LogSlapdStartedEvent( serverName, slap_debug, configfile, urls );
+	lutil_LogStartedEvent( serverName, slap_debug, configfile, urls );
 #endif
 
 	rc = slapd_daemon();
@@ -461,24 +580,46 @@ destroy:
 	module_kill();
 #endif
 
+	slap_op_destroy();
+
 	extops_kill();
 
 stop:
 #ifdef HAVE_NT_EVENT_LOG
 	if (is_NT_Service)
-	LogSlapdStoppedEvent( serverName );
+	lutil_LogStoppedEvent( serverName );
 #endif
 
+#ifdef NEW_LOGGING
+	LDAP_LOG( SLAPD, CRIT, "main: slapd stopped.\n", 0, 0, 0 );
+#else
 	Debug( LDAP_DEBUG_ANY, "slapd stopped.\n", 0, 0, 0 );
+#endif
+
 
 #ifdef HAVE_NT_SERVICE_MANAGER
-	ReportSlapdShutdownComplete();
+	lutil_ReportShutdownComplete();
 #endif
 
 #ifdef LOG_DEBUG
     closelog();
 #endif
 	slapd_daemon_destroy();
+
+	schema_destroy();
+
+#ifdef HAVE_TLS
+	ldap_pvt_tls_destroy();
+#endif
+
+	if ( slapd_pid_file != NULL ) {
+		unlink( slapd_pid_file );
+	}
+	if ( slapd_args_file != NULL ) {
+		unlink( slapd_args_file );
+	}
+
+	config_destroy();
 
 #ifdef CSRIMALLOC
 	mal_dumpleaktrace( leakfile );
@@ -515,7 +656,7 @@ wait4child( int sig )
     errno = save_errno;
 }
 
-#endif /* SIGCHLD || SIGCLD */
+#endif /* LDAP_SIGCHLD */
 
 
 #ifdef LOG_LOCAL4
@@ -528,20 +669,20 @@ wait4child( int sig )
 static int
 cnvt_str2int( char *stringVal, STRDISP_P dispatcher, int defaultVal )
 {
-    int        retVal = defaultVal;
+    int	       retVal = defaultVal;
     STRDISP_P  disp;
 
     for (disp = dispatcher; disp->stringVal; disp++) {
 
-        if (!strncasecmp (stringVal, disp->stringVal, disp->abbr)) {
+	if (!strncasecmp (stringVal, disp->stringVal, disp->abbr)) {
 
-            retVal = disp->intVal;
-            break;
+	    retVal = disp->intVal;
+	    break;
 
-        }
+	}
     }
 
     return (retVal);
 }
 
-#endif  /* LOG_LOCAL4 */
+#endif	/* LOG_LOCAL4 */

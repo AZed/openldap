@@ -1,6 +1,6 @@
-/* $OpenLDAP: pkg/ldap/libraries/liblutil/sockpair.c,v 1.6.2.4 2002/01/04 20:38:25 kurt Exp $ */
+/* $OpenLDAP$ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 
@@ -20,18 +20,19 @@
  * this function is best implemented using a single pipe() call.
  */
 
-int lutil_pair( LBER_SOCKET_T sds[2] )
+int lutil_pair( ber_socket_t sds[2] )
 {
 #ifdef USE_PIPE
 	return pipe( sds );
 #else
 	struct sockaddr_in si;
 	int rc, len = sizeof(si);
-	LBER_SOCKET_T sd;
+	ber_socket_t sd;
 
 	sd = socket( AF_INET, SOCK_DGRAM, 0 );
-	if ( sd == AC_SOCKET_INVALID )
+	if ( sd == AC_SOCKET_INVALID ) {
 		return sd;
+	}
 	
 	(void) memset( (void*) &si, '\0', len );
 	si.sin_family = AF_INET;

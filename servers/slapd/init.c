@@ -1,7 +1,7 @@
 /* init.c - initialize various things */
-/* $OpenLDAP: pkg/ldap/servers/slapd/init.c,v 1.18.2.10 2002/01/04 20:38:28 kurt Exp $ */
+/* $OpenLDAP$ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 
@@ -14,6 +14,7 @@
 #include <ac/time.h>
 
 #include "slap.h"
+#include "lber_pvt.h"
 
 /*
  * read-only global variables or variables only written by the listener
@@ -31,28 +32,34 @@ int		ldap_syslog;
 int		ldap_syslog_level = LOG_DEBUG;
 #endif
 
-struct berval **default_referral = NULL;
-int		g_argc;
-char		**g_argv;
+BerVarray default_referral = NULL;
+
+struct berval AllUser = BER_BVC( LDAP_ALL_USER_ATTRIBUTES );
+struct berval AllOper = BER_BVC( LDAP_ALL_OPERATIONAL_ATTRIBUTES );
+struct berval NoAttrs = BER_BVC( LDAP_NO_ATTRS );
 
 /*
  * global variables that need mutex protection
  */
 ldap_pvt_thread_pool_t	connection_pool;
+int			connection_pool_max = SLAP_MAX_WORKER_THREADS;
 ldap_pvt_thread_mutex_t	gmtime_mutex;
 #if defined( SLAPD_CRYPT ) || defined( SLAPD_SPASSWD )
 ldap_pvt_thread_mutex_t	passwd_mutex;
 #endif
 
-int				num_conns;
-long			num_ops_initiated;
-long			num_ops_completed;
+unsigned long			num_ops_initiated = 0;
+unsigned long			num_ops_completed = 0;
+#ifdef SLAPD_MONITOR
+unsigned long			num_ops_initiated_[SLAP_OP_LAST];
+unsigned long			num_ops_completed_[SLAP_OP_LAST];
+#endif /* SLAPD_MONITOR */
 ldap_pvt_thread_mutex_t	num_ops_mutex;
 
-long			num_entries_sent;
-long			num_refs_sent;
-long			num_bytes_sent;
-long			num_pdu_sent;
+unsigned long			num_entries_sent;
+unsigned long			num_refs_sent;
+unsigned long			num_bytes_sent;
+unsigned long			num_pdu_sent;
 ldap_pvt_thread_mutex_t	num_sent_mutex;
 /*
  * these mutexes must be used when calling the entry2str()
@@ -64,8 +71,6 @@ ldap_pvt_thread_mutex_t	replog_mutex;
 static const char* slap_name = NULL;
 int slapMode = SLAP_UNDEFINED_MODE;
 
-static ldap_pvt_thread_mutex_t	currenttime_mutex;
-
 int
 slap_init( int mode, const char *name )
 {
@@ -74,9 +79,16 @@ slap_init( int mode, const char *name )
 	assert( mode );
 
 	if( slapMode != SLAP_UNDEFINED_MODE ) {
+#ifdef NEW_LOGGING
+		LDAP_LOG( OPERATION, CRIT, 
+			"init: %s init called twice (old=%d, new=%d)\n",
+			name, slapMode, mode );
+#else
 		Debug( LDAP_DEBUG_ANY,
-	   	 "%s init: init called twice (old=%d, new=%d)\n",
-	   	 name, slapMode, mode );
+		 "%s init: init called twice (old=%d, new=%d)\n",
+		 name, slapMode, mode );
+#endif
+
 		return 1;
 	}
 
@@ -85,22 +97,39 @@ slap_init( int mode, const char *name )
 	switch ( slapMode & SLAP_MODE ) {
 		case SLAP_SERVER_MODE:
 		case SLAP_TOOL_MODE:
+#ifdef NEW_LOGGING
+			LDAP_LOG( OPERATION, DETAIL1, 
+				"init: %s initiation, initiated %s.\n",
+				name, (mode & SLAP_MODE) == SLAP_TOOL_MODE ? 
+				  "tool" : "server", 0 );
+#else
 			Debug( LDAP_DEBUG_TRACE,
 				"%s init: initiated %s.\n",	name,
 				(mode & SLAP_MODE) == SLAP_TOOL_MODE ? "tool" : "server",
 				0 );
+#endif
+
 
 			slap_name = name;
 	
 			(void) ldap_pvt_thread_initialize();
 
-			ldap_pvt_thread_pool_init(&connection_pool, SLAP_MAX_WORKER_THREADS, 0);
+			ldap_pvt_thread_pool_init(&connection_pool, connection_pool_max, 0);
 
-			ldap_pvt_thread_mutex_init( &currenttime_mutex );
 			ldap_pvt_thread_mutex_init( &entry2str_mutex );
 			ldap_pvt_thread_mutex_init( &replog_mutex );
 			ldap_pvt_thread_mutex_init( &num_ops_mutex );
 			ldap_pvt_thread_mutex_init( &num_sent_mutex );
+
+#ifdef SLAPD_MONITOR
+			{
+				int i;
+				for ( i = 0; i < SLAP_OP_LAST; i++ ) {
+					num_ops_initiated_[ i ] = 0;
+					num_ops_completed_[ i ] = 0;
+				}
+			}
+#endif
 
 			ldap_pvt_thread_mutex_init( &gmtime_mutex );
 #if defined( SLAPD_CRYPT ) || defined( SLAPD_SPASSWD )
@@ -115,8 +144,14 @@ slap_init( int mode, const char *name )
 			break;
 
 		default:
+#ifdef NEW_LOGGING
+			LDAP_LOG( OPERATION, ERR, 
+				"init: %s init, undefined mode (%d).\n", name, mode, 0 );
+#else
 			Debug( LDAP_DEBUG_ANY,
-	   	 		"%s init: undefined mode (%d).\n", name, mode, 0 );
+				"%s init: undefined mode (%d).\n", name, mode, 0 );
+#endif
+
 			rc = 1;
 			break;
 	}
@@ -128,9 +163,14 @@ int slap_startup( Backend *be )
 {
 	int rc;
 
+#ifdef NEW_LOGGING
+	LDAP_LOG( OPERATION, CRIT, "slap_startup: %s started\n", slap_name, 0, 0 );
+#else
 	Debug( LDAP_DEBUG_TRACE,
 		"%s startup: initiated.\n",
 		slap_name, 0, 0 );
+#endif
+
 
 	rc = backend_startup( be );
 
@@ -141,9 +181,15 @@ int slap_shutdown( Backend *be )
 {
 	int rc;
 
+#ifdef NEW_LOGGING
+	LDAP_LOG( OPERATION, CRIT, 
+		"slap_shutdown: %s shutdown initiated.\n", slap_name, 0, 0);
+#else
 	Debug( LDAP_DEBUG_TRACE,
 		"%s shutdown: initiated\n",
 		slap_name, 0, 0 );
+#endif
+
 
 	slap_sasl_destroy();
 
@@ -157,9 +203,15 @@ int slap_destroy(void)
 {
 	int rc;
 
+#ifdef NEW_LOGGING
+	LDAP_LOG( OPERATION, INFO, 
+		"slap_destroy: %s freeing system resources.\n", slap_name, 0, 0);
+#else
 	Debug( LDAP_DEBUG_TRACE,
 		"%s shutdown: freeing system resources.\n",
 		slap_name, 0, 0 );
+#endif
+
 
 	rc = backend_destroy();
 
@@ -169,14 +221,4 @@ int slap_destroy(void)
 
 	/* should destory the above mutex */
 	return rc;
-}
-
-/* should create a utils.c for these */
-time_t slap_get_time(void)
-{
-	time_t t;
-	ldap_pvt_thread_mutex_lock( &currenttime_mutex );
-	time( &t );
-	ldap_pvt_thread_mutex_unlock( &currenttime_mutex );
-	return t;
 }

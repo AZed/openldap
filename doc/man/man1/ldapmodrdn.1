@@ -1,6 +1,6 @@
-.TH LDAPMODRDN 1 "20 August 2001" "OpenLDAP LDVERSION"
-.\" $OpenLDAP: pkg/ldap/doc/man/man1/ldapmodrdn.1,v 1.7.2.13 2002/01/04 20:38:11 kurt Exp $
-.\" Copyright 1998-2002 The OpenLDAP Foundation All Rights Reserved.
+.TH LDAPMODRDN 1 "RELEASEDATE" "OpenLDAP LDVERSION"
+.\" $OpenLDAP$
+.\" Copyright 1998-2003 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .SH NAME
 ldapmodrdn \- LDAP rename entry tool
@@ -29,6 +29,8 @@ ldapmodrdn \- LDAP rename entry tool
 [\c
 .BI \-w \ passwd\fR]
 [\c
+.BI \-y \ passwdfile\fR]
+[\c
 .BI \-H \ ldapuri\fR]
 [\c
 .BI \-h \ ldaphost\fR]
@@ -44,6 +46,8 @@ ldapmodrdn \- LDAP rename entry tool
 .BR \-Q ]
 [\c
 .BI \-U \ authcid\fR]
+[\c
+.BI \-R \ realm\fR]
 [\c
 .BR \-x ]
 [\c
@@ -125,6 +129,10 @@ This is used instead of specifying the password on the command line.
 .B \-w passwd
 Use \fIpasswd\fP as the password for simple authentication.
 .TP
+.BI \-y \ passwdfile
+Use complete contents of \fIpasswdfile\fP as the password for
+simple authentication.
+.TP
 .BI \-H \ ldapuri
 Specify URI(s) referring to the ldap server(s).
 .TP
@@ -153,8 +161,12 @@ Enable SASL Quiet mode.  Never prompt.
 Specify the authentication ID for SASL bind. The form of the ID
 depends on the actual SASL mechanism used.
 .TP
+.BI \-R \ realm
+Specify the realm of authentication ID for SASL bind. The form of the realm
+depends on the actual SASL mechanism used.
+.TP
 .BI \-X \ authzid
-Specify the requested authorization ID for SASL bind.
+Specify the proxy authorization ID for SASL bind.
 .I authzid
 must be one of the following formats:
 .B dn:\c
@@ -192,7 +204,7 @@ Assuming that the file
 exists and has the contents:
 .LP
 .nf
-    cn=Modify Me, dc=example, dc=com
+    cn=Modify Me,dc=example,dc=com
     cn=The New Me
 .fi
 .LP
@@ -216,8 +228,6 @@ status and a diagnostic message being written to standard error.
 .BR ldap.conf (5),
 .BR ldap (3),
 .BR ldap_modrdn2 (3)
-.SH BUGS
-There is no interactive mode, but there probably should be.
 .SH AUTHOR
 The OpenLDAP Project <http://www.openldap.org/>
 .SH ACKNOWLEDGEMENTS

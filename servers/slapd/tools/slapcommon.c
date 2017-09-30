@@ -1,6 +1,6 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/tools/slapcommon.c,v 1.6.2.7 2002/01/04 20:38:36 kurt Exp $ */
+/* $OpenLDAP$ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 /* slapcommon.c - common routine for the slap tools */
@@ -24,6 +24,8 @@ char	*conffile	= SLAPD_DEFAULT_CONFIGFILE;
 int		truncatemode = 0;
 int		verbose		= 0;
 int		continuemode = 0;
+int		nosubordinates = 0;
+int		dryrun = 0;
 
 char	*ldiffile	= NULL;
 FILE	*ldiffp		= NULL;
@@ -45,7 +47,7 @@ usage( int tool )
 
 	switch( tool ) {
 	case SLAPADD:
-		options = "\t[-l ldiffile]\n";
+		options = "\t[-l ldiffile] [-u]\n";
 		break;
 
 	case SLAPCAT:
@@ -79,7 +81,7 @@ slap_tool_init(
 	int argc, char **argv )
 {
 	char *options;
-	char *base = NULL;
+	struct berval base = { 0, NULL };
 	int rc, i, dbnum;
 	int mode = SLAP_TOOL_MODE;
 
@@ -96,7 +98,7 @@ slap_tool_init(
 
 	switch( tool ) {
 	case SLAPADD:
-		options = "b:cd:f:l:n:tv";
+		options = "b:cd:f:l:n:tuv";
 		break;
 
 	case SLAPINDEX:
@@ -119,7 +121,9 @@ slap_tool_init(
 	while ( (i = getopt( argc, argv, options )) != EOF ) {
 		switch ( i ) {
 		case 'b':
-			base = strdup( optarg );
+			base.bv_val = strdup( optarg );
+			base.bv_len = strlen( base.bv_val );
+			break;
 
 		case 'c':	/* enable continue mode */
 			continuemode++;
@@ -146,6 +150,10 @@ slap_tool_init(
 			mode |= SLAP_TRUNCATE_MODE;
 			break;
 
+		case 'u':	/* dry run */
+			dryrun++;
+			break;
+
 		case 'v':	/* turn on verbose */
 			verbose++;
 			break;
@@ -156,7 +164,7 @@ slap_tool_init(
 		}
 	}
 
-	if ( ( argc != optind ) || (dbnum >= 0 && base != NULL ) ) {
+	if ( ( argc != optind ) || (dbnum >= 0 && base.bv_val != NULL ) ) {
 		usage( tool );
 	}
 
@@ -174,59 +182,120 @@ slap_tool_init(
 	 * initialize stuff and figure out which backend we're dealing with
 	 */
 
+#ifdef SLAPD_MODULES
+	if ( module_init() != 0 ) {
+		fprintf( stderr, "%s: module_init failed!\n", progname );
+		exit( EXIT_FAILURE );
+	}
+#endif
+		
 	rc = slap_init( mode, progname );
 
-	if (rc != 0 ) {
+	if ( rc != 0 ) {
 		fprintf( stderr, "%s: slap_init failed!\n", progname );
 		exit( EXIT_FAILURE );
 	}
 
-	rc = schema_init();
+	rc = slap_schema_init();
 
-	if (rc != 0 ) {
+	if ( rc != 0 ) {
 		fprintf( stderr, "%s: slap_schema_init failed!\n", progname );
 		exit( EXIT_FAILURE );
 	}
 
-	read_config( conffile );
+	rc = read_config( conffile, 0 );
+
+	if ( rc != 0 ) {
+		fprintf( stderr, "%s: bad configuration file!\n", progname );
+		exit( EXIT_FAILURE );
+	}
 
 	if ( !nbackends ) {
 		fprintf( stderr, "No databases found in config file\n" );
 		exit( EXIT_FAILURE );
 	}
 
-	rc = schema_prep();
+	rc = glue_sub_init();
 
-	if (rc != 0 ) {
+	if ( rc != 0 ) {
+		fprintf( stderr, "Subordinate configuration error\n" );
+		exit( EXIT_FAILURE );
+	}
+
+	rc = slap_schema_check();
+
+	if ( rc != 0 ) {
 		fprintf( stderr, "%s: slap_schema_prep failed!\n", progname );
 		exit( EXIT_FAILURE );
 	}
 
-	if( base != NULL ) {
-		char *tbase = ch_strdup( base );
+	if( base.bv_val != NULL ) {
+		struct berval *nbase = NULL;
 
-		if( dn_normalize( tbase ) == NULL ) {
+		rc = dnNormalize( NULL, &base, &nbase );
+		if( rc != LDAP_SUCCESS ) {
 			fprintf( stderr, "%s: slap_init invalid suffix (\"%s\")\n",
-				progname, base );
+				progname, base.bv_val );
 			exit( EXIT_FAILURE );
 		}
 
-		be = select_backend( tbase, 0 );
-		free( tbase );
+		be = select_backend( nbase, 0, 0 );
+		ber_bvfree( nbase );
 
 		if( be == NULL ) {
 			fprintf( stderr, "%s: slap_init no backend for \"%s\"\n",
-				progname, base );
+				progname, base.bv_val );
 			exit( EXIT_FAILURE );
+		}
+		/* If the named base is a glue master, operate on the
+		 * entire context
+		 */
+		if (SLAP_GLUE_INSTANCE(be)) {
+			nosubordinates = 1;
 		}
 
 	} else if ( dbnum == -1 ) {
+		if ( nbackends <= 0 ) {
+			fprintf( stderr, "No available databases\n" );
+			exit( EXIT_FAILURE );
+		}
+		
 		be = &backends[dbnum=0];
+		/* If just doing the first by default and it is a
+		 * glue subordinate, find the master.
+		 */
+		while (SLAP_GLUE_SUBORDINATE(be) || SLAP_MONITOR(be)) {
+			if (SLAP_GLUE_SUBORDINATE(be)) {
+				nosubordinates = 1;
+			}
+			be++;
+			dbnum++;
+		}
+
+
+		if ( dbnum >= nbackends ) {
+			fprintf( stderr, "Available database(s) "
+					"do not allow %s\n", name );
+			exit( EXIT_FAILURE );
+		}
+		
+		if ( nosubordinates == 0 && dbnum > 0 ) {
+#ifdef NEW_LOGGING
+			LDAP_LOG( BACKEND, ERR, 
+"The first database does not allow %s; using the first available one (%d)\n",
+				name, dbnum + 1, 0 );
+#else
+			Debug( LDAP_DEBUG_ANY,
+"The first database does not allow %s; using the first available one (%d)\n",
+				name, dbnum + 1, 0 );
+#endif
+		}
 
 	} else if ( dbnum < 0 || dbnum > (nbackends-1) ) {
 		fprintf( stderr,
 			"Database number selected via -n is out of range\n"
-			"Must be in the range 1 to %d (number of databases in the config file)\n",
+			"Must be in the range 1 to %d"
+				" (number of databases in the config file)\n",
 			nbackends );
 		exit( EXIT_FAILURE );
 
@@ -245,6 +314,18 @@ void slap_tool_destroy( void )
 {
 	slap_shutdown( be );
 	slap_destroy();
+#ifdef SLAPD_MODULES
+	if ( slapMode == SLAP_SERVER_MODE ) {
+	/* always false. just pulls in necessary symbol references. */
+		lutil_uuidstr(NULL, 0);
+	}
+	module_kill();
+#endif
+	schema_destroy();
+#ifdef HAVE_TLS
+	ldap_pvt_tls_destroy();
+#endif
+	config_destroy();
 
 #ifdef CSRIMALLOC
 	mal_dumpleaktrace( leakfile );

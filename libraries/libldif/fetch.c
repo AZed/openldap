@@ -1,7 +1,7 @@
 /* line64.c - routines for dealing with the slapd line format */
-/* $OpenLDAP: pkg/ldap/libraries/libldif/fetch.c,v 1.5.2.6 2002/01/04 20:38:24 kurt Exp $ */
+/* $OpenLDAP$ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 
@@ -51,7 +51,8 @@ ldif_fetch_url(
 			return -1;
 		}
 
-		if( *p != *LDAP_DIRSEP ) {
+		/* we don't check for LDAP_DIRSEP since URLs should contain '/' */
+		if( *p != '/' ) {
 			/* skip over false root */
 			p++;
 		}
@@ -73,7 +74,7 @@ ldif_fetch_url(
 	total = 0;
 
 	while( (bytes = fread( buffer, 1, sizeof(buffer), url )) != 0 ) {
-		char *newp = ber_memrealloc( p, total + bytes );
+		char *newp = ber_memrealloc( p, total + bytes + 1 );
 		if( newp == NULL ) {
 			ber_memfree( p );
 			fclose( url );
@@ -86,6 +87,16 @@ ldif_fetch_url(
 
 	fclose( url );
 
+	if( total == 0 ) {
+		char *newp = ber_memrealloc( p, 1 );
+		if( newp == NULL ) {
+			ber_memfree( p );
+			return -1;
+		}
+		p = newp;
+	}
+
+	p[total] = '\0';
 	*valuep = p;
 	*vlenp = total;
 

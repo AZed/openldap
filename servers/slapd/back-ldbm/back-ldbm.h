@@ -1,7 +1,7 @@
 /* back-ldbm.h - ldap ldbm back-end header file */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/back-ldbm.h,v 1.24.2.11 2002/01/29 19:29:39 kurt Exp $ */
+/* $OpenLDAP$ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 
@@ -19,9 +19,6 @@ LDAP_BEGIN_DECL
 #else
 #	define DEFAULT_DBCACHE_SIZE 100000
 #endif
-
-#define DEFAULT_DB_DIRECTORY	LDAP_RUNDIR LDAP_DIRSEP "openldap-ldbm"
-#define DEFAULT_MODE		0600
 
 #define DN_BASE_PREFIX		SLAP_INDEX_EQUALITY_PREFIX
 #define DN_ONE_PREFIX	 	'%'
@@ -61,6 +58,11 @@ typedef ID ID_BLOCK;
 /* all ID_BLOCK macros operate on a pointer to a ID_BLOCK */
 
 #define ID_BLOCK_NMAX(b)		((b)[ID_BLOCK_NMAX_OFFSET])
+
+/* Use this macro to get the value, but not to set it.
+ * By default this is identical to above.
+ */
+#define	ID_BLOCK_NMAXN(b)		ID_BLOCK_NMAX(b)
 #define ID_BLOCK_NIDS(b)		((b)[ID_BLOCK_NIDS_OFFSET])
 #define ID_BLOCK_ID(b, n)		((b)[ID_BLOCK_IDS_OFFSET+(n)])
 
@@ -71,6 +73,23 @@ typedef ID ID_BLOCK;
 
 #define ID_BLOCK_INDIRECT_VALUE	0
 #define ID_BLOCK_INDIRECT(b)	(ID_BLOCK_NIDS(b) == ID_BLOCK_INDIRECT_VALUE)
+
+#define	USE_INDIRECT_NIDS	1
+
+#ifdef USE_INDIRECT_NIDS
+/*
+ * Use the high bit of ID_BLOCK_NMAX to indicate an INDIRECT block, thus
+ * freeing up the ID_BLOCK_NIDS to store an actual count. This allows us
+ * to use binary search on INDIRECT blocks.
+ */
+#undef	ID_BLOCK_NMAXN
+#define	ID_BLOCK_NMAXN(b)		((b)[ID_BLOCK_NMAX_OFFSET]&0x7fffffff)
+#undef	ID_BLOCK_INDIRECT_VALUE
+#define	ID_BLOCK_INDIRECT_VALUE	0x80000000
+#undef	ID_BLOCK_INDIRECT
+#define	ID_BLOCK_INDIRECT(b)	(ID_BLOCK_NMAX(b) & ID_BLOCK_INDIRECT_VALUE)
+
+#endif	/* USE_INDIRECT_NIDS */
 
 /* for the in-core cache of entries */
 typedef struct ldbm_cache {

@@ -1,7 +1,7 @@
 /* init.c - initialize ldap backend */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-dnssrv/init.c,v 1.7.2.5 2002/01/04 20:38:32 kurt Exp $ */
+/* $OpenLDAP$ */
 /*
- * Copyright 2000-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 2000-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 
@@ -36,6 +36,7 @@ dnssrv_back_initialize(
 {
 	static char *controls[] = {
 		LDAP_CONTROL_MANAGEDSAIT,
+ 		LDAP_CONTROL_VALUESRETURNFILTER,
 		NULL
 	};
 

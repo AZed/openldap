@@ -1,7 +1,7 @@
 /* extended.c - ldbm backend extended routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/extended.c,v 1.5.2.2 2002/01/04 20:38:34 kurt Exp $ */
+/* $OpenLDAP$ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 
@@ -18,9 +18,9 @@
 
 struct exop {
 	char *oid;
-	SLAP_EXTENDED_FN	extended;
+	BI_op_extended	*extended;
 } exop_table[] = {
-	{ LDAP_EXOP_X_MODIFY_PASSWD, ldbm_back_exop_passwd },
+	{ LDAP_EXOP_MODIFY_PASSWD, ldbm_back_exop_passwd },
 	{ NULL, NULL }
 };
 
@@ -35,7 +35,7 @@ ldbm_back_extended(
     struct berval	**rspdata,
 	LDAPControl *** rspctrls,
 	const char**	text,
-    struct berval *** refs 
+    BerVarray *refs 
 )
 {
 	int i;
@@ -50,7 +50,7 @@ ldbm_back_extended(
 		}
 	}
 
-	*text = ch_strdup("not supported within naming context");
-	return LDAP_OPERATIONS_ERROR;
+	*text = "not supported within naming context";
+	return LDAP_UNWILLING_TO_PERFORM;
 }
 

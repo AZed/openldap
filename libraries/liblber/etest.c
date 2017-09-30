@@ -1,7 +1,7 @@
 /* test.c - lber encoding test program */
-/* $OpenLDAP: pkg/ldap/libraries/liblber/etest.c,v 1.17.8.4 2002/01/04 20:38:19 kurt Exp $ */
+/* $OpenLDAP$ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 /* Portions
@@ -25,14 +25,14 @@
 
 #include "lber.h"
 
-static void usage( char *name )
+static void usage( const char *name )
 {
 	fprintf( stderr, "usage: %s fmtstring\n", name );
 }
 
-static char* getbuf() {
+static char* getbuf( void ) {
 	char *p;
-	static char buf[128];
+	static char buf[1024];
 
 	if ( fgets( buf, sizeof(buf), stdin ) == NULL )
 		return NULL;

@@ -1,7 +1,7 @@
 /* Generic signal.h */
-/* $OpenLDAP: pkg/ldap/include/ac/signal.h,v 1.8.8.6 2002/01/04 20:38:16 kurt Exp $ */
+/* $OpenLDAP$ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, Redwood City, California, USA
+ * Copyright 1998-2003 The OpenLDAP Foundation, Redwood City, California, USA
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -49,7 +49,7 @@ LDAP_LUTIL_F(lutil_sig_t) lutil_sigaction( int sig, lutil_sig_t func );
 		 * two signals reserved for user applications.  This forces
 		 * OpenLDAP to use other signals reserved for other uses.
 		 */
-	    
+
 #		if defined( SIGSTKFLT )
 #			define LDAP_SIGUSR1	SIGSTKFLT
 #		elif defined ( SIGSYS )

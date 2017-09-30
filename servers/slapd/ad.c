@@ -1,6 +1,6 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/ad.c,v 1.13.2.5 2002/01/04 20:38:26 kurt Exp $ */
+/* $OpenLDAP$ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 /* ad.c - routines for dealing with attribute descriptions */
@@ -18,43 +18,18 @@
 #include "ldap_pvt.h"
 #include "slap.h"
 
-AttributeDescription *ad_dup(
-	AttributeDescription *desc )
-{
-	AttributeDescription *ad;
+typedef struct Attr_option {
+	struct berval name;	/* option name or prefix */
+	int           prefix;	/* NAME is a tag and range prefix */
+} Attr_option;
 
-	if( desc == NULL ) {
-		return NULL;
-	}
+static Attr_option lang_option = { { sizeof("lang-")-1, "lang-" }, 1 };
 
-	ad = (AttributeDescription *) ch_malloc( sizeof(AttributeDescription) );
+/* Options sorted by name, and number of options */
+static Attr_option *options = &lang_option;
+static int option_count = 1;
 
-	*ad = *desc;
-
-	if( ad->ad_cname != NULL ) {
-		ad->ad_cname = ber_bvdup( ad->ad_cname );
-	}
-
-	if( ad->ad_lang != NULL ) {
-		ad->ad_lang = ch_strdup( ad->ad_lang );
-	}
-
-	return ad;
-}
-
-void
-ad_free( AttributeDescription *ad, int freeit )
-{
-	if( ad == NULL ) return;
-
-	if( ad->ad_cname != NULL ) {
-		ber_bvfree( ad->ad_cname );
-	}
-
-	free( ad->ad_lang );
-
-	if( freeit ) free( ad );
-}
+static Attr_option *ad_find_option_definition( const char *opt, int optlen );
 
 static int ad_keystring(
 	struct berval *bv )
@@ -73,6 +48,34 @@ static int ad_keystring(
 	return 0;
 }
 
+void ad_destroy( AttributeDescription *ad )
+{
+	AttributeDescription *n;
+
+	for (; ad != NULL; ad = n) {
+		n = ad->ad_next;
+		ldap_memfree( ad );
+	}
+}
+
+/* Is there an AttributeDescription for this type that uses these tags? */
+AttributeDescription * ad_find_tags(
+	AttributeType *type,
+	struct berval *tags )
+{
+	AttributeDescription *ad;
+
+	ldap_pvt_thread_mutex_lock( &type->sat_ad_mutex );
+	for (ad = type->sat_ad; ad; ad=ad->ad_next)
+	{
+		if (ad->ad_tags.bv_len == tags->bv_len &&
+			!strcasecmp(ad->ad_tags.bv_val, tags->bv_val))
+			break;
+	}
+	ldap_pvt_thread_mutex_unlock( &type->sat_ad_mutex );
+	return ad;
+}
+
 int slap_str2ad(
 	const char *str,
 	AttributeDescription **ad,
@@ -85,15 +88,41 @@ int slap_str2ad(
 	return slap_bv2ad( &bv, ad, text );
 }
 
+static char *strchrlen(
+	const char *p, 
+	const char ch, 
+	int *len )
+{
+	int i;
+
+	for( i=0; p[i]; i++ ) {
+		if( p[i] == ch ) {
+			*len = i;
+			return (char *) &p[i];
+		}
+	}
+
+	*len = i;
+	return NULL;
+}
+
 int slap_bv2ad(
 	struct berval *bv,
 	AttributeDescription **ad,
 	const char **text )
 {
 	int rtn = LDAP_UNDEFINED_TYPE;
-	int i;
-	AttributeDescription desc;
-	char **tokens;
+	AttributeDescription desc, *d2;
+	char *name, *options;
+	char *opt, *next;
+	int ntags;
+	int tagslen;
+
+	/* hardcoded limits for speed */
+#define MAX_TAGGING_OPTIONS 128
+	struct berval tags[MAX_TAGGING_OPTIONS+1];
+#define MAX_TAGS_LEN 1024
+	char tagbuf[MAX_TAGS_LEN];
 
 	assert( ad != NULL );
 	assert( *ad == NULL ); /* temporary */
@@ -109,90 +138,309 @@ int slap_bv2ad(
 		return rtn;
 	}
 
-	tokens = str2charray( bv->bv_val, ";");
-
-	if( tokens == NULL || *tokens == NULL ) {
-		*text = "no attribute type";
-		goto done;
+	/* find valid base attribute type; parse in place */
+	memset( &desc, 0, sizeof( desc ));
+	desc.ad_cname = *bv;
+	name = bv->bv_val;
+	options = strchr(name, ';');
+	if( options != NULL ) {
+		desc.ad_cname.bv_len = options - name;
 	}
-
-	desc.ad_type = at_find( *tokens );
-
+	desc.ad_type = at_bvfind( &desc.ad_cname );
 	if( desc.ad_type == NULL ) {
 		*text = "attribute type undefined";
-		goto done;
+		return rtn;
 	}
 
-	desc.ad_flags = SLAP_DESC_NONE;
-	desc.ad_lang = NULL;
+	if( is_at_operational( desc.ad_type ) && options != NULL ) {
+		*text = "operational attribute with options undefined";
+		return rtn;
+	}
 
-	for( i=1; tokens[i] != NULL; i++ ) {
-		if( strcasecmp( tokens[i], "binary" ) == 0 ) {
+	/*
+	 * parse options in place
+	 */
+	ntags = 0;
+	memset( tags, 0, sizeof( tags ));
+	tagslen = 0;
+
+	for( opt=options; opt != NULL; opt=next ) {
+		int optlen;
+		opt++; 
+		next = strchrlen( opt, ';', &optlen );
+
+		if( optlen == 0 ) {
+			*text = "zero length option is invalid";
+			return rtn;
+		
+		} else if ( optlen == sizeof("binary")-1 &&
+			strncasecmp( opt, "binary", sizeof("binary")-1 ) == 0 )
+		{
+			/* binary option */
 			if( slap_ad_is_binary( &desc ) ) {
 				*text = "option \"binary\" specified multiple times";
-				goto done;
+				return rtn;
 			}
 
 			if( !slap_syntax_is_binary( desc.ad_type->sat_syntax )) {
 				/* not stored in binary, disallow option */
-				*text = "option \"binary\" with type not supported";
-				goto done;
+				*text = "option \"binary\" not supported with type";
+				return rtn;
 			}
 
 			desc.ad_flags |= SLAP_DESC_BINARY;
+			continue;
 
-		} else if ( strncasecmp( tokens[i], "lang-",
-			sizeof("lang-")-1 ) == 0 && tokens[i][sizeof("lang-")-1] )
+		} else if ( ad_find_option_definition( opt, optlen ) )
 		{
-			if( desc.ad_lang != NULL ) {
-				*text = "multiple language tag options specified";
-				goto done;
+			int i;
+
+			if( opt[optlen-1] == '-' ) {
+				desc.ad_flags |= SLAP_DESC_TAG_RANGE;
 			}
 
-			desc.ad_lang = ch_strdup( tokens[i] );
+			if( ntags >= MAX_TAGGING_OPTIONS ) {
+				*text = "too many tagging options";
+				return rtn;
+			}
 
-			/* normalize to all lower case, it's easy */
-			ldap_pvt_str2lower( desc.ad_lang );
+			/*
+			 * tags should be presented in sorted order,
+			 * so run the array in reverse.
+			 */
+			for( i=ntags-1; i>=0; i-- ) {
+				int rc;
+
+				rc = strncasecmp( opt, tags[i].bv_val,
+					(unsigned) optlen < tags[i].bv_len
+						? optlen : tags[i].bv_len );
+
+				if( rc == 0 && (unsigned)optlen == tags[i].bv_len ) {
+					/* duplicate (ignore) */
+					goto done;
+
+				} else if ( rc > 0 ||
+					( rc == 0 && (unsigned)optlen > tags[i].bv_len ))
+				{
+					AC_MEMCPY( &tags[i+2], &tags[i+1],
+						(ntags-i-1)*sizeof(struct berval) );
+					tags[i+1].bv_val = opt;
+					tags[i+1].bv_len = optlen;
+					goto done;
+				}
+			}
+
+			if( ntags ) {
+				AC_MEMCPY( &tags[1], &tags[0],
+					ntags*sizeof(struct berval) );
+			}
+			tags[0].bv_val = opt;
+			tags[0].bv_len = optlen;
+
+done:;
+			tagslen += optlen + 1;
+			ntags++;
 
 		} else {
 			*text = "unrecognized option";
-			goto done;
+			return rtn;
 		}
 	}
 
-	desc.ad_cname = ch_malloc( sizeof( struct berval ) );
+	if( ntags > 0 ) {
+		int i;
 
-	desc.ad_cname->bv_len = strlen( desc.ad_type->sat_cname );
-	if( slap_ad_is_binary( &desc ) ) {
-		desc.ad_cname->bv_len += sizeof("binary");
+		if( tagslen > MAX_TAGS_LEN ) {
+			*text = "tagging options too long";
+			return rtn;
+		}
+
+		desc.ad_tags.bv_val = tagbuf;
+		tagslen = 0;
+
+		for( i=0; i<ntags; i++ ) {
+			AC_MEMCPY( &desc.ad_tags.bv_val[tagslen],
+				tags[i].bv_val, tags[i].bv_len );
+
+			tagslen += tags[i].bv_len;
+			desc.ad_tags.bv_val[tagslen++] = ';';
+		}
+
+		desc.ad_tags.bv_val[--tagslen] = '\0';
+		desc.ad_tags.bv_len = tagslen;
 	}
-	if( desc.ad_lang != NULL ) {
-		desc.ad_cname->bv_len += 1 + strlen( desc.ad_lang );
+
+	/* see if a matching description is already cached */
+	for (d2 = desc.ad_type->sat_ad; d2; d2=d2->ad_next) {
+		if( d2->ad_flags != desc.ad_flags ) {
+			continue;
+		}
+		if( d2->ad_tags.bv_len != desc.ad_tags.bv_len ) {
+			continue;
+		}
+		if( d2->ad_tags.bv_len == 0 ) {
+			break;
+		}
+		if( strncasecmp( d2->ad_tags.bv_val, desc.ad_tags.bv_val,
+			desc.ad_tags.bv_len ) == 0 )
+		{
+			break;
+		}
 	}
 
-	desc.ad_cname->bv_val = ch_malloc( desc.ad_cname->bv_len + 1 );
+	/* Not found, add new one */
+	while (d2 == NULL) {
+		size_t dlen = 0;
+		ldap_pvt_thread_mutex_lock( &desc.ad_type->sat_ad_mutex );
+		/* check again now that we've locked */
+		for (d2 = desc.ad_type->sat_ad; d2; d2=d2->ad_next) {
+			if (d2->ad_flags != desc.ad_flags)
+				continue;
+			if (d2->ad_tags.bv_len != desc.ad_tags.bv_len)
+				continue;
+			if (d2->ad_tags.bv_len == 0)
+				break;
+			if (strncasecmp(d2->ad_tags.bv_val, desc.ad_tags.bv_val,
+				desc.ad_tags.bv_len) == 0)
+				break;
+		}
+		if (d2) {
+			ldap_pvt_thread_mutex_unlock( &desc.ad_type->sat_ad_mutex );
+			break;
+		}
 
-	strcpy( desc.ad_cname->bv_val, desc.ad_type->sat_cname );
-	if( slap_ad_is_binary( &desc ) ) {
-		strcat( desc.ad_cname->bv_val, ";binary" );
-	}
+		/* Allocate a single contiguous block. If there are no
+		 * options, we just need space for the AttrDesc structure.
+		 * Otherwise, we need to tack on the full name length +
+		 * options length, + maybe tagging options length again.
+		 */
+		if (desc.ad_tags.bv_len || desc.ad_flags != SLAP_DESC_NONE) {
+			dlen = desc.ad_type->sat_cname.bv_len + 1;
+			if (desc.ad_tags.bv_len) {
+				dlen += 1+desc.ad_tags.bv_len;
+			}
+			if( slap_ad_is_binary( &desc ) ) {
+				dlen += sizeof(";binary")+desc.ad_tags.bv_len;
+			}
+		}
 
-	if( desc.ad_lang != NULL ) {
-		strcat( desc.ad_cname->bv_val, ";" );
-		strcat( desc.ad_cname->bv_val, desc.ad_lang );
+		d2 = ch_malloc(sizeof(AttributeDescription) + dlen);
+		d2->ad_next = NULL;
+		d2->ad_type = desc.ad_type;
+		d2->ad_flags = desc.ad_flags;
+		d2->ad_cname.bv_len = desc.ad_type->sat_cname.bv_len;
+		d2->ad_tags.bv_len = desc.ad_tags.bv_len;
+
+		if (dlen == 0) {
+			d2->ad_cname.bv_val = d2->ad_type->sat_cname.bv_val;
+			d2->ad_tags.bv_val = NULL;
+		} else {
+			char *cp, *op, *lp;
+			int j;
+			d2->ad_cname.bv_val = (char *)(d2+1);
+			strcpy(d2->ad_cname.bv_val, d2->ad_type->sat_cname.bv_val);
+			cp = d2->ad_cname.bv_val + d2->ad_cname.bv_len;
+			if( slap_ad_is_binary( &desc ) ) {
+				op = cp;
+				lp = NULL;
+				if( desc.ad_tags.bv_len ) {
+					lp = desc.ad_tags.bv_val;
+					while( strncasecmp(lp, "binary", sizeof("binary")-1) < 0
+					       && (lp = strchr( lp, ';' )) != NULL )
+						++lp;
+					if( lp != desc.ad_tags.bv_val ) {
+						*cp++ = ';';
+						j = (lp
+						     ? lp - desc.ad_tags.bv_val - 1
+						     : strlen( desc.ad_tags.bv_val ));
+						strncpy(cp, desc.ad_tags.bv_val, j);
+						cp += j;
+					}
+				}
+				strcpy(cp, ";binary");
+				cp += sizeof(";binary")-1;
+				if( lp != NULL ) {
+					*cp++ = ';';
+					strcpy(cp, lp);
+					cp += strlen( cp );
+				}
+				d2->ad_cname.bv_len = cp - d2->ad_cname.bv_val;
+				if( desc.ad_tags.bv_len )
+					ldap_pvt_str2lower(op);
+				j = 1;
+			} else {
+				j = 0;
+			}
+			if( desc.ad_tags.bv_len ) {
+				lp = d2->ad_cname.bv_val + d2->ad_cname.bv_len + j;
+				if ( j == 0 )
+					*lp++ = ';';
+				d2->ad_tags.bv_val = lp;
+				strcpy(lp, desc.ad_tags.bv_val);
+				ldap_pvt_str2lower(lp);
+				if( j == 0 )
+					d2->ad_cname.bv_len += 1 + desc.ad_tags.bv_len;
+			}
+		}
+		/* Add new desc to list. We always want the bare Desc with
+		 * no options to stay at the head of the list, assuming
+		 * that one will be used most frequently.
+		 */
+		if (desc.ad_type->sat_ad == NULL || dlen == 0) {
+			d2->ad_next = desc.ad_type->sat_ad;
+			desc.ad_type->sat_ad = d2;
+		} else {
+			d2->ad_next = desc.ad_type->sat_ad->ad_next;
+			desc.ad_type->sat_ad->ad_next = d2;
+		}
+		ldap_pvt_thread_mutex_unlock( &desc.ad_type->sat_ad_mutex );
 	}
 
 	if( *ad == NULL ) {
-		*ad = ch_malloc( sizeof( AttributeDescription ) );
+		*ad = d2;
+	} else {
+		**ad = *d2;
 	}
 
-	**ad = desc;
+	return LDAP_SUCCESS;
+}
 
-	rtn = LDAP_SUCCESS;
+static int is_ad_subtags(
+	struct berval *subtagsbv, 
+	struct berval *suptagsbv )
+{
+	const char *suptags, *supp, *supdelimp;
+	const char *subtags, *subp, *subdelimp;
+	int  suplen, sublen;
 
-done:
-	charray_free( tokens );
-	return rtn;
+	if( suptagsbv->bv_len == 0 ) return 1;
+	if( subtagsbv->bv_len == 0 ) return 0;
+
+	subtags =subtagsbv->bv_val;
+	suptags =suptagsbv->bv_val;
+
+	for( supp=suptags ; supp; supp=supdelimp ) {
+		supdelimp = strchrlen( supp, ';', &suplen );
+		if( supdelimp ) supdelimp++;
+
+		for( subp=subtags ; subp; subp=subdelimp ) {
+			subdelimp = strchrlen( subp, ';', &sublen );
+			if( subdelimp ) subdelimp++;
+
+			if ( suplen > sublen
+				 ? ( suplen-1 == sublen && supp[suplen-1] == '-'
+					 && strncmp( supp, subp, sublen ) == 0 )
+				 : ( ( suplen == sublen || supp[suplen-1] == '-' )
+					 && strncmp( supp, subp, suplen ) == 0 ) )
+			{
+				goto match;
+			}
+		}
+
+		return 0;
+match:;
+	}
+	return 1;
 }
 
 int is_ad_subtype(
@@ -200,43 +448,109 @@ int is_ad_subtype(
 	AttributeDescription *super
 )
 {
+	int lr;
+
 	if( !is_at_subtype( sub->ad_type, super->ad_type ) ) {
 		return 0;
 	}
 
-	if( super->ad_flags && ( super->ad_flags != sub->ad_flags )) {
+	/* ensure sub does support all flags of super */
+	lr = sub->ad_tags.bv_len ? SLAP_DESC_TAG_RANGE : 0;
+	if(( super->ad_flags & ( sub->ad_flags | lr )) != super->ad_flags ) {
 		return 0;
 	}
 
-	if( super->ad_lang != NULL && ( sub->ad_lang == NULL
-		|| strcasecmp( super->ad_lang, sub->ad_lang )))
-	{
+	/* check for tagging options */
+	if ( !is_ad_subtags( &sub->ad_tags, &super->ad_tags )) {
 		return 0;
 	}
 
 	return 1;
 }
 
-
 int ad_inlist(
 	AttributeDescription *desc,
-	char **attrs )
+	AttributeName *attrs )
 {
-	int i;
-	for( i=0; attrs[i] != NULL; i++ ) {
-		AttributeDescription *ad = NULL;
-		const char *text;
+	if (! attrs ) return 0;
+
+	for( ; attrs->an_name.bv_val; attrs++ ) {
+		ObjectClass *oc;
 		int rc;
 		
-		rc = slap_str2ad( attrs[i], &ad, &text );
+		if ( attrs->an_desc ) {
+			if ( desc == attrs->an_desc ) {
+				return 1;
+			}
 
-		if( rc != LDAP_SUCCESS ) continue;
+			/*
+			 * EXTENSION: if requested description is preceeded by an
+			 * a '-' character, do not match on subtypes.
+			 */
+			if ( attrs->an_name.bv_val[0] != '-' &&
+				is_ad_subtype( desc, attrs->an_desc ))
+			{
+				return 1;
+			}
 
-		rc = is_ad_subtype( desc, ad );
+			continue;
+		}
 
-		ad_free( ad, 1 );
+		/*
+		 * EXTENSION: see if requested description is +objectClass
+		 * if so, return attributes which the class requires/allows
+		 */
+		oc = attrs->an_oc;
+		if( oc == NULL && attrs->an_name.bv_val ) {
+			switch( attrs->an_name.bv_val[0] ) {
+			case '+': { /* new way */
+					struct berval ocname;
+					ocname.bv_len = attrs->an_name.bv_len - 1;
+					ocname.bv_val = &attrs->an_name.bv_val[1];
+					oc = oc_bvfind( &ocname );
+				} break;
+			default: /* old (deprecated) way */
+				oc = oc_bvfind( &attrs->an_name );
+			}
+			attrs->an_oc = oc;
+		}
+		if( oc != NULL ) {
+			if ( oc == slap_schema.si_oc_extensibleObject ) {
+				/* extensibleObject allows the return of anything */
+				return 1;
+			}
 
-		if( rc ) return 1;
+			if( oc->soc_required ) {
+				/* allow return of required attributes */
+				int i;
+   				for ( i = 0; oc->soc_required[i] != NULL; i++ ) {
+					rc = is_at_subtype( desc->ad_type,
+						oc->soc_required[i] );
+					if( rc ) return 1;
+				}
+			}
+
+			if( oc->soc_allowed ) {
+				/* allow return of allowed attributes */
+				int i;
+   				for ( i = 0; oc->soc_allowed[i] != NULL; i++ ) {
+					rc = is_at_subtype( desc->ad_type,
+						oc->soc_allowed[i] );
+					if( rc ) return 1;
+				}
+			}
+
+		} else {
+			/* short-circuit this search next time around */
+			if (!slap_schema.si_at_undefined->sat_ad) {
+				const char *text;
+				slap_bv2undef_ad(&attrs->an_name,
+					&attrs->an_desc, &text);
+			} else {
+				attrs->an_desc =
+					slap_schema.si_at_undefined->sat_ad;
+			}
+		}
 	}
 
 	return 0;
@@ -260,10 +574,9 @@ int slap_bv2undef_ad(
 	AttributeDescription **ad,
 	const char **text )
 {
-	AttributeDescription desc;
+	AttributeDescription *desc;
 
 	assert( ad != NULL );
-	assert( *ad == NULL ); /* temporary */
 
 	if( bv == NULL || bv->bv_len == 0 ) {
 		*text = "empty attribute description";
@@ -276,21 +589,260 @@ int slap_bv2undef_ad(
 		return LDAP_UNDEFINED_TYPE;
 	}
 
-	desc.ad_type = slap_schema.si_at_undefined;
-	desc.ad_flags = SLAP_DESC_NONE;
-	desc.ad_lang = NULL;
+	for( desc = slap_schema.si_at_undefined->sat_ad; desc;
+		desc=desc->ad_next ) 
+	{
+		if( desc->ad_cname.bv_len == bv->bv_len &&
+		    !strcasecmp( desc->ad_cname.bv_val, bv->bv_val ))
+		{
+		    	break;
+		}
+	}
+	
+	if( !desc ) {
+		desc = ch_malloc(sizeof(AttributeDescription) + 1 +
+			bv->bv_len);
+		
+		desc->ad_flags = SLAP_DESC_NONE;
+		desc->ad_tags.bv_val = NULL;
+		desc->ad_tags.bv_len = 0;
 
-	desc.ad_cname = ber_bvdup( bv );
+		desc->ad_cname.bv_len = bv->bv_len;
+		desc->ad_cname.bv_val = (char *)(desc+1);
+		strcpy(desc->ad_cname.bv_val, bv->bv_val);
 
-	/* canoncial to upper case */
-	ldap_pvt_str2upper( bv->bv_val );
+		/* canonical to upper case */
+		ldap_pvt_str2upper( desc->ad_cname.bv_val );
 
-	if( *ad == NULL ) {
-		*ad = ch_malloc( sizeof( AttributeDescription ) );
+		desc->ad_type = slap_schema.si_at_undefined;
+		desc->ad_next = desc->ad_type->sat_ad;
+		desc->ad_type->sat_ad = desc;
 	}
 
-	**ad = desc;
+	if( !*ad ) {
+		*ad = desc;
+	} else {
+		**ad = *desc;
+	}
 
 	return LDAP_SUCCESS;
 }
 
+int
+an_find(
+    AttributeName *a,
+    struct berval *s
+)
+{
+	if( a == NULL ) return 0;
+
+	for ( ; a->an_name.bv_val; a++ ) {
+		if ( a->an_name.bv_len != s->bv_len) continue;
+		if ( strcasecmp( s->bv_val, a->an_name.bv_val ) == 0 ) {
+			return( 1 );
+		}
+	}
+
+	return( 0 );
+}
+
+/*
+ * Convert a delimited string into a list of AttributeNames; 
+ * add on to an existing list if it was given.  If the string
+ * is not a valid attribute name, if a '-' is prepended it is 
+ * skipped and the remaining name is tried again; if a '+' is
+ * prepended, an objectclass name is searched instead.
+ * 
+ * NOTE: currently, if a valid attribute name is not found,
+ * the same string is also checked as valid objectclass name;
+ * however, this behavior is deprecated.
+ */
+AttributeName *
+str2anlist( AttributeName *an, char *in, const char *brkstr )
+{
+	char	*str;
+	char	*s;
+	char	*lasts;
+	int	i, j;
+	const char *text;
+	AttributeName *anew;
+
+	/* find last element in list */
+	for (i = 0; an && an[i].an_name.bv_val; i++);
+	
+	/* protect the input string from strtok */
+	str = ch_strdup( in );
+
+	/* Count words in string */
+	j=1;
+	for ( s = str; *s; s++ ) {
+		if ( strchr( brkstr, *s ) != NULL ) {
+			j++;
+		}
+	}
+
+	an = ch_realloc( an, ( i + j + 1 ) * sizeof( AttributeName ) );
+	anew = an + i;
+	for ( s = ldap_pvt_strtok( str, brkstr, &lasts );
+		s != NULL;
+		s = ldap_pvt_strtok( NULL, brkstr, &lasts ) )
+	{
+		anew->an_desc = NULL;
+		anew->an_oc = NULL;
+		ber_str2bv(s, 0, 1, &anew->an_name);
+		slap_bv2ad(&anew->an_name, &anew->an_desc, &text);
+		if ( !anew->an_desc ) {
+			switch( anew->an_name.bv_val[0] ) {
+			case '-': {
+					struct berval adname;
+					adname.bv_len = anew->an_name.bv_len - 1;
+					adname.bv_val = &anew->an_name.bv_val[1];
+					slap_bv2ad(&adname, &anew->an_desc, &text);
+					if ( !anew->an_desc ) {
+						free( an );
+						/*
+						 * overwrites input string
+						 * on error!
+						 */
+						strcpy( in, s );
+						return NULL;
+					}
+				} break;
+
+			case '+': {
+					struct berval ocname;
+					ocname.bv_len = anew->an_name.bv_len - 1;
+					ocname.bv_val = &anew->an_name.bv_val[1];
+					anew->an_oc = oc_bvfind( &ocname );
+					if ( !anew->an_oc ) {
+						free( an );
+						/*
+						 * overwrites input string
+						 * on error!
+						 */
+						strcpy( in, s );
+						return NULL;
+					}
+				} break;
+
+			default:
+				/* old (deprecated) way */
+				anew->an_oc = oc_bvfind( &anew->an_name );
+				if ( !anew->an_oc ) {
+					free( an );
+					/* overwrites input string on error! */
+					strcpy( in, s );
+					return NULL;
+				}
+			}
+		}
+		anew++;
+	}
+
+	anew->an_name.bv_val = NULL;
+	free( str );
+	return( an );
+}
+
+
+/* Define an attribute option. */
+int
+ad_define_option( const char *name, const char *fname, int lineno )
+{
+	int i;
+	unsigned int optlen;
+
+	if ( options == &lang_option ) {
+		options = NULL;
+		option_count = 0;
+	}
+	if ( name == NULL )
+		return 0;
+
+	optlen = 0;
+	do {
+		if ( !DESC_CHAR( name[optlen] ) ) {
+#ifdef NEW_LOGGING
+			LDAP_LOG( CONFIG, CRIT,
+			          "%s: line %d: illegal option name \"%s\"\n",
+			          fname, lineno, name );
+#else
+			Debug( LDAP_DEBUG_ANY,
+			       "%s: line %d: illegal option name \"%s\"\n",
+				    fname, lineno, name );
+#endif
+			return 1;
+		}
+	} while ( name[++optlen] );
+
+	options = ch_realloc( options,
+		(option_count+1) * sizeof(Attr_option) );
+
+	if ( strcasecmp( name, "binary" ) == 0
+	     || ad_find_option_definition( name, optlen ) ) {
+#ifdef NEW_LOGGING
+		LDAP_LOG( CONFIG, CRIT,
+		          "%s: line %d: option \"%s\" is already defined\n",
+		          fname, lineno, name );
+#else
+		Debug( LDAP_DEBUG_ANY,
+		       "%s: line %d: option \"%s\" is already defined\n",
+		       fname, lineno, name );
+#endif
+		return 1;
+	}
+
+	for ( i = option_count; i; --i ) {
+		if ( strcasecmp( name, options[i-1].name.bv_val ) >= 0 )
+			break;
+		options[i] = options[i-1];
+	}
+
+	options[i].name.bv_val = ch_strdup( name );
+	options[i].name.bv_len = optlen;
+	options[i].prefix = (name[optlen-1] == '-');
+
+	if ( i != option_count &&
+	     options[i].prefix &&
+	     optlen < options[i+1].name.bv_len &&
+	     strncasecmp( name, options[i+1].name.bv_val, optlen ) == 0 ) {
+#ifdef NEW_LOGGING
+			LDAP_LOG( CONFIG, CRIT,
+			          "%s: line %d: option \"%s\" overrides previous option\n",
+			          fname, lineno, name );
+#else
+			Debug( LDAP_DEBUG_ANY,
+			       "%s: line %d: option \"%s\" overrides previous option\n",
+				    fname, lineno, name );
+#endif
+			return 1;
+	}
+
+	option_count++;
+	return 0;
+}
+
+/* Find the definition of the option name or prefix matching the arguments */
+static Attr_option *
+ad_find_option_definition( const char *opt, int optlen )
+{
+	int top = 0, bot = option_count;
+	while ( top < bot ) {
+		int mid = (top + bot) / 2;
+		int mlen = options[mid].name.bv_len;
+		char *mname = options[mid].name.bv_val;
+		int j;
+		if ( optlen < mlen ) {
+			j = strncasecmp( opt, mname, optlen ) - 1;
+		} else {
+			j = strncasecmp( opt, mname, mlen );
+			if ( j==0 && (optlen==mlen || options[mid].prefix) )
+				return &options[mid];
+		}
+		if ( j < 0 )
+			bot = mid;
+		else
+			top = mid + 1;
+	}
+	return NULL;
+}

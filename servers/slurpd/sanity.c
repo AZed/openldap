@@ -1,4 +1,8 @@
-/* $OpenLDAP: pkg/ldap/servers/slurpd/sanity.c,v 1.3.8.3 2000/08/18 02:32:55 kurt Exp $ */
+/* $OpenLDAP$ */
+/*
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
+ * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
+ */
 /*
  * Copyright (c) 1996 Regents of the University of Michigan.
  * All rights reserved.
@@ -23,6 +27,7 @@
 
 #include <stdio.h>
 
+#include <ac/stdlib.h>
 #include <ac/unistd.h>
 #include <ac/string.h>
 
@@ -180,8 +185,8 @@ filecheck(
     char		*p;
     unsigned int	ret = 0;
 
-    strcpy( dir, f );
-    p = strrchr( dir, '/' );
+	snprintf( dir, sizeof dir, "%s", f );
+    p = strrchr( dir, LDAP_DIRSEP[0] );
     if ( p != NULL ) {
 	*p = '\0';
     }

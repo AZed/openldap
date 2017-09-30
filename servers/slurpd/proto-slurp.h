@@ -1,4 +1,8 @@
-/* $OpenLDAP: pkg/ldap/servers/slurpd/proto-slurp.h,v 1.3.6.3 2000/06/13 17:57:41 kurt Exp $ */
+/* $OpenLDAP$ */
+/*
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
+ * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
+ */
 #ifndef _PROTO_SLURP
 #define _PROTO_SLURP
 
@@ -34,6 +38,7 @@ void ch_free LDAP_P(( void *p ));
 /* fm.c */
 void *fm	LDAP_P((void *arg));
 RETSIGTYPE do_nothing	LDAP_P((int i));
+RETSIGTYPE slurp_set_shutdown LDAP_P((int));
 
 /* globals.c */
 extern struct globals *sglob;

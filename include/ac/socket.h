@@ -1,7 +1,7 @@
 /* Generic socket.h */
-/* $OpenLDAP: pkg/ldap/include/ac/socket.h,v 1.19.2.12 2002/01/14 19:49:59 kurt Exp $ */
+/* $OpenLDAP$ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, Redwood City, California, USA
+ * Copyright 1998-2003 The OpenLDAP Foundation, Redwood City, California, USA
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -81,11 +81,11 @@
 #	define ioctl_t				u_long
 #	define AC_SOCKET_INVALID	((unsigned int) ~0)
 
-#	if SD_BOTH
+#	ifdef SD_BOTH
 #		define tcp_close( s )	(shutdown( s, SD_BOTH ), closesocket( s ))
-#else
+#	else
 #		define tcp_close( s )		closesocket( s )
-#endif
+#	endif
 
 #define EWOULDBLOCK WSAEWOULDBLOCK
 #define EINPROGRESS WSAEINPROGRESS
@@ -127,18 +127,18 @@ LBER_F( char * ) ber_pvt_wsa_err2string LDAP_P((int));
 #	define tcp_read( s, buf, len)	read( s, buf, len )
 #	define tcp_write( s, buf, len)	write( s, buf, len )
 
-#	if SHUT_RDWR
+#	ifdef SHUT_RDWR
 #		define tcp_close( s )	(shutdown( s, SHUT_RDWR ), close( s ))
-#else
-#		define tcp_close( s )		close( s )
-#endif
+#	else
+#		define tcp_close( s )	close( s )
+#	endif
 
 #ifdef HAVE_PIPE
 /*
- * Only use pipe() on systems where file and socket descriptors 
+ * Only use pipe() on systems where file and socket descriptors
  * are interchangable
  */
-#define USE_PIPE HAVE_PIPE
+#	define USE_PIPE HAVE_PIPE
 #endif
 
 #endif /* MACOS */
@@ -155,7 +155,7 @@ LBER_F( char * ) ber_pvt_wsa_err2string LDAP_P((int));
 #endif
 
 #if !defined( HAVE_INET_ATON ) && !defined( inet_aton )
-#define inet_aton ldap_pvt_inet_aton
+#	define inet_aton ldap_pvt_inet_aton
 struct in_addr;
 LDAP_F (int) ldap_pvt_inet_aton LDAP_P(( const char *, struct in_addr * ));
 #endif
@@ -197,8 +197,17 @@ LDAP_F (int) ldap_pvt_inet_aton LDAP_P(( const char *, struct in_addr * ));
 #		define AC_GAI_STRERROR(x)	(gai_strerror((x)))
 #	else
 #		define AC_GAI_STRERROR(x)	(ldap_pvt_gai_strerror((x)))
-		char * ldap_pvt_gai_strerror( int );
+		LDAP_F (char *) ldap_pvt_gai_strerror( int );
 #	endif
+#endif
+
+#ifndef HAVE_GETPEEREID
+LDAP_LUTIL_F( int ) getpeereid( int s, uid_t *, gid_t * );
+#endif
+
+/* DNS RFC defines max host name as 255. New systems seem to use 1024 */
+#ifndef NI_MAXHOST
+#define	NI_MAXHOST	256
 #endif
 
 #endif /* _AC_SOCKET_H_ */

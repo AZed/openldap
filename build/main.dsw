@@ -39,7 +39,37 @@ Package=<4>
 
 ###############################################################################
 
+Project: "backbdb"="..\servers\slapd\back-bdb\backbdb.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name setup
+    End Project Dependency
+}}}
+
+###############################################################################
+
 Project: "backldbm"="..\servers\slapd\back-ldbm\backldbm.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name setup
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "backmon"="..\servers\slapd\back-monitor\backmon.dsp" - Package Owner=<4>
 
 Package=<5>
 {{{
@@ -93,9 +123,6 @@ Package=<4>
     Project_Dep_Name testavl
     End Project Dependency
     Begin Project Dependency
-    Project_Dep_Name ud
-    End Project Dependency
-    Begin Project Dependency
     Project_Dep_Name slapcat
     End Project Dependency
     Begin Project Dependency
@@ -108,18 +135,6 @@ Package=<4>
     Project_Dep_Name slapd
     End Project Dependency
     Begin Project Dependency
-    Project_Dep_Name ldbmcat
-    End Project Dependency
-    Begin Project Dependency
-    Project_Dep_Name ldif2ldbm
-    End Project Dependency
-    Begin Project Dependency
-    Project_Dep_Name ldbmindex
-    End Project Dependency
-    Begin Project Dependency
-    Project_Dep_Name ldbmentry
-    End Project Dependency
-    Begin Project Dependency
     Project_Dep_Name ltest
     End Project Dependency
     Begin Project Dependency
@@ -127,6 +142,42 @@ Package=<4>
     End Project Dependency
     Begin Project Dependency
     Project_Dep_Name passwd
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name ucgendat
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name dntest
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name ftest
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name ldapwhoami
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name ldapcompare
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "dntest"=..\libraries\libldap\dntest.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name liblber
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libldap
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name liblutil
     End Project Dependency
 }}}
 
@@ -157,6 +208,51 @@ Package=<4>
 {{{
     Begin Project Dependency
     Project_Dep_Name liblber
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "ftest"=..\libraries\libldap\ftest.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name liblber
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libldap
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name liblutil
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "ldapcompare"=..\clients\tools\ldapcompare.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name liblber
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libldap
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name liblutil
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libldif
     End Project Dependency
 }}}
 
@@ -273,6 +369,27 @@ Package=<4>
 
 ###############################################################################
 
+Project: "ldapwhoami"=..\clients\tools\ldapwhoami.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name liblber
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libldap
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name liblutil
+    End Project Dependency
+}}}
+
+###############################################################################
+
 Project: "libavl"=..\libraries\libavl\libavl.dsp - Package Owner=<4>
 
 Package=<5>
@@ -349,6 +466,21 @@ Package=<4>
 ###############################################################################
 
 Project: "libldif"=..\libraries\libldif\libldif.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name setup
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "liblunicode"=..\libraries\liblunicode\liblunicode.dsp - Package Owner=<4>
 
 Package=<5>
 {{{
@@ -497,6 +629,15 @@ Package=<4>
     Begin Project Dependency
     Project_Dep_Name libslapd
     End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name liblunicode
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name backbdb
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name backmon
+    End Project Dependency
 }}}
 
 ###############################################################################
@@ -532,6 +673,15 @@ Package=<4>
     End Project Dependency
     Begin Project Dependency
     Project_Dep_Name backldbm
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name liblunicode
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name backbdb
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name backmon
     End Project Dependency
 }}}
 
@@ -572,6 +722,15 @@ Package=<4>
     Begin Project Dependency
     Project_Dep_Name libslapd
     End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name liblunicode
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name backbdb
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name backmon
+    End Project Dependency
 }}}
 
 ###############################################################################
@@ -608,6 +767,15 @@ Package=<4>
     Begin Project Dependency
     Project_Dep_Name libslapd
     End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name liblunicode
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name backbdb
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name backmon
+    End Project Dependency
 }}}
 
 ###############################################################################
@@ -623,11 +791,14 @@ Package=<4>
     Begin Project Dependency
     Project_Dep_Name libavl
     End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name liblber
+    End Project Dependency
 }}}
 
 ###############################################################################
 
-Project: "ud"=..\clients\ud\ud.dsp - Package Owner=<4>
+Project: "ucgendat"=..\libraries\liblunicode\ucgendat.dsp - Package Owner=<4>
 
 Package=<5>
 {{{
@@ -636,13 +807,7 @@ Package=<5>
 Package=<4>
 {{{
     Begin Project Dependency
-    Project_Dep_Name libldap
-    End Project Dependency
-    Begin Project Dependency
-    Project_Dep_Name liblber
-    End Project Dependency
-    Begin Project Dependency
-    Project_Dep_Name liblutil
+    Project_Dep_Name setup
     End Project Dependency
 }}}
 

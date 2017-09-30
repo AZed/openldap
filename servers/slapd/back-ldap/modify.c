@@ -1,7 +1,7 @@
 /* modify.c - ldap backend modify function */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/modify.c,v 1.1.8.5 2002/01/21 20:26:49 ando Exp $ */
+/* $OpenLDAP$ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 /* This is an altered version */
@@ -24,6 +24,15 @@
  *    ever read sources, credits should appear in the documentation.
  * 
  * 4. This notice may not be removed or altered.
+ *
+ *
+ *
+ * Copyright 2000, Pierangelo Masarati, All rights reserved. <ando@sys-net.it>
+ * 
+ * This software is being modified by Pierangelo Masarati.
+ * The previously reported conditions apply to the modified code as well.
+ * Changes in the original code are highlighted where required.
+ * Credits for the original code go to the author, Howard Chu.
  */
 
 #include "portable.h"
@@ -41,51 +50,123 @@ ldap_back_modify(
     Backend	*be,
     Connection	*conn,
     Operation	*op,
-    const char	*dn,
-    const char	*ndn,
+    struct berval	*dn,
+    struct berval	*ndn,
     Modifications	*modlist
 )
 {
 	struct ldapinfo	*li = (struct ldapinfo *) be->be_private;
 	struct ldapconn *lc;
-	LDAPMod **modv;
+	LDAPMod **modv = NULL;
 	LDAPMod *mods;
 	Modifications *ml;
-	int i;
+	int i, j;
+	struct berval mapped;
+	struct berval mdn = { 0, NULL };
 
 	lc = ldap_back_getconn(li, conn, op);
-	if (!lc)
+	if ( !lc || !ldap_back_dobind( lc, op ) ) {
+		return( -1 );
+	}
+
+	/*
+	 * Rewrite the modify dn, if needed
+	 */
+#ifdef ENABLE_REWRITE
+	switch ( rewrite_session( li->rwinfo, "modifyDn", dn->bv_val, conn, &mdn.bv_val ) ) {
+	case REWRITE_REGEXEC_OK:
+		if ( mdn.bv_val == NULL ) {
+			mdn.bv_val = ( char * )dn->bv_val;
+		}
+#ifdef NEW_LOGGING
+		LDAP_LOG( BACK_LDAP, DETAIL1, 
+			"[rw] modifyDn: \"%s\" -> \"%s\"\n", dn->bv_val, mdn.bv_val, 0 );
+#else /* !NEW_LOGGING */
+		Debug( LDAP_DEBUG_ARGS, "rw> modifyDn: \"%s\" -> \"%s\"\n%s",
+				dn->bv_val, mdn.bv_val, "" );
+#endif /* !NEW_LOGGING */
+		break;
+		
+	case REWRITE_REGEXEC_UNWILLING:
+		send_ldap_result( conn, op, LDAP_UNWILLING_TO_PERFORM,
+				NULL, "Operation not allowed", NULL, NULL );
 		return( -1 );
 
-	if (!lc->bound) {
-		ldap_back_dobind(lc, op);
-		if (!lc->bound)
-			return( -1 );
+	case REWRITE_REGEXEC_ERR:
+		send_ldap_result( conn, op, LDAP_OTHER,
+				NULL, "Rewrite error", NULL, NULL );
+		return( -1 );
 	}
+#else /* !ENABLE_REWRITE */
+	ldap_back_dn_massage( li, dn, &mdn, 0, 1 );
+#endif /* !ENABLE_REWRITE */
 
 	for (i=0, ml=modlist; ml; i++,ml=ml->sml_next)
 		;
 
 	mods = (LDAPMod *)ch_malloc(i*sizeof(LDAPMod));
-	if (mods == NULL)
-		return( -1 );
+	if (mods == NULL) {
+		goto cleanup;
+	}
 	modv = (LDAPMod **)ch_malloc((i+1)*sizeof(LDAPMod *));
 	if (modv == NULL) {
-		free(mods);
-		return( -1 );
+		goto cleanup;
 	}
 
-	modv[i] = 0;
+	for (i=0, ml=modlist; ml; ml=ml->sml_next) {
+		if ( ml->sml_desc->ad_type->sat_no_user_mod  ) {
+			continue;
+		}
 
-	for (i=0, ml=modlist; ml; i++, ml=ml->sml_next) {
+		ldap_back_map(&li->at_map, &ml->sml_desc->ad_cname, &mapped,
+				BACKLDAP_MAP);
+		if (mapped.bv_val == NULL || mapped.bv_val[0] == '\0') {
+			continue;
+		}
+
 		modv[i] = &mods[i];
 		mods[i].mod_op = ml->sml_op | LDAP_MOD_BVALUES;
-		mods[i].mod_type = ml->sml_desc->ad_cname->bv_val;
-		mods[i].mod_bvalues = ml->sml_bvalues;
-	}
+		mods[i].mod_type = mapped.bv_val;
 
-	ldap_modify_s( lc->ld, dn, modv );
-	free(mods);	
-	free(modv);	
+#ifdef ENABLE_REWRITE
+		/*
+		 * FIXME: dn-valued attrs should be rewritten
+		 * to allow their use in ACLs at the back-ldap
+		 * level.
+		 */
+		if ( strcmp( ml->sml_desc->ad_type->sat_syntax->ssyn_oid,
+					SLAPD_DN_SYNTAX ) == 0 ) {
+			ldap_dnattr_rewrite( li->rwinfo,
+					ml->sml_bvalues, conn );
+		}
+#endif /* ENABLE_REWRITE */
+
+		if ( ml->sml_bvalues != NULL ) {	
+			for (j = 0; ml->sml_bvalues[j].bv_val; j++);
+			mods[i].mod_bvalues = (struct berval **)ch_malloc((j+1) *
+				sizeof(struct berval *));
+			for (j = 0; ml->sml_bvalues[j].bv_val; j++)
+				mods[i].mod_bvalues[j] = &ml->sml_bvalues[j];
+			mods[i].mod_bvalues[j] = NULL;
+		} else {
+			mods[i].mod_bvalues = NULL;
+		}
+
+		i++;
+	}
+	modv[i] = 0;
+
+	ldap_modify_s( lc->ld, mdn.bv_val, modv );
+
+cleanup:;
+	if ( mdn.bv_val != dn->bv_val ) {
+		free( mdn.bv_val );
+	}
+	for (i=0; modv[i]; i++) {
+		ch_free(modv[i]->mod_bvalues);
+	}
+	ch_free(mods);
+	ch_free(modv);
 	return( ldap_back_op_result( lc, op ));
 }
+

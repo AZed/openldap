@@ -1,7 +1,7 @@
 /* Generic errno.h */
-/* $OpenLDAP: pkg/ldap/include/ac/errno.h,v 1.11.2.6 2002/01/04 20:38:16 kurt Exp $ */
+/* $OpenLDAP$ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, Redwood City, California, USA
+ * Copyright 1998-2003 The OpenLDAP Foundation, Redwood City, California, USA
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -24,7 +24,7 @@
 	/* no sys_errlist */
 #	define		sys_nerr	0
 #	define		sys_errlist	((char **)0)
-#elif DECL_SYS_ERRLIST 
+#elif DECL_SYS_ERRLIST
 	/* have sys_errlist but need declaration */
 	LDAP_LIBC_V(int)      sys_nerr;
 	LDAP_LIBC_V(char)    *sys_errlist[];

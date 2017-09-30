@@ -1,5 +1,5 @@
-# $OpenLDAP: pkg/ldap/build/mod.mk,v 1.6.2.6 2002/01/04 20:38:06 kurt Exp $
-## Copyright 1998-2002 The OpenLDAP Foundation
+# $OpenLDAP$
+## Copyright 1998-2003 The OpenLDAP Foundation
 ## COPYING RESTRICTIONS APPLY.  See COPYRIGHT File in top level directory
 ## of this package for details.
 ##---------------------------------------------------------------------------
@@ -10,31 +10,26 @@
 LIBRARY = $(LIBBASE).la
 LIBSTAT = lib$(LIBBASE).a
 
-LTFLAGS = --only-$(LINKAGE)
-
-COMPILE = $(LIBTOOL) $(LTFLAGS) --mode=compile $(CC) $(CFLAGS) $(MODDEFS) -c
-LTLIBLINK = $(LIBTOOL) $(LTFLAGS) --mode=link $(CC) -rpath $(moduledir) \
-	$(CFLAGS) $(LDFLAGS) $(LTVERSION) $(LT_NO_UNDEF)
-
 MKDEPFLAG = -l
 
 .SUFFIXES: .c .o .lo
 
 .c.lo:
-	$(COMPILE) $<
+	$(LTCOMPILE_MOD) $<
 
 all-no lint-no 5lint-no depend-no install-no: FORCE
 	@echo "run configure with $(BUILD_OPT) to make $(LIBBASE)"
 
 all-common: all-$(BUILD_MOD)
 
-version.c: $(OBJS)
+version.c: Makefile
 	$(RM) $@
 	$(MKVERSION) $(LIBBASE) > $@
 
-$(LIBRARY): $(MODDEPS) version.lo
-	$(LTLIBLINK) -module -o $@ $(OBJS) version.lo \
-	    $(MODLIBS)
+version.lo: version.c $(OBJS)
+
+$(LIBRARY): version.lo
+	$(LTLINK_MOD) -module -o $@ $(OBJS) version.lo $(LINK_LIBS)
 
 $(LIBSTAT): version.lo
 	$(AR) ruv $@ `echo $(OBJS) | sed 's/\.lo/.o/g'` version.o

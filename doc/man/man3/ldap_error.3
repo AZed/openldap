@@ -1,46 +1,35 @@
-.TH LDAP_ERROR 3 "22 September 1998" "OpenLDAP LDVERSION"
-.\" $OpenLDAP: pkg/ldap/doc/man/man3/ldap_error.3,v 1.3.8.3 2002/06/06 03:27:23 kurt Exp $
-.\" Copyright 1998-2002 The OpenLDAP Foundation All Rights Reserved.
+.TH LDAP_ERROR 3 "RELEASEDATE" "OpenLDAP LDVERSION"
+.\" $OpenLDAP$
+.\" Copyright 1998-2003 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .SH NAME
 ldap_perror, ld_errno, ldap_result2error, ldap_errlist, ldap_err2string \- LDAP protocol error handling routines
+.SH LIBRARY
+OpenLDAP LDAP (libldap, -lldap)
 .SH SYNOPSIS
 .nf
 .ft B
 #include <ldap.h>
 .LP
 .ft B
-struct ldaperror {
-    int e_code;
-    char *e_reason;
-};
+char *ldap_err2string( int err );
 .LP
 .ft B
-struct ldaperror ldap_errlist[];
+void ldap_perror( LDAP *ld, const char *s )
 .LP
 .ft B
-char *ldap_err2string(err)
-.ft
-int err;
-.LP
-.ft B
-void ldap_perror(ld, s)
-.ft
-LDAP *ld;
-char *s;
-.LP
-.ft B
-int ldap_result2error(ld, res, freeit)
-.ft
-LDAP *ld;
-LDAPMessage *res;
-int freeit;
+int ldap_result2error( LDAP *ld, LDAPMessage *res, int freeit )
 .SH DESCRIPTION
 These routines provide interpretation of the various error codes
-returned by the LDAP protocol and LDAP library routines, and assigned
-to the
-.I ld_errno
-field in the \fIld\fP structure.
+returned by the LDAP protocol and LDAP library routines or associated
+with an LDAP session.  The error code associated with an LDAP session
+is accessible using
+.BR ldap_get_option (3)
+and
+.BR ldap_set_option (3)
+with the
+.B LDAP_OPT_ERROR_NUMBER
+option.
 .LP
 The
 .B ldap_result2error()
@@ -59,15 +48,11 @@ field in \fIld\fP is set and returned.
 .LP
 The returned value can be passed to
 .B ldap_err2string()
-or looked up in
-.B ldap_errlist[]
 to get a text description of the message.  The string
 returned from
 .B ldap_err2string()
 is a pointer to a static area that
-should not be modified.  The last element in the
-.B ldap_errlist[]
-array is signaled by an error code of -1.
+should not be modified.
 .LP
 The
 .B ldap_perror()
@@ -217,8 +202,8 @@ An memory allocation (e.g., malloc(3) or other dynamic memory
 allocator) call failed in an ldap
 library routine.
 .SH SEE ALSO
-.BR ldap(3),
-.BR perror(3)
+.BR ldap (3),
+.BR perror (3)
 .SH ACKNOWLEDGEMENTS
 .B	OpenLDAP
 is developed and maintained by The OpenLDAP Project (http://www.openldap.org/).

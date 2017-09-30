@@ -1,6 +1,6 @@
-.TH LDAPSEARCH 1 "20 August 2001" "OpenLDAP LDVERSION"
-.\" $OpenLDAP: pkg/ldap/doc/man/man1/ldapsearch.1,v 1.12.2.13 2002/01/04 20:38:12 kurt Exp $
-.\" Copyright 1998-2002 The OpenLDAP Foundation All Rights Reserved.
+.TH LDAPSEARCH 1 "RELEASEDATE" "OpenLDAP LDVERSION"
+.\" $OpenLDAP$
+.\" Copyright 1998-2003 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .SH NAME
 ldapsearch \- LDAP search tool
@@ -21,8 +21,6 @@ ldapsearch \- LDAP search tool
 [\c
 .BR \-A ]
 [\c
-.BR \-C ]
-[\c
 .BR \-L[L[L]] ]
 [\c
 .BR \-M[M] ]
@@ -35,7 +33,9 @@ ldapsearch \- LDAP search tool
 [\c
 .BR \-W ]
 [\c
-.BI \-w \ bindpasswd\fR]
+.BI \-w \ passwd\fR]
+[\c
+.BI \-y \ passwdfile\fR]
 [\c
 .BI \-H \ ldapuri\fR]
 [\c
@@ -63,6 +63,8 @@ ldapsearch \- LDAP search tool
 [\c
 .BI \-U \ authcid\fR]
 [\c
+.BI \-R \ realm\fR]
+[\c
 .BR \-x ]
 [\c
 .BI \-X \ authzid\fR]
@@ -89,7 +91,7 @@ If
 .B ldapsearch finds one or more entries, the attributes specified by
 \fIattrs\fP are returned.  If * is listed, all user attributes are
 returned.  If + is listed, all operational attributes are returned.
-If no \fIattrs\fP are listed, all attributes are returned.  If only
+If no \fIattrs\fP are listed, all user attributes are returned.  If only
 1.1 is listed, no attributes will be returned.
 .SH OPTIONS
 .TP
@@ -137,9 +139,6 @@ Enable manage DSA IT control.
 .B \-MM
 makes control critical.
 .TP
-.B \-C
-Automatically chase referrals.
-.TP
 .BI \-S \ attribute
 Sort the entries returned based on \fIattribute\fP. The default is not
 to sort entries returned.  If \fIattribute\fP is a zero-length string (""),
@@ -174,8 +173,12 @@ Use the Distinguished Name \fIbinddn\fP to bind to the LDAP directory.
 Prompt for simple authentication.
 This is used instead of specifying the password on the command line.
 .TP
-.BI \-w \ bindpasswd
-Use \fIbindpasswd\fP as the password for simple authentication.
+.BI \-w \ passwd
+Use \fIpasswd\fP as the password for simple authentication.
+.TP
+.BI \-y \ passwdfile
+Use complete contents of \fIpasswdfile\fP as the password for
+simple authentication.
 .TP
 .BI \-H \ ldapuri
 Specify URI(s) referring to the ldap server(s).
@@ -250,8 +253,12 @@ Enable SASL Quiet mode.  Never prompt.
 Specify the authentication ID for SASL bind. The form of the ID
 depends on the actual SASL mechanism used.
 .TP
+.BI \-R \ realm
+Specify the realm of authentication ID for SASL bind. The form of the realm
+depends on the actual SASL mechanism used.
+.TP
 .BI \-X \ authzid
-Specify the requested authorization ID for SASL bind.
+Specify the proxy authorization ID for SASL bind.
 .I authzid
 must be one of the following formats:
 .B dn:\c
@@ -277,7 +284,7 @@ output in LDAP Data Interchange Format or
 	version: 1
 
 	# bjensen, example, net
-	dn: uid=bjensen, dc=example, dc=net
+	dn: uid=bjensen,dc=example,dc=net
 	objectClass: person
 	objectClass: dcObject
 	uid: bjensen
@@ -305,7 +312,7 @@ standard output.
 The output might look something like this if two entries are found:
 .LP
 .nf
-    dn: uid=jts, dc=example, dc=com
+    dn: uid=jts,dc=example,dc=com
 	cn: John Smith
 	cn: John T. Smith
 	sn: Smith
@@ -313,7 +320,7 @@ The output might look something like this if two entries are found:
 	sn;lang-de: Schmidt
 	telephoneNumber: 1 555 123-4567
 
-	dn: uid=sss, dc=example, dc=com
+	dn: uid=sss,dc=example,dc=com
 	cn: Steve Smith
 	cn: Steve S. Smith
 	sn: Smith
@@ -336,7 +343,7 @@ output might look like this if one entry with one value for each of the
 requested attributes is found:
 .LP
 .nf
-    dn: uid=xyz, dc=example, dc=com
+    dn: uid=xyz,dc=example,dc=com
     ufn: xyz, example, com
     audio:< file::/tmp/ldapsearch-audio-a19924
     jpegPhoto:< file::=/tmp/ldapsearch-jpegPhoto-a19924
@@ -354,29 +361,29 @@ The organization name and description attribute values will be retrieved
 and printed to standard output, resulting in output similar to this:
 .LP
 .nf
-    dn: o=University of Alaska Fairbanks, c=US
+    dn: o=University of Alaska Fairbanks,c=US
     o: University of Alaska Fairbanks
     description: Preparing Alaska for a brave new yesterday
     description: leaf node only
 
-    dn: o=University of Colorado at Boulder, c=US
+    dn: o=University of Colorado at Boulder,c=US
     o: University of Colorado at Boulder
     description: No personnel information
     description: Institution of education and research
 
-    dn: o=University of Colorado at Denver, c=US
+    dn: o=University of Colorado at Denver,c=US
     o: University of Colorado at Denver
     o: UCD
     o: CU/Denver
     o: CU-Denver
     description: Institute for Higher Learning and Research
 
-    dn: o=University of Florida, c=US
+    dn: o=University of Florida,c=US
     o: University of Florida
     o: UFl
     description: Warper of young minds
 
-    etc....
+    ...
 .fi
 .SH DIAGNOSTICS
 Exit status is zero if no errors occur.

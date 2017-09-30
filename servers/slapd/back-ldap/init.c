@@ -1,7 +1,7 @@
 /* init.c - initialize ldap backend */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/init.c,v 1.5.2.8 2002/01/04 20:38:32 kurt Exp $ */
+/* $OpenLDAP$ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 /* This is an altered version */
@@ -24,6 +24,15 @@
  *    ever read sources, credits should appear in the documentation.
  * 
  * 4. This notice may not be removed or altered.
+ *
+ *
+ *
+ * Copyright 2000, Pierangelo Masarati, All rights reserved. <ando@sys-net.it>
+ * 
+ * This software is being modified by Pierangelo Masarati.
+ * The previously reported conditions apply to the modified code as well.
+ * Changes in the original code are highlighted where required.
+ * Credits for the original code go to the author, Howard Chu.
  */
 
 #include "portable.h"
@@ -55,6 +64,8 @@ ldap_back_initialize(
     BackendInfo	*bi
 )
 {
+	bi->bi_controls = slap_known_controls;
+
 	bi->bi_open = 0;
 	bi->bi_config = 0;
 	bi->bi_close = 0;
@@ -94,13 +105,53 @@ ldap_back_db_init(
 )
 {
 	struct ldapinfo	*li;
+	struct ldapmapping *mapping;
 
 	li = (struct ldapinfo *) ch_calloc( 1, sizeof(struct ldapinfo) );
+	if ( li == NULL ) {
+ 		return -1;
+ 	}
+
+#ifdef ENABLE_REWRITE
+ 	li->rwinfo = rewrite_info_init( REWRITE_MODE_USE_DEFAULT );
+	if ( li->rwinfo == NULL ) {
+ 		ch_free( li );
+ 		return -1;
+ 	}
+#endif /* ENABLE_REWRITE */
+
 	ldap_pvt_thread_mutex_init( &li->conn_mutex );
+
+	ldap_back_map_init( &li->at_map, &mapping );
 
 	be->be_private = li;
 
-	return li == NULL;
+	return 0;
+}
+
+static void
+conn_free( 
+	void *v_lc
+)
+{
+	struct ldapconn *lc = v_lc;
+	ldap_unbind( lc->ld );
+	if ( lc->bound_dn.bv_val ) {
+		ch_free( lc->bound_dn.bv_val );
+	}
+	if ( lc->cred.bv_val ) {
+		ch_free( lc->cred.bv_val );
+	}
+	ch_free( lc );
+}
+
+void
+mapping_free( void *v_mapping )
+{
+	struct ldapmapping *mapping = v_mapping;
+	ch_free( mapping->src.bv_val );
+	ch_free( mapping->dst.bv_val );
+	ch_free( mapping );
 }
 
 int
@@ -112,21 +163,43 @@ ldap_back_db_destroy(
 
 	if (be->be_private) {
 		li = (struct ldapinfo *)be->be_private;
+
+		ldap_pvt_thread_mutex_lock( &li->conn_mutex );
+
 		if (li->url) {
-			free(li->url);
+			ch_free(li->url);
 			li->url = NULL;
 		}
 		if (li->binddn) {
-			free(li->binddn);
+			ch_free(li->binddn);
 			li->binddn = NULL;
 		}
 		if (li->bindpw) {
-			free(li->bindpw);
+			ch_free(li->bindpw);
 			li->bindpw = NULL;
 		}
+                if (li->conntree) {
+			avl_free( li->conntree, conn_free );
+		}
+#ifdef ENABLE_REWRITE
+		if (li->rwinfo) {
+			rewrite_info_delete( li->rwinfo );
+		}
+#else /* !ENABLE_REWRITE */
+		if (li->suffix_massage) {
+  			ber_bvarray_free( li->suffix_massage );
+ 		}
+#endif /* !ENABLE_REWRITE */
+
+		avl_free( li->oc_map.remap, NULL );
+		avl_free( li->oc_map.map, mapping_free );
+		avl_free( li->at_map.remap, NULL );
+		avl_free( li->at_map.map, mapping_free );
+		
+		ldap_pvt_thread_mutex_unlock( &li->conn_mutex );
 		ldap_pvt_thread_mutex_destroy( &li->conn_mutex );
 	}
 
-	free( be->be_private );
+	ch_free( be->be_private );
 	return 0;
 }

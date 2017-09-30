@@ -1,6 +1,6 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/init.c,v 1.33.2.13 2002/08/26 06:56:59 hyc Exp $ */
+/* $OpenLDAP$ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 #include "portable.h"
@@ -115,7 +115,12 @@ static void openldap_ldap_init_w_conf(
 		return;
 	}
 
+#ifdef NEW_LOGGING
+	LDAP_LOG ( CONFIG, DETAIL1, 
+		"openldap_init_w_conf: trying %s\n", file, 0, 0 );
+#else
 	Debug(LDAP_DEBUG_TRACE, "ldap_init: trying %s\n", file, 0, 0);
+#endif
 
 	fp = fopen(file, "r");
 	if(fp == NULL) {
@@ -123,7 +128,11 @@ static void openldap_ldap_init_w_conf(
 		return;
 	}
 
+#ifdef NEW_LOGGING
+	LDAP_LOG ( CONFIG, DETAIL1, "openldap_init_w_conf: using %s\n", file, 0, 0 );
+#else
 	Debug(LDAP_DEBUG_TRACE, "ldap_init: using %s\n", file, 0, 0);
+#endif
 
 	while((start = fgets(linebuf, sizeof(linebuf), fp)) != NULL) {
 		/* skip lines starting with '#' */
@@ -251,12 +260,22 @@ static void openldap_ldap_init_w_userconf(const char *file)
 	home = getenv("HOME");
 
 	if (home != NULL) {
+#ifdef NEW_LOGGING
+	LDAP_LOG ( CONFIG, ARGS, 
+		"openldap_init_w_userconf: HOME env is %s\n", home, 0, 0 );
+#else
 		Debug(LDAP_DEBUG_TRACE, "ldap_init: HOME env is %s\n",
 		      home, 0, 0);
+#endif
 		path = LDAP_MALLOC(strlen(home) + strlen(file) + sizeof( LDAP_DIRSEP "."));
 	} else {
+#ifdef NEW_LOGGING
+	LDAP_LOG ( CONFIG, ARGS, "openldap_init_w_userconf: HOME env is NULL\n",
+		0, 0, 0 );
+#else
 		Debug(LDAP_DEBUG_TRACE, "ldap_init: HOME env is NULL\n",
 		      0, 0, 0);
+#endif
 	}
 
 	if(home != NULL && path != NULL) {
@@ -364,6 +383,17 @@ static void openldap_ldap_init_w_env(
 	}
 }
 
+#if defined(__GNUC__)
+/* Declare this function as a destructor so that it will automatically be
+ * invoked either at program exit (if libldap is a static library) or
+ * at unload time (if libldap is a dynamic library).
+ *
+ * Sorry, don't know how to handle this for non-GCC environments.
+ */
+static void ldap_int_destroy_global_options(void)
+	__attribute__ ((destructor));
+#endif
+
 static void
 ldap_int_destroy_global_options(void)
 {
@@ -396,21 +426,30 @@ void ldap_int_initialize_global_options( struct ldapoptions *gopts, int *dbglvl 
 	gopts->ldo_tm_api = (struct timeval *)NULL;
 	gopts->ldo_tm_net = (struct timeval *)NULL;
 
-	/* ldo_defludp wll be freed by the atexit() handler
+	/* ldo_defludp will be freed by the termination handler
 	 */
 	ldap_url_parselist(&gopts->ldo_defludp, "ldap://localhost/");
 	gopts->ldo_defport = LDAP_PORT;
-
-#if 0 /* don't register atexit() handler... breaks dlopen() apps */
+#if !defined(__GNUC__) && !defined(PIC)
+	/* Do this only for a static library, and only if we can't
+	 * arrange for it to be executed as a library destructor
+	 */
 	atexit(ldap_int_destroy_global_options);
 #endif
 
 	gopts->ldo_refhoplimit = LDAP_DEFAULT_REFHOPLIMIT;
-	gopts->ldo_rebindproc = NULL;
+	gopts->ldo_rebind_proc = NULL;
+	gopts->ldo_rebind_params = NULL;
 
 	LDAP_BOOL_ZERO(gopts);
 
 	LDAP_BOOL_SET(gopts, LDAP_BOOL_REFERRALS);
+
+#ifdef LDAP_CONNECTIONLESS
+	gopts->ldo_peer = NULL;
+	gopts->ldo_cldapdn = NULL;
+	gopts->ldo_is_udp = 0;
+#endif
 
 #ifdef HAVE_CYRUS_SASL
 	gopts->ldo_def_sasl_mech = NULL;
@@ -441,6 +480,10 @@ void ldap_int_initialize( struct ldapoptions *gopts, int *dbglvl )
 	if ( gopts->ldo_valid == LDAP_INITIALIZED ) {
 		return;
 	}
+
+	ldap_int_error_init();
+
+	ldap_int_utils_init();
 
 #ifdef HAVE_WINSOCK2
 {	WORD wVersionRequested;
@@ -476,8 +519,6 @@ void ldap_int_initialize( struct ldapoptions *gopts, int *dbglvl )
 }
 #endif
 
-	ldap_int_utils_init();
-
 #if defined(LDAP_API_FEATURE_X_OPENLDAP_V2_KBIND) \
 	|| defined(HAVE_TLS) || defined(HAVE_CYRUS_SASL)
 	ldap_int_hostname = ldap_pvt_get_fqdn( ldap_int_hostname );
@@ -512,26 +553,50 @@ void ldap_int_initialize( struct ldapoptions *gopts, int *dbglvl )
 		char *altfile = getenv(LDAP_ENV_PREFIX "CONF");
 
 		if( altfile != NULL ) {
+#ifdef NEW_LOGGING
+			LDAP_LOG ( CONFIG, DETAIL1, 
+				"openldap_init_w_userconf: %sCONF env is %s\n",
+				LDAP_ENV_PREFIX, altfile, 0 );
+#else
 			Debug(LDAP_DEBUG_TRACE, "ldap_init: %s env is %s\n",
 			      LDAP_ENV_PREFIX "CONF", altfile, 0);
+#endif
 			openldap_ldap_init_w_sysconf( altfile );
 		}
 		else
+#ifdef NEW_LOGGING
+			LDAP_LOG ( CONFIG, DETAIL1, 
+				"openldap_init_w_userconf: %sCONF env is NULL\n",
+				LDAP_ENV_PREFIX, 0, 0 );
+#else
 			Debug(LDAP_DEBUG_TRACE, "ldap_init: %s env is NULL\n",
 			      LDAP_ENV_PREFIX "CONF", 0, 0);
+#endif
 	}
 
 	{
 		char *altfile = getenv(LDAP_ENV_PREFIX "RC");
 
 		if( altfile != NULL ) {
+#ifdef NEW_LOGGING
+			LDAP_LOG ( CONFIG, DETAIL1, 
+				"openldap_init_w_userconf: %sRC env is %s\n",
+				LDAP_ENV_PREFIX, altfile, 0 );
+#else
 			Debug(LDAP_DEBUG_TRACE, "ldap_init: %s env is %s\n",
 			      LDAP_ENV_PREFIX "RC", altfile, 0);
+#endif
 			openldap_ldap_init_w_userconf( altfile );
 		}
 		else
+#ifdef NEW_LOGGING
+			LDAP_LOG ( CONFIG, DETAIL1, 
+				"openldap_init_w_userconf: %sRC env is NULL\n",
+				LDAP_ENV_PREFIX, 0, 0 );
+#else
 			Debug(LDAP_DEBUG_TRACE, "ldap_init: %s env is NULL\n",
 			      LDAP_ENV_PREFIX "RC", 0, 0);
+#endif
 	}
 
 	openldap_ldap_init_w_env(gopts, NULL);

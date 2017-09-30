@@ -1,6 +1,6 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/options.c,v 1.36.2.8 2002/01/04 20:38:21 kurt Exp $ */
+/* $OpenLDAP$ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 
@@ -17,6 +17,7 @@
 #include "ldap-int.h"
 
 #define LDAP_OPT_REBIND_PROC 0x4e814d
+#define LDAP_OPT_REBIND_PARAMS 0x4e814e
 
 static const LDAPAPIFeatureInfo features[] = {
 #ifdef LDAP_API_FEATURE_X_OPENLDAP
@@ -157,16 +158,14 @@ ldap_get_option(
 
 	case LDAP_OPT_TIMEOUT:
 		/* the caller has to free outvalue ! */
-		if ( ldap_int_timeval_dup( outvalue, lo->ldo_tm_api) != 0 )
-		{
+		if ( ldap_int_timeval_dup( outvalue, lo->ldo_tm_api) != 0 ) {
 			return LDAP_OPT_ERROR;
 		}
 		return LDAP_OPT_SUCCESS;
 		
 	case LDAP_OPT_NETWORK_TIMEOUT:
 		/* the caller has to free outvalue ! */
-		if ( ldap_int_timeval_dup( outvalue, lo->ldo_tm_net ) != 0 )
-		{
+		if ( ldap_int_timeval_dup( outvalue, lo->ldo_tm_net ) != 0 ) {
 			return LDAP_OPT_ERROR;
 		}
 		return LDAP_OPT_SUCCESS;
@@ -251,6 +250,20 @@ ldap_get_option(
 
 		return LDAP_OPT_SUCCESS;
 
+	case LDAP_OPT_REFERRAL_URLS:
+		if(ld == NULL) {
+			/* bad param */
+			break;
+		} 
+
+		if( ld->ld_referrals == NULL ) {
+			* (char ***) outvalue = NULL;
+		} else {
+			* (char ***) outvalue = ldap_value_dup(ld->ld_referrals);
+		}
+
+		return LDAP_OPT_SUCCESS;
+
 	case LDAP_OPT_API_FEATURE_INFO: {
 			LDAPAPIFeatureInfo *info = (LDAPAPIFeatureInfo *) outvalue;
 			int i;
@@ -317,8 +330,9 @@ ldap_set_option(
 	 * problem. Thus, we introduce a fix here.
 	 */
 
-	if (option == LDAP_OPT_DEBUG_LEVEL)
-	    dbglvl = (int *) invalue;
+	if (option == LDAP_OPT_DEBUG_LEVEL) {
+		dbglvl = (int *) invalue;
+	}
 
 	if( lo->ldo_valid != LDAP_INITIALIZED ) {
 		ldap_int_initialize(lo, dbglvl);
@@ -422,7 +436,10 @@ ldap_set_option(
 
 	/* Only accessed from inside this function by ldap_set_rebind_proc() */
 	case LDAP_OPT_REBIND_PROC: {
-			lo->ldo_rebindproc = (LDAP_REBIND_PROC *)invalue;		
+			lo->ldo_rebind_proc = (LDAP_REBIND_PROC *)invalue;		
+		} return LDAP_OPT_SUCCESS;
+	case LDAP_OPT_REBIND_PARAMS: {
+			lo->ldo_rebind_params = (void *)invalue;		
 		} return LDAP_OPT_SUCCESS;
 	}
 
@@ -571,6 +588,21 @@ ldap_set_option(
 			ld->ld_matched = LDAP_STRDUP(err);
 		} return LDAP_OPT_SUCCESS;
 
+	case LDAP_OPT_REFERRAL_URLS: {
+			char *const *referrals = (char *const *) invalue;
+			
+			if(ld == NULL) {
+				/* need a struct ldap */
+				break;
+			}
+
+			if( ld->ld_referrals ) {
+				LDAP_VFREE(ld->ld_referrals);
+			}
+
+			ld->ld_referrals = ldap_value_dup(referrals);
+		} return LDAP_OPT_SUCCESS;
+
 	case LDAP_OPT_API_FEATURE_INFO:
 		/* read-only */
 		break;
@@ -582,7 +614,7 @@ ldap_set_option(
 	default:
 #ifdef HAVE_TLS
 		if ( ldap_pvt_tls_set_option( ld, option, (void *)invalue ) == 0 )
-	     	return LDAP_OPT_SUCCESS;
+			return LDAP_OPT_SUCCESS;
 #endif
 #ifdef HAVE_CYRUS_SASL
 		if ( ldap_int_sasl_set_option( ld, option, (void *)invalue ) == 0 )
@@ -595,7 +627,12 @@ ldap_set_option(
 }
 
 int
-ldap_set_rebind_proc( LDAP *ld, LDAP_REBIND_PROC *rebind_proc)
+ldap_set_rebind_proc( LDAP *ld, LDAP_REBIND_PROC *proc, void *params )
 {
-	return( ldap_set_option( ld, LDAP_OPT_REBIND_PROC, (void *)rebind_proc));
+	int rc;
+	rc = ldap_set_option( ld, LDAP_OPT_REBIND_PROC, (void *)proc );
+	if( rc != LDAP_OPT_SUCCESS ) return rc;
+
+	rc = ldap_set_option( ld, LDAP_OPT_REBIND_PARAMS, (void *)params );
+	return rc;
 }

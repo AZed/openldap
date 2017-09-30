@@ -1,7 +1,7 @@
 /* Generic stdarg.h */
-/* $OpenLDAP: pkg/ldap/include/ac/stdarg.h,v 1.4.8.4 2002/01/04 20:38:16 kurt Exp $ */
+/* $OpenLDAP$ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, Redwood City, California, USA
+ * Copyright 1998-2003 The OpenLDAP Foundation, Redwood City, California, USA
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

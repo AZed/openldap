@@ -1,6 +1,6 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/apitest.c,v 1.14.8.4 2002/01/04 20:38:19 kurt Exp $ */
+/* $OpenLDAP$ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 /*
@@ -187,6 +187,48 @@ main(int argc, char **argv)
 	} else {
 		puts("  HOST NAME:         <not set>");
 	}
+
+#if 0
+	/* API tests */
+	{	/* bindless unbind */
+		LDAP *ld;
+		int rc;
+
+		ld = ldap_init( "localhost", 389 );
+		if( ld == NULL ) {
+			perror("ldap_init");
+			return EXIT_FAILURE;
+		}
+
+		rc = ldap_unbind( ld );
+		if( rc != LDAP_SUCCESS ) {
+			perror("ldap_unbind");
+			return EXIT_FAILURE;
+		}
+	}
+	{	/* bindless unbind */
+		LDAP *ld;
+		int rc;
+
+		ld = ldap_init( "localhost", 389 );
+		if( ld == NULL ) {
+			perror("ldap_init");
+			return EXIT_FAILURE;
+		}
+
+		rc = ldap_abandon_ext( ld, 0, NULL, NULL );
+		if( rc != LDAP_SERVER_DOWN ) {
+			ldap_perror( ld, "ldap_abandon");
+			return EXIT_FAILURE;
+		}
+
+		rc = ldap_unbind( ld );
+		if( rc != LDAP_SUCCESS ) {
+			perror("ldap_unbind");
+			return EXIT_FAILURE;
+		}
+	}
+#endif
 
 	return EXIT_SUCCESS;
 }

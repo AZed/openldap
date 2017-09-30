@@ -1,6 +1,6 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/bind.c,v 1.10.8.3 2002/01/04 20:38:19 kurt Exp $ */
+/* $OpenLDAP$ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 /*  Portions
@@ -42,7 +42,7 @@
 #include <ac/time.h>
 
 #include "ldap-int.h"
-
+#include "ldap_log.h"
 
 /*
  * ldap_bind - bind to the ldap server (and X.500).  The dn and password
@@ -60,7 +60,11 @@
 int
 ldap_bind( LDAP *ld, LDAP_CONST char *dn, LDAP_CONST char *passwd, int authmethod )
 {
+#ifdef NEW_LOGGING
+	LDAP_LOG ( OPERATION, ENTRY, "ldap_bind\n", 0, 0, 0 );
+#else
 	Debug( LDAP_DEBUG_TRACE, "ldap_bind\n", 0, 0, 0 );
+#endif
 
 	switch ( authmethod ) {
 	case LDAP_AUTH_SIMPLE:
@@ -105,7 +109,11 @@ ldap_bind_s(
 	LDAP_CONST char *passwd,
 	int authmethod )
 {
+#ifdef NEW_LOGGING
+	LDAP_LOG ( OPERATION, ENTRY, "ldap_bind_s\n", 0, 0, 0 );
+#else
 	Debug( LDAP_DEBUG_TRACE, "ldap_bind_s\n", 0, 0, 0 );
+#endif
 
 	switch ( authmethod ) {
 	case LDAP_AUTH_SIMPLE:

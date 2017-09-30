@@ -1,6 +1,6 @@
-/* $OpenLDAP: pkg/ldap/libraries/liblutil/sha1.c,v 1.9.8.6 2002/01/04 20:38:25 kurt Exp $ */
+/* $OpenLDAP$ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 /*	Acquired from:
@@ -31,6 +31,8 @@
 #include <ac/bytes.h>
 
 #include "lutil_sha1.h"
+
+#ifdef LUTIL_SHA1_BYTES
 
 /* undefining this will cause pointer alignment errors */
 #define SHA1HANDSOFF		/* Copies data before messing with it. */
@@ -209,9 +211,6 @@ static char rcsid[] = "$OpenBSD: sha1hl.c,v 1.1 1997/07/12 20:06:03 millert Exp 
 #ifdef HAVE_SYS_FILE_H
 #include <sys/file.h>
 #endif
-#ifdef HAVE_SYS_UIO_H
-#include <sys/uio.h>
-#endif
 
 #ifdef HAVE_IO_H
 #include <io.h>
@@ -273,3 +272,5 @@ lutil_SHA1Data( const unsigned char *data, size_t len, char *buf )
     lutil_SHA1Update(&ctx, data, len);
     return(lutil_SHA1End(&ctx, buf));
 }
+
+#endif

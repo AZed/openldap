@@ -1,6 +1,6 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/tools/slapindex.c,v 1.3.2.6 2002/01/04 20:38:36 kurt Exp $ */
+/* $OpenLDAP$ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 #include "portable.h"

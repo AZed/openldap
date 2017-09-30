@@ -1,6 +1,6 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/test.c,v 1.20.6.6 2002/01/04 20:38:22 kurt Exp $ */
+/* $OpenLDAP$ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 
@@ -35,23 +35,23 @@
 
 /* local functions */
 #ifndef HAVE_GETLINE
-static char *getline LDAP_P(( char *line, int len, FILE *fp, char *prompt ));
+static char *getline LDAP_P(( char *line, int len, FILE *fp, const char *prompt ));
 #endif
-static char **get_list LDAP_P(( char *prompt ));
-static int file_read LDAP_P(( char *path, struct berval *bv ));
-static LDAPMod **get_modlist LDAP_P(( char *prompt1, char *prompt2, char *prompt3 ));
+static char **get_list LDAP_P(( const char *prompt ));
+static int file_read LDAP_P(( const char *path, struct berval *bv ));
+static LDAPMod **get_modlist LDAP_P(( const char *prompt1,
+	const char *prompt2, const char *prompt3 ));
 static void handle_result LDAP_P(( LDAP *ld, LDAPMessage *lm ));
-static void print_ldap_result LDAP_P(( LDAP *ld, LDAPMessage *lm, char *s ));
+static void print_ldap_result LDAP_P(( LDAP *ld, LDAPMessage *lm,
+	const char *s ));
 static void print_search_entry LDAP_P(( LDAP *ld, LDAPMessage *res ));
 static void free_list LDAP_P(( char **list ));
-
-#define NOCACHEERRMSG	"don't compile with -DLDAP_NOCACHE if you desire local caching"
 
 static char *dnsuffix;
 
 #ifndef HAVE_GETLINE
 static char *
-getline( char *line, int len, FILE *fp, char *prompt )
+getline( char *line, int len, FILE *fp, const char *prompt )
 {
 	printf(prompt);
 
@@ -65,7 +65,7 @@ getline( char *line, int len, FILE *fp, char *prompt )
 #endif
 
 static char **
-get_list( char *prompt )
+get_list( const char *prompt )
 {
 	static char	buf[256];
 	int		num;
@@ -111,7 +111,7 @@ free_list( char **list )
 
 
 static int
-file_read( char *path, struct berval *bv )
+file_read( const char *path, struct berval *bv )
 {
 	FILE		*fp;
 	ber_slen_t	rlen;
@@ -157,7 +157,10 @@ file_read( char *path, struct berval *bv )
 
 
 static LDAPMod **
-get_modlist( char *prompt1, char *prompt2, char *prompt3 )
+get_modlist(
+	const char *prompt1,
+	const char *prompt2,
+	const char *prompt3 )
 {
 	static char	buf[256];
 	int		num;
@@ -229,12 +232,15 @@ get_modlist( char *prompt1, char *prompt2, char *prompt3 )
 
 
 static int
-bind_prompt( LDAP *ld, LDAP_CONST char *url, int request, ber_int_t msgid)
+bind_prompt( LDAP *ld,
+	LDAP_CONST char *url,
+	ber_tag_t request, ber_int_t msgid,
+	void *params )
 {
 	static char	dn[256], passwd[256];
 	int	authmethod;
 
-	printf("rebind for request=%d msgid=%ld url=%s\n",
+	printf("rebind for request=%ld msgid=%ld url=%s\n",
 		request, (long) msgid, url );
 
 #ifdef LDAP_API_FEATURE_X_OPENLDAP_V2_KBIND
@@ -349,7 +355,7 @@ main( int argc, char **argv )
 	}
 
 	if ( copyfname != NULL ) {
-		if ( ( ld->ld_sb->sb_fd = open( copyfname, O_WRONLY | O_CREAT,
+		if ( ( ld->ld_sb->sb_fd = open( copyfname, O_WRONLY|O_CREAT|O_EXCL,
 		    0600 ))  == -1 ) {
 			perror( copyfname );
 			exit ( EXIT_FAILURE );
@@ -599,19 +605,6 @@ main( int argc, char **argv )
 			timeout.tv_sec = atoi( line );
 			break;
 
-		case 'l':	/* URL search */
-			getline( line, sizeof(line), stdin,
-			    "attrsonly (0=attrs&values, 1=attrs only)? " );
-			attrsonly = atoi( line );
-			getline( line, sizeof(line), stdin, "LDAP URL? " );
-			if (( id = ldap_url_search( ld, line, attrsonly  ))
-				== -1 ) {
-			    ldap_perror( ld, "ldap_url_search" );
-			} else {
-			    printf( "URL search initiated with id %d\n", id );
-			}
-			break;
-
 		case 'p':	/* parse LDAP URL */
 			getline( line, sizeof(line), stdin, "LDAP URL? " );
 			if (( i = ldap_url_parse( line, &ludp )) != 0 ) {
@@ -651,39 +644,6 @@ main( int argc, char **argv )
 			strcpy( dnsuffix, line );
 			break;
 
-		case 'e':	/* enable cache */
-#ifdef LDAP_NOCACHE
-			printf( NOCACHEERRMSG );
-#else /* LDAP_NOCACHE */
-			getline( line, sizeof(line), stdin, "Cache timeout (secs)? " );
-			i = atoi( line );
-			getline( line, sizeof(line), stdin, "Maximum memory to use (bytes)? " );
-			if ( ldap_enable_cache( ld, i, atoi( line )) == 0 ) {
-				printf( "local cache is on\n" ); 
-			} else {
-				printf( "ldap_enable_cache failed\n" ); 
-			}
-#endif /* LDAP_NOCACHE */
-			break;
-
-		case 'x':	/* uncache entry */
-#ifdef LDAP_NOCACHE
-			printf( NOCACHEERRMSG );
-#else /* LDAP_NOCACHE */
-			getline( line, sizeof(line), stdin, "DN? " );
-			ldap_uncache_entry( ld, line );
-#endif /* LDAP_NOCACHE */
-			break;
-
-		case 'X':	/* uncache request */
-#ifdef LDAP_NOCACHE
-			printf( NOCACHEERRMSG );
-#else /* LDAP_NOCACHE */
-			getline( line, sizeof(line), stdin, "request msgid? " );
-			ldap_uncache_request( ld, atoi( line ));
-#endif /* LDAP_NOCACHE */
-			break;
-
 		case 'o':	/* set ldap options */
 			getline( line, sizeof(line), stdin, "alias deref (0=never, 1=searching, 2=finding, 3=always)?" );
 			ld->ld_deref = atoi( line );
@@ -701,45 +661,21 @@ main( int argc, char **argv )
 				getline( line, sizeof(line), stdin,
 					"Prompt for bind credentials when chasing referrals (0=no, 1=yes)?" );
 				if ( atoi( line ) != 0 ) {
-					ldap_set_rebind_proc( ld, bind_prompt );
+					ldap_set_rebind_proc( ld, bind_prompt, NULL );
 				}
 			}
 			break;
 
-		case 'O':	/* set cache options */
-#ifdef LDAP_NOCACHE
-			printf( NOCACHEERRMSG );
-#else /* LDAP_NOCACHE */
-			getline( line, sizeof(line), stdin, "cache errors (0=smart, 1=never, 2=always)?" );
-			switch( atoi( line )) {
-			case 0:
-				ldap_set_cache_options( ld, 0 );
-				break;
-			case 1:
-				ldap_set_cache_options( ld,
-					LDAP_CACHE_OPT_CACHENOERRS );
-				break;
-			case 2:
-				ldap_set_cache_options( ld,
-					LDAP_CACHE_OPT_CACHEALLERRS );
-				break;
-			default:
-				printf( "not a valid cache option\n" );
-			}
-#endif /* LDAP_NOCACHE */
-			break;
-
 		case '?':	/* help */
-    printf( "Commands: [ad]d         [ab]andon         [b]ind\n" );
-    printf( "          [B]ind async  [c]ompare         [l]URL search\n" );
-    printf( "          [modi]fy      [modr]dn          [rem]ove\n" );
-    printf( "          [res]ult      [s]earch          [q]uit/unbind\n\n" );
-    printf( "          [u]fn search  [ut]fn search with timeout\n" );
-    printf( "          [d]ebug       [e]nable cache    set ms[g]id\n" );
-    printf( "          d[n]suffix    [t]imeout         [v]ersion\n" );
-    printf( "          [U]fn prefix  [x]uncache entry  [X]uncache request\n" );
-    printf( "          [?]help       [o]ptions         [O]cache options\n" );
-    printf( "          [E]xplode dn  [p]arse LDAP URL\n" );
+			printf(
+"Commands: [ad]d         [ab]andon         [b]ind\n"
+"          [B]ind async  [c]ompare\n"
+"          [modi]fy      [modr]dn          [rem]ove\n"
+"          [res]ult      [s]earch          [q]uit/unbind\n\n"
+"          [d]ebug       set ms[g]id\n"
+"          d[n]suffix    [t]imeout         [v]ersion\n"
+"          [?]help       [o]ptions"
+"          [E]xplode dn  [p]arse LDAP URL\n" );
 			break;
 
 		default:
@@ -800,7 +736,7 @@ handle_result( LDAP *ld, LDAPMessage *lm )
 }
 
 static void
-print_ldap_result( LDAP *ld, LDAPMessage *lm, char *s )
+print_ldap_result( LDAP *ld, LDAPMessage *lm, const char *s )
 {
 	ldap_result2error( ld, lm, 1 );
 	ldap_perror( ld, s );

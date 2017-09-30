@@ -1,6 +1,6 @@
-.TH LDAPDELETE 1 "20 August 2001" "OpenLDAP LDVERSION"
-.\" $OpenLDAP: pkg/ldap/doc/man/man1/ldapdelete.1,v 1.7.2.14 2002/01/04 20:38:11 kurt Exp $
-.\" Copyright 1998-2002 The OpenLDAP Foundation All Rights Reserved.
+.TH LDAPDELETE 1 "RELEASEDATE" "OpenLDAP LDVERSION"
+.\" $OpenLDAP$
+.\" Copyright 1998-2003 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .SH NAME
 ldapdelete \- LDAP delete entry tool
@@ -29,6 +29,8 @@ ldapdelete \- LDAP delete entry tool
 [\c
 .BI \-w \ passwd\fR]
 [\c
+.BI \-y \ passwdfile\fR]
+[\c
 .BI \-H \ ldapuri\fR]
 [\c
 .BI \-h \ ldaphost\fR]
@@ -40,6 +42,8 @@ ldapdelete \- LDAP delete entry tool
 .BR \-O \ security-properties ]
 [\c
 .BI \-U \ authcid\fR]
+[\c
+.BI \-R \ realm\fR]
 [\c
 .BR \-x ]
 [\c
@@ -81,7 +85,7 @@ Use verbose mode, with many diagnostics written to standard output.
 Use Kerberos IV authentication instead of simple authentication.  It is
 assumed that you already have a valid ticket granting ticket. This option
 only has effect if
-. B ldapdelete
+.B ldapdelete
 is compiled with Kerberos support.
 .TP
 .B \-K
@@ -106,10 +110,8 @@ Set the LDAP debugging level to \fIdebuglevel\fP.
 must be compiled with LDAP_DEBUG defined for this option to have any effect.
 .TP
 .BI \-f \ file
-Read a series of lines from \fIfile\fP, performing one LDAP search for
-each line.  In this case, the \fIfilter\fP given on the command line
-is treated as a pattern where the first occurrence of \fB%s\fP is
-replaced with a line from \fIfile\fP.
+Read a series of DNs from \fIfile\fP, one per line, performing an
+LDAP delete for each.
 .TP
 .B \-x 
 Use simple authentication instead of SASL.
@@ -123,6 +125,10 @@ This is used instead of specifying the password on the command line.
 .TP
 .BI \-w \ passwd
 Use \fIpasswd\fP as the password for simple authentication.
+.TP
+.BI \-y \ passwdfile
+Use complete contents of \fIpasswdfile\fP as the password for
+simple authentication.
 .TP
 .BI \-H \ ldapuri
 Specify URI(s) referring to the ldap server(s).
@@ -158,8 +164,12 @@ Enable SASL Quiet mode.  Never prompt.
 Specify the authentication ID for SASL bind. The form of the identity depends on the
 actual SASL mechanism used.
 .TP
+.BI \-R \ realm
+Specify the realm of authentication ID for SASL bind. The form of the realm
+depends on the actual SASL mechanism used.
+.TP
 .BI \-X \ authzid
-Specify the requested authorization ID for SASL bind.
+Specify the proxy authorization ID for SASL bind.
 .I authzid
 must be one of the following formats:
 .B dn:\c
@@ -180,11 +190,10 @@ Issue StartTLS (Transport Layer Security) extended operation. If you use
 The following command:
 .LP
 .nf
-    ldapdelete "cn=Delete Me, dc=example, dc=com"
+    ldapdelete "cn=Delete Me,dc=example,dc=com"
 .fi
 .LP
-will attempt to delete the entry named with commonName "Delete Me"
-directly below the "dc=example, dc=com" entry.
+will attempt to delete the entry named "cn=Delete Me,dc=example,dc=com".
 Of course it would probably be necessary to supply authentication
 credentials.
 .SH DIAGNOSTICS
@@ -198,8 +207,6 @@ status and a diagnostic message being written to standard error.
 .BR ldapsearch (1),
 .BR ldap (3),
 .BR ldap_delete (3)
-.SH BUGS
-There is no interactive mode, but there probably should be.
 .SH AUTHOR
 The OpenLDAP Project <http://www.openldap.org/>
 .SH ACKNOWLEDGEMENTS

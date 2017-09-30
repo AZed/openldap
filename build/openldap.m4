@@ -1,6 +1,6 @@
-dnl $OpenLDAP: pkg/ldap/build/openldap.m4,v 1.45.2.17 2002/08/28 05:51:42 hyc Exp $
+dnl $OpenLDAP$
 dnl
-dnl Copyright 1998-2002 The OpenLDAP Foundation, Redwood City, California, USA
+dnl Copyright 1998-2003 The OpenLDAP Foundation, Redwood City, California, USA
 dnl All rights reserved.
 dnl 
 dnl Redistribution and use in source and binary forms, with or without
@@ -254,7 +254,7 @@ AC_DEFUN([OL_BERKELEY_DB_TRY],
 [
 	ol_DB_LIB=ifelse($2,,,$2)
 	ol_LIBS=$LIBS
-	LIBS="$ol_DB_LIB $LIBS"
+	LIBS="$ol_DB_LIB $LTHREAD_LIBS $LIBS"
 
 	AC_TRY_LINK([
 #ifdef HAVE_DB_185_H
@@ -312,11 +312,19 @@ dnl Try to locate appropriate library
 AC_DEFUN([OL_BERKELEY_DB_LINK],
 [ol_cv_lib_db=no
 OL_BERKELEY_DB_TRY(ol_cv_db_none)
-OL_BERKELEY_DB_TRY(ol_cv_db_db,[-ldb])
+OL_BERKELEY_DB_TRY(ol_cv_db_db41,[-ldb41])
+OL_BERKELEY_DB_TRY(ol_cv_db_db_41,[-ldb-41])
+OL_BERKELEY_DB_TRY(ol_cv_db_db_4_dot_1,[-ldb-4.1])
+OL_BERKELEY_DB_TRY(ol_cv_db_db_4_1,[-ldb-4-1])
+OL_BERKELEY_DB_TRY(ol_cv_db_db_4,[-ldb-4])
 OL_BERKELEY_DB_TRY(ol_cv_db_db4,[-ldb4])
+OL_BERKELEY_DB_TRY(ol_cv_db_db,[-ldb])
 OL_BERKELEY_DB_TRY(ol_cv_db_db3,[-ldb3])
+OL_BERKELEY_DB_TRY(ol_cv_db_db_3,[-ldb-3])
 OL_BERKELEY_DB_TRY(ol_cv_db_db2,[-ldb2])
+OL_BERKELEY_DB_TRY(ol_cv_db_db_2,[-ldb-2])
 OL_BERKELEY_DB_TRY(ol_cv_db_db1,[-ldb1])
+OL_BERKELEY_DB_TRY(ol_cv_db_db_1,[-ldb-1])
 ])
 dnl
 dnl --------------------------------------------------------------------
@@ -324,8 +332,9 @@ dnl Check if Berkeley DB supports DB_THREAD
 AC_DEFUN([OL_BERKELEY_DB_THREAD],
 [AC_CACHE_CHECK([for Berkeley DB thread support], [ol_cv_berkeley_db_thread], [
 	ol_LIBS="$LIBS"
+	LIBS="$LTHREAD_LIBS $LIBS"
 	if test $ol_cv_lib_db != yes ; then
-		LIBS="$ol_cv_lib_db"
+		LIBS="$ol_cv_lib_db $LIBS"
 	fi
 
 	AC_TRY_RUN([
@@ -397,12 +406,13 @@ main()
 	[ol_cv_berkeley_db_thread=cross])
 
 	LIBS="$ol_LIBS"
+])
 
 	if test $ol_cv_berkeley_db_thread != no ; then
 		AC_DEFINE(HAVE_BERKELEY_DB_THREAD, 1,
 			[define if Berkeley DB has DB_THREAD support])
 	fi
-])])dnl
+])dnl
 dnl
 dnl --------------------------------------------------------------------
 dnl Find any DB
@@ -417,12 +427,32 @@ if test $ac_cv_header_db_h = yes; then
 	fi
 fi
 ])
-dnl
+dnl --------------------------------------------------------------------
+dnl Check for version compatility with back-bdb
+AC_DEFUN([OL_BDB_COMPAT],
+[AC_CACHE_CHECK([Berkeley DB version for BDB backend], [ol_cv_bdb_compat],[
+	AC_EGREP_CPP(__db_version_compat,[
+#include <db.h>
+
+ /* this check could be improved */
+#ifndef DB_VERSION_MAJOR
+#	define DB_VERSION_MAJOR 1
+#endif
+#ifndef DB_VERSION_MINOR
+#	define DB_VERSION_MINOR 0
+#endif
+
+/* require 4.1 or later */
+#if (DB_VERSION_MAJOR >= 4) && (DB_VERSION_MINOR >= 1)
+	__db_version_compat
+#endif
+	], [ol_cv_bdb_compat=yes], [ol_cv_bdb_compat=no])])
+])
+
 dnl --------------------------------------------------------------------
 dnl Find old Berkeley DB 1.85/1.86
 AC_DEFUN([OL_BERKELEY_COMPAT_DB],
-[ol_cv_berkeley_db=no
-AC_CHECK_HEADERS(db_185.h db.h)
+[AC_CHECK_HEADERS(db_185.h db.h)
 if test $ac_cv_header_db_185_h = yes -o $ac_cv_header_db_h = yes; then
 	AC_CACHE_CHECK([if Berkeley DB header compatibility], [ol_cv_header_db1],[
 		AC_EGREP_CPP(__db_version_1,[
@@ -600,36 +630,48 @@ dnl
 dnl ====================================================================
 dnl Check POSIX Thread version 
 dnl
-dnl defines ol_cv_posix_version to 'final' or 'draft' or 'unknown'
-dnl 	'unknown' implies that the version could not be detected
-dnl		or that pthreads.h does exist.  Existance of pthreads.h
-dnl		should be tested separately.
+dnl defines ol_cv_pthread_version to 4, 5, 6, 7, 8, 10, depending on the
+dnl	version of the POSIX.4a Draft that is implemented.
+dnl	10 == POSIX.4a Final == POSIX.1c-1996 for our purposes.
+dnl	Existence of pthread.h should be tested separately.
+dnl
+dnl tests:
+dnl	pthread_detach() was dropped in Draft 8, it is present
+dnl		in every other version
+dnl	PTHREAD_CREATE_UNDETACHED is only in Draft 7, it was called
+dnl		PTHREAD_CREATE_JOINABLE after that
+dnl	pthread_attr_create was renamed to pthread_attr_init in Draft 6.
+dnl		Draft 6-10 has _init, Draft 4-5 has _create.
+dnl	pthread_attr_default was dropped in Draft 6, only 4 and 5 have it
+dnl	PTHREAD_MUTEX_INITIALIZER was introduced in Draft 5. It's not
+dnl		interesting to us because we don't try to statically
+dnl		initialize mutexes. 5-10 has it.
+dnl
+dnl Draft 9 and 10 are equivalent for our purposes.
 dnl
 AC_DEFUN([OL_POSIX_THREAD_VERSION],
 [AC_CACHE_CHECK([POSIX thread version],[ol_cv_pthread_version],[
-	AC_EGREP_CPP(pthread_version_final,[
+	AC_TRY_COMPILE([
 #		include <pthread.h>
-		/* this check could be improved */
-#		ifdef PTHREAD_ONCE_INIT
-			pthread_version_final;
-#		endif
-	], ol_pthread_final=yes, ol_pthread_final=no)
-
-	AC_EGREP_CPP(pthread_version_draft4,[
+	],[
+		int i = PTHREAD_CREATE_JOINABLE;
+	],[
+	AC_EGREP_HEADER(pthread_detach,pthread.h,
+	ol_cv_pthread_version=10, ol_cv_pthread_version=8)],[
+	AC_EGREP_CPP(draft7,[
 #		include <pthread.h>
-		/* this check could be improved */
-#		ifdef pthread_once_init
-			pthread_version_draft4;
+#		ifdef PTHREAD_CREATE_UNDETACHED
+		draft7
 #		endif
-	], ol_pthread_draft4=yes, ol_pthread_draft4=no)
-
-	if test $ol_pthread_final = yes -a $ol_pthread_draft4 = no; then
-		ol_cv_pthread_version=final
-	elif test $ol_pthread_final = no -a $ol_pthread_draft4 = yes; then
-		ol_cv_pthread_version=draft4
-	else
-		ol_cv_pthread_version=unknown
-	fi
+	], ol_cv_pthread_version=7, [
+	AC_EGREP_HEADER(pthread_attr_init,pthread.h,
+	ol_cv_pthread_version=6, [
+	AC_EGREP_CPP(draft5,[
+#		include <pthread.h>
+#ifdef		PTHREAD_MUTEX_INITIALIZER
+		draft5
+#endif
+	], ol_cv_pthread_version=5, ol_cv_pthread_version=4) ]) ]) ])
 ])
 ])dnl
 dnl
@@ -637,6 +679,9 @@ dnl --------------------------------------------------------------------
 AC_DEFUN([OL_PTHREAD_TEST_INCLUDES],
 [/* pthread test headers */
 #include <pthread.h>
+#if HAVE_PTHREADS < 7
+#include <errno.h>
+#endif
 #ifndef NULL
 #define NULL (void*)0
 #endif
@@ -649,60 +694,43 @@ static void *task(p)
 ])
 AC_DEFUN([OL_PTHREAD_TEST_FUNCTION],[
 	/* pthread test function */
+#ifndef PTHREAD_CREATE_DETACHED
+#define	PTHREAD_CREATE_DETACHED	1
+#endif
 	pthread_t t;
 	int status;
-	int detach = 1;
+	int detach = PTHREAD_CREATE_DETACHED;
 
-#ifdef HAVE_PTHREADS_FINAL
+#if HAVE_PTHREADS > 4
 	/* Final pthreads */
 	pthread_attr_t attr;
 
 	status = pthread_attr_init(&attr);
 	if( status ) return status;
 
-#if defined( PTHREAD_CREATE_JOINABLE ) || defined( PTHREAD_UNDETACHED )
-	if( !detach ) {
-#if defined( PTHREAD_CREATE_JOINABLE )
-		status = pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+#if HAVE_PTHREADS < 7
+	status = pthread_attr_setdetachstate(&attr, &detach);
+	if( status < 0 ) status = errno;
 #else
-		status = pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_UNDETACHED);
+	status = pthread_attr_setdetachstate(&attr, detach);
 #endif
-
-#ifdef PTHREAD_CREATE_DETACHED
-	} else {
-		status = pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
-#endif
-	}
 	if( status ) return status;
-#endif
-
 	status = pthread_create( &t, &attr, task, NULL );
-	if( status ) return status;
-
-#if !defined( PTHREAD_CREATE_JOINABLE ) && !defined( PTHREAD_UNDETACHED )
-	if( detach ) {
-		/* give thread a chance to complete */
-		/* it should remain joinable and hence detachable */
-		sleep( 1 );
-
-		status = pthread_detach( t );
-		if( status ) return status;
-	}
+#if HAVE_PTHREADS < 7
+	if( status < 0 ) status = errno;
 #endif
-
+	if( status ) return status;
 #else
 	/* Draft 4 pthreads */
 	status = pthread_create( &t, pthread_attr_default, task, NULL );
-	if( status ) return status;
+	if( status ) return errno;
 
-	if( detach ) {
-		/* give thread a chance to complete */
-		/* it should remain joinable and hence detachable */
-		sleep( 1 );
+	/* give thread a chance to complete */
+	/* it should remain joinable and hence detachable */
+	sleep( 1 );
 
-		status = pthread_detach( &t );
-		if( status ) return status;
-	}
+	status = pthread_detach( &t );
+	if( status ) return errno;
 #endif
 
 #ifdef HAVE_LINUX_THREADS
@@ -775,6 +803,7 @@ AC_DEFUN([OL_NT_THREADS], [
 
 	if test $ac_cv_func__beginthread = yes ; then
 		AC_DEFINE(HAVE_NT_THREADS,1,[if you have NT Threads])
+		ol_cv_nt_threads=yes
 	fi
 ])
 dnl ====================================================================
@@ -1165,9 +1194,8 @@ AC_DEFUN(OL_FUNC_GETHOSTBYADDR_R_NARGS,
   fi
 ])dnl
 dnl
-dnl
 dnl --------------------------------------------------------------------
-dnl Check for Cyrus SASL version compatility, need 1.5.x, can't use 2.x
+dnl Check for Cyrus SASL version compatility, need 2.1.3 or newer
 AC_DEFUN([OL_SASL_COMPAT],
 [AC_CACHE_CHECK([Cyrus SASL library version], [ol_cv_sasl_compat],[
 	AC_EGREP_CPP(__sasl_compat,[
@@ -1177,9 +1205,27 @@ AC_DEFUN([OL_SASL_COMPAT],
 #include <sasl.h>
 #endif
 
-/* require 1.5.x, unable to use 2.x */
+/* require 2.1.3 or later */
 #if SASL_VERSION_MAJOR == 1  && SASL_VERSION_MINOR >= 5
 	char *__sasl_compat = "1.5.x okay";
+#elif SASL_VERSION_MAJOR == 2  && SASL_VERSION_MINOR > 1
+	__sasl_compat "2.2+ or better okay (we guess)";
+#elif SASL_VERSION_MAJOR == 2  && SASL_VERSION_MINOR == 1 \
+	&& SASL_VERSION_STEP >=3
+	__sasl_compat = "2.1.3+ or better okay";
 #endif
 	],	[ol_cv_sasl_compat=yes], [ol_cv_sasl_compat=no])])
 ])
+dnl ====================================================================
+dnl check for msg_accrights in msghdr
+AC_DEFUN(OL_MSGHDR_MSG_ACCRIGHTS,
+ [AC_CACHE_CHECK(for msg_accrights in msghdr, ol_cv_msghdr_msg_accrights,
+   [AC_TRY_COMPILE([#include <sys/socket.h>],
+		[struct msghdr m; m.msg_accrightslen=0],
+		ol_cv_msghdr_msg_accrights=yes, ol_cv_msghdr_msg_accrights=no)
+	])
+  if test $ol_cv_msghdr_msg_accrights = "yes" ; then
+	AC_DEFINE(HAVE_MSGHDR_MSG_ACCRIGHTS,1,
+		[define if struct msghdr has msg_accrights])
+  fi
+])dnl

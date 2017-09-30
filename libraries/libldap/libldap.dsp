@@ -147,6 +147,10 @@ SOURCE=.\cache.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\cancel.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\charray.c
 # End Source File
 # Begin Source File
@@ -167,23 +171,7 @@ SOURCE=.\delete.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\disptmpl.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\include\disptmpl.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\dn.c
-# End Source File
-# Begin Source File
-
 SOURCE=.\dnssrv.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\dsparse.c
 # End Source File
 # Begin Source File
 
@@ -195,11 +183,11 @@ SOURCE=.\extended.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\free.c
+SOURCE=.\filter.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\friendly.c
+SOURCE=.\free.c
 # End Source File
 # Begin Source File
 
@@ -212,10 +200,6 @@ SOURCE=.\getdn.c
 # Begin Source File
 
 SOURCE=.\getentry.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\getfilter.c
 # End Source File
 # Begin Source File
 
@@ -263,7 +247,19 @@ SOURCE=..\..\include\ldap_pvt.h
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\include\ldap_pvt_uc.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\include\ldap_queue.h
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\include\ldap_schema.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\include\ldap_utf8.h
 # End Source File
 # Begin Source File
 
@@ -288,6 +284,10 @@ SOURCE=.\options.c
 # Begin Source File
 
 SOURCE=".\os-ip.c"
+# End Source File
+# Begin Source File
+
+SOURCE=.\passwd.c
 # End Source File
 # Begin Source File
 
@@ -335,14 +335,6 @@ SOURCE=.\sortctrl.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\srchpref.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\include\srchpref.h
-# End Source File
-# Begin Source File
-
 SOURCE=.\string.c
 # End Source File
 # Begin Source File
@@ -351,15 +343,15 @@ SOURCE=.\tls.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\tmplout.c
-# End Source File
-# Begin Source File
-
 SOURCE=.\unbind.c
 # End Source File
 # Begin Source File
 
 SOURCE=.\url.c
+# End Source File
+# Begin Source File
+
+SOURCE=".\utf-8-conv.c"
 # End Source File
 # Begin Source File
 
@@ -372,6 +364,10 @@ SOURCE=".\util-int.c"
 # Begin Source File
 
 SOURCE=.\vlvctrl.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\whoami.c
 # End Source File
 # End Target
 # End Project

@@ -1,7 +1,7 @@
 /* oc.c - object class routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/oc.c,v 1.14.2.6 2002/01/04 20:38:29 kurt Exp $ */
+/* $OpenLDAP$ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 
@@ -17,28 +17,34 @@
 #include "ldap_pvt.h"
 
 int is_object_subclass(
-	ObjectClass *sub,
-	ObjectClass *sup )
+	ObjectClass *sup,
+	ObjectClass *sub )
 {
 	int i;
 
 	if( sub == NULL || sup == NULL ) return 0;
 
-#if 0
+#if 1
+#ifdef NEW_LOGGING
+	LDAP_LOG ( OPERATION, ARGS, 
+		"is_object_subclass(%s,%s) %d\n",
+		sup->soc_oid, sub->soc_oid, sup == sub );
+#else
 	Debug( LDAP_DEBUG_TRACE, "is_object_subclass(%s,%s) %d\n",
-		sub->soc_oid, sup->soc_oid, sup == sub );
+		sup->soc_oid, sub->soc_oid, sup == sub );
+#endif
 #endif
 
 	if( sup == sub ) {
 		return 1;
 	}
 
-	if( sup->soc_sups == NULL ) {
+	if( sub->soc_sups == NULL ) {
 		return 0;
 	}
 
-	for( i=0; sup->soc_sups[i] != NULL; i++ ) {
-		if( is_object_subclass( sub, sup->soc_sups[i] ) ) {
+	for( i=0; sub->soc_sups[i] != NULL; i++ ) {
+		if( is_object_subclass( sup, sub->soc_sups[i] ) ) {
 			return 1;
 		}
 	}
@@ -48,89 +54,123 @@ int is_object_subclass(
 
 int is_entry_objectclass(
 	Entry*	e,
-	ObjectClass *oc )
+	ObjectClass *oc,
+	int set_flags )
 {
+	/*
+	 * set_flags should only be true if oc is one of operational
+	 * object classes which we support objectClass flags for
+	 * (e.g., referral, alias, ...).  See <slap.h>.
+	 */
+
 	Attribute *attr;
-	int i;
+	struct berval *bv;
 	AttributeDescription *objectClass = slap_schema.si_ad_objectClass;
+
 	assert(!( e == NULL || oc == NULL ));
 
 	if( e == NULL || oc == NULL ) {
 		return 0;
 	}
 
+	if( set_flags && ( e->e_ocflags & SLAP_OC__END )) {
+		/* flags are set, use them */
+		return (e->e_ocflags & oc->soc_flags & SLAP_OC__MASK) != 0;
+	}
+
 	/*
 	 * find objectClass attribute
 	 */
 	attr = attr_find(e->e_attrs, objectClass);
-
 	if( attr == NULL ) {
 		/* no objectClass attribute */
+#ifdef NEW_LOGGING
+		LDAP_LOG( OPERATION, ERR, 
+			"is_entry_objectclass: dn(%s), oid (%s), no objectClass "
+			"attribute.\n", e->e_dn == NULL ? "" : e->e_dn,
+			oc->soc_oclass.oc_oid, 0 );
+#else
 		Debug( LDAP_DEBUG_ANY, "is_entry_objectclass(\"%s\", \"%s\") "
 			"no objectClass attribute\n",
 			e->e_dn == NULL ? "" : e->e_dn,
 			oc->soc_oclass.oc_oid, 0 );
+#endif
 
 		return 0;
 	}
 
-	for( i=0; attr->a_vals[i]; i++ ) {
-		ObjectClass *objectClass = oc_find( attr->a_vals[i]->bv_val );
+	for( bv=attr->a_vals; bv->bv_val; bv++ ) {
+		ObjectClass *objectClass = oc_bvfind( bv );
 
-		if( objectClass == oc ) {
+		if ( !set_flags && objectClass == oc ) {
 			return 1;
+		}
+		
+		if ( objectClass != NULL ) {
+			e->e_ocflags |= objectClass->soc_flags;
 		}
 	}
 
-	return 0;
+	/* mark flags as set */
+	e->e_ocflags |= SLAP_OC__END;
 
+	return (e->e_ocflags & oc->soc_flags & SLAP_OC__MASK) != 0;
 }
 
 
 struct oindexrec {
-	char		*oir_name;
+	struct berval	oir_name;
 	ObjectClass	*oir_oc;
 };
 
 static Avlnode	*oc_index = NULL;
-static ObjectClass *oc_list = NULL;
+static LDAP_SLIST_HEAD(OCList, slap_object_class) oc_list
+	= LDAP_SLIST_HEAD_INITIALIZER(&oc_list);
 
 static int
 oc_index_cmp(
-    struct oindexrec	*oir1,
-    struct oindexrec	*oir2 )
+	const void *v_oir1,
+	const void *v_oir2 )
 {
-	assert( oir1->oir_name );
-	assert( oir1->oir_oc );
-	assert( oir2->oir_name );
-	assert( oir2->oir_oc );
-
-	return (strcasecmp( oir1->oir_name, oir2->oir_name ));
+	const struct oindexrec *oir1 = v_oir1, *oir2 = v_oir2;
+	int i = oir1->oir_name.bv_len - oir2->oir_name.bv_len;
+	if (i)
+		return i;
+	return strcasecmp( oir1->oir_name.bv_val, oir2->oir_name.bv_val );
 }
 
 static int
 oc_index_name_cmp(
-    char 		*name,
-    struct oindexrec	*oir )
+	const void *v_name,
+	const void *v_oir )
 {
-	assert( oir->oir_name );
-	assert( oir->oir_oc );
-
-	return (strcasecmp( name, oir->oir_name ));
+	const struct berval    *name = v_name;
+	const struct oindexrec *oir  = v_oir;
+	int i = name->bv_len - oir->oir_name.bv_len;
+	if (i)
+		return i;
+	return strncasecmp( name->bv_val, oir->oir_name.bv_val, name->bv_len );
 }
 
 ObjectClass *
 oc_find( const char *ocname )
 {
+	struct berval bv;
+
+	bv.bv_val = (char *)ocname;
+	bv.bv_len = strlen( ocname );
+
+	return( oc_bvfind( &bv ) );
+}
+
+ObjectClass *
+oc_bvfind( struct berval *ocname )
+{
 	struct oindexrec	*oir;
 
-	oir = (struct oindexrec *) avl_find( oc_index, ocname,
-            (AVL_CMP) oc_index_name_cmp );
+	oir = avl_find( oc_index, ocname, oc_index_name_cmp );
 
 	if ( oir != NULL ) {
-		assert( oir->oir_name );
-		assert( oir->oir_oc );
-
 		return( oir->oir_oc );
 	}
 
@@ -141,6 +181,7 @@ static int
 oc_create_required(
     ObjectClass		*soc,
     char		**attrs,
+	int			*op,
     const char		**err )
 {
 	char		**attrs1;
@@ -156,6 +197,9 @@ oc_create_required(
 				*err = *attrs1;
 				return SLAP_SCHERR_ATTR_NOT_FOUND;
 			}
+
+			if( is_at_operational( sat )) (*op)++;
+
 			if ( at_find_in_list(sat, soc->soc_required) < 0) {
 				if ( at_append_to_list(sat, &soc->soc_required) ) {
 					*err = *attrs1;
@@ -179,6 +223,7 @@ static int
 oc_create_allowed(
     ObjectClass		*soc,
     char		**attrs,
+	int			*op,
     const char		**err )
 {
 	char		**attrs1;
@@ -192,6 +237,9 @@ oc_create_allowed(
 				*err = *attrs1;
 				return SLAP_SCHERR_ATTR_NOT_FOUND;
 			}
+
+			if( is_at_operational( sat )) (*op)++;
+
 			if ( at_find_in_list(sat, soc->soc_required) < 0 &&
 			     at_find_in_list(sat, soc->soc_allowed) < 0 ) {
 				if ( at_append_to_list(sat, &soc->soc_allowed) ) {
@@ -209,6 +257,7 @@ static int
 oc_add_sups(
     ObjectClass		*soc,
     char			**sups,
+	int			*op,
     const char		**err )
 {
 	int		code;
@@ -249,19 +298,27 @@ oc_add_sups(
 				&& soc1->soc_kind != LDAP_SCHEMA_ABSTRACT )
 			{
 				*err = *sups1;
-				return SLAP_SCHERR_CLASS_BAD_USAGE;
+				return SLAP_SCHERR_CLASS_BAD_SUP;
 			}
 
-			if ( add_sups )
+			if( soc1->soc_obsolete && !soc->soc_obsolete ) {
+				*err = *sups1;
+				return SLAP_SCHERR_CLASS_BAD_SUP;
+			}
+
+			if( soc->soc_flags & SLAP_OC_OPERATIONAL ) (*op)++;
+
+			if ( add_sups ) {
 				soc->soc_sups[nsups] = soc1;
+			}
 
-			code = oc_add_sups( soc, soc1->soc_sup_oids, err );
+			code = oc_add_sups( soc, soc1->soc_sup_oids, op, err );
 			if ( code ) return code;
 
-			code = oc_create_required( soc, soc1->soc_at_oids_must, err );
+			code = oc_create_required( soc, soc1->soc_at_oids_must, op, err );
 			if ( code ) return code;
 
-			code = oc_create_allowed( soc, soc1->soc_at_oids_may, err );
+			code = oc_create_allowed( soc, soc1->soc_at_oids_may, op, err );
 			if ( code ) return code;
 
 			nsups++;
@@ -272,67 +329,77 @@ oc_add_sups(
 	return 0;
 }
 
+void
+oc_destroy( void )
+{
+	ObjectClass *o;
+
+	avl_free(oc_index, ldap_memfree);
+	while( !LDAP_SLIST_EMPTY(&oc_list) ) {
+		o = LDAP_SLIST_FIRST(&oc_list);
+		LDAP_SLIST_REMOVE_HEAD(&oc_list, soc_next);
+
+		if (o->soc_sups) ldap_memfree(o->soc_sups);
+		if (o->soc_required) ldap_memfree(o->soc_required);
+		if (o->soc_allowed) ldap_memfree(o->soc_allowed);
+		ldap_objectclass_free((LDAPObjectClass *)o);
+	}
+}
+
 static int
 oc_insert(
     ObjectClass		*soc,
     const char		**err
 )
 {
-	ObjectClass	**ocp;
 	struct oindexrec	*oir;
 	char			**names;
 
-	ocp = &oc_list;
-	while ( *ocp != NULL ) {
-		ocp = &(*ocp)->soc_next;
-	}
-	*ocp = soc;
+	LDAP_SLIST_INSERT_HEAD( &oc_list, soc, soc_next );
 
 	if ( soc->soc_oid ) {
 		oir = (struct oindexrec *)
 			ch_calloc( 1, sizeof(struct oindexrec) );
-		oir->oir_name = soc->soc_oid;
+		oir->oir_name.bv_val = soc->soc_oid;
+		oir->oir_name.bv_len = strlen( soc->soc_oid );
 		oir->oir_oc = soc;
 
-		assert( oir->oir_name );
+		assert( oir->oir_name.bv_val );
 		assert( oir->oir_oc );
 
 		if ( avl_insert( &oc_index, (caddr_t) oir,
-				 (AVL_CMP) oc_index_cmp,
-				 (AVL_DUP) avl_dup_error ) )
+		                 oc_index_cmp, avl_dup_error ) )
 		{
 			*err = soc->soc_oid;
-			ldap_memfree(oir->oir_name);
 			ldap_memfree(oir);
-			return SLAP_SCHERR_DUP_CLASS;
+			return SLAP_SCHERR_CLASS_DUP;
 		}
 
 		/* FIX: temporal consistency check */
-		assert( oc_find(oir->oir_name) != NULL );
+		assert( oc_bvfind(&oir->oir_name) != NULL );
 	}
 
 	if ( (names = soc->soc_names) ) {
 		while ( *names ) {
 			oir = (struct oindexrec *)
 				ch_calloc( 1, sizeof(struct oindexrec) );
-			oir->oir_name = ch_strdup(*names);
+			oir->oir_name.bv_val = *names;
+			oir->oir_name.bv_len = strlen( *names );
 			oir->oir_oc = soc;
 
-			assert( oir->oir_name );
+			assert( oir->oir_name.bv_val );
 			assert( oir->oir_oc );
 
 			if ( avl_insert( &oc_index, (caddr_t) oir,
-					 (AVL_CMP) oc_index_cmp,
-					 (AVL_DUP) avl_dup_error ) )
+			                 oc_index_cmp, avl_dup_error ) )
 			{
 				*err = *names;
-				ldap_memfree(oir->oir_name);
 				ldap_memfree(oir);
-				return SLAP_SCHERR_DUP_CLASS;
+				return SLAP_SCHERR_CLASS_DUP;
 			}
 
 			/* FIX: temporal consistency check */
-			assert( oc_find(oir->oir_name) != NULL );
+			assert( oc_bvfind(&oir->oir_name) != NULL );
 
 			names++;
 		}
@@ -344,11 +411,13 @@ oc_insert(
 int
 oc_add(
     LDAPObjectClass	*oc,
+	int user,
     const char		**err
 )
 {
 	ObjectClass	*soc;
 	int		code;
+	int		op = 0;
 
 	if ( oc->oc_names != NULL ) {
 		int i;
@@ -360,87 +429,77 @@ oc_add(
 		}
 	}
 
+	if ( !OID_LEADCHAR( oc->oc_oid[0] )) {
+		/* Expand OID macros */
+		char *oid = oidm_find( oc->oc_oid );
+		if ( !oid ) {
+			*err = oc->oc_oid;
+			return SLAP_SCHERR_OIDM;
+		}
+		if ( oid != oc->oc_oid ) {
+			ldap_memfree( oc->oc_oid );
+			oc->oc_oid = oid;
+		}
+	}
+
 	soc = (ObjectClass *) ch_calloc( 1, sizeof(ObjectClass) );
 	AC_MEMCPY( &soc->soc_oclass, oc, sizeof(LDAPObjectClass) );
+
+	if( oc->oc_names != NULL ) {
+		soc->soc_cname.bv_val = soc->soc_names[0];
+	} else {
+		soc->soc_cname.bv_val = soc->soc_oid;
+	}
+	soc->soc_cname.bv_len = strlen( soc->soc_cname.bv_val );
 
 	if( soc->soc_sup_oids == NULL &&
 		soc->soc_kind == LDAP_SCHEMA_STRUCTURAL )
 	{
 		/* structural object classes implicitly inherit from 'top' */
 		static char *top_oids[] = { SLAPD_TOP_OID, NULL };
-		code = oc_add_sups( soc, top_oids, err );
+		code = oc_add_sups( soc, top_oids, &op, err );
 	} else {
-		code = oc_add_sups( soc, soc->soc_sup_oids, err );
+		code = oc_add_sups( soc, soc->soc_sup_oids, &op, err );
 	}
 
 	if ( code != 0 ) return code;
 
-	code = oc_create_required( soc, soc->soc_at_oids_must, err );
+	code = oc_create_required( soc, soc->soc_at_oids_must, &op, err );
 	if ( code != 0 ) return code;
 
-	code = oc_create_allowed( soc, soc->soc_at_oids_may, err );
+	code = oc_create_allowed( soc, soc->soc_at_oids_may, &op, err );
 	if ( code != 0 ) return code;
+
+	if( user && op ) return SLAP_SCHERR_CLASS_BAD_SUP;
 
 	code = oc_insert(soc,err);
 	return code;
 }
 
-#ifdef LDAP_DEBUG
-
-static void
-oc_print( ObjectClass *oc )
-{
-	int	i;
-	const char *mid;
-
-	printf( "objectclass %s\n", ldap_objectclass2name( &oc->soc_oclass ) );
-	if ( oc->soc_required != NULL ) {
-		mid = "\trequires ";
-		for ( i = 0; oc->soc_required[i] != NULL; i++, mid = "," )
-			printf( "%s%s", mid,
-			        ldap_attributetype2name( &oc->soc_required[i]->sat_atype ) );
-		printf( "\n" );
-	}
-	if ( oc->soc_allowed != NULL ) {
-		mid = "\tallows ";
-		for ( i = 0; oc->soc_allowed[i] != NULL; i++, mid = "," )
-			printf( "%s%s", mid,
-			        ldap_attributetype2name( &oc->soc_allowed[i]->sat_atype ) );
-		printf( "\n" );
-	}
-}
-
-#endif
-
-
-#if defined( SLAPD_SCHEMA_DN )
-
 int
 oc_schema_info( Entry *e )
 {
-	struct berval	val;
-	struct berval	*vals[2];
+	struct berval	vals[2];
 	ObjectClass	*oc;
 
 	AttributeDescription *ad_objectClasses = slap_schema.si_ad_objectClasses;
 
-	vals[0] = &val;
-	vals[1] = NULL;
+	vals[1].bv_val = NULL;
 
-	for ( oc = oc_list; oc; oc = oc->soc_next ) {
-		val.bv_val = ldap_objectclass2str( &oc->soc_oclass );
-		if ( val.bv_val == NULL ) {
+	LDAP_SLIST_FOREACH( oc, &oc_list, soc_next ) {
+		if( oc->soc_flags & SLAP_OC_HIDE ) continue;
+
+		if ( ldap_objectclass2bv( &oc->soc_oclass, vals ) == NULL ) {
 			return -1;
 		}
-		val.bv_len = strlen( val.bv_val );
+
 #if 0
 		Debug( LDAP_DEBUG_TRACE, "Merging oc [%ld] %s\n",
-	       (long) val.bv_len, val.bv_val, 0 );
+	       (long) vals[0].bv_len, vals[0].bv_val, 0 );
 #endif
-		attr_merge( e, ad_objectClasses, vals );
-		ldap_memfree( val.bv_val );
+		if( attr_merge( e, ad_objectClasses, vals ) )
+			return -1;
+		ldap_memfree( vals[0].bv_val );
 	}
 	return 0;
 }
-
-#endif

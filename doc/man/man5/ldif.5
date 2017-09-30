@@ -1,6 +1,6 @@
-.TH LDIF 5 "20 August 2000" "OpenLDAP LDVERSION"
-.\" $OpenLDAP: pkg/ldap/doc/man/man5/ldif.5,v 1.2.12.8 2002/01/04 20:38:13 kurt Exp $
-.\" Copyright 1998-2002 The OpenLDAP Foundation All Rights Reserved.
+.TH LDIF 5 "RELEASEDATE" "OpenLDAP LDVERSION"
+.\" $OpenLDAP$
+.\" Copyright 1998-2003 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .SH NAME
 ldif \- LDAP Data Interchange Format
@@ -33,8 +33,8 @@ or tab, e.g.,
 .LP
 .nf
 .ft tt
-	dn: cn=Barbara J Jensen, dc=exam
-	 ple, dc=com
+	dn: cn=Barbara J Jensen,dc=exam
+	 ple,dc=com
 .ft
 .fi
 .LP
@@ -78,20 +78,20 @@ Here is an example of an LDIF file containing three entries.
 .LP
 .nf
 .ft tt
-	dn: cn=Barbara J Jensen, dc=example, dc=com
+	dn: cn=Barbara J Jensen,dc=example,dc=com
 	cn: Barbara J Jensen
 	cn: Babs Jensen
 	objectclass: person
 	description:< file://tmp/babs
 	sn: Jensen
 
-	dn: cn=Bjorn J Jensen, dc=example, dc=com
+	dn: cn=Bjorn J Jensen,dc=example,dc=com
 	cn: Bjorn J Jensen
 	cn: Bjorn Jensen
 	objectclass: person
 	sn: Jensen
 
-	dn: cn=Jennifer J Jensen, dc=example, dc=com
+	dn: cn=Jennifer J Jensen,dc=example,dc=com
 	cn: Jennifer J Jensen
 	cn: Jennifer Jensen
 	objectclass: person
@@ -109,8 +109,9 @@ Jensen's entry is encoded using base 64.
 .SH SEE ALSO
 .BR ldap (3),
 .BR ldapsearch (1),
-.BR ldapadd (1)
-.BR "LDAP Data Interchange Format," Good, G., RFC 2849.
+.BR ldapadd (1).
+.LP
+"LDAP Data Interchange Format," Good, G., RFC 2849.
 .SH ACKNOWLEDGEMENTS
 .B	OpenLDAP
 is developed and maintained by The OpenLDAP Project (http://www.openldap.org/).

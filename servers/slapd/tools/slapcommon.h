@@ -1,6 +1,6 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/tools/slapcommon.h,v 1.3.2.5 2002/01/04 20:38:36 kurt Exp $ */
+/* $OpenLDAP$ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 /* slapcommon.h - common definitions for the slap tools */
@@ -25,6 +25,8 @@ extern	Backend *be;
 extern	int		appendmode;
 extern	int		verbose;
 extern	int		continuemode;
+extern	int		nosubordinates;
+extern	int		dryrun;
 
 extern	char	*ldiffile;
 extern	FILE	*ldiffp;

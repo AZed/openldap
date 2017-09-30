@@ -1,7 +1,7 @@
 /* delete.c - ldap backend delete function */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/delete.c,v 1.1.8.4 2002/01/04 20:38:32 kurt Exp $ */
+/* $OpenLDAP$ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 /* This is an altered version */
@@ -24,6 +24,15 @@
  *    ever read sources, credits should appear in the documentation.
  * 
  * 4. This notice may not be removed or altered.
+ *
+ *
+ *
+ * Copyright 2000, Pierangelo Masarati, All rights reserved. <ando@sys-net.it>
+ * 
+ * This software is being modified by Pierangelo Masarati.
+ * The previously reported conditions apply to the modified code as well.
+ * Changes in the original code are highlighted where required.
+ * Credits for the original code go to the author, Howard Chu.
  */
 
 #include "portable.h"
@@ -41,23 +50,58 @@ ldap_back_delete(
     Backend	*be,
     Connection	*conn,
     Operation	*op,
-    const char	*dn,
-    const char	*ndn
+    struct berval	*dn,
+    struct berval	*ndn
 )
 {
 	struct ldapinfo	*li = (struct ldapinfo *) be->be_private;
 	struct ldapconn *lc;
 
-	lc = ldap_back_getconn( li, conn, op );
-	if (!lc)
-		return( -1 );
+	struct berval mdn = { 0, NULL };
 
-	if (!lc->bound) {
-		ldap_back_dobind(lc, op);
-		if (!lc->bound)
-			return( -1 );
+	lc = ldap_back_getconn( li, conn, op );
+	
+	if ( !lc || !ldap_back_dobind( lc, op ) ) {
+		return( -1 );
 	}
 
-	ldap_delete_s( lc->ld, dn );
+	/*
+	 * Rewrite the compare dn, if needed
+	 */
+#ifdef ENABLE_REWRITE
+	switch ( rewrite_session( li->rwinfo, "deleteDn", dn->bv_val, conn, &mdn.bv_val ) ) {
+	case REWRITE_REGEXEC_OK:
+	if ( mdn.bv_val == NULL ) {
+			mdn.bv_val = ( char * )dn->bv_val;
+		}
+#ifdef NEW_LOGGING
+	LDAP_LOG( BACK_LDAP, DETAIL1, 
+		"[rw] deleteDn: \"%s\" -> \"%s\"\n", dn->bv_val, mdn.bv_val, 0 );
+#else /* !NEW_LOGGING */
+	Debug( LDAP_DEBUG_ARGS, "rw> deleteDn: \"%s\" -> \"%s\"\n%s",
+			dn->bv_val, mdn.bv_val, "" );
+#endif /* !NEW_LOGGING */
+	break;
+		
+	case REWRITE_REGEXEC_UNWILLING:
+		send_ldap_result( conn, op, LDAP_UNWILLING_TO_PERFORM,
+				NULL, "Operation not allowed", NULL, NULL );
+		return( -1 );
+
+	case REWRITE_REGEXEC_ERR:
+		send_ldap_result( conn, op, LDAP_OTHER,
+				NULL, "Rewrite error", NULL, NULL );
+		return( -1 );
+	}
+#else /* !ENABLE_REWRITE */
+	ldap_back_dn_massage( li, dn, &mdn, 0, 1 );
+#endif /* !ENABLE_REWRITE */
+	
+	ldap_delete_s( lc->ld, mdn.bv_val );
+
+	if ( mdn.bv_val != dn->bv_val ) {
+		free( mdn.bv_val );
+	}
+	
 	return( ldap_back_op_result( lc, op ) );
 }

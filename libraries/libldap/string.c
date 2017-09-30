@@ -1,6 +1,6 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/string.c,v 1.9.2.4 2002/06/07 11:37:47 hyc Exp $ */
+/* $OpenLDAP$ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 
@@ -112,6 +112,26 @@ ldap_pvt_str2upper( char *str )
 	return( str );
 }
 
+struct berval *
+ldap_pvt_str2upperbv( char *str, struct berval *bv )
+{
+	char    *s = NULL;
+
+	assert( bv );
+
+	/* to upper */
+	if ( str ) {
+		for ( s = str; *s; s++ ) {
+			*s = TOUPPER( (unsigned char) *s );
+		}
+	}
+
+	bv->bv_val = str;
+	bv->bv_len = (ber_len_t)(s - str);
+	
+	return( bv );
+}
+
 char *
 ldap_pvt_str2lower( char *str )
 {
@@ -125,4 +145,24 @@ ldap_pvt_str2lower( char *str )
 	}
 
 	return( str );
+}
+
+struct berval *
+ldap_pvt_str2lowerbv( char *str, struct berval *bv )
+{
+	char    *s = NULL;
+
+	assert( bv );
+
+	/* to lower */
+	if ( str ) {
+		for ( s = str; *s; s++ ) {
+			*s = TOLOWER( (unsigned char) *s );
+		}
+	}
+
+	bv->bv_val = str;
+	bv->bv_len = (ber_len_t)(s - str);
+
+	return( bv );
 }

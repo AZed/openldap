@@ -1,7 +1,7 @@
 /* Generic string.h */
-/* $OpenLDAP: pkg/ldap/include/ac/string.h,v 1.22.8.6 2002/01/04 20:38:16 kurt Exp $ */
+/* $OpenLDAP$ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, Redwood City, California, USA
+ * Copyright 1998-2003 The OpenLDAP Foundation, Redwood City, California, USA
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -20,7 +20,8 @@
 #else
 #	ifdef HAVE_STRING_H
 #		include <string.h>
-#	elif HAVE_STRINGS_H
+#	endif
+#	if defined(HAVE_STRINGS_H) && (!defined(HAVE_STRING_H) || defined(BOTH_STRINGS_H))
 #		include <strings.h>
 #	endif
 
@@ -44,15 +45,16 @@
 #endif
 
 /* use ldap_pvt_strtok instead of strtok or strtok_r! */
-LDAP_F(char *) ldap_pvt_strtok LDAP_P(( char *str, const char *delim,
-					   char **pos ));
+LDAP_F(char *) ldap_pvt_strtok LDAP_P(( char *str,
+	const char *delim, char **pos ));
 
 #ifndef HAVE_STRDUP
 	/* strdup() is missing, declare our own version */
 #	undef strdup
 #	define strdup(s) ber_strdup(s)
-#else
+#elif !defined(_WIN32)
 	/* some systems fail to declare strdup */
+	/* Windows does not require this declaration */
 	LDAP_LIBC_F(char *) (strdup)();
 #endif
 
@@ -61,9 +63,11 @@ LDAP_F(char *) ldap_pvt_strtok LDAP_P(( char *str, const char *delim,
  * we need them declared so we can obtain pointers to them
  */
 
-/* In Mingw32, strcasecmp is not in the C library, so we don't LIBC_F it */
+/* we don't want these declared for Windows or Mingw */
+#ifndef _WIN32
 int (strcasecmp)();
 int (strncasecmp)();
+#endif
 
 #ifndef SAFEMEMCPY
 #	if defined( HAVE_MEMMOVE )

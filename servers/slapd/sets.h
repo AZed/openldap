@@ -1,18 +1,32 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/sets.h,v 1.1.2.2 2002/01/04 20:38:31 kurt Exp $ */
+/* $OpenLDAP$ */
 /*
- * Copyright 2000-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 2000-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
+
+#ifndef SLAP_SETS_H_
+#define SLAP_SETS_H_
+
+#include <ldap_cdefs.h>
+
+LDAP_BEGIN_DECL
 
 /* this routine needs to return the bervals instead of
  * plain strings, since syntax is not known.  It should
  * also return the syntax or some "comparison cookie"
  * that is used by set_filter.
  */
-typedef char **(*SET_GATHER) (void *cookie, char *name, char *attr);
+typedef BerVarray (SLAP_SET_GATHER)(
+	void *cookie, struct berval *name, struct berval *attr);
 
-long set_size (char **set);
-void set_dispose (char **set);
+LDAP_SLAPD_F (long) slap_set_size(BerVarray set);
+LDAP_SLAPD_F (void) slap_set_dispose(BerVarray set);
 
-int set_filter (SET_GATHER gatherer, void *cookie, char *filter, char *user, char *this, char ***results);
+LDAP_SLAPD_F (int) slap_set_filter(
+	SLAP_SET_GATHER gatherer,
+	void *cookie, struct berval *filter,
+	struct berval *user, struct berval *this, BerVarray *results);
 
+LDAP_END_DECL
+
+#endif

@@ -1,6 +1,6 @@
-/* $OpenLDAP: pkg/ldap/libraries/liblutil/signal.c,v 1.1.2.5 2002/01/04 20:38:25 kurt Exp $ */
+/* $OpenLDAP$ */
 /*
- * Copyright 2000-2002 The OpenLDAP Foundation
+ * Copyright 2000-2003 The OpenLDAP Foundation
  * COPYING RESTRICTIONS APPLY.  See COPYRIGHT File in top level directory
  * of this package for details.
  */

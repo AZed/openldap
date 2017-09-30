@@ -148,6 +148,10 @@ SOURCE=..\libldap\cache.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\libldap\cancel.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\libldap\charray.c
 # End Source File
 # Begin Source File
@@ -168,19 +172,7 @@ SOURCE=..\libldap\delete.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\libldap\disptmpl.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\include\disptmpl.h
-# End Source File
-# Begin Source File
-
 SOURCE=..\libldap\dnssrv.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\libldap\dsparse.c
 # End Source File
 # Begin Source File
 
@@ -192,11 +184,11 @@ SOURCE=..\libldap\extended.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\libldap\free.c
+SOURCE=..\libldap\filter.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\libldap\friendly.c
+SOURCE=..\libldap\free.c
 # End Source File
 # Begin Source File
 
@@ -209,10 +201,6 @@ SOURCE=..\libldap\getdn.c
 # Begin Source File
 
 SOURCE=..\libldap\getentry.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\libldap\getfilter.c
 # End Source File
 # Begin Source File
 
@@ -240,7 +228,19 @@ SOURCE=..\..\include\ldap_cdefs.h
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\include\ldap_config.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\include\ldap_defaults.h
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\include\ldap_features.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\include\ldap_int_thread.h
 # End Source File
 # Begin Source File
 
@@ -253,6 +253,22 @@ SOURCE=..\..\include\ldap_pvt.h
 # Begin Source File
 
 SOURCE=..\..\include\ldap_pvt_thread.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\include\ldap_pvt_uc.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\include\ldap_queue.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\include\ldap_schema.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\include\ldap_utf8.h
 # End Source File
 # Begin Source File
 
@@ -317,14 +333,6 @@ SOURCE=..\libldap\sortctrl.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\libldap\srchpref.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\include\srchpref.h
-# End Source File
-# Begin Source File
-
 SOURCE=..\libldap\string.c
 # End Source File
 # Begin Source File
@@ -345,10 +353,6 @@ SOURCE=..\libldap\tls.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\libldap\tmplout.c
-# End Source File
-# Begin Source File
-
 SOURCE=.\tpool.c
 # ADD CPP /I "..\libldap"
 # End Source File
@@ -359,6 +363,10 @@ SOURCE=..\libldap\unbind.c
 # Begin Source File
 
 SOURCE=..\libldap\url.c
+# End Source File
+# Begin Source File
+
+SOURCE="..\libldap\utf-8-conv.c"
 # End Source File
 # Begin Source File
 

@@ -1,6 +1,6 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/add.c,v 1.9.6.6 2002/01/04 20:38:19 kurt Exp $ */
+/* $OpenLDAP$ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 /*  Portions
@@ -99,7 +99,11 @@ ldap_add_ext(
 	BerElement	*ber;
 	int		i, rc;
 
-	Debug( LDAP_DEBUG_TRACE, "ldap_add\n", 0, 0, 0 );
+#ifdef NEW_LOGGING
+	LDAP_LOG ( OPERATION, ENTRY, "ldap_add_ext\n", 0, 0, 0 );
+#else
+	Debug( LDAP_DEBUG_TRACE, "ldap_add_ext\n", 0, 0, 0 );
+#endif
 	assert( ld != NULL );
 	assert( LDAP_VALID( ld ) );
 	assert( dn != NULL );

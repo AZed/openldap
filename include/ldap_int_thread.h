@@ -1,6 +1,6 @@
-/* $OpenLDAP: pkg/ldap/include/ldap_int_thread.h,v 1.6.2.5 2002/01/04 20:38:15 kurt Exp $ */
+/* $OpenLDAP$ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, Redwood City, California, USA
+ * Copyright 1998-2003 The OpenLDAP Foundation, Redwood City, California, USA
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

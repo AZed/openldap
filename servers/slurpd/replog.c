@@ -1,4 +1,8 @@
-/* $OpenLDAP: pkg/ldap/servers/slurpd/replog.c,v 1.6.8.2 2000/06/13 17:57:41 kurt Exp $ */
+/* $OpenLDAP$ */
+/*
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
+ * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
+ */
 /*
  * Copyright (c) 1996 Regents of the University of Michigan.
  * All rights reserved.
@@ -20,6 +24,7 @@
 
 #include <stdio.h>
 
+#include <ac/stdlib.h>
 #include <ac/errno.h>
 #include <ac/param.h>
 #include <ac/string.h>
@@ -53,54 +58,83 @@ copy_replog(
     static char	rbuf[ 1024 ];
     char	*p;
 
+#ifdef NEW_LOGGING
+	LDAP_LOG ( SLURPD, ARGS, "copy_replog: "
+		"copy replog \"%s\" to \"%s\"\n", src, dst, 0 );
+#else
     Debug( LDAP_DEBUG_ARGS,
 	    "copy replog \"%s\" to \"%s\"\n", 
 	    src, dst, 0 );
+#endif
 
     /*
      * Make sure the destination directory is writable.  If not, exit
      * with a fatal error.
      */
     strcpy( buf, src );
-    if (( p = strrchr( buf, '/' )) == NULL ) {
+    if (( p = strrchr( buf, LDAP_DIRSEP[0] )) == NULL ) {
 	strcpy( buf, "." );
     } else {
 	*p = '\0';
     }
     if ( access( buf, W_OK ) < 0 ) {
+#ifdef NEW_LOGGING
+	LDAP_LOG ( SLURPD, ERR, "copy_replog: "
+		"Error: (%ld): Directory %s is not writable\n",
+		(long) getpid(), buf, 0 );
+#else
 	Debug( LDAP_DEBUG_ANY,
 		"Error: copy_replog (%ld): Directory %s is not writable\n",
 		(long) getpid(), buf, 0 );
+#endif
 	return( -1 );
     }
     strcpy( buf, dst );
-    if (( p = strrchr( buf, '/' )) == NULL ) {
+    if (( p = strrchr( buf, LDAP_DIRSEP[0] )) == NULL ) {
 	strcpy( buf, "." );
     } else {
 	*p = '\0';
     }
     if ( access( buf, W_OK ) < 0 ) {
+#ifdef NEW_LOGGING
+	LDAP_LOG ( SLURPD, ERR, "copy_replog: "
+		"Error: (%ld): Directory %s is not writable\n",
+		(long) getpid(), buf, 0 );
+#else
 	Debug( LDAP_DEBUG_ANY,
 		"Error: copy_replog (%ld): Directory %s is not writable\n",
 		(long) getpid(), buf, 0 );
+#endif
 	return( -1 );
     }
 
     /* lock src */
     rfp = lock_fopen( src, "r", &lfp );
     if ( rfp == NULL ) {
+#ifdef NEW_LOGGING
+	LDAP_LOG ( SLURPD, ERR, "copy_replog: "
+		"Error: Can't lock replog \"%s\" for read: %s\n",
+		src, sys_errlist[ errno ], 0 );
+#else
 	Debug( LDAP_DEBUG_ANY,
 		"Error: copy_replog: Can't lock replog \"%s\" for read: %s\n",
 		src, sys_errlist[ errno ], 0 );
+#endif
 	return( 1 );
     }
 
     /* lock dst */
     dfp = lock_fopen( dst, "a", &dlfp );
     if ( dfp == NULL ) {
+#ifdef NEW_LOGGING
+	LDAP_LOG ( SLURPD, ERR, "copy_replog: "
+		"Error: Can't lock replog \"%s\" for write: %s\n",
+		src, sys_errlist[ errno ], 0 );
+#else
 	Debug( LDAP_DEBUG_ANY,
 		"Error: copy_replog: Can't lock replog \"%s\" for write: %s\n",
 		src, sys_errlist[ errno ], 0 );
+#endif
 	lock_fclose( rfp, lfp );
 	return( 1 );
     }
@@ -108,7 +142,7 @@ copy_replog(
     /*
      * Make our own private copy of the replication log.
      */
-    while (( p = fgets( rbuf, sizeof( buf ), rfp )) != NULL ) {
+    while (( p = fgets( rbuf, sizeof( rbuf ), rfp )) != NULL ) {
 	fputs( rbuf, dfp );
     }
     /* Only truncate the source file if we're not in one-shot mode */
@@ -118,14 +152,24 @@ copy_replog(
     }
 
     if ( lock_fclose( dfp, dlfp ) == EOF ) {
+#ifdef NEW_LOGGING
+	LDAP_LOG ( SLURPD, ERR, "copy_replog: "
+		"Error: Error closing \"%s\"\n", src, 0, 0 );
+#else
 	Debug( LDAP_DEBUG_ANY,
 		"Error: copy_replog: Error closing \"%s\"\n",
 		src, 0, 0 );
+#endif
     }
     if ( lock_fclose( rfp, lfp ) == EOF ) {
+#ifdef NEW_LOGGING
+	LDAP_LOG ( SLURPD, ERR, "copy_replog: "
+		"Error: Error closing \"%s\"\n", src, 0, 0 );
+#else
 	Debug( LDAP_DEBUG_ANY,
 		"Error: copy_replog: Error closing \"%s\"\n",
 		src, 0, 0 );
+#endif
     }
     return( rc );
 }

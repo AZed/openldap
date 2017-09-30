@@ -1,7 +1,7 @@
 /* unbind.c - shell backend unbind function */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-shell/unbind.c,v 1.6.2.4 2002/01/04 20:38:35 kurt Exp $ */
+/* $OpenLDAP$ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 
@@ -38,7 +38,7 @@ shell_back_unbind(
 	fprintf( wfp, "UNBIND\n" );
 	fprintf( wfp, "msgid: %ld\n", (long) op->o_msgid );
 	print_suffixes( wfp, be );
-	fprintf( wfp, "dn: %s\n", (conn->c_dn ? conn->c_dn : "") );
+	fprintf( wfp, "dn: %s\n", (conn->c_dn.bv_len ? conn->c_dn.bv_val : "") );
 	fclose( wfp );
 
 	/* no response to unbind */

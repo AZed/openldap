@@ -1,28 +1,27 @@
 #! /bin/sh
-# $OpenLDAP: pkg/ldap/tests/scripts/defines.sh,v 1.27.2.6 2000/10/30 18:14:15 kurt Exp $
+# $OpenLDAP$
 
 DATADIR=$SRCDIR/data
 PROGDIR=./progs
+DBDIR=./test-db
+REPLDIR=./test-repl
 
-if test "$BACKEND" = "bdb2" ; then
-	CONF=$DATADIR/slapd-bdb2-master.conf
-	PWCONF=$DATADIR/slapd-bdb2-pw.conf
-	ACLCONF=$DATADIR/slapd-bdb2-acl.conf
-	MASTERCONF=$DATADIR/slapd-bdb2-repl-master.conf
-	SLAVECONF=$DATADIR/slapd-bdb2-repl-slave.conf
-	REFSLAVECONF=$DATADIR/slapd-bdb2-ref-slave.conf
-	SCHEMACONF=$DATADIR/slapd-bdb2-schema.conf
-	TIMING="-t"
-else
-	CONF=$DATADIR/slapd.conf
-	MCONF=$DATADIR/slapd-master.conf
-	PWCONF=$DATADIR/slapd-pw.conf
-	ACLCONF=$DATADIR/slapd-acl.conf
-	MASTERCONF=$DATADIR/slapd-repl-master.conf
-	SLAVECONF=$DATADIR/slapd-repl-slave.conf
-	REFSLAVECONF=$DATADIR/slapd-ref-slave.conf
-	SCHEMACONF=$DATADIR/slapd-schema.conf
-fi
+CONF=$DATADIR/slapd.conf
+MCONF=$DATADIR/slapd-master.conf
+PWCONF=$DATADIR/slapd-pw.conf
+ACLCONF=$DATADIR/slapd-acl.conf
+RCONF=$DATADIR/slapd-referrals.conf
+MASTERCONF=$DATADIR/slapd-repl-master.conf
+SLAVECONF=$DATADIR/slapd-repl-slave.conf
+REFSLAVECONF=$DATADIR/slapd-ref-slave.conf
+SUBMASTERCONF=$DATADIR/slapd-repl-submaster.conf
+SUBSLAVECONF=$DATADIR/slapd-repl-subslave.conf
+SCHEMACONF=$DATADIR/slapd-schema.conf
+GLUECONF=$DATADIR/slapd-glue.conf
+
+DBCONF=$DBDIR/slapd.conf
+ADDCONF=$DBDIR/slapadd.conf
+REPLCONF=$REPLDIR/slapd.conf
 
 TOOLARGS="-x $LDAP_TOOLARGS"
 TOOLPROTO="-P 3"
@@ -32,51 +31,71 @@ PASSWDCONF=$DATADIR/slapd-passwd.conf
 CLIENTDIR=../clients/tools
 #CLIENTDIR=/usr/local/bin
 
+LDIFFILTER=$SRCDIR/scripts/acfilter.sh
+SUBFILTER=$SRCDIR/scripts/subfilter.sh
+UNDIFFFILTER=$SRCDIR/scripts/undiff.sh
+CONFFILTER=$SRCDIR/scripts/conf.sh
+STRIPATTR=$SRCDIR/scripts/stripattr.sh
+
 SLAPADD="../servers/slapd/tools/slapadd $LDAP_VERBOSE"
 SLAPCAT="../servers/slapd/tools/slapcat $LDAP_VERBOSE"
 SLAPINDEX="../servers/slapd/tools/slapindex $LDAP_VERBOSE"
 
+unset DIFF_OPTIONS
+DIFF="diff -iu"
 CMP="diff -i"
+BCMP="diff -iB"
 CMPOUT=/dev/null
-SLAPD=../servers/slapd/slapd
+SLAPD="../servers/slapd/slapd -s0"
 SLURPD=../servers/slurpd/slurpd
 LDAPPASSWD="$CLIENTDIR/ldappasswd $TOOLARGS"
 LDAPSEARCH="$CLIENTDIR/ldapsearch $TOOLPROTO $TOOLARGS -LLL"
+LDAPRSEARCH="$CLIENTDIR/ldapsearch $TOOLPROTO $TOOLARGS"
 LDAPMODIFY="$CLIENTDIR/ldapmodify $TOOLPROTO $TOOLARGS"
-LDAPADD="$CLIENTDIR/ldapadd $TOOLPROTO $TOOLARGS"
+LDAPADD="$CLIENTDIR/ldapmodify -a $TOOLPROTO $TOOLARGS"
 LDAPMODRDN="$CLIENTDIR/ldapmodrdn $TOOLPROTO $TOOLARGS"
+LDAPWHOAMI="$CLIENTDIR/ldapwhoami $TOOLARGS"
 SLAPDTESTER=$PROGDIR/slapd-tester
-LVL=${SLAPD_DEBUG-5}
-ADDR=127.0.0.1
+LVL=${SLAPD_DEBUG-261}
+LOCALHOST=localhost
 PORT=9009
 SLAVEPORT=9010
-MASTERURI="ldap://localhost:$PORT/"
-SLAVEURI="ldap://localhost:$SLAVEPORT/"
-DBDIR=./test-db
-REPLDIR=./test-repl
+MASTERURI="ldap://${LOCALHOST}:$PORT/"
+SLAVEURI="ldap://${LOCALHOST}:$SLAVEPORT/"
 LDIF=$DATADIR/test.ldif
+LDIFGLUED=$DATADIR/test-glued.ldif
 LDIFORDERED=$DATADIR/test-ordered.ldif
+LDIFBASE=$DATADIR/test-base.ldif
 LDIFPASSWD=$DATADIR/passwd.ldif
 LDIFPASSWDOUT=$DATADIR/passwd-out.ldif
+LDIFLANG=$DATADIR/test-lang.ldif
+LDIFLANGOUT=$DATADIR/lang-out.ldif
+LDIFREF=$DATADIR/referrals.ldif
 MONITOR=""
-BASEDN="o=University of Michigan, c=US"
-MANAGERDN="cn=Manager, o=University of Michigan, c=US"
-UPDATEDN="cn=Replica, o=University of Michigan, c=US"
+REFDN="c=US"
+BASEDN="o=University of Michigan,c=US"
+MANAGERDN="cn=Manager,o=University of Michigan,c=US"
+UPDATEDN="cn=Replica,o=University of Michigan,c=US"
 PASSWD=secret
-BABSDN="cn=Barbara Jensen, ou=Information Technology Division, ou=People, o=University of  Michigan , c = US "
-BJORNSDN="cn=Bjorn Jensen, ou=Information Technology Division, ou=People, o=University of Michigan, c=US"
-JAJDN="cn=James A Jones 1, ou=Alumni Association, ou=People, o=University of Michigan, c=US"
+BABSDN="cn=Barbara Jensen,ou=Information Technology DivisioN,OU=People,o=University of Michigan,c=us"
+BJORNSDN="cn=Bjorn Jensen,ou=Information Technology DivisioN,OU=People,o=University of Michigan,c=us"
+JAJDN="cn=James A Jones 1,ou=Alumni Association,ou=People,o=University of Michigan,c=US"
 MASTERLOG=$DBDIR/master.log
 SLAVELOG=$DBDIR/slave.log
 SLURPLOG=$DBDIR/slurp.log
 SEARCHOUT=$DBDIR/ldapsearch.out
 SEARCHFLT=$DBDIR/ldapsearch.flt
 LDIFFLT=$DBDIR/ldif.flt
+SUBFLT=$DBDIR/sub.flt
+SUBFLT2=$DBDIR/sub2.flt
 MASTEROUT=$DBDIR/master.out
 SLAVEOUT=$DBDIR/slave.out
+SUBMASTEROUT=$DBDIR/submaster.out
 TESTOUT=$DBDIR/test.out
 INITOUT=$DBDIR/init.out
+REFERRALOUT=$DATADIR/referrals.out
 SEARCHOUTMASTER=$DATADIR/search.out.master
+SEARCHOUTX=$DATADIR/search.out.xsearch
 MODIFYOUTMASTER=$DATADIR/modify.out.master
 ADDDELOUTMASTER=$DATADIR/adddel.out.master
 MODRDNOUTMASTER0=$DATADIR/modrdn.out.master.0

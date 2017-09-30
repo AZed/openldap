@@ -1,6 +1,6 @@
-/* $OpenLDAP: pkg/ldap/include/lutil_sha1.h,v 1.10.8.5 2002/01/04 20:38:16 kurt Exp $ */
+/* $OpenLDAP$ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, Redwood City, California, USA
+ * Copyright 1998-2003 The OpenLDAP Foundation, Redwood City, California, USA
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -19,7 +19,10 @@
 #include <ldap_cdefs.h>
 #include <ac/bytes.h>
 
+#ifdef AC_INT4_TYPE
+
 LDAP_BEGIN_DECL
+
 
 /*
  * SHA-1 in C
@@ -32,10 +35,10 @@ typedef ac_uint4 uint32;
 
 typedef struct {
     uint32 state[5];
-    uint32 count[2];  
+    uint32 count[2];
     unsigned char buffer[64];
 } lutil_SHA1_CTX;
-  
+
 LDAP_LUTIL_F( void )
 lutil_SHA1Transform
 	LDAP_P((uint32 state[5], const unsigned char buffer[64]));
@@ -65,5 +68,7 @@ lutil_SHA1Data
 	LDAP_P((const unsigned char *, size_t, char *));
 
 LDAP_END_DECL
+
+#endif /* AC_INT4_TYPE */
 
 #endif /* _LUTIL_SHA1_H_ */

@@ -1,7 +1,7 @@
 /*  ldap-int.h - defines & prototypes internal to the LDAP library */
-/* $OpenLDAP: pkg/ldap/libraries/libldap/ldap-int.h,v 1.49.2.20 2002/01/04 20:38:20 kurt Exp $ */
+/* $OpenLDAP$ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 /*  Portions
@@ -18,9 +18,17 @@
 
 #include "../liblber/lber-int.h"
 
+#ifdef LDAP_R_COMPILE
+#include <ldap_pvt_thread.h>
+#endif
+
 #ifdef HAVE_CYRUS_SASL
 	/* the need for this should be removed */
+#ifdef HAVE_SASL_SASL_H
+#include <sasl/sasl.h>
+#else
 #include <sasl.h>
+#endif
 
 #define SASL_MAX_BUFF_SIZE	65536
 #define SASL_MIN_BUFF_SIZE	4096
@@ -51,6 +59,11 @@
 
 #undef Debug
 #define Debug( level, fmt, arg1, arg2, arg3 ) \
+	do { if ( ldap_debug & level ) \
+	ldap_log_printf( NULL, (level), (fmt), (arg1), (arg2), (arg3) ); \
+	} while ( 0 )
+
+#define LDAP_Debug( subsystem, level, fmt, arg1, arg2, arg3 )\
 	ldap_log_printf( NULL, (level), (fmt), (arg1), (arg2), (arg3) )
 
 #include "ldap.h"
@@ -65,6 +78,10 @@ LDAP_BEGIN_DECL
 #define LDAPS_URL_PREFIX_LEN	(sizeof(LDAPS_URL_PREFIX)-1)
 #define LDAPI_URL_PREFIX	"ldapi://"
 #define LDAPI_URL_PREFIX_LEN	(sizeof(LDAPI_URL_PREFIX)-1)
+#ifdef LDAP_CONNECTIONLESS
+#define LDAPC_URL_PREFIX	"cldap://"
+#define LDAPC_URL_PREFIX_LEN	(sizeof(LDAPC_URL_PREFIX)-1)
+#endif
 #define LDAP_URL_URLCOLON		"URL:"
 #define LDAP_URL_URLCOLON_LEN	(sizeof(LDAP_URL_URLCOLON)-1)
 
@@ -111,8 +128,14 @@ struct ldapoptions {
 #define LDAP_UNINITIALIZED	0x0
 #define LDAP_INITIALIZED	0x1
 #define LDAP_VALID_SESSION	0x2
+	int   ldo_debug;
+#ifdef LDAP_CONNECTIONLESS
+#define	LDAP_IS_UDP(ld)		((ld)->ld_options.ldo_is_udp)
+	void*			ldo_peer;	/* struct sockaddr* */
+	char*			ldo_cldapdn;
+	int			ldo_is_udp;
+#endif
 
-	int		ldo_debug;
 	/* per API call timeout */
 	struct timeval		*ldo_tm_api;
 	struct timeval		*ldo_tm_net;
@@ -148,7 +171,8 @@ struct ldapoptions {
 	LDAPControl **ldo_cctrls;
 
 	/* LDAP rebind callback function */
-	LDAP_REBIND_PROC		*ldo_rebindproc;
+	LDAP_REBIND_PROC *ldo_rebind_proc;
+	void *ldo_rebind_params;
 
 	LDAP_BOOLEANS ldo_booleans;	/* boolean options */
 };
@@ -180,7 +204,7 @@ typedef struct ldap_conn {
 #endif
 	BerElement		*lconn_ber;	/* ber receiving on this conn. */
 
-	struct ldap_conn	*lconn_next;
+	struct ldap_conn *lconn_next;
 } LDAPConn;
 
 
@@ -261,18 +285,17 @@ struct ldap {
 
 #define ld_sctrls		ld_options.ldo_sctrls
 #define ld_cctrls		ld_options.ldo_cctrls
-#define ld_rebindproc	ld_options.ldo_rebindproc
+#define ld_rebind_proc	ld_options.ldo_rebind_proc
+#define ld_rebind_params	ld_options.ldo_rebind_params
 
 #define ld_version		ld_options.ldo_version
 
 	unsigned short	ld_lberoptions;
 
-	LDAPFiltDesc	*ld_filtd;	/* from getfilter for ufn searches */
-	char		*ld_ufnprefix;	/* for incomplete ufn's */
-
 	ber_int_t	ld_errno;
 	char	*ld_error;
 	char	*ld_matched;
+	char	**ld_referrals;
 	ber_len_t		ld_msgid;
 
 	/* do not mess with these */
@@ -292,14 +315,10 @@ struct ldap {
 #define LDAP_VALID(ld)	( (ld)->ld_valid == LDAP_VALID_SESSION )
 
 #ifdef LDAP_R_COMPILE
-#include <ldap_pvt_thread.h>
-
-#ifdef HAVE_RES_QUERY
 LDAP_V ( ldap_pvt_thread_mutex_t ) ldap_int_resolv_mutex;
-#endif
 
 #ifdef HAVE_CYRUS_SASL
-LDAP_V ( ldap_pvt_thread_mutex_t ) ldap_int_sasl_mutex;
+LDAP_V( ldap_pvt_thread_mutex_t ) ldap_int_sasl_mutex;
 #endif
 #endif
 
@@ -315,19 +334,18 @@ LDAP_F ( void ) ldap_int_initialize_global_options LDAP_P((
 
 /* memory.c */
 	/* simple macros to realloc for now */
-#define LDAP_INT_MALLOC(s)		(LBER_MALLOC((s)))
-#define LDAP_INT_CALLOC(n,s)	(LBER_CALLOC((n),(s)))
-#define LDAP_INT_REALLOC(p,s)	(LBER_REALLOC((p),(s)))
-#define LDAP_INT_FREE(p)		(LBER_FREE((p)))
-#define LDAP_INT_VFREE(v)		(LBER_VFREE((void **)(v)))
-#define LDAP_INT_STRDUP(s)		(LBER_STRDUP((s)))
-
 #define LDAP_MALLOC(s)		(LBER_MALLOC((s)))
 #define LDAP_CALLOC(n,s)	(LBER_CALLOC((n),(s)))
 #define LDAP_REALLOC(p,s)	(LBER_REALLOC((p),(s)))
 #define LDAP_FREE(p)		(LBER_FREE((p)))
 #define LDAP_VFREE(v)		(LBER_VFREE((void **)(v)))
 #define LDAP_STRDUP(s)		(LBER_STRDUP((s)))
+#define LDAP_STRNDUP(s,l)	(LBER_STRNDUP((s),(l)))
+
+/*
+ * in error.c
+ */
+LDAP_F (void) ldap_int_error_init( void );
 
 /*
  * in unit-int.c
@@ -351,12 +369,6 @@ LDAP_F (int) ldap_check_cache LDAP_P(( LDAP *ld, ber_tag_t msgtype, BerElement *
 /*
  * in controls.c
  */
-LDAP_F (LDAPControl *) ldap_control_dup LDAP_P((
-	const LDAPControl *ctrl ));
-
-LDAP_F (LDAPControl **) ldap_controls_dup LDAP_P((
-	LDAPControl *const *ctrls ));
-
 LDAP_F (int) ldap_int_get_controls LDAP_P((
 	BerElement *be,
 	LDAPControl ***ctrlsp));
@@ -398,11 +410,10 @@ LDAP_F (int) ldap_int_open_connection( LDAP *ld,
 /*
  * in os-ip.c
  */
-LDAP_F (int) ldap_int_tblsize;
+LDAP_V (int) ldap_int_tblsize;
 LDAP_F (int) ldap_int_timeval_dup( struct timeval **dest, const struct timeval *tm );
 LDAP_F (int) ldap_connect_to_host( LDAP *ld, Sockbuf *sb,
-	int proto, const char *host, unsigned long address, int port,
-	int async );
+	int proto, const char *host, int port, int async );
 
 #if defined(LDAP_API_FEATURE_X_OPENLDAP_V2_KBIND) || \
 	defined(HAVE_TLS) || defined(HAVE_CYRUS_SASL)
@@ -411,7 +422,7 @@ LDAP_F (char *) ldap_host_connected_to( Sockbuf *sb );
 #endif
 
 LDAP_F (void) ldap_int_ip_init( void );
-LDAP_F (int) do_ldap_select( LDAP *ld, struct timeval *timeout );
+LDAP_F (int) ldap_int_select( LDAP *ld, struct timeval *timeout );
 LDAP_F (void *) ldap_new_select_info( void );
 LDAP_F (void) ldap_free_select_info( void *sip );
 LDAP_F (void) ldap_mark_select_write( LDAP *ld, Sockbuf *sb );
@@ -448,6 +459,7 @@ LDAP_F (int) ldap_chase_referrals( LDAP *ld, LDAPRequest *lr,
 LDAP_F (int) ldap_chase_v3referrals( LDAP *ld, LDAPRequest *lr,
 	char **refs, int sref, char **referralsp, int *hadrefp );
 LDAP_F (int) ldap_append_referral( LDAP *ld, char **referralsp, char *s );
+LDAP_F (int) ldap_int_flush_request( LDAP *ld, LDAPRequest *lr );
 
 /*
  * in result.c:
@@ -502,6 +514,11 @@ LDAP_F (int) ldap_url_parselist LDAP_P((
 	LDAPURLDesc **ludlist,
 	const char *url ));
 
+LDAP_F (int) ldap_url_parselist_ext LDAP_P((
+	LDAPURLDesc **ludlist,
+	const char *url,
+	const char *sep	));
+
 LDAP_F (int) ldap_url_parsehosts LDAP_P((
 	LDAPURLDesc **ludlist,
 	const char *hosts,
@@ -519,11 +536,12 @@ LDAP_F (void) ldap_free_urllist LDAP_P((
 /*
  * in cyrus.c
  */
+
 LDAP_F (int) ldap_int_sasl_init LDAP_P(( void ));
 
 LDAP_F (int) ldap_int_sasl_open LDAP_P((
 	LDAP *ld, LDAPConn *conn,
-	const char* host, ber_len_t ssf ));
+	const char* host ));
 LDAP_F (int) ldap_int_sasl_close LDAP_P(( LDAP *ld, LDAPConn *conn ));
 
 LDAP_F (int) ldap_int_sasl_external LDAP_P((
@@ -548,6 +566,12 @@ LDAP_F (int) ldap_int_sasl_bind LDAP_P((
 	LDAP_SASL_INTERACT_PROC *interact,
 	void *defaults ));
 
+/* in schema.c */
+LDAP_F (char *) ldap_int_parse_numericoid LDAP_P((
+	const char **sp,
+	int *code,
+	const int flags ));
+
 /*
  * in tls.c
  */
@@ -556,6 +580,12 @@ LDAP_F (int) ldap_int_tls_config LDAP_P(( LDAP *ld,
 
 LDAP_F (int) ldap_int_tls_start LDAP_P(( LDAP *ld,
 	LDAPConn *conn, LDAPURLDesc *srv ));
+
+/*
+ *	in getvalues.c
+ */
+LDAP_F (char **) ldap_value_dup LDAP_P((
+	char *const *vals ));
 
 LDAP_END_DECL
 

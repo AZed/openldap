@@ -1,6 +1,6 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/unbind.c,v 1.17.6.12 2002/01/14 19:50:00 kurt Exp $ */
+/* $OpenLDAP$ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 /*  Portions
@@ -36,6 +36,9 @@ ldap_unbind_ext(
 {
 	int rc;
 
+	assert( ld != NULL );
+	assert( LDAP_VALID( ld ) );
+
 	/* check client controls */
 	rc = ldap_int_client_controls( ld, cctrls );
 	if( rc != LDAP_SUCCESS ) return rc;
@@ -55,7 +58,11 @@ ldap_unbind_ext_s(
 int
 ldap_unbind( LDAP *ld )
 {
+#ifdef NEW_LOGGING
+	LDAP_LOG ( OPERATION, ENTRY, "ldap_unbind\n", 0, 0, 0 );
+#else
 	Debug( LDAP_DEBUG_TRACE, "ldap_unbind\n", 0, 0, 0 );
+#endif
 
 	return( ldap_unbind_ext( ld, NULL, NULL ) );
 }
@@ -76,22 +83,16 @@ ldap_ld_free(
 		ldap_free_request( ld, ld->ld_requests );
 	}
 
-		/* free and unbind from all open connections */
-		while ( ld->ld_conns != NULL ) {
-			ldap_free_connection( ld, ld->ld_conns, 1, close );
-		}
+	/* free and unbind from all open connections */
+	while ( ld->ld_conns != NULL ) {
+		ldap_free_connection( ld, ld->ld_conns, 1, close );
+	}
 
 	for ( lm = ld->ld_responses; lm != NULL; lm = next ) {
 		next = lm->lm_next;
 		ldap_msgfree( lm );
 	}
 
-#ifndef LDAP_NOCACHE
-	if ( ld->ld_cache != NULL ) {
-		ldap_destroy_cache( ld );
-		ld->ld_cache = NULL;
-	}
-#endif /* !LDAP_NOCACHE */
 
 	if ( ld->ld_error != NULL ) {
 		LDAP_FREE( ld->ld_error );
@@ -103,6 +104,11 @@ ldap_ld_free(
 		ld->ld_matched = NULL;
 	}
 
+	if( ld->ld_referrals != NULL) {
+		LDAP_VFREE(ld->ld_referrals);
+		ld->ld_referrals = NULL;
+	}  
+    
 	if ( ld->ld_abandoned != NULL ) {
 		LDAP_FREE( ld->ld_abandoned );
 		ld->ld_abandoned = NULL;
@@ -173,8 +179,16 @@ ldap_send_unbind(
 {
 	BerElement	*ber;
 
+#ifdef NEW_LOGGING
+	LDAP_LOG ( OPERATION, ENTRY, "ldap_send_unbind\n", 0, 0, 0 );
+#else
 	Debug( LDAP_DEBUG_TRACE, "ldap_send_unbind\n", 0, 0, 0 );
+#endif
 
+#ifdef LDAP_CONNECTIONLESS
+	if (LDAP_IS_UDP(ld))
+		return LDAP_SUCCESS;
+#endif
 	/* create a message to send */
 	if ( (ber = ldap_alloc_ber_with_options( ld )) == NULL ) {
 		return( ld->ld_errno );

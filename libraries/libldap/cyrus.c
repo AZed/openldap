@@ -1,6 +1,6 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/cyrus.c,v 1.15.2.22 2002/09/05 20:53:37 hyc Exp $ */
+/* $OpenLDAP$ */
 /*
- * Copyright 1999-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1999-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 
@@ -23,7 +23,17 @@
 ldap_pvt_thread_mutex_t ldap_int_sasl_mutex;
 #endif
 
+#ifdef HAVE_SASL_SASL_H
+#include <sasl/sasl.h>
+#else
 #include <sasl.h>
+#endif
+
+#if SASL_VERSION_MAJOR >= 2
+#define SASL_CONST const
+#else
+#define SASL_CONST
+#endif
 
 /*
 * Various Cyrus SASL related stuff.
@@ -46,11 +56,34 @@ int ldap_int_sasl_init( void )
 		{ SASL_CB_LIST_END, NULL, NULL }
 	};
 
+#ifdef HAVE_SASL_VERSION
+#define SASL_BUILD_VERSION ((SASL_VERSION_MAJOR << 24) |\
+	(SASL_VERSION_MINOR << 16) | SASL_VERSION_STEP)
+
+	{ int rc;
+	sasl_version( NULL, &rc );
+	if ( ((rc >> 16) != ((SASL_VERSION_MAJOR << 8)|SASL_VERSION_MINOR)) ||
+		(rc & 0xffff) < SASL_VERSION_STEP) {
+
+#ifdef NEW_LOGGING
+		LDAP_LOG( TRANSPORT, INFO,
+		"ldap_int_sasl_init: SASL version mismatch, got %x, wanted %x.\n",
+			rc, SASL_BUILD_VERSION, 0 );
+#else
+		Debug( LDAP_DEBUG_ANY,
+		"ldap_int_sasl_init: SASL version mismatch, got %x, wanted %x.\n",
+			rc, SASL_BUILD_VERSION, 0 );
+#endif
+		return -1;
+	}
+	}
+#endif
 	if ( sasl_initialized ) {
 		return 0;
 	}
 
-#ifndef CSRIMALLOC
+/* SASL 2 takes care of its own memory completely internally */
+#if SASL_VERSION_MAJOR < 2 && !defined(CSRIMALLOC)
 	sasl_set_alloc(
 		ber_memalloc,
 		ber_memcalloc,
@@ -73,12 +106,10 @@ int ldap_int_sasl_init( void )
 		return 0;
 	}
 
-	/* This function is a no-op in Cyrus 1.5.x and does not exist
-	 * in Cyrus 2.x. This reference ensures that we can't pick up
-	 * the wrong version of a dynamic library.
-	 */
-	sasl_client_auth(NULL, NULL, NULL, 0, NULL, NULL);
-
+#if SASL_VERSION_MAJOR < 2
+	/* A no-op to make sure we link with Cyrus 1.5 */
+	sasl_client_auth( NULL, NULL, NULL, 0, NULL, NULL );
+#endif
 	return -1;
 }
 
@@ -114,7 +145,7 @@ sb_sasl_setup( Sockbuf_IO_Desc *sbiod, void *arg )
 		return -1;
 	}
 	sasl_getprop( p->sasl_context, SASL_MAXOUTBUF,
-		(void **) &p->sasl_maxbuf );
+		(SASL_CONST void **) &p->sasl_maxbuf );
 
 	sbiod->sbiod_pvt = p;
 
@@ -129,6 +160,14 @@ sb_sasl_remove( Sockbuf_IO_Desc *sbiod )
 	assert( sbiod != NULL );
 	
 	p = (struct sb_sasl_data *)sbiod->sbiod_pvt;
+#if SASL_VERSION_MAJOR >= 2
+	/*
+	 * SASLv2 encode/decode buffers are managed by
+	 * libsasl2. Ensure they are not freed by liblber.
+	 */
+	p->buf_in.buf_base = NULL;
+	p->buf_out.buf_base = NULL;
+#endif
 	ber_pvt_sb_buf_destroy( &p->sec_buf_in );
 	ber_pvt_sb_buf_destroy( &p->buf_in );
 	ber_pvt_sb_buf_destroy( &p->buf_out );
@@ -155,10 +194,6 @@ sb_sasl_pkt_length( const unsigned char *buf, unsigned max, int debuglevel )
 			"sb_sasl_pkt_length: received illegal packet length "
 			"of %lu bytes\n", (unsigned long)size );      
 		size = 16; /* this should lead to an error. */
-	} else if ( size > max ) {
-		ber_log_printf( LDAP_DEBUG_ANY, debuglevel,
-			"sb_sasl_pkt_length: received packet length "
-			"of %lu exceeds negotiated max of %lu bytes\n", (unsigned long)size, (unsigned long)max );
 	}
 
 	return size + 4; /* include the size !!! */
@@ -204,7 +239,11 @@ sb_sasl_read( Sockbuf_IO_Desc *sbiod, void *buf, ber_len_t len)
 	if ( len == 0 )
 		return bufptr;
 
+#if SASL_VERSION_MAJOR >= 2
+	ber_pvt_sb_buf_init( &p->buf_in );
+#else
 	ber_pvt_sb_buf_destroy( &p->buf_in );
+#endif
 
 	/* Read the length of the packet */
 	while ( p->sec_buf_in.buf_ptr < 4 ) {
@@ -226,7 +265,8 @@ sb_sasl_read( Sockbuf_IO_Desc *sbiod, void *buf, ber_len_t len)
 
 	/* Grow the packet buffer if neccessary */
 	if ( ( p->sec_buf_in.buf_size < (ber_len_t) ret ) && 
-			ber_pvt_sb_grow_buffer( &p->sec_buf_in, ret ) < 0 ) {
+		ber_pvt_sb_grow_buffer( &p->sec_buf_in, ret ) < 0 )
+	{
 		errno = ENOMEM;
 		return -1;
 	}
@@ -251,7 +291,8 @@ sb_sasl_read( Sockbuf_IO_Desc *sbiod, void *buf, ber_len_t len)
 
 	/* Decode the packet */
 	ret = sasl_decode( p->sasl_context, p->sec_buf_in.buf_base,
-		p->sec_buf_in.buf_end, &p->buf_in.buf_base,
+		p->sec_buf_in.buf_end,
+		(SASL_CONST char **)&p->buf_in.buf_base,
 		(unsigned *)&p->buf_in.buf_end );
 
 	/* Drop the packet from the input buffer */
@@ -297,11 +338,18 @@ sb_sasl_write( Sockbuf_IO_Desc *sbiod, void *buf, ber_len_t len)
 	}
 
 	/* now encode the next packet. */
+#if SASL_VERSION_MAJOR >= 2
+	ber_pvt_sb_buf_init( &p->buf_out );
+	/* sasl v2 makes sure this number is correct */
+	if ( len > *p->sasl_maxbuf )
+		len = *p->sasl_maxbuf;
+#else
 	ber_pvt_sb_buf_destroy( &p->buf_out );
-
 	if ( len > *p->sasl_maxbuf - 100 )
 		len = *p->sasl_maxbuf - 100;	/* For safety margin */
-	ret = sasl_encode( p->sasl_context, buf, len, &p->buf_out.buf_base,
+#endif
+	ret = sasl_encode( p->sasl_context, buf, len,
+		(SASL_CONST char **)&p->buf_out.buf_base,
 		(unsigned *)&p->buf_out.buf_size );
 	if ( ret != SASL_OK ) {
 		ber_log_printf( LDAP_DEBUG_ANY, sbiod->sbiod_sb->sb_debug,
@@ -343,8 +391,12 @@ Sockbuf_IO ldap_pvt_sockbuf_io_sasl = {
 
 int ldap_pvt_sasl_install( Sockbuf *sb, void *ctx_arg )
 {
+#ifdef NEW_LOGGING
+	LDAP_LOG ( TRANSPORT, ENTRY, "ldap_pvt_sasl_install\n", 0, 0, 0 );
+#else
 	Debug( LDAP_DEBUG_TRACE, "ldap_pvt_sasl_install\n",
 		0, 0, 0 );
+#endif
 
 	/* don't install the stuff unless security has been negotiated */
 
@@ -409,8 +461,7 @@ int
 ldap_int_sasl_open(
 	LDAP *ld, 
 	LDAPConn *lc,
-	const char * host,
-	ber_len_t ssf )
+	const char * host )
 {
 	int rc;
 	sasl_conn_t *ctx;
@@ -422,30 +473,28 @@ ldap_int_sasl_open(
 		return ld->ld_errno;
 	}
 
+#if SASL_VERSION_MAJOR >= 2
+	rc = sasl_client_new( "ldap", host, NULL, NULL,
+		NULL, 0, &ctx );
+#else
 	rc = sasl_client_new( "ldap", host, NULL,
 		SASL_SECURITY_LAYER, &ctx );
+#endif
 
 	if ( rc != SASL_OK ) {
 		ld->ld_errno = sasl_err2ldap( rc );
 		return ld->ld_errno;
 	}
 
+#ifdef NEW_LOGGING
+	LDAP_LOG ( TRANSPORT, DETAIL1, "ldap_int_sasl_open: host=%s\n", 
+		host, 0, 0 );
+#else
 	Debug( LDAP_DEBUG_TRACE, "ldap_int_sasl_open: host=%s\n",
 		host, 0, 0 );
+#endif
 
 	lc->lconn_sasl_ctx = ctx;
-
-	if( ssf ) {
-		sasl_external_properties_t extprops;
-		memset(&extprops, 0L, sizeof(extprops));
-		extprops.ssf = ssf;
-
-		(void) sasl_setprop( ctx, SASL_SSF_EXTERNAL,
-			(void *) &extprops );
-
-		Debug( LDAP_DEBUG_TRACE, "ldap_int_sasl_open: ssf=%ld\n",
-			(long) ssf, 0, 0 );
-	}
 
 	return LDAP_SUCCESS;
 }
@@ -484,8 +533,13 @@ ldap_int_sasl_bind(
 	struct berval ccred;
 	ber_socket_t		sd;
 
+#ifdef NEW_LOGGING
+	LDAP_LOG ( TRANSPORT, ARGS, "ldap_int_sasl_bind: %s\n", 
+		mechs ? mechs : "<null>", 0, 0 );
+#else
 	Debug( LDAP_DEBUG_TRACE, "ldap_int_sasl_bind: %s\n",
 		mechs ? mechs : "<null>", 0, 0 );
+#endif
 
 	/* do a quick !LDAPv3 check... ldap_sasl_bind will do the rest. */
 	if (ld->ld_version < LDAP_VERSION3) {
@@ -527,9 +581,11 @@ ldap_int_sasl_bind(
 	do {
 		saslrc = sasl_client_start( ctx,
 			mechs,
+#if SASL_VERSION_MAJOR < 2
 			NULL,
+#endif
 			&prompts,
-			&ccred.bv_val,
+			(SASL_CONST char **)&ccred.bv_val,
 			&credlen,
 			&mech );
 
@@ -547,17 +603,19 @@ ldap_int_sasl_bind(
 			int res;
 			if( !interact ) break;
 			res = (interact)( ld, flags, defaults, prompts );
-			if( res != LDAP_SUCCESS ) {
-				break;
-			}
+
+			if( res != LDAP_SUCCESS ) break;
 		}
 	} while ( saslrc == SASL_INTERACT );
 
 	ccred.bv_len = credlen;
 
 	if ( (saslrc != SASL_OK) && (saslrc != SASL_CONTINUE) ) {
-		ld->ld_errno = sasl_err2ldap( saslrc );
-		return ld->ld_errno;
+		rc = ld->ld_errno = sasl_err2ldap( saslrc );
+#if SASL_VERSION_MAJOR >= 2
+		ld->ld_error = LDAP_STRDUP( sasl_errdetail( ctx ) );
+#endif
+		goto done;
 	}
 
 	do {
@@ -569,30 +627,46 @@ ldap_int_sasl_bind(
 		rc = ldap_sasl_bind_s( ld, dn, mech, &ccred, sctrls, cctrls, &scred );
 
 		if ( ccred.bv_val != NULL ) {
+#if SASL_VERSION_MAJOR < 2
 			LDAP_FREE( ccred.bv_val );
+#endif
 			ccred.bv_val = NULL;
 		}
 
 		if ( rc != LDAP_SUCCESS && rc != LDAP_SASL_BIND_IN_PROGRESS ) {
 			if( scred && scred->bv_len ) {
 				/* and server provided us with data? */
+#ifdef NEW_LOGGING
+				LDAP_LOG ( TRANSPORT, DETAIL1, 
+					"ldap_int_sasl_bind: rc=%d sasl=%d len=%ld\n", 
+					rc, saslrc, scred->bv_len );
+#else
 				Debug( LDAP_DEBUG_TRACE,
 					"ldap_int_sasl_bind: rc=%d sasl=%d len=%ld\n",
 					rc, saslrc, scred->bv_len );
+#endif
 				ber_bvfree( scred );
 			}
-			return ld->ld_errno;
+			rc = ld->ld_errno;
+			goto done;
 		}
 
 		if( rc == LDAP_SUCCESS && saslrc == SASL_OK ) {
 			/* we're done, no need to step */
 			if( scred && scred->bv_len ) {
 				/* but server provided us with data! */
+#ifdef NEW_LOGGING
+				LDAP_LOG ( TRANSPORT, DETAIL1, 
+					"ldap_int_sasl_bind: rc=%d sasl=%d len=%ld\n", 
+					rc, saslrc, scred->bv_len );
+#else
 				Debug( LDAP_DEBUG_TRACE,
 					"ldap_int_sasl_bind: rc=%d sasl=%d len=%ld\n",
 					rc, saslrc, scred->bv_len );
+#endif
 				ber_bvfree( scred );
-				return ld->ld_errno = LDAP_LOCAL_ERROR;
+				rc = ld->ld_errno = LDAP_LOCAL_ERROR;
+				goto done;
 			}
 			break;
 		}
@@ -602,19 +676,22 @@ ldap_int_sasl_bind(
 				(scred == NULL) ? NULL : scred->bv_val,
 				(scred == NULL) ? 0 : scred->bv_len,
 				&prompts,
-				&ccred.bv_val,
+				(SASL_CONST char **)&ccred.bv_val,
 				&credlen );
 
+#ifdef NEW_LOGGING
+				LDAP_LOG ( TRANSPORT, DETAIL1, 
+					"ldap_int_sasl_bind: sasl_client_step: %d\n", saslrc,0,0 );
+#else
 			Debug( LDAP_DEBUG_TRACE, "sasl_client_step: %d\n",
 				saslrc, 0, 0 );
+#endif
 
 			if( saslrc == SASL_INTERACT ) {
 				int res;
 				if( !interact ) break;
 				res = (interact)( ld, flags, defaults, prompts );
-				if( res != LDAP_SUCCESS ) {
-					break;
-				}
+				if( res != LDAP_SUCCESS ) break;
 			}
 		} while ( saslrc == SASL_INTERACT );
 
@@ -623,31 +700,39 @@ ldap_int_sasl_bind(
 
 		if ( (saslrc != SASL_OK) && (saslrc != SASL_CONTINUE) ) {
 			ld->ld_errno = sasl_err2ldap( saslrc );
-			return ld->ld_errno;
+#if SASL_VERSION_MAJOR >= 2
+			ld->ld_error = LDAP_STRDUP( sasl_errdetail( ctx ) );
+#endif
+			rc = ld->ld_errno;
+			goto done;
 		}
 	} while ( rc == LDAP_SASL_BIND_IN_PROGRESS );
 
-	if ( rc != LDAP_SUCCESS ) {
-		return rc;
-	}
+	if ( rc != LDAP_SUCCESS ) goto done;
 
 	if ( saslrc != SASL_OK ) {
-		return ld->ld_errno = sasl_err2ldap( saslrc );
+#if SASL_VERSION_MAJOR >= 2
+		ld->ld_error = LDAP_STRDUP( sasl_errdetail( ctx ) );
+#endif
+		rc = ld->ld_errno = sasl_err2ldap( saslrc );
+		goto done;
 	}
 
 	if( flags != LDAP_SASL_QUIET ) {
-		saslrc = sasl_getprop( ctx, SASL_USERNAME, (void **) &data );
+		saslrc = sasl_getprop( ctx, SASL_USERNAME, (SASL_CONST void **) &data );
 		if( saslrc == SASL_OK && data && *data ) {
 			fprintf( stderr, "SASL username: %s\n", data );
 		}
 
-		saslrc = sasl_getprop( ctx, SASL_REALM, (void **) &data );
+#if SASL_VERSION_MAJOR < 2
+		saslrc = sasl_getprop( ctx, SASL_REALM, (SASL_CONST void **) &data );
 		if( saslrc == SASL_OK && data && *data ) {
 			fprintf( stderr, "SASL realm: %s\n", data );
 		}
+#endif
 	}
 
-	saslrc = sasl_getprop( ctx, SASL_SSF, (void **) &ssf );
+	saslrc = sasl_getprop( ctx, SASL_SSF, (SASL_CONST void **) &ssf );
 	if( saslrc == SASL_OK ) {
 		if( flags != LDAP_SASL_QUIET ) {
 			fprintf( stderr, "SASL SSF: %lu\n",
@@ -662,6 +747,7 @@ ldap_int_sasl_bind(
 		}
 	}
 
+done:
 	return rc;
 }
 
@@ -674,21 +760,29 @@ ldap_int_sasl_external(
 {
 	int sc;
 	sasl_conn_t *ctx;
+#if SASL_VERSION_MAJOR < 2
 	sasl_external_properties_t extprops;
+#endif
 
 	ctx = conn->lconn_sasl_ctx;
 
 	if ( ctx == NULL ) {
 		return LDAP_LOCAL_ERROR;
 	}
-    
+   
+#if SASL_VERSION_MAJOR >= 2
+	sc = sasl_setprop( ctx, SASL_SSF_EXTERNAL, &ssf );
+	if ( sc == SASL_OK )
+		sc = sasl_setprop( ctx, SASL_AUTH_EXTERNAL, authid );
+#else
 	memset( &extprops, '\0', sizeof(extprops) );
 	extprops.ssf = ssf;
 	extprops.auth_id = (char *) authid;
-    
+
 	sc = sasl_setprop( ctx, SASL_SSF_EXTERNAL,
 		(void *) &extprops );
-    
+#endif
+
 	if ( sc != SASL_OK ) {
 		return LDAP_LOCAL_ERROR;
 	}
@@ -857,7 +951,7 @@ ldap_int_sasl_get_option( LDAP *ld, int option, void *arg )
 			}
 
 			sc = sasl_getprop( ctx, SASL_SSF,
-				(void **) &ssf );
+				(SASL_CONST void **) &ssf );
 
 			if ( sc != SASL_OK ) {
 				return -1;
@@ -903,7 +997,9 @@ ldap_int_sasl_set_option( LDAP *ld, int option, void *arg )
 
 	case LDAP_OPT_X_SASL_SSF_EXTERNAL: {
 		int sc;
+#if SASL_VERSION_MAJOR < 2
 		sasl_external_properties_t extprops;
+#endif
 		sasl_conn_t *ctx;
 
 		if( ld->ld_defconn == NULL ) {
@@ -916,12 +1012,16 @@ ldap_int_sasl_set_option( LDAP *ld, int option, void *arg )
 			return -1;
 		}
 
+#if SASL_VERSION_MAJOR >= 2
+		sc = sasl_setprop( ctx, SASL_SSF_EXTERNAL, arg);
+#else
 		memset(&extprops, 0L, sizeof(extprops));
 
 		extprops.ssf = * (ber_len_t *) arg;
 
 		sc = sasl_setprop( ctx, SASL_SSF_EXTERNAL,
 			(void *) &extprops );
+#endif
 
 		if ( sc != SASL_OK ) {
 			return -1;
@@ -953,6 +1053,7 @@ ldap_int_sasl_set_option( LDAP *ld, int option, void *arg )
 }
 
 #ifdef LDAP_R_COMPILE
+#define LDAP_DEBUG_R_SASL
 void *ldap_pvt_sasl_mutex_new(void)
 {
 	ldap_pvt_thread_mutex_t *mutex;
@@ -963,23 +1064,47 @@ void *ldap_pvt_sasl_mutex_new(void)
 	if ( ldap_pvt_thread_mutex_init( mutex ) == 0 ) {
 		return mutex;
 	}
+#ifndef LDAP_DEBUG_R_SASL
+	assert( 0 );
+#endif /* !LDAP_DEBUG_R_SASL */
 	return NULL;
 }
 
 int ldap_pvt_sasl_mutex_lock(void *mutex)
 {
+#ifdef LDAP_DEBUG_R_SASL
+	if ( mutex == NULL ) {
+		return SASL_OK;
+	}
+#else /* !LDAP_DEBUG_R_SASL */
+	assert( mutex );
+#endif /* !LDAP_DEBUG_R_SASL */
 	return ldap_pvt_thread_mutex_lock( (ldap_pvt_thread_mutex_t *)mutex )
 		? SASL_FAIL : SASL_OK;
 }
 
 int ldap_pvt_sasl_mutex_unlock(void *mutex)
 {
+#ifdef LDAP_DEBUG_R_SASL
+	if ( mutex == NULL ) {
+		return SASL_OK;
+	}
+#else /* !LDAP_DEBUG_R_SASL */
+	assert( mutex );
+#endif /* !LDAP_DEBUG_R_SASL */
 	return ldap_pvt_thread_mutex_unlock( (ldap_pvt_thread_mutex_t *)mutex )
 		? SASL_FAIL : SASL_OK;
 }
 
 void ldap_pvt_sasl_mutex_dispose(void *mutex)
 {
+#ifdef LDAP_DEBUG_R_SASL
+	if ( mutex == NULL ) {
+		return;
+	}
+#else /* !LDAP_DEBUG_R_SASL */
+	assert( mutex );
+#endif /* !LDAP_DEBUG_R_SASL */
 	(void) ldap_pvt_thread_mutex_destroy( (ldap_pvt_thread_mutex_t *)mutex );
 	LDAP_FREE( mutex );
 }

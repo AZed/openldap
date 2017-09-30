@@ -1,6 +1,6 @@
-/* $OpenLDAP: pkg/ldap/servers/slurpd/config.c,v 1.9.8.10 2002/01/04 20:38:36 kurt Exp $ */
+/* $OpenLDAP$ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 /*
@@ -34,15 +34,17 @@
 #include "slurp.h"
 #include "globals.h"
 
-#define MAXARGS	500
+#define ARGS_STEP	512
 
 /* Forward declarations */
 static void	add_replica LDAP_P(( char **, int ));
 static int	parse_replica_line LDAP_P(( char **, int, Ri *));
-static void	parse_line LDAP_P(( char *, int *, char ** ));
+static void	parse_line LDAP_P(( char * ));
 static char	*getline LDAP_P(( FILE * ));
 static char	*strtok_quote LDAP_P(( char *, char * ));
 
+int	cargc = 0, cargv_size = 0;
+char	**cargv;
 /* current config file line # */
 static int	lineno;
 
@@ -60,11 +62,18 @@ slurpd_read_config(
 {
     FILE	*fp;
     char	*line;
-    int		cargc;
-    char	*cargv[MAXARGS];
 
+	cargv = ch_calloc( ARGS_STEP + 1, sizeof(*cargv) );
+	cargv_size = ARGS_STEP + 1;
+
+#ifdef NEW_LOGGING
+    LDAP_LOG ( CONFIG, ARGS, 
+		"slurpd_read_config: Config: opening config file \"%s\"\n", 
+		fname, 0, 0 );
+#else
     Debug( LDAP_DEBUG_CONFIG, "Config: opening config file \"%s\"\n",
 	    fname, 0, 0 );
+#endif
 
     if ( (fp = fopen( fname, "r" )) == NULL ) {
 	perror( fname );
@@ -78,9 +87,14 @@ slurpd_read_config(
 	    continue;
 	}
 
+#ifdef NEW_LOGGING
+    LDAP_LOG ( CONFIG, DETAIL1, 
+		"slurpd_read_config: Config: (%s)\n", line, 0, 0 );
+#else
 	Debug( LDAP_DEBUG_CONFIG, "Config: (%s)\n", line, 0, 0 );
+#endif
 
-	parse_line( line, &cargc, cargv );
+	parse_line( line );
 
 	if ( cargc < 1 ) {
 	    fprintf( stderr, "line %d: bad config line (ignored)\n", lineno );
@@ -119,9 +133,9 @@ slurpd_read_config(
 
             if ( cargc < 2 ) {
 #ifdef NEW_LOGGING
-                LDAP_LOG(( "config", LDAP_LEVEL_CRIT,
+                LDAP_LOG( CONFIG, CRIT,
                         "%s: line %d: missing filename in \"include "
-                        "<filename>\" line.\n", fname, lineno ));
+                        "<filename>\" line.\n", fname, lineno , 0 );
 #else
                 Debug( LDAP_DEBUG_ANY,
         "%s: line %d: missing filename in \"include <filename>\" line\n",
@@ -142,9 +156,15 @@ slurpd_read_config(
 	}
     }
     fclose( fp );
+#ifdef NEW_LOGGING
+    LDAP_LOG ( CONFIG, RESULTS, 
+		"slurpd_read_config: Config: "
+		"** configuration file successfully read and parsed\n", 0, 0, 0 );
+#else
     Debug( LDAP_DEBUG_CONFIG,
 	    "Config: ** configuration file successfully read and parsed\n",
 	    0, 0, 0 );
+#endif
     return 0;
 }
 
@@ -156,19 +176,30 @@ slurpd_read_config(
  */
 static void
 parse_line(
-    char	*line,
-    int		*argcp,
-    char	**argv
+    char	*line
 )
 {
     char *	token;
 
-    *argcp = 0;
+    cargc = 0;
     for ( token = strtok_quote( line, " \t" ); token != NULL;
-	token = strtok_quote( NULL, " \t" ) ) {
-	argv[(*argcp)++] = token;
+	token = strtok_quote( NULL, " \t" ) )
+    {
+        if ( cargc == cargv_size - 1 ) {
+	    char **tmp;
+            tmp = ch_realloc( cargv, (cargv_size + ARGS_STEP) *
+                               sizeof(*cargv) );
+	    if (tmp == NULL) {
+		cargc = 0;
+		return;
+	    }
+	    cargv = tmp;
+            cargv_size += ARGS_STEP;
+        }
+
+	cargv[cargc++] = token;
     }
-    argv[*argcp] = NULL;
+    cargv[cargc] = NULL;
 }
 
 
@@ -313,11 +344,19 @@ add_replica(
 	sglob->replicas[ nr - 1] = NULL;
 	sglob->num_replicas--;
     } else {
+#ifdef NEW_LOGGING
+    LDAP_LOG ( CONFIG, RESULTS, 
+		"add_replica: Config: ** successfully added replica \"%s%d\"\n", 
+		sglob->replicas[ nr - 1 ]->ri_hostname == NULL ?
+		"(null)" : sglob->replicas[ nr - 1 ]->ri_hostname,
+		sglob->replicas[ nr - 1 ]->ri_port, 0 );
+#else
 	Debug( LDAP_DEBUG_CONFIG,
 		"Config: ** successfully added replica \"%s:%d\"\n",
 		sglob->replicas[ nr - 1 ]->ri_hostname == NULL ?
 		"(null)" : sglob->replicas[ nr - 1 ]->ri_hostname,
 		sglob->replicas[ nr - 1 ]->ri_port, 0 );
+#endif
 	sglob->replicas[ nr - 1]->ri_stel =
 		sglob->st->st_add( sglob->st,
 		sglob->replicas[ nr - 1 ] );
@@ -369,8 +408,8 @@ parse_replica_line(
     char	*hp, *val;
 
     for ( i = 1; i < cargc; i++ ) {
-	if ( !strncasecmp( cargv[ i ], HOSTSTR, strlen( HOSTSTR ))) {
-	    val = cargv[ i ] + strlen( HOSTSTR ) + 1;
+	if ( !strncasecmp( cargv[ i ], HOSTSTR, sizeof( HOSTSTR ) - 1 ) ) {
+	    val = cargv[ i ] + sizeof( HOSTSTR ); /* '\0' string terminator accounts for '=' */
 	    if (( hp = strchr( val, ':' )) != NULL ) {
 		*hp = '\0';
 		hp++;
@@ -381,23 +420,27 @@ parse_replica_line(
 	    }
 	    ri->ri_hostname = strdup( val );
 	    gots |= GOT_HOST;
-	} else if ( !strncasecmp( cargv[ i ], SUFFIXSTR, strlen( HOSTSTR ))) {
+	} else if ( !strncasecmp( cargv[ i ], 
+			ATTRSTR, sizeof( ATTRSTR ) - 1 ) ) {
 	    /* ignore it */ ;
-	} else if ( !strncasecmp( cargv[ i ], TLSSTR, strlen( TLSSTR ))) {
-	    val = cargv[ i ] + strlen( TLSSTR ) + 1;
+	} else if ( !strncasecmp( cargv[ i ], 
+			SUFFIXSTR, sizeof( SUFFIXSTR ) - 1 ) ) {
+	    /* ignore it */ ;
+	} else if ( !strncasecmp( cargv[ i ], TLSSTR, sizeof( TLSSTR ) - 1 ) ) {
+	    val = cargv[ i ] + sizeof( TLSSTR );
 		if( !strcasecmp( val, TLSCRITICALSTR ) ) {
 			ri->ri_tls = TLS_CRITICAL;
 		} else {
 			ri->ri_tls = TLS_ON;
 		}
 	} else if ( !strncasecmp( cargv[ i ],
-		BINDDNSTR, strlen( BINDDNSTR ))) { 
-	    val = cargv[ i ] + strlen( BINDDNSTR ) + 1;
+			BINDDNSTR, sizeof( BINDDNSTR ) - 1 ) ) { 
+	    val = cargv[ i ] + sizeof( BINDDNSTR );
 	    ri->ri_bind_dn = strdup( val );
 	    gots |= GOT_DN;
 	} else if ( !strncasecmp( cargv[ i ], BINDMETHSTR,
-		strlen( BINDMETHSTR ))) {
-	    val = cargv[ i ] + strlen( BINDMETHSTR ) + 1;
+		sizeof( BINDMETHSTR ) - 1 ) ) {
+	    val = cargv[ i ] + sizeof( BINDMETHSTR );
 	    if ( !strcasecmp( val, KERBEROSSTR )) {
 	    fprintf( stderr, "Error: a bind method of \"kerberos\" was\n" );
 	    fprintf( stderr, "specified in the slapd configuration file.\n" );
@@ -412,31 +455,39 @@ parse_replica_line(
 	    } else {
 		ri->ri_bind_method = -1;
 	    }
-	} else if ( !strncasecmp( cargv[ i ], SASLMECHSTR, strlen( SASLMECHSTR ))) {
-	    val = cargv[ i ] + strlen( SASLMECHSTR ) + 1;
+	} else if ( !strncasecmp( cargv[ i ], 
+			SASLMECHSTR, sizeof( SASLMECHSTR ) - 1 ) ) {
+	    val = cargv[ i ] + sizeof( SASLMECHSTR );
 	    gots |= GOT_MECH;
 	    ri->ri_saslmech = strdup( val );
-	} else if ( !strncasecmp( cargv[ i ], CREDSTR, strlen( CREDSTR ))) {
-	    val = cargv[ i ] + strlen( CREDSTR ) + 1;
+	} else if ( !strncasecmp( cargv[ i ], 
+			CREDSTR, sizeof( CREDSTR ) - 1 ) ) {
+	    val = cargv[ i ] + sizeof( CREDSTR );
 	    ri->ri_password = strdup( val );
-	} else if ( !strncasecmp( cargv[ i ], SECPROPSSTR, strlen( SECPROPSSTR ))) {
-	    val = cargv[ i ] + strlen( SECPROPSSTR ) + 1;
+	} else if ( !strncasecmp( cargv[ i ], 
+			SECPROPSSTR, sizeof( SECPROPSSTR ) - 1 ) ) {
+	    val = cargv[ i ] + sizeof( SECPROPSSTR );
 	    ri->ri_secprops = strdup( val );
-	} else if ( !strncasecmp( cargv[ i ], REALMSTR, strlen( REALMSTR ))) {
-	    val = cargv[ i ] + strlen( REALMSTR ) + 1;
+	} else if ( !strncasecmp( cargv[ i ], 
+			REALMSTR, sizeof( REALMSTR ) - 1 ) ) {
+	    val = cargv[ i ] + sizeof( REALMSTR );
 	    ri->ri_realm = strdup( val );
-	} else if ( !strncasecmp( cargv[ i ], AUTHCSTR, strlen( AUTHCSTR ))) {
-	    val = cargv[ i ] + strlen( AUTHCSTR ) + 1;
+	} else if ( !strncasecmp( cargv[ i ], 
+			AUTHCSTR, sizeof( AUTHCSTR ) - 1 ) ) {
+	    val = cargv[ i ] + sizeof( AUTHCSTR );
 	    ri->ri_authcId = strdup( val );
-	} else if ( !strncasecmp( cargv[ i ], OLDAUTHCSTR, strlen( OLDAUTHCSTR ))) {
+	} else if ( !strncasecmp( cargv[ i ], 
+			OLDAUTHCSTR, sizeof( OLDAUTHCSTR ) - 1 ) ) {
 	    /* Old authcID is provided for some backwards compatibility */
-	    val = cargv[ i ] + strlen( OLDAUTHCSTR ) + 1;
+	    val = cargv[ i ] + sizeof( OLDAUTHCSTR );
 	    ri->ri_authcId = strdup( val );
-	} else if ( !strncasecmp( cargv[ i ], AUTHZSTR, strlen( AUTHZSTR ))) {
-	    val = cargv[ i ] + strlen( AUTHZSTR ) + 1;
+	} else if ( !strncasecmp( cargv[ i ], 
+			AUTHZSTR, sizeof( AUTHZSTR ) - 1 ) ) {
+	    val = cargv[ i ] + sizeof( AUTHZSTR );
 	    ri->ri_authzId = strdup( val );
-	} else if ( !strncasecmp( cargv[ i ], SRVTABSTR, strlen( SRVTABSTR ))) {
-	    val = cargv[ i ] + strlen( SRVTABSTR ) + 1;
+	} else if ( !strncasecmp( cargv[ i ], 
+			SRVTABSTR, sizeof( SRVTABSTR ) - 1 ) ) {
+	    val = cargv[ i ] + sizeof( SRVTABSTR );
 	    if ( ri->ri_srvtab != NULL ) {
 		free( ri->ri_srvtab );
 	    }

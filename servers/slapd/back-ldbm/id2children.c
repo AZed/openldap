@@ -1,7 +1,7 @@
 /* id2children.c - routines to deal with the id2children index */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/id2children.c,v 1.18.2.4 2002/01/04 20:38:34 kurt Exp $ */
+/* $OpenLDAP$ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 
@@ -14,7 +14,6 @@
 
 #include "slap.h"
 #include "back-ldbm.h"
-
 
 int
 has_children(
@@ -29,13 +28,24 @@ has_children(
 
 	ldbm_datum_init( key );
 
+#ifdef NEW_LOGGING
+	LDAP_LOG( INDEX, ENTRY, "has_children: enter %ld\n", p->e_id, 0, 0 );
+#else
 	Debug( LDAP_DEBUG_TRACE, "=> has_children( %ld )\n", p->e_id , 0, 0 );
+#endif
+
 
 	if ( (db = ldbm_cache_open( be, "dn2id", LDBM_SUFFIX,
 	    LDBM_WRCREAT )) == NULL ) {
+#ifdef NEW_LOGGING
+		LDAP_LOG( INDEX, ERR, 
+			"has_children: could not open \"dn2id%s\"\n", LDBM_SUFFIX, 0, 0 );
+#else
 		Debug( LDAP_DEBUG_ANY,
 		    "<= has_children -1 could not open \"dn2id%s\"\n",
 		    LDBM_SUFFIX, 0, 0 );
+#endif
+
 		return( 0 );
 	}
 
@@ -54,7 +64,14 @@ has_children(
 		rc = 1;
 	}
 
+#ifdef NEW_LOGGING
+	LDAP_LOG( INDEX, ENTRY, 
+		   "has_children: id (%ld) %s children.\n",
+		   p->e_id, rc ? "has" : "doesn't have", 0 );
+#else
 	Debug( LDAP_DEBUG_TRACE, "<= has_children( %ld ): %s\n",
 		p->e_id, rc ? "yes" : "no", 0 );
+#endif
+
 	return( rc );
 }

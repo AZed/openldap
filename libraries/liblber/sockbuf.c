@@ -1,7 +1,7 @@
 /* sockbuf.c - i/o routines with support for adding i/o layers. */
-/* $OpenLDAP: pkg/ldap/libraries/liblber/sockbuf.c,v 1.22.2.12 2002/09/05 20:53:36 hyc Exp $ */
+/* $OpenLDAP$ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 
@@ -33,9 +33,15 @@
 
 #include "lber-int.h"
 
-#define MIN_BUFF_SIZE		4096
-#define MAX_BUFF_SIZE		65536
-#define DEFAULT_READAHEAD	16384
+#ifndef LBER_MIN_BUFF_SIZE
+#define LBER_MIN_BUFF_SIZE		4096
+#endif
+#ifndef LBER_MAX_BUFF_SIZE
+#define LBER_MAX_BUFF_SIZE		65536
+#endif
+#ifndef LBER_DEFAULT_READAHEAD
+#define LBER_DEFAULT_READAHEAD	16384
+#endif
 
 Sockbuf *
 ber_sockbuf_alloc( void )
@@ -108,7 +114,7 @@ ber_sockbuf_ctrl( Sockbuf *sb, int opt, void *arg )
 				/* Drain the data source to enable possible errors (e.g.
 				 * TLS) to be propagated to the upper layers
 				 */
-				char buf[MIN_BUFF_SIZE];
+				char buf[LBER_MIN_BUFF_SIZE];
 
 				do {
 					ret = ber_int_sb_read( sb, buf, sizeof( buf ) );
@@ -243,18 +249,16 @@ ber_pvt_sb_grow_buffer( Sockbuf_Buf *buf, ber_len_t minsize )
    
 	assert( buf != NULL );
 
-	for ( pw = MIN_BUFF_SIZE; pw < minsize; pw <<= 1 ) {
-		if (pw > MAX_BUFF_SIZE)
-      return -1;
-   }
+	for ( pw = LBER_MIN_BUFF_SIZE; pw < minsize; pw <<= 1 ) {
+		if (pw > LBER_MAX_BUFF_SIZE) return -1;
+	}
 
 	if ( buf->buf_size < pw ) {
 		p = LBER_REALLOC( buf->buf_base, pw );
-		if ( p == NULL )
-			return -1;
+		if ( p == NULL ) return -1;
 		buf->buf_base = p;
 		buf->buf_size = pw;
-   }
+	}
 	return 0;
 }
 
@@ -593,7 +597,7 @@ sb_rdahead_setup( Sockbuf_IO_Desc *sbiod, void *arg )
 	ber_pvt_sb_buf_init( p );
 
 	if ( arg == NULL ) {
-		ber_pvt_sb_grow_buffer( p, DEFAULT_READAHEAD );
+		ber_pvt_sb_grow_buffer( p, LBER_DEFAULT_READAHEAD );
 	} else {
 		ber_pvt_sb_grow_buffer( p, *((int *)arg) );
 	}
@@ -810,17 +814,21 @@ sb_debug_read( Sockbuf_IO_Desc *sbiod, void *buf, ber_len_t len )
 	ber_slen_t		ret;
 
 	ret = LBER_SBIOD_READ_NEXT( sbiod, buf, len );
-	if ( ret < 0 ) {
+	if (sbiod->sbiod_sb->sb_debug & LDAP_DEBUG_PACKETS)
+	{
+	    int err = errno;
+	    if ( ret < 0 ) {
 		ber_log_printf( LDAP_DEBUG_PACKETS, sbiod->sbiod_sb->sb_debug,
 			"%sread: want=%ld error=%s\n", (char *)sbiod->sbiod_pvt,
 			(long)len, STRERROR( errno ) );
-
-	} else {
+	    } else {
 		ber_log_printf( LDAP_DEBUG_PACKETS, sbiod->sbiod_sb->sb_debug,
 			"%sread: want=%ld, got=%ld\n", (char *)sbiod->sbiod_pvt,
 			(long)len, (long)ret );
 		ber_log_bprint( LDAP_DEBUG_PACKETS, sbiod->sbiod_sb->sb_debug,
 			(const char *)buf, ret );
+	    }
+	    errno = err;
 	}
 	return ret;
 }
@@ -831,18 +839,23 @@ sb_debug_write( Sockbuf_IO_Desc *sbiod, void *buf, ber_len_t len )
 	ber_slen_t		ret;
 
 	ret = LBER_SBIOD_WRITE_NEXT( sbiod, buf, len );
-	if ( ret < 0 ) {
+	if (sbiod->sbiod_sb->sb_debug & LDAP_DEBUG_PACKETS)
+	{
+	    int err = errno;
+	    if ( ret < 0 ) {
 		ber_log_printf( LDAP_DEBUG_PACKETS, sbiod->sbiod_sb->sb_debug,
 			"%swrite: want=%ld error=%s\n",
 			(char *)sbiod->sbiod_pvt, (long)len,
 			STRERROR( errno ) );
-
-	} else {
+		errno = err;
+	    } else {
 		ber_log_printf( LDAP_DEBUG_PACKETS, sbiod->sbiod_sb->sb_debug,
 			"%swrite: want=%ld, written=%ld\n",
 			(char *)sbiod->sbiod_pvt, (long)len, (long)ret );
 		ber_log_bprint( LDAP_DEBUG_PACKETS, sbiod->sbiod_sb->sb_debug,
 			(const char *)buf, ret );
+	    }
+	    errno = err;
 	}
 
 	return ret;
@@ -857,3 +870,105 @@ Sockbuf_IO ber_sockbuf_io_debug = {
 	NULL				/* sbi_close */
 };
 
+#ifdef LDAP_CONNECTIONLESS
+
+/*
+ * Support for UDP (CLDAP)
+ *
+ * All I/O at this level must be atomic. For ease of use, the sb_readahead
+ * must be used above this module. All data reads and writes are prefixed
+ * with a sockaddr containing the address of the remote entity. Upper levels
+ * must read and write this sockaddr before doing the usual ber_printf/scanf
+ * operations on LDAP messages.
+ */
+
+static int 
+sb_dgram_setup( Sockbuf_IO_Desc *sbiod, void *arg )
+{
+	assert( sbiod != NULL);
+	assert( SOCKBUF_VALID( sbiod->sbiod_sb ) );
+
+	if ( arg != NULL )
+		sbiod->sbiod_sb->sb_fd = *((int *)arg);
+	return 0;
+}
+
+static ber_slen_t
+sb_dgram_read( Sockbuf_IO_Desc *sbiod, void *buf, ber_len_t len )
+{
+	ber_slen_t rc;
+	socklen_t  addrlen;
+	struct sockaddr *src;
+   
+	assert( sbiod != NULL );
+	assert( SOCKBUF_VALID( sbiod->sbiod_sb ) );
+	assert( buf != NULL );
+
+	addrlen = sizeof( struct sockaddr );
+	src = buf;
+	buf += addrlen;
+	rc = recvfrom( sbiod->sbiod_sb->sb_fd, buf, len, 0, src,
+		&addrlen );
+
+	return rc > 0 ? rc+sizeof(struct sockaddr) : rc;
+}
+
+static ber_slen_t 
+sb_dgram_write( Sockbuf_IO_Desc *sbiod, void *buf, ber_len_t len )
+{
+	ber_slen_t rc;
+	struct sockaddr *dst;
+   
+	assert( sbiod != NULL );
+	assert( SOCKBUF_VALID( sbiod->sbiod_sb ) );
+	assert( buf != NULL );
+
+	dst = buf;
+	buf += sizeof( struct sockaddr );
+	len -= sizeof( struct sockaddr );
+   
+	rc = sendto( sbiod->sbiod_sb->sb_fd, buf, len, 0, dst,
+	     sizeof( struct sockaddr ) );
+
+	if ( rc < 0 )
+		return -1;
+   
+	/* fake error if write was not atomic */
+	if (rc < len) {
+# ifdef EMSGSIZE
+	errno = EMSGSIZE;
+# endif
+		return -1;
+	}
+	rc = len + sizeof(struct sockaddr);
+	return rc;
+}
+
+static int 
+sb_dgram_close( Sockbuf_IO_Desc *sbiod )
+{
+	assert( sbiod != NULL );
+	assert( SOCKBUF_VALID( sbiod->sbiod_sb ) );
+
+	tcp_close( sbiod->sbiod_sb->sb_fd );
+	return 0;
+}
+
+static int
+sb_dgram_ctrl( Sockbuf_IO_Desc *sbiod, int opt, void *arg )
+{
+	/* This is an end IO descriptor */
+	return 0;
+}
+
+Sockbuf_IO ber_sockbuf_io_udp =
+{
+	sb_dgram_setup,		/* sbi_setup */
+	NULL,			/* sbi_remove */
+	sb_dgram_ctrl,		/* sbi_ctrl */
+	sb_dgram_read,		/* sbi_read */
+	sb_dgram_write,		/* sbi_write */
+	sb_dgram_close		/* sbi_close */
+};
+
+#endif	/* LDAP_CONNECTIONLESS */

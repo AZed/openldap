@@ -1,7 +1,7 @@
 /* compare.c - ldbm backend compare routine */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/compare.c,v 1.8.2.5 2002/01/29 19:29:39 kurt Exp $ */
+/* $OpenLDAP$ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 
@@ -21,8 +21,8 @@ ldbm_back_compare(
     Backend	*be,
     Connection	*conn,
     Operation	*op,
-    const char	*dn,
-    const char	*ndn,
+    struct berval	*dn,
+    struct berval	*ndn,
 	AttributeAssertion *ava
 )
 {
@@ -39,7 +39,7 @@ ldbm_back_compare(
 	/* get entry with reader lock */
 	if ( (e = dn2entry_r( be, ndn, &matched )) == NULL ) {
 		char *matched_dn = NULL;
-		struct berval **refs = NULL;
+		BerVarray refs = NULL;
 
 		if ( matched != NULL ) {
 			matched_dn = ch_strdup( matched->e_dn );
@@ -48,7 +48,8 @@ ldbm_back_compare(
 				: NULL;
 			cache_return_entry_r( &li->li_cache, matched );
 		} else {
-			refs = default_referral;
+			refs = referral_rewrite( default_referral,
+				NULL, dn, LDAP_SCOPE_DEFAULT );
 		}
 
 		ldap_pvt_thread_rdwr_runlock(&li->li_giant_rwlock);
@@ -56,33 +57,37 @@ ldbm_back_compare(
 		send_ldap_result( conn, op, LDAP_REFERRAL,
 			matched_dn, NULL, refs, NULL );
 
-		if( matched != NULL ) {
-			ber_bvecfree( refs );
-			free( matched_dn );
-		}
+		if ( refs ) ber_bvarray_free( refs );
+		free( matched_dn );
 
 		return( 1 );
 	}
 
 	if (!manageDSAit && is_entry_referral( e ) ) {
 		/* entry is a referral, don't allow add */
-		struct berval **refs = get_entry_referrals( be,
+		BerVarray refs = get_entry_referrals( be,
 			conn, op, e );
 
+#ifdef NEW_LOGGING
+		LDAP_LOG( BACK_LDBM, INFO, 
+			"ldbm_back_compare: entry (%s) is a referral.\n", e->e_dn, 0, 0 );
+#else
 		Debug( LDAP_DEBUG_TRACE, "entry is referral\n", 0,
 		    0, 0 );
+#endif
+
 
 		send_ldap_result( conn, op, LDAP_REFERRAL,
 		    e->e_dn, NULL, refs, NULL );
 
-		ber_bvecfree( refs );
+		if (refs ) ber_bvarray_free( refs );
 
 		rc = 1;
 		goto return_results;
 	}
 
 	if ( ! access_allowed( be, conn, op, e,
-		ava->aa_desc, ava->aa_value, ACL_COMPARE ) )
+		ava->aa_desc, &ava->aa_value, ACL_COMPARE, NULL ) )
 	{
 		send_ldap_result( conn, op, LDAP_INSUFFICIENT_ACCESS,
 			NULL, NULL, NULL, NULL );
@@ -98,12 +103,10 @@ ldbm_back_compare(
 	{
 		rc = LDAP_COMPARE_FALSE;
 
-		if ( value_find( ava->aa_desc, a->a_vals, ava->aa_value ) == 0 )
-		{
+		if ( value_find( ava->aa_desc, a->a_vals, &ava->aa_value ) == 0 ) {
 			rc = LDAP_COMPARE_TRUE;
 			break;
 		}
-
 	}
 
 	send_ldap_result( conn, op, rc,

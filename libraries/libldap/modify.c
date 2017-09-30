@@ -1,6 +1,6 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/modify.c,v 1.7.6.5 2002/01/04 20:38:20 kurt Exp $ */
+/* $OpenLDAP$ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 /*  Portions
@@ -71,7 +71,11 @@ ldap_modify_ext( LDAP *ld,
 	 *	}
 	 */
 
+#ifdef NEW_LOGGING
+	LDAP_LOG ( OPERATION, ENTRY, "ldap_modify_ext\n", 0, 0, 0 );
+#else
 	Debug( LDAP_DEBUG_TRACE, "ldap_modify_ext\n", 0, 0, 0 );
+#endif
 
 	/* check client controls */
 	rc = ldap_int_client_controls( ld, cctrls );
@@ -155,7 +159,11 @@ ldap_modify( LDAP *ld, LDAP_CONST char *dn, LDAPMod **mods )
 {
 	int rc, msgid;
 
+#ifdef NEW_LOGGING
+	LDAP_LOG ( OPERATION, ENTRY, "ldap_modify\n", 0, 0, 0 );
+#else
 	Debug( LDAP_DEBUG_TRACE, "ldap_modify\n", 0, 0, 0 );
+#endif
 
 	rc = ldap_modify_ext( ld, dn, mods, NULL, NULL, &msgid );
 

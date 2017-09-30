@@ -1,7 +1,7 @@
 /* init.c - initialize shell backend */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-shell/init.c,v 1.9.4.7 2002/01/04 20:38:35 kurt Exp $ */
+/* $OpenLDAP$ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 

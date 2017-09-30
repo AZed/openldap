@@ -1,7 +1,7 @@
 /* decode.c - ber input decoding routines */
-/* $OpenLDAP: pkg/ldap/libraries/liblber/decode.c,v 1.34.6.10 2002/01/04 20:38:18 kurt Exp $ */
+/* $OpenLDAP$ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 /* Portions
@@ -42,15 +42,19 @@ ber_get_tag( BerElement *ber )
 	unsigned int	i;
 
 	assert( ber != NULL );
-	assert( BER_VALID( ber ) );
+	assert( LBER_VALID( ber ) );
 
-	if ( ber_read( ber, (char *) &xbyte, 1 ) != 1 ) {
+	if ( ber_pvt_ber_remaining( ber ) < 1 ) {
 		return LBER_DEFAULT;
 	}
 
-	tag = xbyte;
+	if ( ber->ber_ptr == ber->ber_buf )
+		tag = *(unsigned char *)ber->ber_ptr;
+	else
+		tag = ber->ber_tag;
+	ber->ber_ptr++;
 
-	if ( (xbyte & LBER_BIG_TAG_MASK) != LBER_BIG_TAG_MASK ) {
+	if ( (tag & LBER_BIG_TAG_MASK) != LBER_BIG_TAG_MASK ) {
 		return tag;
 	}
 
@@ -85,7 +89,7 @@ ber_skip_tag( BerElement *ber, ber_len_t *len )
 
 	assert( ber != NULL );
 	assert( len != NULL );
-	assert( BER_VALID( ber ) );
+	assert( LBER_VALID( ber ) );
 
 	/*
 	 * Any ber element looks like this: tag length contents.
@@ -109,7 +113,7 @@ ber_skip_tag( BerElement *ber, ber_len_t *len )
 
 	/*
 	 * Next, read the length.  The first byte contains the length of
-	 * the length.  If bit 8 is set, the length is the long form,
+	 * the length.	If bit 8 is set, the length is the long form,
 	 * otherwise it's the short form.  We don't allow a length that's
 	 * greater than what we can hold in a ber_len_t.
 	 */
@@ -138,9 +142,10 @@ ber_skip_tag( BerElement *ber, ber_len_t *len )
 	}
 
 	/* BER element should have enough data left */
-	if( *len > ber_pvt_ber_remaining( ber ) ) {
+	if( *len > (ber_len_t) ber_pvt_ber_remaining( ber ) ) {
 		return LBER_DEFAULT;
 	}
+	ber->ber_tag = *(unsigned char *)ber->ber_ptr;
 
 	return tag;
 }
@@ -156,11 +161,13 @@ ber_peek_tag(
 	 */
 
 	char *save;
-	ber_tag_t	tag;
+	ber_tag_t	tag, old;
 
+	old = ber->ber_tag;
 	save = ber->ber_ptr;
 	tag = ber_skip_tag( ber, len );
 	ber->ber_ptr = save;
+	ber->ber_tag = old;
 
 	return tag;
 }
@@ -175,7 +182,7 @@ ber_getnint(
 
 	assert( ber != NULL );
 	assert( num != NULL );
-	assert( BER_VALID( ber ) );
+	assert( LBER_VALID( ber ) );
 
 	/*
 	 * The tag and length have already been stripped off.  We should
@@ -208,6 +215,7 @@ ber_getnint(
 	} else {
 		*num = 0;
 	}
+	ber->ber_tag = *(unsigned char *)ber->ber_ptr;
 
 	return len;
 }
@@ -221,7 +229,7 @@ ber_get_int(
 	ber_len_t	len;
 
 	assert( ber != NULL );
-	assert( BER_VALID( ber ) );
+	assert( LBER_VALID( ber ) );
 
 	if ( (tag = ber_skip_tag( ber, &len )) == LBER_DEFAULT ) {
 		return LBER_DEFAULT;
@@ -252,7 +260,7 @@ ber_get_stringb(
 	ber_tag_t	tag;
 
 	assert( ber != NULL );
-	assert( BER_VALID( ber ) );
+	assert( LBER_VALID( ber ) );
 
 	if ( (tag = ber_skip_tag( ber, &datalen )) == LBER_DEFAULT ) {
 		return LBER_DEFAULT;
@@ -266,39 +274,202 @@ ber_get_stringb(
 	if ( (ber_len_t) ber_read( ber, buf, datalen ) != datalen ) {
 		return LBER_DEFAULT;
 	}
+	ber->ber_tag = *(unsigned char *)ber->ber_ptr;
 
-	buf[datalen] = '\0';
+	/* must fit within allocated space with termination */
+	if ( datalen >= *len ) {
+		return LBER_DEFAULT;
+	}
 
 	*len = datalen;
+	return tag;
+}
+
+/* Definitions for get_string vector
+ *
+ * ChArray, BvArray, and BvVec are self-explanatory.
+ * BvOff is a struct berval embedded in an array of larger structures
+ * of siz bytes at off bytes from the beginning of the struct.
+ */
+enum bgbvc { ChArray, BvArray, BvVec, BvOff };
+
+/* Use this single cookie for state, to keep actual
+ * stack use to the absolute minimum.
+ */
+typedef struct bgbvr {
+	enum bgbvc choice;
+	BerElement *ber;
+	int alloc;
+	ber_len_t siz;
+	ber_len_t off;
+	union {
+		char ***c;
+		BerVarray *ba;
+		struct berval ***bv;
+	} res;
+} bgbvr;
+
+static ber_tag_t
+ber_get_stringbvl( bgbvr *b, ber_len_t *rlen )
+{
+	int i = 0, n;
+	ber_tag_t tag;
+	ber_len_t len;
+	char *last, *orig;
+	struct berval bv, *bvp = NULL;
+
+	/* For rewinding, just like ber_peek_tag() */
+	orig = b->ber->ber_ptr;
+	tag = b->ber->ber_tag;
+
+	if ( ber_first_element( b->ber, &len, &last ) != LBER_DEFAULT ) {
+		for ( ; b->ber->ber_ptr < last; i++ )
+		{
+			if (ber_skip_tag( b->ber, &len ) == LBER_DEFAULT) break;
+			b->ber->ber_ptr += len;
+			b->ber->ber_tag = *(unsigned char *)b->ber->ber_ptr;
+		}
+	}
+
+	if ( rlen ) *rlen = i;
+
+	if ( i == 0 )
+	{
+		*b->res.c = NULL;
+		return 0;
+	}
+
+	n = i;
+
+	/* Allocate the result vector */
+	switch (b->choice) {
+	case ChArray:
+		*b->res.c = LBER_MALLOC( (n+1) * sizeof( char * ));
+		if ( *b->res.c == NULL )
+			return LBER_DEFAULT;
+		(*b->res.c)[n] = NULL;
+		break;
+	case BvArray:
+		*b->res.ba = LBER_MALLOC( (n+1) * sizeof( struct berval ));
+		if ( *b->res.ba == NULL )
+			return LBER_DEFAULT;
+		(*b->res.ba)[n].bv_val = NULL;
+		break;
+	case BvVec:
+		*b->res.bv = LBER_MALLOC( (n+1) * sizeof( struct berval *));
+		if ( *b->res.bv == NULL )
+			return LBER_DEFAULT;
+		(*b->res.bv)[n] = NULL;
+		break;
+	case BvOff:
+		*b->res.ba = LBER_MALLOC( (n+1) * b->siz );
+		if ( *b->res.ba == NULL )
+			return LBER_DEFAULT;
+		((struct berval *)((long)(*b->res.ba) + n*b->siz +
+			b->off))->bv_val = NULL;
+		break;
+	}
+	b->ber->ber_ptr = orig;
+	b->ber->ber_tag = tag;
+	ber_skip_tag( b->ber, &len );
+	
+	for (n=0; n<i; n++)
+	{
+		tag = ber_next_element( b->ber, &len, last );
+		if ( ber_get_stringbv( b->ber, &bv, b->alloc ) == LBER_DEFAULT )
+			goto nomem;
+
+		/* store my result */
+		switch (b->choice) {
+		case ChArray:
+			(*b->res.c)[n] = bv.bv_val;
+			break;
+		case BvArray:
+			(*b->res.ba)[n] = bv;
+			break;
+		case BvVec:
+			bvp = LBER_MALLOC( sizeof( struct berval ));
+			if ( !bvp ) {
+				LBER_FREE(bv.bv_val);
+				goto nomem;
+			}
+			(*b->res.bv)[n] = bvp;
+			*bvp = bv;
+			break;
+		case BvOff:
+			*(BerVarray)((long)(*b->res.ba)+n*b->siz+b->off) = bv;
+			break;
+		}
+	}
+	return tag;
+nomem:
+	if (b->alloc || b->choice == BvVec)
+	{
+		for (--n; n>=0; n--)
+		{
+			switch(b->choice) {
+			case ChArray: LBER_FREE((*b->res.c)[n]); break;
+			case BvArray: LBER_FREE((*b->res.ba)[n].bv_val); break;
+			case BvVec: LBER_FREE((*b->res.bv)[n]->bv_val);
+				LBER_FREE((*b->res.bv)[n]); break;
+			}
+		}
+	}
+	LBER_FREE(*b->res.c);
+	*b->res.c = NULL;
+	return LBER_DEFAULT;
+}
+
+ber_tag_t
+ber_get_stringbv( BerElement *ber, struct berval *bv, int alloc )
+{
+	ber_tag_t	tag;
+
+	assert( ber != NULL );
+	assert( bv != NULL );
+
+	assert( LBER_VALID( ber ) );
+
+	if ( (tag = ber_skip_tag( ber, &bv->bv_len )) == LBER_DEFAULT ) {
+		bv->bv_val = NULL;
+		return LBER_DEFAULT;
+	}
+
+	if ( (ber_len_t) ber_pvt_ber_remaining( ber ) < bv->bv_len ) {
+		return LBER_DEFAULT;
+	}
+
+	if ( alloc ) {
+		if ( (bv->bv_val = (char *) LBER_MALLOC( bv->bv_len + 1 )) == NULL ) {
+			return LBER_DEFAULT;
+		}
+
+		if ( bv->bv_len > 0 && (ber_len_t) ber_read( ber, bv->bv_val,
+			bv->bv_len ) != bv->bv_len ) {
+			LBER_FREE( bv->bv_val );
+			bv->bv_val = NULL;
+			return LBER_DEFAULT;
+		}
+	} else {
+		bv->bv_val = ber->ber_ptr;
+		ber->ber_ptr += bv->bv_len;
+	}
+	ber->ber_tag = *(unsigned char *)ber->ber_ptr;
+	bv->bv_val[bv->bv_len] = '\0';
+
 	return tag;
 }
 
 ber_tag_t
 ber_get_stringa( BerElement *ber, char **buf )
 {
-	ber_len_t	datalen;
+	BerValue	bv;
 	ber_tag_t	tag;
 
-	assert( ber != NULL );
 	assert( buf != NULL );
 
-	assert( BER_VALID( ber ) );
-
-	if ( (tag = ber_skip_tag( ber, &datalen )) == LBER_DEFAULT ) {
-		*buf = NULL;
-		return LBER_DEFAULT;
-	}
-
-	if ( (*buf = (char *) LBER_MALLOC( datalen + 1 )) == NULL ) {
-		return LBER_DEFAULT;
-	}
-
-	if ( (ber_len_t) ber_read( ber, *buf, datalen ) != datalen ) {
-		LBER_FREE( *buf );
-		*buf = NULL;
-		return LBER_DEFAULT;
-	}
-	(*buf)[datalen] = '\0';
+	tag = ber_get_stringbv( ber, &bv, 1 );
+	*buf = bv.bv_val;
 
 	return tag;
 }
@@ -306,46 +477,21 @@ ber_get_stringa( BerElement *ber, char **buf )
 ber_tag_t
 ber_get_stringal( BerElement *ber, struct berval **bv )
 {
-	ber_len_t	len;
 	ber_tag_t	tag;
 
 	assert( ber != NULL );
 	assert( bv != NULL );
-
-	assert( BER_VALID( ber ) );
-
-	if ( (tag = ber_skip_tag( ber, &len )) == LBER_DEFAULT ) {
-		*bv = NULL;
-		return LBER_DEFAULT;
-	}
 
 	*bv = (struct berval *) LBER_MALLOC( sizeof(struct berval) );
 	if ( *bv == NULL ) {
 		return LBER_DEFAULT;
 	}
 
-	if( len == 0 ) {
-		(*bv)->bv_val = NULL;
-		(*bv)->bv_len = 0;
-		return tag;
-	}
-
-	(*bv)->bv_val = (char *) LBER_MALLOC( len + 1 );
-	if ( (*bv)->bv_val == NULL ) {
+	tag = ber_get_stringbv( ber, *bv, 1 );
+	if ( tag == LBER_DEFAULT ) {
 		LBER_FREE( *bv );
 		*bv = NULL;
-		return LBER_DEFAULT;
 	}
-
-	if ( (ber_len_t) ber_read( ber, (*bv)->bv_val, len ) != len ) {
-		ber_bvfree( *bv );
-		*bv = NULL;
-		return LBER_DEFAULT;
-	}
-
-	((*bv)->bv_val)[len] = '\0';
-	(*bv)->bv_len = len;
-
 	return tag;
 }
 
@@ -363,7 +509,7 @@ ber_get_bitstringa(
 	assert( buf != NULL );
 	assert( blen != NULL );
 
-	assert( BER_VALID( ber ) );
+	assert( LBER_VALID( ber ) );
 
 	if ( (tag = ber_skip_tag( ber, &datalen )) == LBER_DEFAULT ) {
 		*buf = NULL;
@@ -386,6 +532,7 @@ ber_get_bitstringa(
 		*buf = NULL;
 		return LBER_DEFAULT;
 	}
+	ber->ber_tag = *(unsigned char *)ber->ber_ptr;
 
 	*blen = datalen * 8 - unusedbits;
 	return tag;
@@ -398,7 +545,7 @@ ber_get_null( BerElement *ber )
 	ber_tag_t	tag;
 
 	assert( ber != NULL );
-	assert( BER_VALID( ber ) );
+	assert( LBER_VALID( ber ) );
 
 	if ( (tag = ber_skip_tag( ber, &len )) == LBER_DEFAULT ) {
 		return LBER_DEFAULT;
@@ -407,6 +554,7 @@ ber_get_null( BerElement *ber )
 	if ( len != 0 ) {
 		return LBER_DEFAULT;
 	}
+	ber->ber_tag = *(unsigned char *)ber->ber_ptr;
 
 	return( tag );
 }
@@ -422,7 +570,7 @@ ber_get_boolean(
 	assert( ber != NULL );
 	assert( boolval != NULL );
 
-	assert( BER_VALID( ber ) );
+	assert( LBER_VALID( ber ) );
 
 	rc = ber_get_int( ber, &longbool );
 	*boolval = longbool;
@@ -445,6 +593,7 @@ ber_first_element(
 		*last = NULL;
 		return LBER_DEFAULT;
 	}
+	ber->ber_tag = *(unsigned char *)ber->ber_ptr;
 
 	*last = ber->ber_ptr + *len;
 
@@ -465,9 +614,9 @@ ber_next_element(
 	assert( len != NULL );
 	assert( last != NULL );
 
-	assert( BER_VALID( ber ) );
+	assert( LBER_VALID( ber ) );
 
-	if ( ber->ber_ptr == last ) {
+	if ( ber->ber_ptr >= last ) {
 		return LBER_DEFAULT;
 	}
 
@@ -482,14 +631,12 @@ ber_scanf ( BerElement *ber,
 {
 	va_list		ap;
 	LDAP_CONST char		*fmt_reset;
-	char		*last;
-	char		*s, **ss, ***sss;
-	struct berval 	***bv, **bvp, *bval;
+	char		*s, **ss;
+	struct berval	**bvp, *bval;
 	ber_int_t	*i;
-	int j;
 	ber_len_t	*l;
 	ber_tag_t	*t;
-	ber_tag_t	rc, tag;
+	ber_tag_t	rc;
 	ber_len_t	len;
 
 	va_start( ap, fmt );
@@ -497,13 +644,20 @@ ber_scanf ( BerElement *ber,
 	assert( ber != NULL );
 	assert( fmt != NULL );
 
-	assert( BER_VALID( ber ) );
+	assert( LBER_VALID( ber ) );
 
 	fmt_reset = fmt;
 
+#ifdef NEW_LOGGING
+	LDAP_LOG( BER, ENTRY, "ber_scanf fmt (%s) ber:\n", fmt, 0, 0 );
+
+	if ( LDAP_LOGS_TEST(BER, DETAIL2 ))
+			BER_DUMP(( "liblber", LDAP_LEVEL_DETAIL2, ber, 1 ));
+#else
 	ber_log_printf( LDAP_DEBUG_TRACE, ber->ber_debug,
 		"ber_scanf fmt (%s) ber:\n", fmt );
 	ber_log_dump( LDAP_DEBUG_BER, ber->ber_debug, ber, 1 );
+#endif
 
 	for ( rc = 0; *fmt && rc != LBER_DEFAULT; fmt++ ) {
 		/* When this is modified, remember to update
@@ -550,10 +704,14 @@ ber_scanf ( BerElement *ber,
 			rc = ber_get_stringb( ber, s, l );
 			break;
 
+		case 'm':	/* octet string in berval, in-place */
+			bval = va_arg( ap, struct berval * );
+			rc = ber_get_stringbv( ber, bval, 0 );
+			break;
+
 		case 'o':	/* octet string in a supplied berval */
 			bval = va_arg( ap, struct berval * );
-			ber_peek_tag( ber, &bval->bv_len );
-			rc = ber_get_stringa( ber, &bval->bv_val );
+			rc = ber_get_stringbv( ber, bval, 1 );
 			break;
 
 		case 'O':	/* octet string - allocate & include length */
@@ -578,66 +736,63 @@ ber_scanf ( BerElement *ber,
 			break;
 
 		case 'v':	/* sequence of strings */
-			sss = va_arg( ap, char *** );
-			*sss = NULL;
-			j = 0;
-			for ( tag = ber_first_element( ber, &len, &last );
-			    tag != LBER_DEFAULT && rc != LBER_DEFAULT;
-			    tag = ber_next_element( ber, &len, last ) )
-			{
-				char **save = *sss;
-
-				*sss = (char **) LBER_REALLOC( *sss,
-					(j + 2) * sizeof(char *) );
-
-				if( *sss == NULL ) {
-					save[j] = NULL;
-					ber_memvfree( (void **) save );
-					rc = LBER_DEFAULT;
-					goto breakout;
-				}
-
-				rc = ber_get_stringa( ber, &((*sss)[j]) );
-				j++;
-			}
-			if ( j > 0 ) (*sss)[j] = NULL;
+		{
+			bgbvr cookie = { ChArray };
+			cookie.ber = ber;
+			cookie.res.c = va_arg( ap, char *** );
+			cookie.alloc = 1;
+			rc = ber_get_stringbvl( &cookie, NULL );
 			break;
+		}
 
 		case 'V':	/* sequence of strings + lengths */
-			bv = va_arg( ap, struct berval *** );
-			*bv = NULL;
-			j = 0;
-			for ( tag = ber_first_element( ber, &len, &last );
-			    tag != LBER_DEFAULT && rc != LBER_DEFAULT;
-			    tag = ber_next_element( ber, &len, last ) )
-			{
-				struct berval **save = *bv;
-
-				*bv = (struct berval **) LBER_REALLOC( *bv,
-					(j + 2) * sizeof(struct berval *) );
-		
-				if( *bv == NULL ) {
-					save[j] = NULL;
-					ber_bvecfree( save );
-					rc = LBER_DEFAULT;
-					goto breakout;
-				}
-
-				rc = ber_get_stringal( ber, &((*bv)[j]) );
-				j++;
-			}
-			if ( j > 0 ) (*bv)[j] = NULL;
+		{
+			bgbvr cookie = { BvVec };
+			cookie.ber = ber;
+			cookie.res.bv = va_arg( ap, struct berval *** );
+			cookie.alloc = 1;
+			rc = ber_get_stringbvl( &cookie, NULL );
 			break;
+		}
+
+		case 'W':	/* bvarray */
+		{
+			bgbvr cookie = { BvArray };
+			cookie.ber = ber;
+			cookie.res.ba = va_arg( ap, struct berval ** );
+			cookie.alloc = 1;
+			rc = ber_get_stringbvl( &cookie, NULL );
+			break;
+		}
+
+		case 'M':	/* bvoffarray - must include address of
+				 * a record len, and record offset.
+				 * number of records will be returned thru
+				 * len ptr on finish. parsed in-place.
+				 */
+		{
+			bgbvr cookie = { BvOff };
+			cookie.ber = ber;
+			cookie.res.ba = va_arg( ap, struct berval ** );
+			cookie.alloc = 0;
+			l = va_arg( ap, ber_len_t * );
+			cookie.siz = *l;
+			cookie.off = va_arg( ap, ber_len_t );
+			rc = ber_get_stringbvl( &cookie, l );
+			break;
+		}
 
 		case 'x':	/* skip the next element - whatever it is */
 			if ( (rc = ber_skip_tag( ber, &len )) == LBER_DEFAULT )
 				break;
 			ber->ber_ptr += len;
+			ber->ber_tag = *(unsigned char *)ber->ber_ptr;
 			break;
 
 		case '{':	/* begin sequence */
 		case '[':	/* begin set */
-			if ( *(fmt + 1) != 'v' && *(fmt + 1) != 'V' )
+			if ( *(fmt + 1) != 'v' && *(fmt + 1) != 'V'
+				&& *(fmt + 1) != 'W' && *(fmt + 1) != 'M' )
 				rc = ber_skip_tag( ber, &len );
 			break;
 
@@ -647,8 +802,13 @@ ber_scanf ( BerElement *ber,
 
 		default:
 			if( ber->ber_debug ) {
+#ifdef NEW_LOGGING
+				LDAP_LOG( BER, ERR, 
+					"ber_scanf: unknown fmt %c\n", *fmt, 0, 0 );
+#else
 				ber_log_printf( LDAP_DEBUG_ANY, ber->ber_debug,
 					"ber_scanf: unknown fmt %c\n", *fmt );
+#endif
 			}
 			rc = LBER_DEFAULT;
 			break;
@@ -657,7 +817,6 @@ ber_scanf ( BerElement *ber,
 
 breakout:
 	va_end( ap );
-
 	if ( rc == LBER_DEFAULT ) {
 	    /*
 	     * Error.  Reclaim malloced memory that was given to the caller.
@@ -732,21 +891,10 @@ breakout:
 			break;
 
 		case 'v':	/* sequence of strings */
-			sss = va_arg( ap, char *** );
-			if ( *sss ) {
-				ber_memvfree( (void **) *sss );
-				*sss = NULL;
-			}
-			break;
-
 		case 'V':	/* sequence of strings + lengths */
-			bv = va_arg( ap, struct berval *** );
-			if ( *bv ) {
-				ber_bvecfree( *bv );
-				*bv = NULL;
-			}
-			break;
-
+		case 'W':	/* BerVarray */
+		case 'm':	/* berval in-place */
+		case 'M':	/* BVoff array in-place */
 		case 'n':	/* null */
 		case 'x':	/* skip the next element - whatever it is */
 		case '{':	/* begin sequence */

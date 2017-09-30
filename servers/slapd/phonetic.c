@@ -1,7 +1,7 @@
 /* phonetic.c - routines to do phonetic matching */
-/* $OpenLDAP: pkg/ldap/servers/slapd/phonetic.c,v 1.8.8.5 2002/01/04 20:38:29 kurt Exp $ */
+/* $OpenLDAP$ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 
@@ -24,7 +24,7 @@
 			 ispunct((unsigned char) (x)) || \
 			 isdigit((unsigned char) (x)) || (x) == '\0')
 
-char *
+static char *
 first_word( char *s )
 {
 	if ( s == NULL ) {
@@ -42,7 +42,7 @@ first_word( char *s )
 	return( s );
 }
 
-char *
+static char *
 next_word( char *s )
 {
 	if ( s == NULL ) {
@@ -64,7 +64,7 @@ next_word( char *s )
 	return( s );
 }
 
-char *
+static char *
 word_dup( char *w )
 {
 	char	*s, *ret;
@@ -161,9 +161,12 @@ phonetic( char *s )
         return( ch_strdup( phoneme ) );
 }
 
-#else
-#if defined(SLAPD_METAPHONE)
+#elif defined(SLAPD_METAPHONE)
 
+/*
+ * Metaphone was originally developed by Lawrence Philips and
+ * published in the "Computer Language" magazine in 1990.
+ */
 /*
  * Metaphone copied from C Gazette, June/July 1991, pp 56-57,
  * author Gary A. Parker, with changes by Bernard Tiffany of the
@@ -432,5 +435,4 @@ phonetic( char *Word )
 	return( ch_strdup( buf ) );
 }
 
-#endif /* metaphone */
-#endif /* SLAPD_PHONETIC */
+#endif /* SLAPD_METAPHONE */

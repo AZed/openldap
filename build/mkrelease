@@ -1,6 +1,6 @@
 #! /bin/sh
-# $OpenLDAP: pkg/ldap/build/mkrelease,v 1.1.2.5 2002/01/04 20:38:06 kurt Exp $
-## Copyright 1998-2002 The OpenLDAP Foundation
+# $OpenLDAP$
+## Copyright 1998-2003 The OpenLDAP Foundation
 ## COPYING RESTRICTIONS APPLY.  See COPYRIGHT File in top level directory
 ## of this package for details.
 #
@@ -37,10 +37,12 @@ if test ! -d $RELNAME ; then
 	exit 1
 fi
 
-if test ! -e $RELNAME/build/version ; then
+if test ! -e $RELNAME/build/version.sh ; then
 	echo "No build version"
 	exit 1
 fi
+
+eval `$RELNAME/build/version.sh`
 
 tar cf $RELNAME.tar $RELNAME
 gzip -9 -c $RELNAME.tar > $RELNAME.tgz
@@ -48,4 +50,5 @@ md5 $RELNAME.tgz > $RELNAME.md5
 rm -f $RELNAME.tar
 
 ls -l $RELNAME.*
-cat $RELNAME/build/version
+
+echo "Made $OL_STRING as $RELNAME.tgz"

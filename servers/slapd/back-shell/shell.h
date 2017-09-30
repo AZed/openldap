@@ -1,7 +1,7 @@
 /* shell.h - shell backend header file */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-shell/shell.h,v 1.7.2.3 2002/01/04 20:38:35 kurt Exp $ */
+/* $OpenLDAP$ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 
@@ -13,13 +13,13 @@
 LDAP_BEGIN_DECL
 
 struct shellinfo {
-	char	**si_bind;	/* cmd + args to exec for bind	  */
+	char	**si_bind;		/* cmd + args to exec for bind	  */
 	char	**si_unbind;	/* cmd + args to exec for unbind  */
 	char	**si_search;	/* cmd + args to exec for search  */
 	char	**si_compare;	/* cmd + args to exec for compare */
 	char	**si_modify;	/* cmd + args to exec for modify  */
 	char	**si_modrdn;	/* cmd + args to exec for modrdn  */
-	char	**si_add;	/* cmd + args to exec for add	  */
+	char	**si_add;		/* cmd + args to exec for add	  */
 	char	**si_delete;	/* cmd + args to exec for delete  */
 	char	**si_abandon;	/* cmd + args to exec for abandon */
 };
@@ -42,7 +42,7 @@ extern int read_and_send_results LDAP_P((
 	struct slap_conn *conn,
 	struct slap_op *op,
 	FILE *fp,
-	char **attrs,
+	AttributeName *attrs,
 	int attrsonly));
 
 LDAP_END_DECL

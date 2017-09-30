@@ -1,6 +1,6 @@
-/* $OpenLDAP: pkg/ldap/libraries/liblber/lber-int.h,v 1.23.2.8 2002/01/04 20:38:19 kurt Exp $ */
+/* $OpenLDAP$ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 /* Portions
@@ -21,10 +21,14 @@
 #include "lber.h"
 #include "ldap_log.h"
 #include "lber_pvt.h"
+#include "ldap_queue.h"
 
 LDAP_BEGIN_DECL
 
-LBER_F (BER_ERRNO_FN) ber_int_errno_fn;
+typedef void (*BER_LOG_FN)(FILE *file,
+	const char *subsys, int level, const char *fmt, ... );
+
+LBER_V (BER_ERRNO_FN) ber_int_errno_fn;
 
 struct lber_options {
 	short lbo_valid;
@@ -33,12 +37,34 @@ struct lber_options {
 	long		lbo_meminuse;
 };
 
+#ifdef NEW_LOGGING
+/*
+#    ifdef LDAP_DEBUG
+#        ifdef LDAP_LOG
+#            undef LDAP_LOG
+#        endif
+#        define LDAP_LOG(a) ber_pvt_log_output a
+ */
+#        define BER_DUMP(a) ber_output_dump a
+/*
+#    else
+#        define LDAP_LOG(a)
+#        define BER_DUMP(a)
+#    endif
+ */
+#endif
+
+LBER_F( int ) ber_pvt_log_output(
+	const char *subsystem,
+	int level,
+	const char *fmt, ... );
+
 #define LBER_UNINITIALIZED		0x0
 #define LBER_INITIALIZED		0x1
 #define LBER_VALID_BERELEMENT	0x2
 #define LBER_VALID_SOCKBUF		0x3
 
-LBER_F (struct lber_options) ber_int_options;
+LBER_V (struct lber_options) ber_int_options;
 #define ber_int_debug ber_int_options.lbo_debug
 
 struct berelement {
@@ -47,10 +73,10 @@ struct berelement {
 #define ber_options		ber_opts.lbo_options
 #define ber_debug		ber_opts.lbo_debug
 
-	ber_tag_t	ber_usertag;
-
+	/* Do not change the order of these 3 fields! see ber_get_next */
 	ber_tag_t	ber_tag;
 	ber_len_t	ber_len;
+	ber_tag_t	ber_usertag;
 
 	char		*ber_buf;
 	char		*ber_ptr;
@@ -59,7 +85,7 @@ struct berelement {
 	struct seqorset	*ber_sos;
 	char		*ber_rwptr;
 };
-#define BER_VALID(ber)	((ber)->ber_valid==LBER_VALID_BERELEMENT)
+#define LBER_VALID(ber)	((ber)->ber_valid==LBER_VALID_BERELEMENT)
 
 #define ber_pvt_ber_remaining(ber)	((ber)->ber_end - (ber)->ber_ptr)
 #define ber_pvt_ber_total(ber)		((ber)->ber_end - (ber)->ber_buf)
@@ -79,8 +105,6 @@ struct sockbuf {
 
 #define SOCKBUF_VALID( sb )	( (sb)->sb_valid == LBER_VALID_SOCKBUF )
 
-#define READBUFSIZ	8192
-
 struct seqorset {
 	BerElement	*sos_ber;
 	ber_len_t	sos_clen;
@@ -94,7 +118,8 @@ struct seqorset {
 /*
  * io.c
  */
-int ber_realloc LDAP_P((
+LBER_F( int )
+ber_realloc LDAP_P((
 	BerElement *ber,
 	ber_len_t len ));
 
@@ -102,6 +127,15 @@ int ber_realloc LDAP_P((
  * bprint.c
  */
 #define ber_log_printf ber_pvt_log_printf
+
+#ifdef NEW_LOGGING
+LBER_F( int )
+ber_output_dump LDAP_P((
+	const char *subsys,
+	int level,
+	BerElement *ber,
+	int inout ));
+#endif
 
 LBER_F( int )
 ber_log_bprint LDAP_P((
@@ -123,40 +157,32 @@ ber_log_sos_dump LDAP_P((
 	int loglvl,
 	Seqorset *sos ));
 
+LBER_V (BER_LOG_FN) ber_int_log_proc;
+LBER_V (FILE *) ber_pvt_err_file;
 
 /* memory.c */
 	/* simple macros to realloc for now */
-LBER_F (BerMemoryFunctions *)	ber_int_memory_fns;
+LBER_V (BerMemoryFunctions *)	ber_int_memory_fns;
+LBER_F (char *)	ber_strndup( LDAP_CONST char *, ber_len_t );
+LBER_F (char *)	ber_strndup__( LDAP_CONST char *, size_t );
 
 #ifdef CSRIMALLOC
-#define LBER_INT_MALLOC		malloc
-#define LBER_INT_CALLOC		calloc
-#define LBER_INT_REALLOC	realloc
-#define LBER_INT_FREE		free
-#define LBER_INT_VFREE		ber_memvfree
-#define LBER_INT_STRDUP		strdup
-
 #define LBER_MALLOC			malloc
 #define LBER_CALLOC			calloc
 #define LBER_REALLOC		realloc
 #define LBER_FREE			free
 #define LBER_VFREE			ber_memvfree
 #define LBER_STRDUP			strdup
+#define LBER_STRNDUP		ber_strndup__
 
 #else
-#define LBER_INT_MALLOC(s)		ber_memalloc((s))
-#define LBER_INT_CALLOC(n,s)	ber_memcalloc((n),(s))
-#define LBER_INT_REALLOC(p,s)	ber_memrealloc((p),(s))
-#define LBER_INT_FREE(p)		ber_memfree((p))
-#define LBER_INT_VFREE(v)		ber_memvfree((void**)(v))
-#define LBER_INT_STRDUP(s)		ber_strdup((s))
-
 #define LBER_MALLOC(s)		ber_memalloc((s))
 #define LBER_CALLOC(n,s)	ber_memcalloc((n),(s))
 #define LBER_REALLOC(p,s)	ber_memrealloc((p),(s))
 #define LBER_FREE(p)		ber_memfree((p))	
 #define LBER_VFREE(v)		ber_memvfree((void**)(v))
 #define LBER_STRDUP(s)		ber_strdup((s))
+#define LBER_STRNDUP(s,l)	ber_strndup((s),(l))
 #endif
 
 /* sockbuf.c */

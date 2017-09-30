@@ -1,7 +1,7 @@
 /* index.c - index utilities */
-/* $OpenLDAP: pkg/ldap/servers/slapd/index.c,v 1.1.2.3 2002/01/04 20:38:28 kurt Exp $ */
+/* $OpenLDAP$ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 
@@ -10,29 +10,6 @@
 #include <stdio.h>
 
 #include "slap.h"
-
-int
-slap_index2prefix( int indextype )
-{
-	int	prefix;
-
-	switch ( indextype ) {
-	case SLAP_INDEX_EQUALITY:
-		prefix = SLAP_INDEX_EQUALITY_PREFIX;
-		break;
-	case SLAP_INDEX_APPROX:
-		prefix = SLAP_INDEX_APPROX_PREFIX;
-		break;
-	case SLAP_INDEX_SUBSTR:
-		prefix = SLAP_INDEX_SUBSTR_PREFIX;
-		break;
-	default:
-		prefix = SLAP_INDEX_UNKNOWN_PREFIX;
-		break;
-	}
-
-	return( prefix );
-}
 
 int slap_str2index( const char *str, slap_mask_t *idx )
 {
@@ -52,14 +29,11 @@ int slap_str2index( const char *str, slap_mask_t *idx )
 		strcasecmp( str, "sub" ) == 0 )
 	{
 		*idx = SLAP_INDEX_SUBSTR_DEFAULT;
-	} else if ( strcasecmp( str, "lang" ) == 0 ) {
-		*idx = SLAP_INDEX_LANG;
-	} else if ( strcasecmp( str, "autolang" ) == 0 ) {
-		*idx = SLAP_INDEX_AUTO_LANG;
-	} else if ( strcasecmp( str, "subtypes" ) == 0 ) {
-		*idx = SLAP_INDEX_SUBTYPES;
-	} else if ( strcasecmp( str, "autosubtypes" ) == 0 ) {
-		*idx = SLAP_INDEX_AUTO_SUBTYPES;
+	} else if ( strcasecmp( str, "nolang" ) == 0 ||	/* backwards compat */
+	            strcasecmp( str, "notags" ) == 0 ) {
+		*idx = SLAP_INDEX_NOTAGS;
+	} else if ( strcasecmp( str, "nosubtypes" ) == 0 ) {
+		*idx = SLAP_INDEX_NOSUBTYPES;
 	} else {
 		return LDAP_OTHER;
 	}
