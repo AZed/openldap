@@ -1,5 +1,5 @@
 /* dn.c - routines for dealing with distinguished names */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/dn.c,v 1.124.2.11 2003/03/24 03:54:12 kurt Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -677,7 +677,6 @@ dnMatch(
 	*matchp = match;
 	return( LDAP_SUCCESS );
 }
-
 
 /*
  * dnParent - dn's parent, in-place

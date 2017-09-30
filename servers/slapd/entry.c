@@ -1,5 +1,5 @@
 /* entry.c - routines for dealing with entries */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/entry.c,v 1.90.2.10 2003/05/07 22:29:10 hyc Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -29,16 +29,6 @@ const Entry slap_entry_root = { NOID, { 0, "" }, { 0, "" }, NULL, 0, { 0, "" }, 
 int entry_destroy(void)
 {
 	if ( ebuf ) free( ebuf );
-	ebuf = NULL;
-	ecur = NULL;
-	emaxsize = 0;
-	return 0;
-}
-
-
-int entry_destroy(void)
-{
-	free( ebuf );
 	ebuf = NULL;
 	ecur = NULL;
 	emaxsize = 0;

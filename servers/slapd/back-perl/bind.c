@@ -1,4 +1,4 @@
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-perl/bind.c,v 1.9.2.3 2002/06/20 20:12:34 kurt Exp $ */
 /*
  *	 Copyright 1999, John C. Quillan, All rights reserved.
  *	 Portions Copyright 2002, myinternet Limited. All rights reserved.

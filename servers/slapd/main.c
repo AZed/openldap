@@ -1,4 +1,4 @@
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/main.c,v 1.132.2.13 2003/03/27 03:04:06 hyc Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -235,7 +235,6 @@ int main( int argc, char **argv )
 			slap_inet4or6 = AF_INET6;
 			break;
 #endif
-			break;
 
 		case 'h':	/* listen URLs */
 			if ( urls != NULL ) free( urls );
@@ -256,14 +255,10 @@ int main( int argc, char **argv )
 		case 'f':	/* read config file */
 			configfile = ch_strdup( optarg );
 			break;
-#endif
 
-#ifdef HAVE_CHROOT
-		case 'r':
-			if( sandbox ) free(sandbox);
-			sandbox = ch_strdup( optarg );
+		case 's':	/* set syslog level */
+			ldap_syslog = atoi( optarg );
 			break;
-#endif
 
 #ifdef LOG_LOCAL4
 		case 'l':	/* set syslog local user */

@@ -1,5 +1,5 @@
 #! /bin/sh
-# $OpenLDAP$
+# $OpenLDAP: pkg/ldap/tests/scripts/test011-subtree-repl,v 1.7.2.9 2003/02/24 16:16:54 kurt Exp $
 
 echo "Test disabled."
 exit 0

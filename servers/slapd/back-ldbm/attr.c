@@ -1,5 +1,5 @@
 /* attr.c - backend routines for dealing with attributes */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/attr.c,v 1.29.2.4 2003/05/07 22:29:11 hyc Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -219,23 +219,3 @@ attr_index_destroy( Avlnode *tree )
 {
 	avl_free( tree, free );
 }
-
-
-static void
-ainfo_free( void *attr )
-{
-	AttrInfo *ai = attr;
-#ifdef SLAPD_USE_AD
-	ad_free( ai->ai_desc, 1 );
-#else
-	free( ai->ai_desc );
-#endif
-	free( ai );
-}
-
-void
-attr_index_destroy( Avlnode *tree )
-{
-	avl_free( tree, ainfo_free );
-}
-

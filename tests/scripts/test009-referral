@@ -1,5 +1,5 @@
 #! /bin/sh
-# $OpenLDAP$
+# $OpenLDAP: pkg/ldap/tests/scripts/test009-referral,v 1.20.2.5 2002/09/24 00:05:01 kurt Exp $
 
 SRCDIR="."
 if test $# -ge 1 ; then

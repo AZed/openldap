@@ -1,11 +1,11 @@
 #! /bin/sh
-# $OpenLDAP: pkg/ldap/tests/scripts/start-master-nolog,v 1.1.2.2 2001/05/10 04:43:48 kurt Exp $
+# $OpenLDAP: pkg/ldap/tests/scripts/start-master-nolog,v 1.4 2002/01/21 05:35:04 kurt Exp $
 
 SRCDIR="."
 if test $# -ge 1 ; then
 	SRCDIR=$1; shift
 fi
-BACKEND=ldbm
+BACKEND=bdb
 if test $# -ge 1 ; then
 	BACKEND=$1; shift
 fi
@@ -35,7 +35,7 @@ PID=$!
 
 echo "Using ldapsearch to retrieve all the entries..."
 for i in 0 1 2 3 4 5; do
-	$LDAPSEARCH -S "" -b "$BASEDN" -h localhost:$PORT > $SEARCHOUT 2>&1
+	$LDAPSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT > $SEARCHOUT 2>&1
 	RC=$?
 	if test $RC = 1 ; then
 		echo "Waiting 5 seconds for slapd to start..."

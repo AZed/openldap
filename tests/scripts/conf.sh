@@ -1,5 +1,5 @@
 #! /bin/sh
-# $OpenLDAP$
+# $OpenLDAP: pkg/ldap/tests/scripts/conf.sh,v 1.5.2.3 2003/02/10 18:43:11 kurt Exp $
 if [ x"$MONITORDB" = x"yes" ] ; then
 	MON=monitor
 else

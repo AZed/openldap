@@ -1,4 +1,4 @@
-# $OpenLDAP$
+# $OpenLDAP: pkg/ldap/include/setup.mak,v 1.7.2.2 2003/03/29 15:45:43 kurt Exp $
 #
 # Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT file

@@ -1,4 +1,4 @@
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slurpd/rq.c,v 1.16.2.3 2003/03/03 17:10:11 kurt Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -289,11 +289,6 @@ Rq_dump(
 	Debug( LDAP_DEBUG_ANY, "Rq_dump: cannot fdopen \"%s\" for write\n",
 		SLURPD_DUMPFILE, 0, 0 );
 #endif
-	return;
-    }
-    if (( fp = fdopen( tmpfd, "w" )) == NULL ) {
-	Debug( LDAP_DEBUG_ANY, "Rq_dump: cannot fdopen \"%s\" for write\n",
-		SLURPD_DUMPFILE, 0, 0 );
 	return;
     }
 

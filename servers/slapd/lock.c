@@ -1,5 +1,5 @@
 /* lock.c - routines to open and apply an advisory lock to a file */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/lock.c,v 1.20.2.5 2003/03/12 19:19:21 kurt Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file

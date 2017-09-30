@@ -1,5 +1,5 @@
 /* group.c - bdb backend acl group routine */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/group.c,v 1.9.2.12 2003/04/25 08:30:00 hyc Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file

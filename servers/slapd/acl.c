@@ -1,5 +1,5 @@
 /* acl.c - routines to parse and check acl's */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/acl.c,v 1.139.2.15 2003/05/22 22:22:42 kurt Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -525,7 +525,6 @@ acl_get(
 	return( NULL );
 }
 
-
 /*
  * Record value-dependent access control state
  */
@@ -683,20 +682,6 @@ acl_mask(
 				} else {
 					pat = b->a_dn_pat;
 				}
-			} else {
-				strncpy( buf, b->a_group_pat, sizeof(buf) - 1 );
-				buf[sizeof(buf) - 1] = 0;
-			}
-
-			if (backend_group(be, e, buf, op->o_ndn,
-				b->a_group_oc, b->a_group_at) != 0)
-			{
-				continue;
-			}
-		}
-
-		if ( b->a_set_pat != NULL ) {
-			struct berval bv;
 
 				patlen = pat.bv_len;
 				odnlen = op->o_ndn.bv_len;

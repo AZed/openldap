@@ -1,4 +1,4 @@
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-perl/external.h,v 1.11.2.1 2002/04/18 15:20:02 kurt Exp $ */
 #ifndef _PERL_EXTERNAL_H
 #define _PERL_EXTERNAL_H
 

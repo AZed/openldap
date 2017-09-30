@@ -1,4 +1,4 @@
-# $OpenLDAP$
+# $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/Makefile.in,v 1.9.2.1 2002/06/21 01:15:08 kurt Exp $
 
 SRCS = init.c search.c compare.c modify.c bind.c \
 	operational.c \

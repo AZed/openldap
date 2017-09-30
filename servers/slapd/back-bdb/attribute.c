@@ -1,5 +1,5 @@
 /* attribute.c - bdb backend acl attribute routine */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/attribute.c,v 1.12.2.10 2003/04/25 08:30:00 hyc Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file

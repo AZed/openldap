@@ -1,5 +1,5 @@
 #! /bin/sh
-# $OpenLDAP: pkg/ldap/tests/scripts/makeldbm.sh,v 1.4.8.3 2000/06/13 17:57:44 kurt Exp $
+# $OpenLDAP: pkg/ldap/tests/scripts/makeldbm.sh,v 1.7 1999/09/01 22:52:45 kdz Exp $
 
 . scripts/defines.sh
 

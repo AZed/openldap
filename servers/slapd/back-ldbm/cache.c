@@ -1,5 +1,5 @@
 /* cache.c - routines to maintain an in-core cache of entries */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/cache.c,v 1.57.2.3 2003/02/09 16:31:38 kurt Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -84,12 +84,6 @@ cache_entry_private_destroy( Entry*e )
 	return 0;
 }
 
-/*
- * marks an entry in CREATING state as committed, so it is really returned
- * to the cache. Otherwise an entry in CREATING state is removed.
- * Makes e_private be destroyed at the following cache_return_entry_w,
- * but lets the entry untouched (owned by someone else)
- */
 void
 cache_return_entry_rw( Cache *cache, Entry *e, int rw )
 {
@@ -771,4 +765,3 @@ lru_print( Cache *cache )
 	}
 }
 #endif
-

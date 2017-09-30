@@ -1,5 +1,5 @@
 /* dn2id.c - routines to deal with the dn2id index */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/dn2id.c,v 1.63.2.3 2003/03/03 17:10:09 kurt Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -345,8 +345,6 @@ dn2id_delete(
 
 	free( buf );
 
-	free( key.dptr );
-
 	ldbm_cache_close( be, db );
 
 #ifdef NEW_LOGGING
@@ -424,7 +422,6 @@ dn2entry_rw(
 		if ( (e = dn2entry_r( be, &pdn, matched )) != NULL ) {
 			*matched = e;
 		}
-		free( pdn );
 	}
 
 	return NULL;

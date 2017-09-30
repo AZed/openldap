@@ -1,5 +1,5 @@
 #! /bin/sh
-# $OpenLDAP$
+# $OpenLDAP: pkg/ldap/tests/scripts/test014-whoami,v 1.1.2.5 2003/02/10 18:43:11 kurt Exp $
 
 SRCDIR="."
 if test $# -ge 1 ; then

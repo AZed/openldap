@@ -1,4 +1,4 @@
-# $OpenLDAP$
+# $OpenLDAP: pkg/ldap/clients/tools/Makefile.in,v 1.29.2.4 2003/03/29 15:45:43 kurt Exp $
 ##
 ## Makefile for LDAP tools
 ##

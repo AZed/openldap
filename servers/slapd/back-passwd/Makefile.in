@@ -1,4 +1,4 @@
-# $OpenLDAP$
+# $OpenLDAP: pkg/ldap/servers/slapd/back-passwd/Makefile.in,v 1.12.2.1 2002/06/21 01:15:09 kurt Exp $
 
 SRCS	= search.c config.c init.c
 OBJS	= search.lo config.lo init.lo

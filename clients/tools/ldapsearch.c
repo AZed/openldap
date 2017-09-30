@@ -1,4 +1,4 @@
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/clients/tools/ldapsearch.c,v 1.111.2.21 2003/03/29 15:45:43 kurt Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -918,13 +918,6 @@ getNextPage:
 	return( rc );
 }
 
-		rc = ldap_initialize( &ld, ldapuri );
-		if( rc != LDAP_SUCCESS ) {
-			fprintf( stderr, "Could not create LDAP session handle (%d): %s\n",
-				rc, ldap_err2string(rc) );
-			return EXIT_FAILURE;
-		}
-	}
 
 static int dosearch(
 	LDAP	*ld,

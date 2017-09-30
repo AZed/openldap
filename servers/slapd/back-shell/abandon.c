@@ -1,5 +1,5 @@
 /* abandon.c - shell backend abandon function */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-shell/abandon.c,v 1.13.2.6 2003/05/23 10:45:18 hallvard Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file

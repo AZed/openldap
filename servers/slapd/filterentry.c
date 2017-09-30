@@ -1,5 +1,5 @@
 /* filterentry.c - apply a filter to an entry */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/filterentry.c,v 1.47.2.6 2003/02/09 16:31:36 kurt Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -184,7 +184,6 @@ test_filter(
 
 		rc = test_mra_filter( be, conn, op, e, f->f_mra );
 		break;
-#endif
 
 	default:
 #ifdef NEW_LOGGING

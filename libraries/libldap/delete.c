@@ -1,4 +1,4 @@
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/delete.c,v 1.15.2.3 2003/03/03 17:10:04 kurt Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -53,15 +53,6 @@ ldap_delete_ext(
 #else
 	Debug( LDAP_DEBUG_TRACE, "ldap_delete_ext\n", 0, 0, 0 );
 #endif
-
-	assert( ld != NULL );
-	assert( LDAP_VALID( ld ) );
-	assert( dn != NULL );
-	assert( msgidp != NULL );
-
-	/* check client controls */
-	rc = ldap_int_client_controls( ld, cctrls );
-	if( rc != LDAP_SUCCESS ) return rc;
 
 	assert( ld != NULL );
 	assert( LDAP_VALID( ld ) );

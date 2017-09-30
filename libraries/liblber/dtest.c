@@ -1,5 +1,5 @@
 /* dtest.c - lber decoding test program */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/libraries/liblber/dtest.c,v 1.27.2.3 2003/05/22 22:22:36 kurt Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file

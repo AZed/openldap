@@ -1,5 +1,5 @@
 /* idl.c - ldap id list handling routines */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/idl.c,v 1.66.2.9 2003/03/13 03:35:27 kurt Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -289,13 +289,6 @@ idl_store(
 {
 	int	rc, flags;
 	Datum	data;
-	struct ldbminfo *li = (struct ldbminfo *) be->be_private;
-
-#ifdef LDBM_DEBUG_IDL
-	idl_check(idl);
-#endif
-
-	ldbm_datum_init( data );
 
 #ifdef LDBM_DEBUG_IDL
 	idl_check(idl);

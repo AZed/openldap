@@ -1,5 +1,5 @@
 /* compare.c - bdb backend compare routine */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/compare.c,v 1.20.2.7 2003/03/03 17:10:07 kurt Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file

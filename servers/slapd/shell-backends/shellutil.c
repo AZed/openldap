@@ -1,4 +1,4 @@
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/shell-backends/shellutil.c,v 1.11.2.1 2002/08/05 19:06:48 kurt Exp $ */
 /*
  shellutil.c - common routines useful when building shell-based backends
 		 for the standalone ldap server

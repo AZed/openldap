@@ -1,4 +1,4 @@
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/search.c,v 1.86.2.9 2003/02/10 19:22:47 kurt Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -546,8 +546,6 @@ static void doPostSearchPluginFNs( Backend *be, Slapi_PBlock *pb )
 				"failed.\n", 0, 0, 0);
 #endif
 	}
-
-	return rc;
 }
 
 void dummy(void)

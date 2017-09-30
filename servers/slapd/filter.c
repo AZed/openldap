@@ -1,5 +1,5 @@
 /* filter.c - routines for parsing and dealing with filters */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/filter.c,v 1.72.2.11 2003/05/05 16:37:15 kurt Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -141,18 +141,6 @@ get_filter(
 		if ( err != LDAP_SUCCESS ) {
 			break;
 		}
-
-		filter_escape_value( f->f_av_value, &escaped );
-
-		*fstr = ch_malloc( sizeof("(>=)")
-			+ f->f_av_desc->ad_cname->bv_len
-			+ escaped.bv_len );
-
-		sprintf( *fstr, "(%s>=%s)",
-			f->f_av_desc->ad_cname->bv_val,
-		    escaped.bv_val );
-
-		ber_memfree( escaped.bv_val );
 		break;
 
 	case LDAP_FILTER_LE:
@@ -166,19 +154,6 @@ get_filter(
 		if ( err != LDAP_SUCCESS ) {
 			break;
 		}
-
-
-		filter_escape_value( f->f_av_value, &escaped );
-
-		*fstr = ch_malloc( sizeof("(<=)")
-			+ f->f_av_desc->ad_cname->bv_len
-			+ escaped.bv_len );
-
-		sprintf( *fstr, "(%s<=%s)",
-			f->f_av_desc->ad_cname->bv_val,
-		    escaped.bv_val );
-
-		ber_memfree( escaped.bv_val );
 		break;
 
 	case LDAP_FILTER_PRESENT: {
@@ -219,18 +194,6 @@ get_filter(
 		if ( err != LDAP_SUCCESS ) {
 			break;
 		}
-
-		filter_escape_value( f->f_av_value, &escaped );
-
-		*fstr = ch_malloc( sizeof("(~=)")
-			+ f->f_av_desc->ad_cname->bv_len
-			+ escaped.bv_len );
-
-		sprintf( *fstr, "(%s~=%s)",
-			f->f_av_desc->ad_cname->bv_val,
-		    escaped.bv_val );
-
-		ber_memfree( escaped.bv_val );
 		break;
 
 	case LDAP_FILTER_AND:
@@ -248,10 +211,6 @@ get_filter(
 			f->f_choice = SLAPD_FILTER_COMPUTED;
 			f->f_result = LDAP_COMPARE_TRUE;
 		}
-		*fstr = ch_malloc( sizeof("(&)")
-			+ ( ftmp == NULL ? 0 : strlen( ftmp ) ) );
-		sprintf( *fstr, "(&%s)",
-			ftmp == NULL ? "" : ftmp );
 		break;
 
 	case LDAP_FILTER_OR:
@@ -269,10 +228,6 @@ get_filter(
 			f->f_choice = SLAPD_FILTER_COMPUTED;
 			f->f_result = LDAP_COMPARE_FALSE;
 		}
-		*fstr = ch_malloc( sizeof("(!)")
-			+ ( ftmp == NULL ? 0 : strlen( ftmp ) ) );
-		sprintf( *fstr, "(|%s)",
-			ftmp == NULL ? "" : ftmp );
 		break;
 
 	case LDAP_FILTER_NOT:

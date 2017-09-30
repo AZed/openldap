@@ -1,5 +1,5 @@
 /* back-bdb.h - ldap ldbm back-end header file */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/idl.h,v 1.11.2.2 2003/03/03 17:10:07 kurt Exp $ */
 /*
  * Copyright 2000-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file

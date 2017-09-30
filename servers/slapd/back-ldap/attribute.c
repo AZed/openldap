@@ -1,5 +1,5 @@
 /* group.c - ldap backend acl group routine */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/attribute.c,v 1.12.2.1 2003/02/09 16:31:38 kurt Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file

@@ -1,5 +1,5 @@
 /* init.c - initialize passwd backend */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-passwd/init.c,v 1.19.2.1 2002/05/22 14:25:55 kurt Exp $ */
 
 #include "portable.h"
 

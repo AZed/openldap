@@ -1,7 +1,7 @@
 .TH SLAPD.CONF 5 "RELEASEDATE" "OpenLDAP LDVERSION"
 .\" Copyright 1998-2003 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
-.\" $OpenLDAP$
+.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapd.conf.5,v 1.87.2.25 2003/05/24 23:04:34 kurt Exp $
 .SH NAME
 slapd.conf \- configuration file for slapd, the stand-alone LDAP daemon
 .SH SYNOPSIS
@@ -757,14 +757,6 @@ Extra args can be added on the same line.
 See
 .BR limits
 for an explanation of the different flags.
-.TP
-.B sockbuf_max_incoming <integer>
-Specify the maximum incoming LDAP PDU size for anonymous sessions.
-The default is 262143.
-.TP
-.B sockbuf_max_incoming_auth <integer>
-Specify the maximum incoming LDAP PDU size for authenticated sessions.
-The default is 4194303.
 .TP
 .B sockbuf_max_incoming <integer>
 Specify the maximum incoming LDAP PDU size for anonymous sessions.

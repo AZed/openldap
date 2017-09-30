@@ -1,4 +1,4 @@
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-passwd/back-passwd.h,v 1.1.2.1 2002/05/22 14:25:55 kurt Exp $ */
 #ifndef _BACK_PASSWD_H
 #define _BACK_PASSWD_H
 

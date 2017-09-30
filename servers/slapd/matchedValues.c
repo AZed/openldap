@@ -1,4 +1,4 @@
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/matchedValues.c,v 1.2.2.6 2003/02/09 16:31:36 kurt Exp $ */
 /* 
  * Copyright 1999-2003 The OpenLDAP Foundation.
  * All rights reserved.

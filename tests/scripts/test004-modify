@@ -1,5 +1,5 @@
 #! /bin/sh
-# $OpenLDAP$
+# $OpenLDAP: pkg/ldap/tests/scripts/test004-modify,v 1.35.2.6 2003/02/24 16:16:54 kurt Exp $
 
 SRCDIR="."
 if test $# -ge 1 ; then

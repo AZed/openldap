@@ -1,4 +1,4 @@
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/compare.c,v 1.16.2.4 2003/02/09 17:02:18 kurt Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -60,16 +60,6 @@ ldap_compare_ext(
 #else
 	Debug( LDAP_DEBUG_TRACE, "ldap_compare\n", 0, 0, 0 );
 #endif
-
-	assert( ld != NULL );
-	assert( LDAP_VALID( ld ) );
-	assert( dn != NULL );
-	assert( attr != NULL );
-	assert( msgidp != NULL );
-
-	/* check client controls */
-	rc = ldap_int_client_controls( ld, cctrls );
-	if( rc != LDAP_SUCCESS ) return rc;
 
 	assert( ld != NULL );
 	assert( LDAP_VALID( ld ) );

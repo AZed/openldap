@@ -1,4 +1,4 @@
-dnl $OpenLDAP$
+dnl $OpenLDAP: pkg/ldap/build/openldap.m4,v 1.98.2.13 2003/04/04 01:45:49 kurt Exp $
 dnl
 dnl Copyright 1998-2003 The OpenLDAP Foundation, Redwood City, California, USA
 dnl All rights reserved.

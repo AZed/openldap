@@ -1,6 +1,6 @@
 # This is a sample Perl module for the OpenLDAP server slapd.
 #
-# $OpenLDAP$
+# $OpenLDAP: pkg/ldap/servers/slapd/back-perl/SampleLDAP.pm,v 1.3.2.2 2002/05/22 14:25:55 kurt Exp $
 #
 # Usage: Add something this to slapd.conf:
 #

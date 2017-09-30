@@ -1,5 +1,5 @@
 /* Generic bytes.h */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/include/ac/bytes.h,v 1.13.2.1 2003/02/09 17:02:17 kurt Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, Redwood City, California, USA
  * All rights reserved.

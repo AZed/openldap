@@ -2,7 +2,7 @@
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/clients/tools/ldapcompare.c,v 1.2.2.8 2003/03/29 15:45:43 kurt Exp $ */
 
 #include "portable.h"
 

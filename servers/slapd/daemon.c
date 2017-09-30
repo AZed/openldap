@@ -1,4 +1,4 @@
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/daemon.c,v 1.211.2.25 2003/06/21 17:22:58 kurt Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -1225,126 +1225,6 @@ slapd_daemon_task(
 	if ( started_event != NULL ) {
 		ldap_pvt_thread_cond_signal( &started_event );
 	}
-
-#ifdef HAVE_SYSCONF
-	dtblsize = sysconf( _SC_OPEN_MAX );
-#elif HAVE_GETDTABLESIZE
-	dtblsize = getdtablesize();
-#else
-	dtblsize = FD_SETSIZE;
-#endif
-	/* initialization complete. Here comes the loop. */
-
-#ifdef FD_SETSIZE
-	if(dtblsize > FD_SETSIZE) {
-		dtblsize = FD_SETSIZE;
-	}
-#endif	/* !FD_SETSIZE */
-
-	/* open a pipe (or something equivalent connected to itself).
-	 * we write a byte on this fd whenever we catch a signal. The main
-	 * loop will be select'ing on this socket, and will wake up when
-	 * this byte arrives.
-	 */
-	if( (rc = lutil_pair( wake_sds )) < 0 ) {
-		Debug( LDAP_DEBUG_ANY,
-			"daemon: lutil_pair() failed rc=%d\n", rc, 0, 0 );
-		return rc;
-	}
-
-	FD_ZERO( &slap_daemon.sd_readers );
-	FD_ZERO( &slap_daemon.sd_writers );
-
-	if( urls == NULL ) {
-		urls = "ldap:///";
-	}
-
-	u = str2charray( urls, " " );
-
-	if( u == NULL || u[0] == NULL ) {
-		Debug( LDAP_DEBUG_ANY, "daemon_init: no urls (%s) provided.\n",
-			urls, 0, 0 );
-		return -1;
-	}
-
-	for( i=0; u[i] != NULL; i++ ) {
-		Debug( LDAP_DEBUG_TRACE, "daemon_init: listen on %s\n",
-			u[i], 0, 0 );
-	}
-
-	if( i == 0 ) {
-		Debug( LDAP_DEBUG_ANY, "daemon_init: no listeners to open (%s)\n",
-			urls, 0, 0 );
-		charray_free( u );
-		return -1;
-	}
-
-	Debug( LDAP_DEBUG_TRACE, "daemon_init: %d listeners to open...\n",
-		i, 0, 0 );
-	slap_listeners = ch_malloc( (i+1)*sizeof(Listener *) );
-
-	for(i = 0; u[i] != NULL; i++ ) {
-		slap_listeners[i] = slap_open_listener( u[i] );
-
-		if( slap_listeners[i] == NULL ) {
-			charray_free( u );
-			return -1;
-		}
-	}
-	slap_listeners[i] = NULL;
-
-	Debug( LDAP_DEBUG_TRACE, "daemon_init: %d listeners opened\n",
-		i, 0, 0 );
-
-
-	charray_free( u );
-	ldap_pvt_thread_mutex_init( &slap_daemon.sd_mutex );
-	return !i;
-}
-
-
-int
-slapd_daemon_destroy(void)
-{
-	connections_destroy();
-	tcp_close( wake_sds[1] );
-	tcp_close( wake_sds[0] );
-	sockdestroy();
-
-
-	return 0;
-}
-
-
-static void *
-slapd_daemon_task(
-	void *ptr
-)
-{
-	int l;
-	time_t	last_idle_check = slap_get_time();
-	time( &starttime );
-
-	for ( l = 0; slap_listeners[l] != NULL; l++ ) {
-		if ( slap_listeners[l]->sl_sd == AC_SOCKET_INVALID )
-			continue;
-
-		if ( listen( slap_listeners[l]->sl_sd, SLAPD_LISTEN ) == -1 ) {
-			int err = sock_errno();
-			Debug( LDAP_DEBUG_ANY,
-				"daemon: listen(%s, 5) failed errno=%d (%s)\n",
-					slap_listeners[l]->sl_url, err,
-					sock_errstr(err) );
-			return( (void*)-1 );
-		}
-
-		slapd_add( slap_listeners[l]->sl_sd );
-	}
-
-#ifdef HAVE_NT_SERVICE_MANAGER
-	if ( started_event != NULL ) {
-		ldap_pvt_thread_cond_signal( &started_event );
-	}
 #endif
 	/* initialization complete. Here comes the loop. */
 
@@ -1876,17 +1756,7 @@ slapd_daemon_task(
 #else
 		for ( i = 0; i < nfds; i++ ) {
 			int	r, w;
-			int	is_listener = 0;
 
-			for ( l = 0; slap_listeners[l] != NULL; l++ ) {
-				if ( i == slap_listeners[l]->sl_sd ) {
-					is_listener = 1;
-					break;
-				}
-			}
-			if ( is_listener ) {
-				continue;
-			}
 			r = FD_ISSET( i, &readfds );
 			w = FD_ISSET( i, &writefds );
 			if ( r || w ) {

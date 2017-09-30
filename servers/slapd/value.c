@@ -1,5 +1,5 @@
 /* value.c - routines for dealing with values */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/value.c,v 1.47.2.10 2003/04/25 15:54:16 kurt Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file

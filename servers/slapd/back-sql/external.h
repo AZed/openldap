@@ -1,4 +1,4 @@
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/external.h,v 1.6.2.1 2002/08/29 01:51:02 kurt Exp $ */
 #ifndef _SQL_EXTERNAL_H
 #define _SQL_EXTERNAL_H
 

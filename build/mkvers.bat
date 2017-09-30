@@ -1,4 +1,4 @@
-:: $OpenLDAP$
+:: $OpenLDAP: pkg/ldap/build/mkvers.bat,v 1.2.2.1 2003/03/29 15:45:42 kurt Exp $
 :: Copyright 1998-2003 The OpenLDAP Foundation
 :: COPYING RESTRICTIONS APPLY.  See COPYRIGHT File in top level directory
 :: of this package for details.

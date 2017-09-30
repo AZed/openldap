@@ -15,4 +15,4 @@ stale, expired, or otherwise out of date.
 Please refer to http://www.ietf.org/ for latest revisions (and
 status).
 
-$OpenLDAP: pkg/ldap/doc/drafts/README,v 1.1.2.5 2002/01/25 16:03:55 kurt Exp $
+$OpenLDAP: pkg/ldap/doc/drafts/README,v 1.7 2002/01/13 01:56:36 kurt Exp $

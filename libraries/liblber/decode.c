@@ -1,5 +1,5 @@
 /* decode.c - ber input decoding routines */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/libraries/liblber/decode.c,v 1.84.2.8 2003/04/26 14:56:37 kurt Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -276,10 +276,7 @@ ber_get_stringb(
 	}
 	ber->ber_tag = *(unsigned char *)ber->ber_ptr;
 
-	/* must fit within allocated space with termination */
-	if ( datalen >= *len ) {
-		return LBER_DEFAULT;
-	}
+	buf[datalen] = '\0';
 
 	*len = datalen;
 	return tag;
@@ -815,7 +812,6 @@ ber_scanf ( BerElement *ber,
 		}
 	}
 
-breakout:
 	va_end( ap );
 	if ( rc == LBER_DEFAULT ) {
 	    /*

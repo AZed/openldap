@@ -1,5 +1,5 @@
 /* bind.c - decode an ldap bind operation and pass it to a backend db */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/bind.c,v 1.109.2.15 2003/05/18 19:58:56 kurt Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -88,28 +88,6 @@ do_bind(
 		free( op->o_ndn.bv_val );
 		op->o_ndn.bv_val = ch_strdup( "" );
 		op->o_ndn.bv_len = 0;
-	}
-
-	dn = NULL;
-	ndn = NULL;
-	mech = NULL;
-	cred.bv_val = NULL;
-
-	/*
-	 * Force to connection to "anonymous" until bind succeeds.
-	 */
-	ldap_pvt_thread_mutex_lock( &conn->c_mutex );
-	connection2anonymous( conn );
-	ldap_pvt_thread_mutex_unlock( &conn->c_mutex );
-
-	if ( op->o_dn != NULL ) {
-		free( op->o_dn );
-		op->o_dn = ch_strdup( "" );
-	}
-
-	if ( op->o_ndn != NULL ) {
-		free( op->o_ndn );
-		op->o_ndn = ch_strdup( "" );
 	}
 
 	/*

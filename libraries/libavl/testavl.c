@@ -1,5 +1,5 @@
 /* testavl.c - Test Tim Howes AVL code */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/libraries/libavl/testavl.c,v 1.17.2.1 2003/02/08 23:53:24 kurt Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file

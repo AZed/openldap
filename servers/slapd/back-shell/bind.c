@@ -1,5 +1,5 @@
 /* bind.c - shell backend bind function */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-shell/bind.c,v 1.14.2.6 2003/03/03 17:10:10 kurt Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -32,8 +32,6 @@ shell_back_bind(
 	Entry e;
 	FILE			*rfp, *wfp;
 	int			rc;
-
-	*edn = NULL;
 
 	if ( si->si_bind == NULL ) {
 		send_ldap_result( conn, op, LDAP_UNWILLING_TO_PERFORM, NULL,

@@ -1,5 +1,5 @@
 /* config.c - passwd backend configuration file routine */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-passwd/config.c,v 1.5.8.2 2000/06/13 17:57:35 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-passwd/config.c,v 1.7 1999/09/08 17:06:38 kdz Exp $ */
 
 #include "portable.h"
 

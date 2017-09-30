@@ -1,4 +1,4 @@
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/url.c,v 1.64.2.5 2003/03/03 17:10:05 kurt Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -662,42 +662,6 @@ ldap_url_parse_ext( LDAP_CONST char *url_in, LDAPURLDesc **ludpp )
 			ldap_free_urldesc( ludp );
 			return LDAP_URL_ERR_BADSCOPE;
 		}
-
-		LDAP_FREE( ludp->lud_filter );
-		ludp->lud_filter = LDAP_STRDUP( p );
-
-		if( ludp->lud_filter == NULL ) {
-			LDAP_FREE( url );
-			ldap_free_urldesc( ludp );
-			return LDAP_URL_ERR_MEM;
-		}
-	}
-
-	if ( q == NULL ) {
-		/* no more */
-		LDAP_FREE( url );
-		*ludpp = ludp;
-		return LDAP_URL_SUCCESS;
-	}
-
-	/* scan forward for '?' that may marks end of extensions */
-	p = q;
-	q = strchr( p, '?' );
-
-	if( q != NULL ) {
-		/* extra '?' */
-		LDAP_FREE( url );
-		ldap_free_urldesc( ludp );
-		return LDAP_URL_ERR_BADURL;
-	}
-
-	/* parse the extensions */
-	ludp->lud_exts = ldap_str2charray( p, "," );
-
-	if( ludp->lud_exts == NULL ) {
-		LDAP_FREE( url );
-		ldap_free_urldesc( ludp );
-		return LDAP_URL_ERR_BADEXTS;
 	}
 
 	if ( q == NULL ) {

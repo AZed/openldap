@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/shell-backends/shellutil.h,v 1.4.8.2 2000/06/13 17:57:40 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/shell-backends/shellutil.h,v 1.7 1999/09/08 17:06:40 kdz Exp $ */
 /*
  shellutil.h
 

@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/shell-backends/passwd-shell.c,v 1.7.8.3 2000/06/13 17:57:40 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/shell-backends/passwd-shell.c,v 1.10 2000/02/06 20:09:48 kurt Exp $ */
 /*
  passwd-shell.c - /etc/passwd shell-based backend for standalone ldap server
 

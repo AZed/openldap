@@ -1,5 +1,5 @@
 /* result.c - routines to send ldap results, errors, and referrals */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/result.c,v 1.130.2.21 2003/02/28 17:07:14 kurt Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -113,26 +113,6 @@ static ber_tag_t req2res( ber_tag_t tag )
 	}
 
 	return tag;
-}
-
-static long send_ldap_ber(
-	Connection *conn,
-	BerElement *ber )
-{
-	ber_len_t bytes;
-
-	ber_get_option( ber, LBER_OPT_BER_BYTES_TO_WRITE, &bytes );
-
-	refs[j] = NULL;
-
-	if( j == 0 ) {
-		ber_bvecfree( refs );
-		refs = NULL;
-	}
-
-	/* we should check that a referral value exists... */
-
-	return refs;
 }
 
 static long send_ldap_ber(
@@ -543,51 +523,6 @@ slap_send_ldap_result(
 	}
 }
 
-
-void
-send_ldap_disconnect(
-    Connection	*conn,
-    Operation	*op,
-    ber_int_t	err,
-    const char	*text
-)
-{
-	ber_tag_t tag;
-	ber_int_t msgid;
-	char *reqoid;
-
-#define LDAP_UNSOLICITED_ERROR(e) \
-	(  (e) == LDAP_PROTOCOL_ERROR \
-	|| (e) == LDAP_STRONG_AUTH_REQUIRED \
-	|| (e) == LDAP_UNAVAILABLE )
-
-	assert( LDAP_UNSOLICITED_ERROR( err ) );
-
-	Debug( LDAP_DEBUG_TRACE,
-		"send_ldap_disconnect %d:%s\n",
-		err, text ? text : "", NULL );
-
-	if ( op->o_protocol < LDAP_VERSION3 ) {
-		reqoid = NULL;
-		tag = req2res( op->o_tag );
-		msgid = (tag != LBER_SEQUENCE) ? op->o_msgid : 0;
-
-	} else {
-		reqoid = LDAP_NOTICE_DISCONNECT;
-		tag = LDAP_RES_EXTENDED;
-		msgid = 0;
-	}
-
-	send_ldap_response( conn, op, tag, msgid,
-		err, NULL, text, NULL,
-		reqoid, NULL, NULL, NULL );
-
-	Statslog( LDAP_DEBUG_STATS,
-	    "conn=%ld op=%ld DISCONNECT tag=%lu err=%ld text=%s\n",
-		(long) op->o_connid, (long) op->o_opid,
-		(unsigned long) tag, (long) err, text ? text : "" );
-}
-
 void
 send_ldap_sasl(
     Connection	*conn,
@@ -770,7 +705,6 @@ slap_send_search_result(
 	    ch_free(tmp);
 	}
 }
-
 
 int
 slap_send_search_entry(
@@ -1395,7 +1329,6 @@ error_return:;
 	if ( e_flags ) free( e_flags );
 	return( rc );
 }
-
 
 int
 slap_send_search_reference(

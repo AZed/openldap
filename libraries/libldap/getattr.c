@@ -1,4 +1,4 @@
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/getattr.c,v 1.24.2.7 2003/05/15 21:10:31 kurt Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -101,15 +101,6 @@ ldap_next_attribute( LDAP *ld, LDAPMessage *entry, BerElement *ber )
 #else
 	Debug( LDAP_DEBUG_TRACE, "ldap_next_attribute\n", 0, 0, 0 );
 #endif
-
-	assert( ld != NULL );
-	assert( LDAP_VALID( ld ) );
-	assert( entry != NULL );
-	assert( ber != NULL );
-
-	if ( ber_pvt_ber_remaining( ber ) == 0 ) {
-		return NULL;
-	}
 
 	assert( ld != NULL );
 	assert( LDAP_VALID( ld ) );

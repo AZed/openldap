@@ -1,4 +1,4 @@
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/modify.c,v 1.127.2.15 2003/04/17 22:49:05 ando Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -98,7 +98,6 @@ do_modify(
 #else
 	Debug( LDAP_DEBUG_ARGS, "do_modify: dn (%s)\n", dn.bv_val, 0, 0 );
 #endif
-
 
 
 	/* collect modifications & save for later */
@@ -367,15 +366,6 @@ do_modify(
 		modv = NULL;
 		goto cleanup;
 	}
-
-	/* check for referrals */
-	rc = backend_check_referrals( be, conn, op, dn, ndn );
-	if ( rc != LDAP_SUCCESS ) {
-		goto cleanup;
-	}
-
-	/* deref suffix alias if appropriate */
-	ndn = suffix_alias( be, ndn );
 
 	/*
 	 * It's possible that the preoperation plugin changed the
@@ -747,12 +737,6 @@ int slap_mods_opattrs(
 			*modtail = mod;
 			modtail = &mod->sml_next;
 		}
-
-		mod->sml_bvalues = ml->ml_bvalues;
-		ml->ml_values = NULL;
-
-		*modtail = mod;
-		modtail = &mod->sml_next;
 	}
 
 	if( SLAP_LASTMOD(be) ) {

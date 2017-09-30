@@ -1,4 +1,4 @@
-# $OpenLDAP$
+# $OpenLDAP: pkg/ldap/Makefile.in,v 1.21.2.1 2003/03/03 17:10:01 kurt Exp $
 # Master Makefile for OpenLDAP
 ##
 ## Copyright 1998-2003 The OpenLDAP Foundation, Redwood City, California, USA

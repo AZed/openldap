@@ -1,4 +1,4 @@
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/clients/tools/ldapmodrdn.c,v 1.80.2.9 2003/03/29 15:45:43 kurt Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -132,17 +132,6 @@ main(int argc, char **argv)
     prog = lutil_progname( "ldapmodrdn", argc, argv );
 
 	tool_args( argc, argv );
-
-	if (version == -1) {
-		version = LDAP_VERSION3;
-	}
-	if (authmethod == -1 && version > LDAP_VERSION2) {
-#ifdef HAVE_CYRUS_SASL
-		authmethod = LDAP_AUTH_SASL;
-#else
-		authmethod = LDAP_AUTH_SIMPLE;
-#endif
-	}
 
     havedn = 0;
     if (argc - optind == 2) {

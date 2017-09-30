@@ -1,5 +1,5 @@
 /* referral.c - muck with referrals */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/referral.c,v 1.7.2.6 2003/03/03 17:10:07 kurt Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file

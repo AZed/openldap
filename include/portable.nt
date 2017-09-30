@@ -1,4 +1,4 @@
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/include/portable.nt,v 1.28.2.4 2003/02/09 17:02:17 kurt Exp $ */
 /* include/portable.nt -- manually updated of MS NT (MS VC5) */
 /* synced with portable.h.in 1.191 */
 /*

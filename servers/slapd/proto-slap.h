@@ -1,4 +1,4 @@
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/proto-slap.h,v 1.329.2.27 2003/05/07 22:29:11 hyc Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -10,53 +10,6 @@
 #include "ldap_pvt.h"
 
 LDAP_BEGIN_DECL
-
-#include <ldap_cdefs.h>
-
-LDAP_BEGIN_DECL
-
-LDAP_SLAPD_F( int ) schema_init_done;
-LDAP_SLAPD_F( struct slap_internal_schema ) slap_schema;
-
-LDAP_SLAPD_F( int ) slap_valid_descr( const char * );
-
-LDAP_SLAPD_F (int) slap_str2ad LDAP_P((
-	const char *,
-	AttributeDescription **ad,
-	const char **text ));
-
-LDAP_SLAPD_F (int) slap_bv2ad LDAP_P((
-	struct berval *bv,
-	AttributeDescription **ad,
-	const char **text ));
-
-LDAP_SLAPD_F (AttributeDescription *) ad_dup LDAP_P((
-	AttributeDescription *desc ));
-
-LDAP_SLAPD_F (void) ad_free LDAP_P((
-	AttributeDescription *desc,
-	int freeit ));
-
-#define ad_cmp(l,r)	( strcasecmp( \
-	(l)->ad_cname->bv_val, (r)->ad_cname->bv_val ))
-
-LDAP_SLAPD_F (int) is_ad_subtype LDAP_P((
-	AttributeDescription *sub,
-	AttributeDescription *super ));
-
-LDAP_SLAPD_F (int) ad_inlist LDAP_P((
-	AttributeDescription *desc,
-	char **attrs ));
-
-LDAP_SLAPD_F (int) slap_str2undef_ad LDAP_P((
-	const char *,
-	AttributeDescription **ad,
-	const char **text ));
-
-LDAP_SLAPD_F (int) slap_bv2undef_ad LDAP_P((
-	struct berval *bv,
-	AttributeDescription **ad,
-	const char **text ));
 
 /*
  * acl.c

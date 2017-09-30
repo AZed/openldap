@@ -1,4 +1,4 @@
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/error.c,v 1.37.2.6 2003/02/08 23:53:24 kurt Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -147,14 +147,7 @@ void ldap_int_error_init( void ) {
 static const struct ldaperror *
 ldap_int_error( int err )
 {
-	const struct ldaperror *e;
-	
-	Debug( LDAP_DEBUG_TRACE, "ldap_err2string\n", 0, 0, 0 );
-
-	e = ldap_int_error( err );
-
-	return ( e != NULL ) ? e->e_reason : "Unknown error";
-}
+	int	i;
 
 	for ( i=0; ldap_errlist[i].e_reason != NULL; i++ ) {
 		if ( err == ldap_errlist[i].e_code ) {

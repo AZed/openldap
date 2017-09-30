@@ -1,5 +1,5 @@
 #! /bin/sh
-# $OpenLDAP$
+# $OpenLDAP: pkg/ldap/tests/scripts/test016-subref,v 1.1.2.1 2002/10/29 01:02:11 kurt Exp $
 
 RCODE=10
 SRCDIR="."

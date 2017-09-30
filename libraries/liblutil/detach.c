@@ -1,4 +1,4 @@
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/libraries/liblutil/detach.c,v 1.12.2.1 2003/02/07 16:55:58 kurt Exp $ */
 /*
  * Copyright (c) 1990, 1994 Regents of the University of Michigan.
  * All rights reserved.

@@ -1,4 +1,4 @@
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-perl/modrdn.c,v 1.10.2.1 2002/04/18 15:20:02 kurt Exp $ */
 /*
  *	 Copyright 1999, John C. Quillan, All rights reserved.
  *	 Portions Copyright 2002, myinternet Limited. All rights reserved.

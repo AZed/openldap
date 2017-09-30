@@ -1,4 +1,4 @@
-# $OpenLDAP$
+# $OpenLDAP: pkg/ldap/servers/slapd/schema/misc.schema,v 1.23.2.1 2003/02/15 15:44:08 kurt Exp $
 #
 # Assorted definitions from several sources, including
 # ''works in progress''.  Contents of this file are

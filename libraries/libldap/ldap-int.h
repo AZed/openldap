@@ -1,5 +1,5 @@
 /*  ldap-int.h - defines & prototypes internal to the LDAP library */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/ldap-int.h,v 1.129.2.12 2003/04/28 23:41:55 kurt Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -481,10 +481,6 @@ LDAP_F (BerElement *) ldap_build_search_req LDAP_P((
 	ber_int_t timelimit,
 	ber_int_t sizelimit ));
 
-/*
- * in string.c
- */
-	/* see <ac/string.h> */
 
 /*
  * in unbind.c

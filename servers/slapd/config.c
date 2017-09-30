@@ -1,5 +1,5 @@
 /* config.c - configuration file handling routines */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/config.c,v 1.165.2.26 2003/03/27 03:04:06 hyc Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -712,36 +712,7 @@ read_config( const char *fname, int depth )
 				return( 1 );
 			}
 
-			if ( global_realm != NULL ) {
-				Debug( LDAP_DEBUG_ANY,
-					"%s: line %d: already set sasl-realm!\n",
-					fname, lineno, 0 );
-				return 1;
-
-			} else {
-				global_realm = ch_strdup( cargv[1] );
-			}
-
-		/* SASL security properties */
-		} else if ( strcasecmp( cargv[0], "sasl-secprops" ) == 0 ) {
-			char *txt;
-
-			if ( cargc < 2 ) {
-				Debug( LDAP_DEBUG_ANY,
-	    "%s: line %d: missing flags in \"sasl-secprops <properties>\" line\n",
-				    fname, lineno, 0 );
-				return 1;
-			}
-
-			txt = slap_sasl_secprops( cargv[1] );
-			if ( txt != NULL ) {
-				Debug( LDAP_DEBUG_ANY,
-	    "%s: line %d: sasl-secprops: %s\n",
-				    fname, lineno, txt );
-				return 1;
-			}
-
-		/* set time limit */
+		/* set size limit */
 		} else if ( strcasecmp( cargv[0], "sizelimit" ) == 0 ) {
 			int rc = 0, i;
 			struct slap_limits_set *lim;
@@ -2622,8 +2593,6 @@ fp_getline( FILE *fp, int *lineno )
 			/* change leading whitespace to a space */
 			buf[0] = ' ';
 		}
-
-		buf[0] = ' ';
 
 		CATLINE( buf );
 		(*lineno)++;

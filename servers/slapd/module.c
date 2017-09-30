@@ -1,4 +1,4 @@
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/module.c,v 1.15.2.4 2003/02/09 16:31:36 kurt Exp $ */
 #include "portable.h"
 #include <stdio.h>
 #include "slap.h"

@@ -1,4 +1,4 @@
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/clients/tools/ldapmodify.c,v 1.109.2.15 2003/03/29 15:45:43 kurt Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -103,46 +103,6 @@ usage( void )
     exit( EXIT_FAILURE );
 }
 
-static void
-usage( const char *prog )
-{
-    fprintf( stderr,
-"Add or modify entries from an LDAP server\n\n"
-"usage: %s [options]\n"
-"	The list of desired operations are read from stdin or from the file\n"
-"	specified by \"-f file\".\n"
-"Add or modify options:\n"
-"  -a         add values (default%s)\n"
-"  -F         force all changes records to be used\n"
-
-"Common options:\n"
-"  -d level   set LDAP debugging level to `level'\n"
-"  -D binddn  bind DN\n"
-"  -f file    read operations from `file'\n"
-"  -h host    LDAP server\n"
-"  -H URI     LDAP Uniform Resource Indentifier(s)\n"
-"  -I         use SASL Interactive mode\n"
-"  -k         use Kerberos authentication\n"
-"  -K         like -k, but do only step 1 of the Kerberos bind\n"
-"  -M         enable Manage DSA IT control (-MM to make critical)\n"
-"  -n         show what would be done but don't actually update\n"
-"  -O props   SASL security properties\n"
-"  -p port    port on LDAP server\n"
-"  -P version procotol version (default: 3)\n"
-"  -Q         use SASL Quiet mode\n"
-"  -R realm   SASL realm\n"
-"  -U authcid SASL authentication identity\n"
-"  -v         run in verbose mode (diagnostics to standard output)\n"
-"  -w passwd  bind passwd (for simple authentication)\n"
-"  -W         prompt for bind passwd\n"
-"  -x         Simple authentication\n"
-"  -X authzid SASL authorization identity (\"dn:<dn>\" or \"u:<user>\")\n"
-"  -Y mech    SASL mechanism\n"
-"  -Z         Start TLS request (-ZZ to require successful response)\n"
-	     , prog, (strcmp( prog, "ldapadd" ) ? " is to replace" : "") );
-
-    exit( EXIT_FAILURE );
-}
 
 const char options[] = "aFrS:"
 	"cCd:D:e:f:h:H:IkKMnO:p:P:QR:U:vVw:WxX:y:Y:Z";

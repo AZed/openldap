@@ -1,5 +1,5 @@
 /* Generic stdlib.h */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/include/ac/stdlib.h,v 1.11.2.2 2003/03/03 17:10:03 kurt Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, Redwood City, California, USA
  * All rights reserved.

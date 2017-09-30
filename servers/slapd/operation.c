@@ -1,5 +1,5 @@
 /* operation.c - routines to deal with pending ldap operations */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/operation.c,v 1.25.2.7 2003/03/29 15:45:43 kurt Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -123,4 +123,3 @@ slap_op_alloc(
 
 	return( op );
 }
-

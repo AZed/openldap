@@ -1,5 +1,5 @@
 /* id2entry.c - routines to deal with the id2entry index */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/id2entry.c,v 1.29.2.3 2003/03/03 17:10:10 kurt Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -102,15 +102,6 @@ id2entry_delete( Backend *be, Entry *e )
 	    e->e_dn, 0 );
 #endif
 
-
-#ifdef notdef
-#ifdef LDAP_RDWR_DEBUG
-	/* check for writer lock */
-	assert(ldap_pvt_thread_rdwr_writers(&e->e_rdwr) == 1);
-#endif
-#endif
-
-	ldbm_datum_init( key );
 
 #ifdef notdef
 #ifdef LDAP_RDWR_DEBUG

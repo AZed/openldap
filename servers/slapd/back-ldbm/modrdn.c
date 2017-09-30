@@ -1,5 +1,5 @@
 /* modrdn.c - ldbm backend modrdn routine */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/modrdn.c,v 1.114.2.7 2003/03/03 17:10:10 kurt Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -581,7 +581,6 @@ ldbm_back_modrdn(
 	if ( op->o_abandon ) {
 		goto return_results;
 	}
-	ldap_pvt_thread_mutex_unlock( &op->o_abandonmutex );
 
 	/* delete old one */
 	if ( dn2id_delete( be, &e->e_nname, e->e_id ) != 0 ) {

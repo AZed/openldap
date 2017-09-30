@@ -1,5 +1,5 @@
 /* str2filter.c - parse an rfc 1588 string filter */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/str2filter.c,v 1.24.2.5 2003/03/03 17:10:07 kurt Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file

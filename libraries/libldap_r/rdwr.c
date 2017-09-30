@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap_r/rdwr.c,v 1.10.8.3 2000/06/17 16:16:57 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap_r/rdwr.c,v 1.18 2000/06/16 19:25:03 kurt Exp $ */
 /*
 ** This is an improved implementation of Reader/Writer locks does
 ** not protect writers from starvation.  That is, if a writer is

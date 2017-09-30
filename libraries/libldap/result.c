@@ -1,4 +1,4 @@
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/result.c,v 1.64.2.12 2003/02/28 17:07:14 kurt Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -961,18 +961,7 @@ lr->lr_res_matched ? lr->lr_res_matched : "" );
 			prev->lm_next = l->lm_next;
 		*result = l;
 		ld->ld_errno = LDAP_SUCCESS;
-#ifdef LDAP_WORLD_P16
-		/*
-		 * XXX questionable fix; see text for [P16] on
-		 * http://www.critical-angle.com/ldapworld/patch/
-		 *
-		 * inclusion of this patch causes searchs to hang on
-		 * multiple platforms
-		 */
-		return( l->lm_msgtype );
-#else	/* LDAP_WORLD_P16 */
 		return( tag );
-#endif	/* !LDAP_WORLD_P16 */
 	}
 
 exit:

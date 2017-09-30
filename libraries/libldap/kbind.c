@@ -1,4 +1,4 @@
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/kbind.c,v 1.27.2.4 2003/03/06 19:08:00 kurt Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -68,11 +68,6 @@ ldap_kerberos_bind1( LDAP *ld, LDAP_CONST char *dn )
 #else
 	Debug( LDAP_DEBUG_TRACE, "ldap_kerberos_bind1\n", 0, 0, 0 );
 #endif
-
-	if( ld->ld_version > LDAP_VERSION2 ) {
-		ld->ld_errno = LDAP_NOT_SUPPORTED;
-		return -1;
-	}
 
 	if( ld->ld_version > LDAP_VERSION2 ) {
 		ld->ld_errno = LDAP_NOT_SUPPORTED;
@@ -159,11 +154,6 @@ ldap_kerberos_bind2( LDAP *ld, LDAP_CONST char *dn )
 #else
 	Debug( LDAP_DEBUG_TRACE, "ldap_kerberos_bind2\n", 0, 0, 0 );
 #endif
-
-	if( ld->ld_version > LDAP_VERSION2 ) {
-		ld->ld_errno = LDAP_NOT_SUPPORTED;
-		return -1;
-	}
 
 	if( ld->ld_version > LDAP_VERSION2 ) {
 		ld->ld_errno = LDAP_NOT_SUPPORTED;

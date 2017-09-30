@@ -1,5 +1,5 @@
 /* Generic time.h */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/contrib/ldapc++/src/ac/time.h,v 1.3.2.1 2003/03/03 17:10:02 kurt Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, Redwood City, California, USA
  * All rights reserved.

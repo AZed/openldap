@@ -1,5 +1,5 @@
 /* io.c - ber general i/o routines */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/libraries/liblber/io.c,v 1.70.2.11 2003/05/22 22:22:36 kurt Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -299,7 +299,6 @@ ber_dup( BerElement *ber )
 }
 
 
-/* OLD U-Mich ber_init() */
 void
 ber_init2( BerElement *ber, struct berval *bv, int options )
 {

@@ -1,4 +1,4 @@
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/include/ldap.h,v 1.168.2.16 2003/03/05 23:48:31 kurt Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, Redwood City, California, USA
  * All rights reserved.
@@ -63,14 +63,6 @@ LDAP_BEGIN_DECL
 /* #define LDAP_API_FEATURE_SESSION_SAFE	1	*/
 /* #define LDAP_API_OPERATION_SESSION_SAFE	1	*/
 #endif
-#if defined( LDAP_THREAD_SAFE ) && \
-	defined( LDAP_API_FEATURE_X_OPENLDAP_THREAD_SAFE )
-/* #define LDAP_API_FEATURE_SESSION_SAFE	1	*/
-/* #define LDAP_API_OPERATION_SESSION_SAFE	1	*/
-#endif
-
-#define LDAP_PORT		389		/* ldap:///		default LDAP port */
-#define LDAPS_PORT		636		/* ldaps:///	default LDAP over TLS port */
 
 #define LDAP_PORT		389		/* ldap:///		default LDAP port */
 #define LDAPS_PORT		636		/* ldaps:///	default LDAP over TLS port */
@@ -404,8 +396,6 @@ typedef struct ldapcontrol {
 
 #define LDAP_UPDATE_ERROR(n)	LDAP_RANGE((n),0x40,0x47) /* 64-69,71 */
 
-#define LDAP_UPDATE_ERROR(n)	LDAP_RANGE((n),0x40,0x47) /* 64-69,71 */
-
 #define LDAP_NAMING_VIOLATION		0x40
 #define LDAP_OBJECT_CLASS_VIOLATION	0x41
 #define LDAP_NOT_ALLOWED_ON_NONLEAF	0x42
@@ -492,7 +482,7 @@ typedef struct ldap LDAP;
 #define LDAP_MSG_RECEIVED		0x02
 
 /*
- * in controls.c:
+ * types for ldap URL handling
  */
 typedef struct ldap_url_desc {
 	struct ldap_url_desc *lud_next;
