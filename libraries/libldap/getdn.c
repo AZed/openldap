@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/getdn.c,v 1.94.2.9 2003/03/03 17:10:04 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/getdn.c,v 1.94.2.10 2004/03/16 17:08:02 ando Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file

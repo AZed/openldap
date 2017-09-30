@@ -1,5 +1,5 @@
 /* bind.c - ldbm backend bind and unbind routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/bind.c,v 1.60.2.2 2003/02/09 16:31:38 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/bind.c,v 1.60.2.3 2003/10/29 21:32:17 hyc Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file

@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/tools/slappasswd.c,v 1.12.2.3 2003/06/21 17:20:34 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/tools/slappasswd.c,v 1.12.2.4 2003/10/29 21:32:17 hyc Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file

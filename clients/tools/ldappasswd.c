@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/clients/tools/ldappasswd.c,v 1.94.2.10 2003/04/14 15:37:27 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/clients/tools/ldappasswd.c,v 1.94.2.12 2003/12/17 23:30:20 kurt Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file

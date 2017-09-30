@@ -1,5 +1,5 @@
 /* template.c -- example OpenLDAP source file */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/doc/devel/template.c,v 1.5.2.1 2003/12/17 23:33:14 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright YEAR The OpenLDAP Foundation.

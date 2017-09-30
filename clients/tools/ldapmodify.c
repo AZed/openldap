@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/clients/tools/ldapmodify.c,v 1.109.2.15 2003/03/29 15:45:43 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/clients/tools/ldapmodify.c,v 1.109.2.18 2003/12/17 23:30:20 kurt Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file

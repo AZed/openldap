@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/clients/tools/ldapwhoami.c,v 1.2.2.9 2003/03/29 15:45:43 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/clients/tools/ldapwhoami.c,v 1.2.2.10 2003/12/17 23:30:20 kurt Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file

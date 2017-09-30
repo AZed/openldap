@@ -1,5 +1,5 @@
 /* entry.c - routines for dealing with entries */
-/* $OpenLDAP: pkg/ldap/servers/slapd/entry.c,v 1.90.2.10 2003/05/07 22:29:10 hyc Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/entry.c,v 1.90.2.11 2003/12/20 14:07:31 hyc Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file

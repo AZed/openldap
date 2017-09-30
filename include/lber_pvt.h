@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/include/lber_pvt.h,v 1.19.2.3 2003/03/03 17:10:03 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/include/lber_pvt.h,v 1.19.2.4 2003/12/02 03:20:31 kurt Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, Redwood City, California, USA
  * All rights reserved.

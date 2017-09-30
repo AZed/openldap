@@ -1,5 +1,5 @@
 #! /bin/sh
-# $OpenLDAP$
+# $OpenLDAP: pkg/ldap/build/version.var,v 1.1.2.29 2004/03/26 19:28:44 kurt Exp $
 ## Copyright 2000-2004 The OpenLDAP Foundation
 ## COPYING RESTRICTIONS APPLY.  See COPYRIGHT File in top level directory
 ## of this package for details.

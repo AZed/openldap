@@ -1,4 +1,4 @@
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/libraries/librewrite/map.c,v 1.7.2.7 2004/03/06 16:10:31 ando Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2004 The OpenLDAP Foundation.

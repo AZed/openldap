@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/clients/tools/common.c,v 1.5.2.9 2003/05/22 22:22:17 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/clients/tools/common.c,v 1.5.2.10 2003/12/02 18:00:23 kurt Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file

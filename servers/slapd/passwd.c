@@ -1,5 +1,5 @@
 /* bind.c - ldbm backend bind and unbind routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/passwd.c,v 1.35.2.8 2003/03/03 17:10:07 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/passwd.c,v 1.35.2.10 2003/12/02 03:27:43 kurt Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file

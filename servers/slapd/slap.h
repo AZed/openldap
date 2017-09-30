@@ -1,5 +1,5 @@
 /* slap.h - stand alone ldap server include file */
-/* $OpenLDAP: pkg/ldap/servers/slapd/slap.h,v 1.323.2.29 2003/05/16 00:38:09 hyc Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/slap.h,v 1.323.2.34 2004/03/06 16:05:52 ando Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file

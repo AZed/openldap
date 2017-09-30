@@ -1,4 +1,4 @@
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slurpd/args.c,v 1.20.2.6 2003/12/18 03:25:14 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2003 The OpenLDAP Foundation.

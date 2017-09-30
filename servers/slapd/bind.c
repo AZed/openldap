@@ -1,5 +1,5 @@
 /* bind.c - decode an ldap bind operation and pass it to a backend db */
-/* $OpenLDAP: pkg/ldap/servers/slapd/bind.c,v 1.109.2.15 2003/05/18 19:58:56 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/bind.c,v 1.109.2.17 2004/01/21 07:56:34 hyc Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file

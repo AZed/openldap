@@ -1,5 +1,5 @@
 /* dbcache.c - manage cache of open databases */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/dbcache.c,v 1.15.2.7 2003/03/29 15:45:43 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/dbcache.c,v 1.15.2.8 2003/11/29 12:59:10 hyc Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file

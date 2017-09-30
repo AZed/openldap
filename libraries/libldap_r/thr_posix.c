@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap_r/thr_posix.c,v 1.25.2.9 2003/03/03 17:10:05 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap_r/thr_posix.c,v 1.25.2.10 2003/11/13 02:35:57 hyc Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, Redwood City, California, USA
  * All rights reserved.

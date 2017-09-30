@@ -1,4 +1,4 @@
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/libraries/liblutil/passwd.c,v 1.59.2.14 2003/12/18 02:36:40 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2003 The OpenLDAP Foundation.

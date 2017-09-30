@@ -1,5 +1,5 @@
 /* repl.c - log modifications for replication purposes */
-/* $OpenLDAP: pkg/ldap/servers/slapd/repl.c,v 1.40.2.4 2003/03/03 17:10:07 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/repl.c,v 1.40.2.7 2004/01/24 01:46:37 hyc Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
