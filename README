@@ -5,10 +5,8 @@ OpenLDAP 2.0 README
 	changes from previous releases, see the CHANGES file in this
 	directory.
 
-	This is the first release of 2.0 and includes significant
-	changes from prior releases.  The software may be a little
-	rough around the edges, use with appropriate care.  Those
-	seeking stable LDAP servers may want to use 1.2.
+	This is 2.0 release.  2.0 releases includes significant changes
+	from prior releases.  
 
 
 REQUIRED SOFTWARE
@@ -24,7 +22,7 @@ REQUIRED SOFTWARE
 
 	SLAPD:
 		LDBM compatible datastore (required)
-			[Sleepycat Berkeley DB 3.2 (recommended) or GDBM]
+			[Sleepycat Berkeley DB 4 (recommended) or GDBM]
 
 	SLURPD:
 		LTHREAD compatible thread package
@@ -64,7 +62,7 @@ SUPPORT / FEEDBACK / PROBLEM REPORTS / DISCUSSIONS
 	the answer, please enquire on the OpenLDAP-software list.
 
 	Issues, such as bug reports, should be reported using our
-	our Issue Tracking System <http://www.OpenLDAP.com/its/> or
+	our Issue Tracking System <http://www.OpenLDAP.org/its/> or
 	by sending mail to OpenLDAP-its@OpenLDAP.org.  Do not use
 	this system for software enquiries.  Please direct these
 	to an appropriate mailing list.

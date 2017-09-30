@@ -156,7 +156,12 @@ parse_acl(
 						|| strcasecmp( style, "regex" ) == 0 )
 					{
 						a->acl_dn_style = ACL_STYLE_REGEX;
-						if ( strcmp(right, "*") == 0 
+
+						if ( *right == '\0' ) {
+							a->acl_dn_style = ACL_STYLE_BASE;
+							a->acl_dn_pat = ch_strdup( right );
+
+						} else if ( strcmp(right, "*") == 0 
 							|| strcmp(right, ".*") == 0 
 							|| strcmp(right, ".*$") == 0 
 							|| strcmp(right, "^.*") == 0 
@@ -1305,7 +1310,7 @@ print_acl( Backend *be, AccessControl *a )
 			if ( ! first ) {
 				fprintf( stderr, "," );
 			}
-			fprintf( stderr, a->acl_attrs[i] );
+			fputs( a->acl_attrs[i], stderr );
 			first = 0;
 		}
 		fprintf(  stderr, "\n" );

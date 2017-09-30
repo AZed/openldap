@@ -48,17 +48,26 @@ static void cont_free( Datum *cont )
 #ifdef LDBM_DEBUG_IDL
 static void idl_check(ID_BLOCK *idl)
 {
-	int i;
+	int i, max;
 	ID_BLOCK last;
 
-	if( ID_BLOCK_INDIRECT(idl) || ID_BLOCK_ALLIDS(idl)
-		|| ID_BLOCK_NIDS(idl) <= 1 )
+	if( ID_BLOCK_ALLIDS(idl) )
 	{
 		return;
 	}
+	if( ID_BLOCK_INDIRECT(idl) )
+	{
+		for ( max = 0; ID_BLOCK_ID(idl, max) != NOID; max++ ) ;
+	} else
+	{
+		max = ID_BLOCK_NIDS(idl);
+	}
+
+	if (max <= 1)
+		return;
 
 	for( last = ID_BLOCK_ID(idl, 0), i = 1;
-		i < ID_BLOCK_NIDS(idl);
+		i < max;
 		last = ID_BLOCK_ID(idl, i), i++ )
 	{
 		assert (last < ID_BLOCK_ID(idl, i) );
@@ -526,7 +535,7 @@ idl_insert_key(
 		if ( !first && !ID_BLOCK_NOID(idl, i + 1) ) {
 			/* read it in */
 			cont_alloc( &k2, &key );
-			cont_id( &k2, ID_BLOCK_ID(idl, i) );
+			cont_id( &k2, ID_BLOCK_ID(idl, i + 1) );
 			if ( (tmp2 = idl_fetch_one( be, db, k2 )) == NULL ) {
 				Debug( LDAP_DEBUG_ANY,
 				    "idl_insert_key: idl_fetch_one returned NULL\n",
@@ -913,6 +922,9 @@ idl_intersection(
 	if ( ID_BLOCK_ALLIDS( b ) ) {
 		return( idl_dup( a ) );
 	}
+	if ( ID_BLOCK_NIDS(a) == 0 || ID_BLOCK_NIDS(b) == 0 ) {
+		return( NULL );
+	}
 
 	n = idl_dup( idl_min( a, b ) );
 
@@ -921,20 +933,21 @@ idl_intersection(
 	idl_check(b);
 #endif
 
-	for ( ni = 0, ai = 0, bi = 0; ai < ID_BLOCK_NIDS(a); ai++ ) {
-		for ( ;
-			bi < ID_BLOCK_NIDS(b) && ID_BLOCK_ID(b, bi) < ID_BLOCK_ID(a, ai);
-			bi++ )
-		{
-			;	/* NULL */
-		}
-
-		if ( bi == ID_BLOCK_NIDS(b) ) {
-			break;
-		}
-
+	for ( ni = 0, ai = 0, bi = 0; ; ) {
 		if ( ID_BLOCK_ID(b, bi) == ID_BLOCK_ID(a, ai) ) {
 			ID_BLOCK_ID(n, ni++) = ID_BLOCK_ID(a, ai);
+			bi++;
+			ai++;
+			if ( ai >= ID_BLOCK_NIDS(a) || bi >= ID_BLOCK_NIDS(b) )
+				break;
+		} else if ( ID_BLOCK_ID(a, ai) < ID_BLOCK_ID(b, bi) ) {
+			ai++;
+			if ( ai >= ID_BLOCK_NIDS(a) )
+				break;
+		} else {
+			bi++;
+			if ( bi >= ID_BLOCK_NIDS(b) )
+				break;
 		}
 	}
 

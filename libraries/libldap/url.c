@@ -928,7 +928,7 @@ ldap_url_search( LDAP *ld, LDAP_CONST char *url, int attrsonly )
 		bind.ri_url = (char *)url;
 		err = ldap_send_server_request(
 					ld, ber, ld->ld_msgid, NULL,
-					ludp, NULL, &bind );
+					ludp->lud_host ? ludp : NULL, NULL, &bind );
 	}
 
 	ldap_free_urldesc( ludp );
@@ -989,12 +989,14 @@ ldap_pvt_hex_unescape( char *s )
 
 	for ( p = s; *s != '\0'; ++s ) {
 		if ( *s == '%' ) {
-			if ( *++s != '\0' ) {
-				*p = ldap_pvt_unhex( *s ) << 4;
+			if ( *++s == '\0' ) {
+				break;
 			}
-			if ( *++s != '\0' ) {
-				*p++ += ldap_pvt_unhex( *s );
+			*p = ldap_pvt_unhex( *s ) << 4;
+			if ( *++s == '\0' ) {
+				break;
 			}
+			*p++ += ldap_pvt_unhex( *s );
 		} else {
 			*p++ = *s;
 		}

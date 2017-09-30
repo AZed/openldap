@@ -6,10 +6,10 @@
 
 #include "portable.h"
 
-#include <stdlib.h>
 #include <stdio.h>
 
 #include <ac/socket.h>
+#include <ac/stdlib.h>
 #include <ac/string.h>
 #include <ac/time.h>
 #include <ac/errno.h>
@@ -73,6 +73,12 @@ int ldap_int_sasl_init( void )
 		return 0;
 	}
 
+	/* This function is a no-op in Cyrus 1.5.x and does not exist
+	 * in Cyrus 2.x. This reference ensures that we can't pick up
+	 * the wrong version of a dynamic library.
+	 */
+	sasl_client_auth(NULL, NULL, NULL, 0, NULL, NULL);
+
 	return -1;
 }
 
@@ -82,6 +88,7 @@ int ldap_int_sasl_init( void )
 
 struct sb_sasl_data {
 	sasl_conn_t		*sasl_context;
+	unsigned		*sasl_maxbuf;
 	Sockbuf_Buf		sec_buf_in;
 	Sockbuf_Buf		buf_in;
 	Sockbuf_Buf		buf_out;
@@ -102,9 +109,12 @@ sb_sasl_setup( Sockbuf_IO_Desc *sbiod, void *arg )
 	ber_pvt_sb_buf_init( &p->buf_in );
 	ber_pvt_sb_buf_init( &p->buf_out );
 	if ( ber_pvt_sb_grow_buffer( &p->sec_buf_in, SASL_MIN_BUFF_SIZE ) < 0 ) {
+		LBER_FREE( p );
 		errno = ENOMEM;
 		return -1;
 	}
+	sasl_getprop( p->sasl_context, SASL_MAXOUTBUF,
+		(void **) &p->sasl_maxbuf );
 
 	sbiod->sbiod_pvt = p;
 
@@ -128,7 +138,7 @@ sb_sasl_remove( Sockbuf_IO_Desc *sbiod )
 }
 
 static ber_len_t
-sb_sasl_pkt_length( const unsigned char *buf, int debuglevel )
+sb_sasl_pkt_length( const unsigned char *buf, unsigned max, int debuglevel )
 {
 	ber_len_t		size;
 
@@ -139,15 +149,16 @@ sb_sasl_pkt_length( const unsigned char *buf, int debuglevel )
 		| buf[2] << 8
 		| buf[3];
    
-	/* we really should check against actual buffer size set
-	 * in the secopts.
-	 */
 	if ( size > SASL_MAX_BUFF_SIZE ) {
 		/* somebody is trying to mess me up. */
 		ber_log_printf( LDAP_DEBUG_ANY, debuglevel,
 			"sb_sasl_pkt_length: received illegal packet length "
 			"of %lu bytes\n", (unsigned long)size );      
 		size = 16; /* this should lead to an error. */
+	} else if ( size > max ) {
+		ber_log_printf( LDAP_DEBUG_ANY, debuglevel,
+			"sb_sasl_pkt_length: received packet length "
+			"of %lu exceeds negotiated max of %lu bytes\n", (unsigned long)size, (unsigned long)max );
 	}
 
 	return size + 4; /* include the size !!! */
@@ -155,18 +166,18 @@ sb_sasl_pkt_length( const unsigned char *buf, int debuglevel )
 
 /* Drop a processed packet from the input buffer */
 static void
-sb_sasl_drop_packet ( Sockbuf_Buf *sec_buf_in, int debuglevel )
+sb_sasl_drop_packet ( Sockbuf_Buf *sec_buf_in, unsigned max, int debuglevel )
 {
 	ber_slen_t			len;
 
 	len = sec_buf_in->buf_ptr - sec_buf_in->buf_end;
 	if ( len > 0 )
-		memmove( sec_buf_in->buf_base, sec_buf_in->buf_base +
+		AC_MEMCPY( sec_buf_in->buf_base, sec_buf_in->buf_base +
 			sec_buf_in->buf_end, len );
    
 	if ( len >= 4 ) {
 		sec_buf_in->buf_end = sb_sasl_pkt_length( sec_buf_in->buf_base,
-			debuglevel);
+			max, debuglevel);
 	}
 	else {
 		sec_buf_in->buf_end = 0;
@@ -204,17 +215,17 @@ sb_sasl_read( Sockbuf_IO_Desc *sbiod, void *buf, ber_len_t len)
 			continue;
 #endif
 		if ( ret <= 0 )
-			return ret;
+			return bufptr ? bufptr : ret;
 
 		p->sec_buf_in.buf_ptr += ret;
 	}
 
 	/* The new packet always starts at p->sec_buf_in.buf_base */
 	ret = sb_sasl_pkt_length( p->sec_buf_in.buf_base,
-		sbiod->sbiod_sb->sb_debug );
+		*p->sasl_maxbuf, sbiod->sbiod_sb->sb_debug );
 
 	/* Grow the packet buffer if neccessary */
-	if ( ( p->sec_buf_in.buf_size < ret ) && 
+	if ( ( p->sec_buf_in.buf_size < (ber_len_t) ret ) && 
 			ber_pvt_sb_grow_buffer( &p->sec_buf_in, ret ) < 0 ) {
 		errno = ENOMEM;
 		return -1;
@@ -233,7 +244,7 @@ sb_sasl_read( Sockbuf_IO_Desc *sbiod, void *buf, ber_len_t len)
 			continue;
 #endif
 		if ( ret <= 0 )
-			return ret;
+			return bufptr ? bufptr : ret;
 
 		p->sec_buf_in.buf_ptr += ret;
    	}
@@ -242,19 +253,19 @@ sb_sasl_read( Sockbuf_IO_Desc *sbiod, void *buf, ber_len_t len)
 	ret = sasl_decode( p->sasl_context, p->sec_buf_in.buf_base,
 		p->sec_buf_in.buf_end, &p->buf_in.buf_base,
 		(unsigned *)&p->buf_in.buf_end );
+
+	/* Drop the packet from the input buffer */
+	sb_sasl_drop_packet( &p->sec_buf_in,
+			*p->sasl_maxbuf, sbiod->sbiod_sb->sb_debug );
+
 	if ( ret != SASL_OK ) {
 		ber_log_printf( LDAP_DEBUG_ANY, sbiod->sbiod_sb->sb_debug,
 			"sb_sasl_read: failed to decode packet: %s\n",
 			sasl_errstring( ret, NULL, NULL ) );
-		sb_sasl_drop_packet( &p->sec_buf_in,
-			sbiod->sbiod_sb->sb_debug );
 		errno = EIO;
 		return -1;
 	}
 	
-	/* Drop the packet from the input buffer */
-	sb_sasl_drop_packet( &p->sec_buf_in, sbiod->sbiod_sb->sb_debug );
-
 	p->buf_in.buf_size = p->buf_in.buf_end;
 
 	bufptr += ber_pvt_sb_copy_out( &p->buf_in, (char*) buf + bufptr, len );
@@ -276,12 +287,20 @@ sb_sasl_write( Sockbuf_IO_Desc *sbiod, void *buf, ber_len_t len)
 	/* Are there anything left in the buffer? */
 	if ( p->buf_out.buf_ptr != p->buf_out.buf_end ) {
 		ret = ber_pvt_sb_do_write( sbiod, &p->buf_out );
-		if ( ret <= 0 )
+		if ( ret < 0 )
 			return ret;
+		/* Still have something left?? */
+		if ( p->buf_out.buf_ptr != p->buf_out.buf_end ) {
+			errno = EAGAIN;
+			return 0;
+		}
 	}
 
 	/* now encode the next packet. */
 	ber_pvt_sb_buf_destroy( &p->buf_out );
+
+	if ( len > *p->sasl_maxbuf - 100 )
+		len = *p->sasl_maxbuf - 100;	/* For safety margin */
 	ret = sasl_encode( p->sasl_context, buf, len, &p->buf_out.buf_base,
 		(unsigned *)&p->buf_out.buf_size );
 	if ( ret != SASL_OK ) {
@@ -396,19 +415,6 @@ ldap_int_sasl_open(
 	int rc;
 	sasl_conn_t *ctx;
 
-	sasl_callback_t *session_callbacks =
-		ber_memcalloc( 2, sizeof( sasl_callback_t ) );
-
-	if( session_callbacks == NULL ) return LDAP_NO_MEMORY;
-
-	session_callbacks[0].id = SASL_CB_USER;
-	session_callbacks[0].proc = NULL;
-	session_callbacks[0].context = ld;
-
-	session_callbacks[1].id = SASL_CB_LIST_END;
-	session_callbacks[1].proc = NULL;
-	session_callbacks[1].context = NULL;
-
 	assert( lc->lconn_sasl_ctx == NULL );
 
 	if ( host == NULL ) {
@@ -416,9 +422,8 @@ ldap_int_sasl_open(
 		return ld->ld_errno;
 	}
 
-	rc = sasl_client_new( "ldap", host, session_callbacks,
+	rc = sasl_client_new( "ldap", host, NULL,
 		SASL_SECURITY_LAYER, &ctx );
-	ber_memfree( session_callbacks );
 
 	if ( rc != SASL_OK ) {
 		ld->ld_errno = sasl_err2ldap( rc );
@@ -600,7 +605,7 @@ ldap_int_sasl_bind(
 				&ccred.bv_val,
 				&credlen );
 
-			Debug( LDAP_DEBUG_TRACE, "sasl_client_start: %d\n",
+			Debug( LDAP_DEBUG_TRACE, "sasl_client_step: %d\n",
 				saslrc, 0, 0 );
 
 			if( saslrc == SASL_INTERACT ) {
@@ -742,7 +747,7 @@ int ldap_pvt_sasl_secprops(
 		} else if( !strncasecmp(props[i],
 			"minssf=", sizeof("minssf")) )
 		{
-			if( isdigit( props[i][sizeof("minssf")] ) ) {
+			if( isdigit( (unsigned char) props[i][sizeof("minssf")] ) ) {
 				got_min_ssf++;
 				min_ssf = atoi( &props[i][sizeof("minssf")] );
 			} else {
@@ -752,7 +757,7 @@ int ldap_pvt_sasl_secprops(
 		} else if( !strncasecmp(props[i],
 			"maxssf=", sizeof("maxssf")) )
 		{
-			if( isdigit( props[i][sizeof("maxssf")] ) ) {
+			if( isdigit( (unsigned char) props[i][sizeof("maxssf")] ) ) {
 				got_max_ssf++;
 				max_ssf = atoi( &props[i][sizeof("maxssf")] );
 			} else {
@@ -762,7 +767,7 @@ int ldap_pvt_sasl_secprops(
 		} else if( !strncasecmp(props[i],
 			"maxbufsize=", sizeof("maxbufsize")) )
 		{
-			if( isdigit( props[i][sizeof("maxbufsize")] ) ) {
+			if( isdigit( (unsigned char) props[i][sizeof("maxbufsize")] ) ) {
 				got_maxbufsize++;
 				maxbufsize = atoi( &props[i][sizeof("maxbufsize")] );
 			} else {

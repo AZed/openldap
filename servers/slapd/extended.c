@@ -148,12 +148,11 @@ do_extended(
 	text = NULL;
 	refs = NULL;
 
-	rc = (ext->ext_main)( conn, op,
-		reqoid, reqdata,
+	rc = (ext->ext_main)( conn, op, reqoid, reqdata,
 		&rspoid, &rspdata, &rspctrls, &text, &refs );
 
 	if( rc != SLAPD_ABANDON ) {
-		if (rc == LDAP_REFERRAL) {
+		if (rc == LDAP_REFERRAL && refs == NULL ) {
 			refs = default_referral;
 		}
 

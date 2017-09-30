@@ -253,7 +253,7 @@ static void openldap_ldap_init_w_userconf(const char *file)
 	if (home != NULL) {
 		Debug(LDAP_DEBUG_TRACE, "ldap_init: HOME env is %s\n",
 		      home, 0, 0);
-		path = LDAP_MALLOC(strlen(home) + strlen(file) + 3);
+		path = LDAP_MALLOC(strlen(home) + strlen(file) + sizeof( LDAP_DIRSEP "."));
 	} else {
 		Debug(LDAP_DEBUG_TRACE, "ldap_init: HOME env is NULL\n",
 		      0, 0, 0);
@@ -263,11 +263,11 @@ static void openldap_ldap_init_w_userconf(const char *file)
 		/* we assume UNIX path syntax is used... */
 
 		/* try ~/file */
-		sprintf(path, "%s%s%s", home, LDAP_DIRSEP, file);
+		sprintf(path, "%s" LDAP_DIRSEP "%s", home, file);
 		openldap_ldap_init_w_conf(path, 1);
 
 		/* try ~/.file */
-		sprintf(path, "%s%s.%s", home, LDAP_DIRSEP, file);
+		sprintf(path, "%s" LDAP_DIRSEP ".%s", home, file);
 		openldap_ldap_init_w_conf(path, 1);
 	}
 
@@ -400,7 +400,10 @@ void ldap_int_initialize_global_options( struct ldapoptions *gopts, int *dbglvl 
 	 */
 	ldap_url_parselist(&gopts->ldo_defludp, "ldap://localhost/");
 	gopts->ldo_defport = LDAP_PORT;
+
+#if 0 /* don't register atexit() handler... breaks dlopen() apps */
 	atexit(ldap_int_destroy_global_options);
+#endif
 
 	gopts->ldo_refhoplimit = LDAP_DEFAULT_REFHOPLIMIT;
 	gopts->ldo_rebindproc = NULL;
@@ -473,12 +476,12 @@ void ldap_int_initialize( struct ldapoptions *gopts, int *dbglvl )
 }
 #endif
 
+	ldap_int_utils_init();
+
 #if defined(LDAP_API_FEATURE_X_OPENLDAP_V2_KBIND) \
 	|| defined(HAVE_TLS) || defined(HAVE_CYRUS_SASL)
 	ldap_int_hostname = ldap_pvt_get_fqdn( ldap_int_hostname );
 #endif
-	ldap_int_utils_init();
-
 	if ( ldap_int_tblsize == 0 )
 		ldap_int_ip_init();
 

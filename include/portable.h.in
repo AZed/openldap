@@ -304,9 +304,6 @@
 /* Define if you have the sysconf function.  */
 #undef HAVE_SYSCONF
 
-/* Define if you have the tempnam function.  */
-#undef HAVE_TEMPNAM
-
 /* Define if you have the thr_getconcurrency function.  */
 #undef HAVE_THR_GETCONCURRENCY
 
@@ -349,8 +346,8 @@
 /* Define if you have the <crypt.h> header file.  */
 #undef HAVE_CRYPT_H
 
-/* Define if you have the <cthread.h> header file.  */
-#undef HAVE_CTHREAD_H
+/* Define if you have the <cthreads.h> header file.  */
+#undef HAVE_CTHREADS_H
 
 /* Define if you have the <db.h> header file.  */
 #undef HAVE_DB_H
