@@ -1,0 +1,16 @@
+"Fix" building of shared libraries on ppc64 -- ppc has /lib/ld.so.1, so it
+already prevented ltconfig from incorrectly deciding that we don't have
+support for them.  The correct fix is to regenerate configure with a newer
+AC_PROG_LIBTOOL, but this is less likely to pull in unexpected changes.
+
+--- openldap-2.0.27/build/ltconfig	2007-03-27 17:49:30.000000000 -0400
++++ openldap-2.0.27/build/ltconfig	2007-03-27 17:49:24.000000000 -0400
+@@ -2033,7 +2033,7 @@
+   shlibpath_overrides_runpath=no
+   deplibs_check_method=pass_all
+ 
+-  if test -f /lib/ld.so.1; then
++  if test -f /lib/ld.so.1 -o -f /lib64/ld64.so.1 ; then
+     dynamic_linker='GNU ld.so'
+   else
+     # Only the GNU ld.so supports shared libraries on MkLinux.

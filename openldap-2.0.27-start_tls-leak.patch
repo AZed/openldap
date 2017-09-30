@@ -1,0 +1,21 @@
+diff -ur openldap-2.0.27.orig/libraries/libldap/tls.c openldap-2.0.27/libraries/libldap/tls.c
+--- openldap-2.0.27.orig/libraries/libldap/tls.c	2005-11-21 10:43:23.028825000 +0000
++++ openldap-2.0.27/libraries/libldap/tls.c	2005-11-21 10:51:18.553571113 +0000
+@@ -1134,7 +1134,7 @@
+ 	 * set SASL properties to TLS ssf and authid
+ 	 */
+ 	{
+-		const char *authid;
++		char *authid;
+ 		ber_len_t ssf;
+ 
+ 		/* we need to let SASL know */
+@@ -1142,6 +1142,8 @@
+ 		authid = ldap_pvt_tls_get_peer( ssl );
+ 
+ 		(void) ldap_int_sasl_external( ld, conn, authid, ssf );
++
++		LDAP_FREE( authid );
+ 	}
+ 
+ 	return LDAP_SUCCESS;

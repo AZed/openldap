@@ -12,7 +12,7 @@
 Summary: The configuration files, libraries, and documentation for OpenLDAP.
 Name: openldap
 Version: 2.0.27
-Release: 22
+Release: 23
 License: OpenLDAP
 Group: System Environment/Daemons
 Source0: ftp://ftp.OpenLDAP.org/pub/OpenLDAP/openldap-release/openldap-%{version}.tgz
@@ -50,6 +50,9 @@ Patch33: openldap-2.0.27-lutil-passwd.patch
 Patch34: openldap-2.2.13-tls-fix-connection-test.patch
 Patch35: openldap-2.0.27-tls-cache.patch
 Patch36: openldap-2.0.27-hang.patch
+Patch37: openldap-2.0.27-selfwrite.patch
+Patch38: openldap-2.0.27-start_tls-leak.patch
+Patch39: openldap-2.0.27-ppc64.patch
 URL: http://www.openldap.org/
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 BuildPreReq: cyrus-sasl-devel, gdbm-devel, krb5-devel, openssl-devel
@@ -138,6 +141,9 @@ pushd %{name}-%{version}
 %patch34 -p1 -b .CAN-2005-2069
 %patch35 -p1 -b .tls-cache
 %patch36 -p1 -b .hang
+%patch37 -p1 -b .selfwrite
+%patch38 -p1 -b .start_tls-leak
+%patch39 -p1 -b .ppc64
 cp %{_datadir}/libtool/config.{sub,guess} build/
 popd
 
@@ -441,6 +447,17 @@ fi
 %attr(0644,root,root) %{_mandir}/man3/*
 
 %changelog
+* Wed Mar 28 2007 Jay Fenlason <fenlason@redhat.com> 2.0.27-23
+- Include the -ppc64 patch to fix a ppc64-specific build failure.
+- Put back smp_mflags
+
+* Tue Mar 27 2007 Jay Fenlason <fenlason@redhat.com> 2.0.27-22
+- remove smp_mflags to work around a build-time race condition
+- backport the -selfwrite patch
+  Resolves: rhbz#234222 CVE-2006-4600 openldap improper selfwrite access
+- Include the start_tls-leak patch
+  Resolves: rhbz#174830: ldap_start_tls_s() leaks
+
 * Thu Mar 2 2006 Jay Fenlason <fenlason@redhat.com> 2.0.27-22
 - Add -hang patch (backported from 2.2.13) to finish fixing
   bz#177570 SSL session caching causes client hangs when doing multiple
