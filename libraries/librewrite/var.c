@@ -1,26 +1,21 @@
-/******************************************************************************
+/* $OpenLDAP$ */
+/* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright (C) 2000 Pierangelo Masarati, <ando@sys-net.it>
+ * Copyright 2000-2004 The OpenLDAP Foundation.
  * All rights reserved.
  *
- * Permission is granted to anyone to use this software for any purpose
- * on any computer system, and to alter it and redistribute it, subject
- * to the following restrictions:
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted only as authorized by the OpenLDAP
+ * Public License.
  *
- * 1. The author is not responsible for the consequences of use of this
- * software, no matter how awful, even if they arise from flaws in it.
- *
- * 2. The origin of this software must not be misrepresented, either by
- * explicit claim or by omission.  Since few users ever read sources,
- * credits should appear in the documentation.
- *
- * 3. Altered versions must be plainly marked as such, and must not be
- * misrepresented as being the original software.  Since few users
- * ever read sources, credits should appear in the documentation.
- * 
- * 4. This notice may not be removed or altered.
- *
- ******************************************************************************/
+ * A copy of this license is available in the file LICENSE in the
+ * top-level directory of the distribution or, alternatively, at
+ * <http://www.OpenLDAP.org/license.html>.
+ */
+/* ACKNOWLEDGEMENT:
+ * This work was initially developed by Pierangelo Masarati for
+ * inclusion in OpenLDAP Software.
+ */
 
 #include <portable.h>
 
@@ -109,25 +104,31 @@ rewrite_var_insert(
 	if ( var == NULL ) {
 		return NULL;
 	}
-	var->lv_name = ( char * )strdup( name );
+	memset( var, 0, sizeof( struct rewrite_var ) );
+	var->lv_name = strdup( name );
 	if ( var->lv_name == NULL ) {
-		free( var );
-		return NULL;
+		rc = -1;
+		goto cleanup;
 	}
 	var->lv_value.bv_val = strdup( value );
 	if ( var->lv_value.bv_val == NULL ) {
-		free( var );
-		free( var->lv_name );
-		return NULL;
+		rc = -1;
+		goto cleanup;
 	}
 	var->lv_value.bv_len = strlen( value );
 	rc = avl_insert( tree, ( caddr_t )var,
 			rewrite_var_cmp, rewrite_var_dup );
 	if ( rc != 0 ) { 
-		free( var );
+		rc = -1;
+		goto cleanup;
+	}
+
+cleanup:;
+	if ( rc != 0 ) {
 		free( var->lv_name );
 		free( var->lv_value.bv_val );
-		return NULL;
+		free( var );
+		var = NULL;
 	}
 
 	return var;
@@ -184,6 +185,7 @@ rewrite_var_free(
 
 	free( var->lv_name );
 	free( var->lv_value.bv_val );
+	free( var );
 }
 
 /*

@@ -16,6 +16,8 @@
 #include <ac/time.h>
 #include <ac/unistd.h>
 
+#include "lber_pvt.h"
+
 #include "slap.h"
 
 #ifdef LDAP_SLAPI
@@ -234,8 +236,8 @@ send_ldap_response(
 	LDAPControl **ctrls
 )
 {
-	char berbuf[LBER_ELEMENT_SIZEOF];
-	BerElement	*ber = (BerElement *)berbuf;
+	BerElementBuffer berbuf;
+	BerElement	*ber = (BerElement *)&berbuf;
 	int		rc;
 	long	bytes;
 
@@ -450,7 +452,7 @@ slap_send_ldap_result(
 	ber_int_t msgid;
 	char *tmp = NULL;
 
-	assert( !LDAP_API_ERROR( err ) );
+	assert( !LDAP_API_ERROR( err ) && ( err >= 0 ));
 
 #ifdef NEW_LOGGING
 	LDAP_LOG( OPERATION, ENTRY, 
@@ -717,8 +719,8 @@ slap_send_search_entry(
 	LDAPControl **ctrls
 )
 {
-	char berbuf[LBER_ELEMENT_SIZEOF];
-	BerElement	*ber = (BerElement *)berbuf;
+	BerElementBuffer berbuf;
+	BerElement	*ber = (BerElement *)&berbuf;
 	Attribute	*a, *aa;
 	int		i, j, rc=-1, bytes;
 	char		*edn;
@@ -1341,8 +1343,8 @@ slap_send_search_reference(
     BerVarray *v2refs
 )
 {
-	char berbuf[LBER_ELEMENT_SIZEOF];
-	BerElement	*ber = (BerElement *)berbuf;
+	BerElementBuffer berbuf;
+	BerElement	*ber = (BerElement *)&berbuf;
 	int rc;
 	int bytes;
 

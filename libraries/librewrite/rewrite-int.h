@@ -1,26 +1,21 @@
-/******************************************************************************
+/* $OpenLDAP$ */
+/* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright (C) 2000 Pierangelo Masarati, <ando@sys-net.it>
+ * Copyright 2000-2004 The OpenLDAP Foundation.
  * All rights reserved.
  *
- * Permission is granted to anyone to use this software for any purpose
- * on any computer system, and to alter it and redistribute it, subject
- * to the following restrictions:
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted only as authorized by the OpenLDAP
+ * Public License.
  *
- * 1. The author is not responsible for the consequences of use of this
- * software, no matter how awful, even if they arise from flaws in it.
- *
- * 2. The origin of this software must not be misrepresented, either by
- * explicit claim or by omission.  Since few users ever read sources,
- * credits should appear in the documentation.
- *
- * 3. Altered versions must be plainly marked as such, and must not be
- * misrepresented as being the original software.  Since few users
- * ever read sources, credits should appear in the documentation.
- * 
- * 4. This notice may not be removed or altered.
- *
- ******************************************************************************/
+ * A copy of this license is available in the file LICENSE in the
+ * top-level directory of the distribution or, alternatively, at
+ * <http://www.OpenLDAP.org/license.html>.
+ */
+/* ACKNOWLEDGEMENT:
+ * This work was initially developed by Pierangelo Masarati for
+ * inclusion in OpenLDAP Software.
+ */
 
 #ifndef REWRITE_INT_H
 #define REWRITE_INT_H
@@ -189,10 +184,10 @@ struct rewrite_submatch {
  */
 struct rewrite_subst {
 	size_t                          lt_subs_len;
-	struct berval                 **lt_subs;
+	struct berval                  *lt_subs;
 	
 	int                             lt_num_submatch;
-	struct rewrite_submatch       **lt_submatch;
+	struct rewrite_submatch        *lt_submatch;
 };
 
 /*
@@ -262,7 +257,9 @@ struct rewrite_var {
 struct rewrite_op {
 	int                             lo_num_passes;
 	int                             lo_depth;
+#if 0 /* FIXME: not used anywhere! (debug? then, why strdup?) */
 	char                           *lo_string;
+#endif
 	char                           *lo_result;
 	Avlnode                        *lo_vars;
 	const void                     *lo_cookie;
@@ -315,7 +312,7 @@ struct rewrite_info {
  * PRIVATE *
  ***********/
 
-LDAP_REWRITE_V (struct rewrite_context*) __curr_context;
+LDAP_REWRITE_V (struct rewrite_context*) rewrite_int_curr_context;
 
 /*
  * Maps
@@ -359,7 +356,20 @@ rewrite_xmap_apply(
 		struct berval *val
 );
 
+LDAP_REWRITE_F (int)
+rewrite_map_destroy(
+		struct rewrite_map **map
+);
 
+LDAP_REWRITE_F (int)
+rewrite_xmap_destroy(
+		struct rewrite_map **map
+);
+
+LDAP_REWRITE_F (void)
+rewrite_builtin_map_free(
+		void *map
+);
 /*
  * Submatch substitution
  */
@@ -385,6 +395,11 @@ rewrite_subst_apply(
 		const char *string,
 		const regmatch_t *match,
 		struct berval *val
+);
+
+LDAP_REWRITE_F (int)
+rewrite_subst_destroy(
+		struct rewrite_subst **subst
 );
 
 
@@ -420,6 +435,11 @@ rewrite_rule_apply(
 		struct rewrite_rule *rule,
 		const char *string,
 		char **result
+);
+
+LDAP_REWRITE_F (int)
+rewrite_rule_destroy(
+		struct rewrite_rule **rule
 );
 
 /*
@@ -553,6 +573,16 @@ rewrite_context_apply(
 		struct rewrite_context *context,
 		const char *string,
 		char **result
+);
+
+LDAP_REWRITE_F (int)
+rewrite_context_destroy(
+		struct rewrite_context **context
+);
+
+LDAP_REWRITE_F (void)
+rewrite_context_free(
+		void *tmp
 );
 
 #endif /* REWRITE_INT_H */

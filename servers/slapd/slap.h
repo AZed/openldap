@@ -981,10 +981,7 @@ typedef enum slap_style_e {
 	ACL_STYLE_ONE,
 	ACL_STYLE_SUBTREE,
 	ACL_STYLE_CHILDREN,
-	ACL_STYLE_ATTROF,
-
-	/* alternate names */
-	ACL_STYLE_EXACT = ACL_STYLE_BASE
+	ACL_STYLE_ATTROF
 } slap_style_t;
 
 typedef struct slap_authz_info {
@@ -1311,9 +1308,7 @@ struct slap_backend_db {
 
 #define SLAP_DISALLOW_BIND_ANON		0x0001U /* no anonymous */
 #define SLAP_DISALLOW_BIND_SIMPLE	0x0002U	/* simple authentication */
-#define SLAP_DISALLOW_BIND_SIMPLE_UNPROTECTED \
-									0x0004U	/* unprotected simple auth */
-#define SLAP_DISALLOW_BIND_KRBV4	0x0008U /* Kerberos V4 authentication */
+#define SLAP_DISALLOW_BIND_KRBV4	0x0004U /* Kerberos V4 authentication */
 
 #define SLAP_DISALLOW_TLS_2_ANON	0x0010U /* StartTLS -> Anonymous */
 #define SLAP_DISALLOW_TLS_AUTHC		0x0020U	/* TLS while authenticated */
@@ -1617,6 +1612,15 @@ typedef struct slap_callback {
 	void *sc_private;
 } slap_callback;
 
+/* callback context for invoking replog */
+typedef struct slap_replog_ctx {
+	slap_callback *prev;
+	BackendDB *be;
+	struct berval *dn;
+	struct berval *ndn;
+	void *change;
+} slap_replog_ctx;
+
 /*
  * Paged Results state
  */
@@ -1658,6 +1662,18 @@ struct psid_entry {
 };
 #endif
 
+/*
+ * Caches the result of a backend_group check for ACL evaluation
+ */
+typedef struct slap_gacl {
+	struct slap_gacl *ga_next;
+	Backend *ga_be;
+	ObjectClass *ga_oc;
+	AttributeDescription *ga_at;
+	int ga_res;
+	ber_len_t ga_len;
+	char ga_ndn[1];
+} GroupAssertion;
 
 /*
  * represents an operation pending from an ldap client
@@ -1683,7 +1699,8 @@ typedef struct slap_op {
 #define SLAP_CANCEL_ACK					0x02
 #define SLAP_CANCEL_DONE				0x03
 
-	char o_do_not_cache;	/* don't cache from this op */
+	GroupAssertion *o_groups;
+	char o_do_not_cache;	/* don't cache groups from this op */
 	char o_is_auth_check;	/* authorization in progress */
 
 #define SLAP_NO_CONTROL 0
@@ -1861,19 +1878,6 @@ typedef void (*SEND_LDAP_INTERMEDIATE_RESP)(
 	(*conn->c_send_ldap_intermediate_resp)( conn, op, err, matched, text, \
 						refs, rspoid, rspdata, ctrls )
 
-/*
- * Caches the result of a backend_group check for ACL evaluation
- */
-typedef struct slap_gacl {
-	struct slap_gacl *ga_next;
-	Backend *ga_be;
-	ObjectClass *ga_oc;
-	AttributeDescription *ga_at;
-	int ga_res;
-	ber_len_t ga_len;
-	char ga_ndn[1];
-} GroupAssertion;
-
 typedef struct slap_listener Listener;
 
 /*
@@ -1906,7 +1910,6 @@ typedef struct slap_conn {
 	Backend *c_authz_backend;
 
 	AuthorizationInformation c_authz;
-	GroupAssertion *c_groups;
 
 	ber_int_t	c_protocol;	/* version of the LDAP protocol used by client */
 

@@ -179,7 +179,9 @@ parse_acl(
 						} else {
 							acl_regex_normalized_dn( right, &a->acl_dn_pat );
 						}
-					} else if ( strcasecmp( style, "base" ) == 0 ) {
+					} else if ( strcasecmp( style, "base" ) == 0
+						|| strcasecmp( style, "exact" ) == 0 )
+					{
 						a->acl_dn_style = ACL_STYLE_BASE;
 						ber_str2bv( right, 0, 1, &a->acl_dn_pat );
 					} else if ( strcasecmp( style, "one" ) == 0 ) {
@@ -301,9 +303,9 @@ parse_acl(
 					|| strcasecmp( style, "regex" ) == 0 )
 				{
 					sty = ACL_STYLE_REGEX;
-				} else if ( strcasecmp( style, "exact" ) == 0 ) {
-					sty = ACL_STYLE_EXACT;
-				} else if ( strcasecmp( style, "base" ) == 0 ) {
+				} else if ( strcasecmp( style, "exact" ) == 0 ||
+					strcasecmp( style, "base" ) == 0 )
+				{
 					sty = ACL_STYLE_BASE;
 				} else if ( strcasecmp( style, "one" ) == 0 ) {
 					sty = ACL_STYLE_ONE;
@@ -1550,6 +1552,10 @@ print_access( Access *b )
 
 	if ( b->a_sockurl_pat.bv_len != 0 ) {
 		fprintf( stderr, " sockurl=%s", b->a_sockurl_pat.bv_val );
+	}
+
+	if ( b->a_set_pat.bv_len != 0 ) {
+		fprintf( stderr, " set=\"%s\"", b->a_set_pat.bv_val );
 	}
 
 #ifdef SLAPD_ACI_ENABLED

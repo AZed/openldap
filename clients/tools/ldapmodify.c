@@ -105,7 +105,7 @@ usage( void )
 
 
 const char options[] = "aFrS:"
-	"cCd:D:e:f:h:H:IkKMnO:p:P:QR:U:vVw:WxX:y:Y:Z";
+	"cd:D:e:f:h:H:IkKMnO:p:P:QR:U:vVw:WxX:y:Y:Z";
 
 int
 handle_private_option( int i )
@@ -809,6 +809,11 @@ domodify(
 {
     int			i, j, k, notascii, op;
     struct berval	*bvp;
+
+	if ( dn == NULL ) {
+	fprintf( stderr, "%s: no DN specified\n", prog );
+	return( LDAP_PARAM_ERROR );
+	}
 
     if ( pmods == NULL ) {
 	fprintf( stderr, "%s: no attributes to change or add (entry=\"%s\")\n",
