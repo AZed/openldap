@@ -1,5 +1,5 @@
 #! /bin/sh
-# $OpenLDAP$
+# $OpenLDAP: pkg/ldap/tests/scripts/test009-referral,v 1.3.2.6 2000/07/29 01:53:18 kurt Exp $
 
 #
 # Test default referral

@@ -1,4 +1,4 @@
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/clients/fax500/rp500.c,v 1.17.6.5 2001/07/21 19:01:36 kurt Exp $ */
 /*
  * Copyright (c) 1990 Regents of the University of Michigan.
  * All rights reserved.

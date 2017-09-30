@@ -1,4 +1,4 @@
-# $OpenLDAP$
+# $OpenLDAP: pkg/ldap/servers/slapd/schema/nis.schema,v 1.1.8.5 2000/09/28 17:35:12 kurt Exp $
 # Definitions from RFC2307 (Experimental)
 #	An Approach for Using LDAP as a Network Information Service
 

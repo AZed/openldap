@@ -1,4 +1,4 @@
-# $OpenLDAP$
+# $OpenLDAP: pkg/ldap/clients/maildap/Makefile.in,v 1.2.2.1 2000/06/13 17:57:02 kurt Exp $
 
 UNIX_PRGS = maildap
 PROGRAMS = $(@PLAT@_PRGS)

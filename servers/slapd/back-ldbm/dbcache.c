@@ -1,5 +1,5 @@
 /* ldbmcache.c - maintain a cache of open ldbm files */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/dbcache.c,v 1.20.2.9 2002/01/04 20:38:33 kurt Exp $ */
 /*
  * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file

@@ -1,4 +1,4 @@
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/include/lber.h,v 1.32.6.9 2002/01/04 20:38:14 kurt Exp $ */
 /*
  * Copyright 1998-2002 The OpenLDAP Foundation, Redwood City, California, USA
  * All rights reserved.

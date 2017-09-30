@@ -1,4 +1,4 @@
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slurpd/args.c,v 1.9.8.5 2000/09/18 16:08:08 kurt Exp $ */
 /*
  * Copyright (c) 1996 Regents of the University of Michigan.
  * All rights reserved.

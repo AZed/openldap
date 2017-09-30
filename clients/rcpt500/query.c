@@ -1,4 +1,4 @@
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/clients/rcpt500/query.c,v 1.13.6.5 2001/07/21 19:01:37 kurt Exp $ */
 /*
  * query.c: for rcpt500 (X.500 email query responder)
  *

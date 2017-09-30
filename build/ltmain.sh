@@ -1,7 +1,7 @@
 # ltmain.sh - Provide generalized library-building support services.
 # NOTE: Changing this file will not affect anything until you rerun ltconfig.
 # 
-# $OpenLDAP$
+# $OpenLDAP: pkg/ldap/build/ltmain.sh,v 1.5.2.7 2001/11/06 16:29:18 kurt Exp $
 #
 # Copyright (C) 1996-1999 Free Software Foundation, Inc.
 # Originally by Gordon Matzigkeit <gord@gnu.ai.mit.edu>, 1996

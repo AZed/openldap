@@ -1,5 +1,5 @@
 #! /bin/sh
-# $OpenLDAP$
+# $OpenLDAP: pkg/ldap/tests/scripts/test007-replication,v 1.17.2.8 2001/10/09 17:21:03 kurt Exp $
 
 #
 # Test replication:

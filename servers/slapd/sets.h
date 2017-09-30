@@ -1,4 +1,4 @@
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/sets.h,v 1.1.2.2 2002/01/04 20:38:31 kurt Exp $ */
 /*
  * Copyright 2000-2002 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file

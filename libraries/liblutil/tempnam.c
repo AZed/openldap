@@ -1,4 +1,4 @@
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/libraries/liblutil/tempnam.c,v 1.6.8.3 2000/07/04 17:58:54 kurt Exp $ */
 #include "portable.h"
 
 #ifndef HAVE_TEMPNAM

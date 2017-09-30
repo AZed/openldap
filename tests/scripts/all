@@ -1,5 +1,5 @@
 #! /bin/sh
-# $OpenLDAP$
+# $OpenLDAP: pkg/ldap/tests/scripts/all,v 1.7.8.3 2000/06/13 17:57:44 kurt Exp $
 
 # disable LDAP initialization
 LDAPNOINIT=true; export LDAPNOINIT

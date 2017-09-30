@@ -1,5 +1,5 @@
 #! /bin/sh
-# $OpenLDAP$
+# $OpenLDAP: pkg/ldap/build/ltconfig,v 1.7.2.7 2001/11/06 16:29:18 kurt Exp $
 
 # ltconfig - Create a system-specific libtool.
 # Copyright (C) 1996-1999 Free Software Foundation, Inc.

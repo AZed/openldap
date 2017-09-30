@@ -1,4 +1,4 @@
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slurpd/ch_malloc.c,v 1.8.6.3 2000/06/13 17:57:41 kurt Exp $ */
 /*
  * Copyright (c) 1996 Regents of the University of Michigan.
  * All rights reserved.

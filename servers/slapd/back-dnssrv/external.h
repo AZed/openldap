@@ -1,4 +1,4 @@
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-dnssrv/external.h,v 1.4.2.2 2000/06/17 16:16:59 kurt Exp $ */
 /*
  *	 Copyright 2000, OpenLDAP Foundation, All rights reserved.
  *

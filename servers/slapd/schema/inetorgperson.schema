@@ -1,4 +1,4 @@
-# $OpenLDAP$
+# $OpenLDAP: pkg/ldap/servers/slapd/schema/inetorgperson.schema,v 1.4.2.6 2001/10/09 17:15:08 kurt Exp $
 #
 # InetOrgPerson (RFC2798)
 #

@@ -1,5 +1,5 @@
 /* syntax.c - routines to manage syntax definitions */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/syntax.c,v 1.8.2.5 2002/01/04 20:38:31 kurt Exp $ */
 /*
  * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file

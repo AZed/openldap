@@ -1,4 +1,4 @@
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-passwd/external.h,v 1.1.8.2 2000/06/13 17:57:35 kurt Exp $ */
 #ifndef _PASSWD_EXTERNAL_H
 #define _PASSWD_EXTERNAL_H
 

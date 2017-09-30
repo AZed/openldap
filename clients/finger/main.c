@@ -1,4 +1,4 @@
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/clients/finger/main.c,v 1.19.2.6 2001/07/21 19:01:36 kurt Exp $ */
 /*
  * Copyright (c) 1990,1994 Regents of the University of Michigan.
  * All rights reserved.

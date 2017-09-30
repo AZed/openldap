@@ -1,5 +1,5 @@
 /* schema_init.c - init builtin schema */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/schema_prep.c,v 1.7.2.6 2002/01/04 20:38:31 kurt Exp $ */
 /*
  * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file

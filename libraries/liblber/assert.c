@@ -1,4 +1,4 @@
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/libraries/liblber/assert.c,v 1.3.2.4 2002/01/04 20:38:18 kurt Exp $ */
 /*
  * Copyright 1999-2002 The OpenLDAP Foundation, Redwood City, California, USA
  * All rights reserved.

@@ -38,7 +38,7 @@ MAILER_DEFINITIONS
 ###   MAILDAP Mailer specification   ###
 ##################*****##################
 
-VERSIONID(`$OpenLDAP$')
+VERSIONID(`$OpenLDAP: pkg/ldap/clients/maildap/maildap.m4,v 1.2.2.2 2002/01/04 20:38:08 kurt Exp $')
 
 Mmaildap,	P=MAILDAP_MAILER_PATH, F=CONCAT(`DFM', MAILDAP_MAILER_FLAGS), S=11/31, R=20/40, T=DNS/RFC822/X-Unix,
 		ifdef(`MAILDAP_MAILER_MAX', `M=500_MAILER_MAX, ')A=MAILDAP_MAILER_ARGS

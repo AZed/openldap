@@ -1,4 +1,4 @@
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/clients/mail500/main.c,v 1.25.2.5 2002/01/04 20:38:07 kurt Exp $ */
 /*
  * Copyright (c) 1990 Regents of the University of Michigan.
  * All rights reserved.

@@ -1,5 +1,5 @@
 /* line64.c - routines for dealing with the slapd line format */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/libraries/libldif/line64.c,v 1.18.2.8 2002/01/04 20:38:24 kurt Exp $ */
 /*
  * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file

@@ -1,4 +1,4 @@
-# $OpenLDAP$
+# $OpenLDAP: pkg/ldap/servers/slapd/shell-backends/Makefile.in,v 1.4.8.4 2002/01/15 01:54:46 kurt Exp $
 ## Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
 ## COPYING RESTRICTIONS APPLY, see COPYRIGHT file
 

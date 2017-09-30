@@ -1,4 +1,4 @@
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/clients/rcpt500/help.c,v 1.4.6.2 2000/06/13 17:57:03 kurt Exp $ */
 /*
  * help.c: for rcpt500 (X.500 email query responder)
  *

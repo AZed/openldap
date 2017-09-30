@@ -1,4 +1,4 @@
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slurpd/proto-slurp.h,v 1.3.6.3 2000/06/13 17:57:41 kurt Exp $ */
 #ifndef _PROTO_SLURP
 #define _PROTO_SLURP
 

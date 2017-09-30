@@ -1,4 +1,4 @@
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/include/avl.h,v 1.13.6.5 2002/01/04 20:38:14 kurt Exp $ */
 /*
  * Copyright 1998-2002 The OpenLDAP Foundation, Redwood City, California, USA
  * All rights reserved.

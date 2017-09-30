@@ -1,5 +1,5 @@
 /* unbind.c - handle an ldap unbind operation */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/unbind.c,v 1.3.8.4 2002/01/04 20:38:35 kurt Exp $ */
 /*
  * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file

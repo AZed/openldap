@@ -1,4 +1,4 @@
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/include/getopt-compat.h,v 1.5.8.5 2002/01/04 20:38:14 kurt Exp $ */
 /*
  * Copyright 1998-2002 The OpenLDAP Foundation, Redwood City, California, USA
  * All rights reserved.

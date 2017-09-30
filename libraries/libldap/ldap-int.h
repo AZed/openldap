@@ -1,5 +1,5 @@
 /*  ldap-int.h - defines & prototypes internal to the LDAP library */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/ldap-int.h,v 1.49.2.20 2002/01/04 20:38:20 kurt Exp $ */
 /*
  * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file

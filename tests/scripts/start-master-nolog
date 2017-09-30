@@ -1,5 +1,5 @@
 #! /bin/sh
-# $OpenLDAP$
+# $OpenLDAP: pkg/ldap/tests/scripts/start-master-nolog,v 1.1.2.2 2001/05/10 04:43:48 kurt Exp $
 
 SRCDIR="."
 if test $# -ge 1 ; then

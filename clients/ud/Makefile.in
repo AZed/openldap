@@ -1,4 +1,4 @@
-# $OpenLDAP$
+# $OpenLDAP: pkg/ldap/clients/ud/Makefile.in,v 1.10.2.5 2001/10/10 16:41:32 kurt Exp $
 
 SRCS=	main.c find.c mod.c print.c auth.c util.c help.c \
 	group.c edit.c globals.c

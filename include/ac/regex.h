@@ -1,5 +1,5 @@
 /* Generic Regex */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/include/ac/regex.h,v 1.4.8.4 2002/01/04 20:38:16 kurt Exp $ */
 /*
  * Copyright 1998-2002 The OpenLDAP Foundation, Redwood City, California, USA
  * All rights reserved.

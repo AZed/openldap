@@ -1,5 +1,5 @@
 #! /bin/sh
-# $OpenLDAP$
+# $OpenLDAP: pkg/ldap/tests/scripts/test008-concurrency,v 1.10.2.5 2000/07/29 01:53:18 kurt Exp $
 
 if test $# -eq 0 ; then
 	SRCDIR="."

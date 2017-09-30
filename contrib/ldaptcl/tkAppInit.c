@@ -14,7 +14,7 @@
  * software for any purpose.  It is provided "as is" without express or
  * implied warranty.
  *-----------------------------------------------------------------------------
- * $OpenLDAP$
+ * $OpenLDAP: pkg/ldap/contrib/ldaptcl/tkAppInit.c,v 1.1.10.2 2001/05/30 04:38:24 kurt Exp $
  *-----------------------------------------------------------------------------
  */
 

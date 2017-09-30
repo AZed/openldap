@@ -1,4 +1,4 @@
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/libraries/liblutil/sasl.c,v 1.6.2.2 2002/01/04 20:38:25 kurt Exp $ */
 /*
  * Copyright 2000-2002 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file

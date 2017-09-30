@@ -1,5 +1,5 @@
 # Java Object Schema
-# $OpenLDAP$
+# $OpenLDAP: pkg/ldap/servers/slapd/schema/java.schema,v 1.1.2.2 2000/09/13 18:16:13 kurt Exp $
 # depends upon core.schema
 
 # Network Working Group                                            V. Ryan

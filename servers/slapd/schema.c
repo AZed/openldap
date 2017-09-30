@@ -1,5 +1,5 @@
 /* schema.c - routines to manage schema definitions */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/schema.c,v 1.28.2.6 2002/01/04 20:38:29 kurt Exp $ */
 /*
  * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file

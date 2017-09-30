@@ -1,4 +1,4 @@
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/libraries/liblutil/memcmp.c,v 1.2.8.2 2000/06/13 17:57:25 kurt Exp $ */
 #include "portable.h"
 
 #include <ac/string.h>

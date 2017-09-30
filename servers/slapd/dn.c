@@ -1,5 +1,5 @@
 /* dn.c - routines for dealing with distinguished names */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/dn.c,v 1.20.2.7 2002/01/04 20:38:27 kurt Exp $ */
 /*
  * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file

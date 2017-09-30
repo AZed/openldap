@@ -1,5 +1,5 @@
 #! /bin/sh
-# $OpenLDAP$
+# $OpenLDAP: pkg/ldap/tests/scripts/defines.sh,v 1.27.2.6 2000/10/30 18:14:15 kurt Exp $
 
 DATADIR=$SRCDIR/data
 PROGDIR=./progs

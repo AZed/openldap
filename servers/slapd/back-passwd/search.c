@@ -1,5 +1,5 @@
 /* search.c - /etc/passwd backend search function */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-passwd/search.c,v 1.18.2.4 2001/12/04 18:27:18 kurt Exp $ */
 
 #include "portable.h"
 

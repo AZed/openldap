@@ -1,4 +1,4 @@
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/shell-backends/passwd-shell.h,v 1.1.3.1.32.2 2000/06/13 17:57:40 kurt Exp $ */
 /*
  passwd-shell.h
 

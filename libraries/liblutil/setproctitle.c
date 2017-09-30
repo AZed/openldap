@@ -1,4 +1,4 @@
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/libraries/liblutil/setproctitle.c,v 1.7.8.2 2000/06/13 17:57:26 kurt Exp $ */
 #include "portable.h"
 
 #ifndef HAVE_SETPROCTITLE

@@ -1,4 +1,4 @@
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/controls.c,v 1.6.2.5 2002/01/04 20:38:27 kurt Exp $ */
 /* 
  * Copyright 1999-2002 The OpenLDAP Foundation.
  * All rights reserved.

@@ -1,5 +1,5 @@
 /* ldbm.c - ldap dbm compatibility routines */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/libraries/libldbm/ldbm.c,v 1.30.8.23 2002/01/05 02:15:35 kurt Exp $ */
 /*
  * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file

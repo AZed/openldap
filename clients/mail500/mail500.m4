@@ -36,7 +36,7 @@ MAILER_DEFINITIONS
 ###   MAIL500 Mailer specification   ###
 ##################*****##################
 
-VERSIONID(`$OpenLDAP$')
+VERSIONID(`$OpenLDAP: pkg/ldap/clients/mail500/mail500.m4,v 1.4.2.2 2002/01/04 20:38:07 kurt Exp $')
 
 Mmail500,	P=MAIL500_MAILER_PATH, F=CONCAT(`DFM', MAIL500_MAILER_FLAGS), S=11/31, R=20/40, T=DNS/RFC822/X-Unix,
 		ifdef(`MAIL500_MAILER_MAX', `M=500_MAILER_MAX, ')A=MAIL500_MAILER_ARGS

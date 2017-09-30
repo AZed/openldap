@@ -1,4 +1,4 @@
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/clients/rcpt500/cmds.c,v 1.3.8.2 2000/06/13 17:57:03 kurt Exp $ */
 /*
  * cmds.c: command table for rcpt500 (X.500 email query responder)
  *

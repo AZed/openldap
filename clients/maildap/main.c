@@ -1,4 +1,4 @@
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/clients/maildap/main.c,v 1.2.2.4 2002/01/04 20:38:08 kurt Exp $ */
 /*
  * Copyright (c) 1990 Regents of the University of Michigan.
  * All rights reserved.

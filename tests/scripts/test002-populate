@@ -1,5 +1,5 @@
 #! /bin/sh
-# $OpenLDAP$
+# $OpenLDAP: pkg/ldap/tests/scripts/test002-populate,v 1.17.2.5 2000/07/29 01:53:18 kurt Exp $
 
 if test $# -eq 0 ; then
 	SRCDIR="."

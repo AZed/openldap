@@ -1,5 +1,5 @@
 /* Generic krb.h */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/include/ac/krb.h,v 1.5.8.4 2002/01/04 20:38:16 kurt Exp $ */
 /*
  * Copyright 1998-2002 The OpenLDAP Foundation, Redwood City, California, USA
  * All rights reserved.

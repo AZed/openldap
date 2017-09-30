@@ -1,4 +1,4 @@
-# $OpenLDAP$
+# $OpenLDAP: pkg/ldap/clients/mail500/Makefile.in,v 1.8.2.3 2000/06/13 17:57:02 kurt Exp $
 
 UNIX_PRGS = mail500
 PROGRAMS = $(@PLAT@_PRGS)

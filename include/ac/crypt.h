@@ -1,5 +1,5 @@
 /* Generic crypt.h */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/include/ac/crypt.h,v 1.2.2.3 2002/01/04 20:38:16 kurt Exp $ */
 /*
  * Copyright 1998-2002 The OpenLDAP Foundation, Redwood City, California, USA
  * All rights reserved.

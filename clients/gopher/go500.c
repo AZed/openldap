@@ -1,4 +1,4 @@
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/clients/gopher/go500.c,v 1.28.2.5 2001/07/21 19:01:37 kurt Exp $ */
 /*
  * Copyright (c) 1990 Regents of the University of Michigan.
  * All rights reserved.

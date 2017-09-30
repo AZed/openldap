@@ -1,4 +1,4 @@
-# $OpenLDAP$
+# $OpenLDAP: pkg/ldap/servers/slapd/Makefile.in,v 1.36.2.10 2001/07/22 02:28:28 kurt Exp $
 ##
 ## Makefile.in for slapd
 ##
