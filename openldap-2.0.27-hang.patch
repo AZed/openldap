@@ -1,0 +1,21 @@
+--- openldap-2.0.27/servers/slapd/connection.c.hang	2002-06-05 22:07:40.000000000 -0400
++++ openldap-2.0.27/servers/slapd/connection.c	2006-03-02 09:16:26.000000000 -0500
+@@ -979,9 +979,15 @@
+ 			authid = (char *)ldap_pvt_tls_get_peer( ssl );
+ 			slap_sasl_external( c, c->c_tls_ssf, authid );
+ 		}
+-		connection_return( c );
+-		ldap_pvt_thread_mutex_unlock( &connections_mutex );
+-		return 0;
++
++		/* if success and data is ready, fall thru to data input loop */
++		if( rc != 0 ||
++		   !ber_sockbuf_ctrl( c->c_sb, LBER_SB_OPT_DATA_READY, NULL ) )
++		    {
++			connection_return( c );
++			ldap_pvt_thread_mutex_unlock( &connections_mutex );
++			return 0;
++		    }
+ 	}
+ #endif
+ 

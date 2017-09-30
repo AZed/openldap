@@ -12,7 +12,7 @@
 Summary: The configuration files, libraries, and documentation for OpenLDAP.
 Name: openldap
 Version: 2.0.27
-Release: 20
+Release: 22
 License: OpenLDAP
 Group: System Environment/Daemons
 Source0: ftp://ftp.OpenLDAP.org/pub/OpenLDAP/openldap-release/openldap-%{version}.tgz
@@ -48,6 +48,8 @@ Patch31: openldap-2.0.27-hop.patch
 Patch32: openldap-2.0.27-start_tls-async.patch
 Patch33: openldap-2.0.27-lutil-passwd.patch
 Patch34: openldap-2.2.13-tls-fix-connection-test.patch
+Patch35: openldap-2.0.27-tls-cache.patch
+Patch36: openldap-2.0.27-hang.patch
 URL: http://www.openldap.org/
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 BuildPreReq: cyrus-sasl-devel, gdbm-devel, krb5-devel, openssl-devel
@@ -134,6 +136,8 @@ pushd %{name}-%{version}
 %patch31 -p1 -b .hop
 %patch33 -p1 -b .lutil-passwd
 %patch34 -p1 -b .CAN-2005-2069
+%patch35 -p1 -b .tls-cache
+%patch36 -p1 -b .hang
 cp %{_datadir}/libtool/config.{sub,guess} build/
 popd
 
@@ -437,6 +441,17 @@ fi
 %attr(0644,root,root) %{_mandir}/man3/*
 
 %changelog
+* Thu Mar 2 2006 Jay Fenlason <fenlason@redhat.com> 2.0.27-22
+- Add -hang patch (backported from 2.2.13) to finish fixing
+  bz#177570 SSL session caching causes client hangs when doing multiple
+   connections
+
+* Thu Jan 12 2006 Jay Fenlason <fenlason@redhat.com> 2.0.27-21
+- Add -tls-cache.patch from upstream (rev 1.92 of
+  /repo/OpenLDAP/pkg/ldap/libraries/libldap/tls.c,v) to close
+  bz#177570 SSL session caching causes client hangs when doing multiple
+   connections
+
 * Fri Aug 19 2005 Jay Fenlason <fenlason@redhat.com> 2.0.27-20
 - Fix packaging error that left usr/bin/ud- in the -clients rpm.
 - Add readline-devel to BuildPreReq so that saucer always gets built.

@@ -1,0 +1,13 @@
+--- openldap-2.0.27/libraries/libldap/tls.c.orig	2006-01-10 16:28:37.000000000 -0500
++++ openldap-2.0.27/libraries/libldap/tls.c	2006-01-10 16:31:51.000000000 -0500
+@@ -227,6 +227,10 @@
+ 			tls_report_error();
+ 			goto error_exit;
+ 		}
++
++		SSL_CTX_set_session_id_context( tls_def_ctx,
++			(const unsigned char *) "OpenLDAP", sizeof("OpenLDAP")-1 );
++
+ 		if ( tls_opt_certfile &&
+ 		     !SSL_CTX_use_certificate_file( tls_def_ctx,
+ 						    tls_opt_certfile,
