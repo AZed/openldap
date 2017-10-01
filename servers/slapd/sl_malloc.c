@@ -1,5 +1,5 @@
 /* sl_malloc.c - malloc routines using a per-thread slab */
-/* $OpenLDAP: pkg/ldap/servers/slapd/sl_malloc.c,v 1.24.2.7 2007/01/02 21:43:58 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/sl_malloc.c,v 1.24.2.8 2008/02/11 23:24:18 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2003-2008 The OpenLDAP Foundation.

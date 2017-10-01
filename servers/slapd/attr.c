@@ -1,5 +1,5 @@
 /* attr.c - routines for dealing with attributes */
-/* $OpenLDAP: pkg/ldap/servers/slapd/attr.c,v 1.100.2.12 2007/02/21 21:32:21 ando Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/attr.c,v 1.100.2.13 2008/02/11 23:24:15 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2008 The OpenLDAP Foundation.

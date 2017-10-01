@@ -1,5 +1,5 @@
 /* compare.c - monitor backend compare routine */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/compare.c,v 1.20.2.4 2007/01/02 21:44:04 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/compare.c,v 1.20.2.5 2008/02/11 23:24:22 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2001-2008 The OpenLDAP Foundation.

@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/librewrite/session.c,v 1.11.2.7 2007/01/02 21:43:53 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/librewrite/session.c,v 1.11.2.8 2008/02/11 23:24:14 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2008 The OpenLDAP Foundation.

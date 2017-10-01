@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/include/lutil_hash.h,v 1.6.2.3 2007/01/02 21:43:46 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/include/lutil_hash.h,v 1.6.2.4 2008/02/11 23:24:10 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2008 The OpenLDAP Foundation.

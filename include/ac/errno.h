@@ -1,5 +1,5 @@
 /* Generic errno.h */
-/* $OpenLDAP: pkg/ldap/include/ac/errno.h,v 1.28.2.3 2007/01/02 21:43:47 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/include/ac/errno.h,v 1.28.2.4 2008/02/11 23:24:10 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2008 The OpenLDAP Foundation.

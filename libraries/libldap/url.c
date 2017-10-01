@@ -1,5 +1,5 @@
 /* LIBLDAP url.c -- LDAP URL (RFC 2255) related routines */
-/* $OpenLDAP: pkg/ldap/libraries/libldap/url.c,v 1.84.2.8 2007/01/02 21:43:50 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/url.c,v 1.84.2.9 2008/02/11 23:24:12 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2008 The OpenLDAP Foundation.

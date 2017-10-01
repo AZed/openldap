@@ -1,4 +1,4 @@
-# $OpenLDAP$
+# $OpenLDAP: pkg/openldap-guide/admin/runningslapd.sdf,v 1.15.2.3 2008/02/11 23:24:08 kurt Exp $
 # Copyright 1999-2008 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 H1: Running slapd

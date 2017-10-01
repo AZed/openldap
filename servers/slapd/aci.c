@@ -1,5 +1,5 @@
 /* aci.c - routines to parse and check acl's */
-/* $OpenLDAP: pkg/ldap/servers/slapd/aci.c,v 1.1.2.9 2007/02/13 22:41:20 ando Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/aci.c,v 1.1.2.10 2008/02/11 23:24:14 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2008 The OpenLDAP Foundation.
