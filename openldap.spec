@@ -15,7 +15,7 @@
 Summary: The configuration files, libraries, and documentation for OpenLDAP.
 Name: openldap
 Version: %{version_22}
-Release: 6.4E
+Release: 7.4E
 License: OpenLDAP
 Group: System Environment/Daemons
 Source0: ftp://ftp.OpenLDAP.org/pub/OpenLDAP/openldap-release/openldap-%{version_22}.tgz
@@ -61,6 +61,7 @@ Patch44: openldap-2.1.30-hop.patch
 Patch45: openldap-2.2.13-nostrip.patch
 Patch46: openldap-2.2.13-wait4msg-select-fix.patch
 Patch47: openldap-2.2.13-gethostbyname_r.patch
+Patch48: openldap-2.2.13-selfwrite.patch
 
 URL: http://www.openldap.org/
 BuildRoot: %{_tmppath}/%{name}-%{version_22}-root
@@ -166,6 +167,7 @@ pushd openldap-%{version_22}
 %patch42 -p1 -b .hop
 %patch46 -p1 -b .wait4msg-select-fix
 %patch47 -p1 -b .gethostbyname_r
+%patch48 -p1 -b .selfwrite
 
 cp %{_datadir}/libtool/config.{sub,guess} build/
 popd
@@ -759,6 +761,10 @@ fi
 %attr(0644,root,root)      %{evolution_connector_libdir}/*.a
 
 %changelog
+* Thu Mar 22 2007 Jay Fenlason <fenlason@redhat.com> 2.3.13-7.4E
+- include the -selfwrite patch to close
+  Resolves: rhbz#205826: CVE-2006-4600 openldap improper selfwrite access
+
 * Mon Apr 24 2006 Jay Fenlason <fenlason@redhat.com> 2.2.13-6.4E
 - Change autofs.schema to use the correct OID for the automount objectlass.
   This closes bz#150340 OID conflict in LDAP schemas shipped

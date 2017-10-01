@@ -1,0 +1,33 @@
+--- openldap-2.2.13/servers/slapd/acl.c	2004-05-13 04:12:37.000000000 -0400
++++ ../../RHEL-4.lab2/openldap-2.2.13/openldap-2.2.13/servers/slapd/acl.c	2006-07-28 11:57:09.000000000 -0400
+@@ -769,6 +769,30 @@
+ 			 * user is bound as somebody in the same namespace as
+ 			 * the entry, OR the given dn matches the dn pattern
+ 			 */
++			if ( b->a_dn_self ) {
++			    int rc, match = 0;
++			    const char *dummy;
++
++			    ACL_RECORD_VALUE_STATE;
++
++			    /* must have DN syntax */
++			    if ( desc->ad_type->sat_syntax != slap_schema.si_syn_distinguishedName &&
++				!is_at_syntax( desc->ad_type, SLAPD_NAMEUID_SYNTAX )) {
++				continue;
++			    }
++			    /* check if the target is an attribute. */
++			    if ( val == NULL )
++				continue;
++			    /* target is attribute, check if the attribute value
++			     * is the op dn.
++			     */
++			    rc = value_match( &match, desc,
++					     desc->ad_type->sat_equality, 0,
++					     val, &op->o_ndn, &dummy );
++			    /* on match error or no match, fail the ACL clause */
++			    if (rc != LDAP_SUCCESS || match != 0 )
++				continue;
++			}
+ 			if ( bvmatch( &b->a_dn_pat, &aci_bv_anonymous ) ) {
+ 				if ( op->o_ndn.bv_len != 0 ) {
+ 					continue;
