@@ -1,7 +1,7 @@
 Correct key pointer usage in bdb_idl_fetch_key.
 
 Author: Shogo Matsumoto
-Resolves: #1212283
+Resolves: #1356165
 
 diff --git a/servers/slapd/back-bdb/idl.c b/servers/slapd/back-bdb/idl.c
 --- a/servers/slapd/back-bdb/idl.c

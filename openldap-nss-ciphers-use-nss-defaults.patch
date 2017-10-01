@@ -1,8 +1,7 @@
 Use what NSS considers default for DEFAULT cipher string.
 
 Author: Matus Honek <mhonek@redhat.com>
-Resolves: #1300701
-Backports: #1245279
+Resolves: #1245279
 
 diff --git a/libraries/libldap/tls_m.c b/libraries/libldap/tls_m.c
 --- a/libraries/libldap/tls_m.c

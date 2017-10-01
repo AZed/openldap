@@ -1,5 +1,5 @@
 fix: id_query option is not available after rebasing openldap to 2.4.39
-Resolves: rhbz#1288545
+Resolves: rhbz#1311832
 Upstream: ITS#8329
 diff --git a/servers/slapd/back-sql/config.c b/servers/slapd/back-sql/config.c
 --- a/servers/slapd/back-sql/config.c

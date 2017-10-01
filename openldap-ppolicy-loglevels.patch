@@ -1,7 +1,7 @@
 Correct log levels in ppolicy overlay.
 
 Author: Matus Honek <mhonek@redhat.com>
-Related: rhbz#1255046
+Resolves: #1356158
 
 diff --git a/servers/slapd/overlays/ppolicy.c b/servers/slapd/overlays/ppolicy.c
 --- a/servers/slapd/overlays/ppolicy.c
