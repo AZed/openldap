@@ -1,9 +1,10 @@
-MozNSS: update list of supported cipher suites
+fix: some TLS ciphers cannot be enabled
 
 The updated list includes all ciphers implemented in Mozilla NSS 3.13.15
 
 Author: Jan Vcelak <jvcelak@redhat.com>
-Upstream ITS: #7374
+Upstream ITS: #7367
+Resolves: #852339
 
 diff --git a/libraries/libldap/tls_m.c b/libraries/libldap/tls_m.c
 index 1422ce2..5e49fc5 100644
