@@ -16,7 +16,7 @@
 Summary: The configuration files, libraries, and documentation for OpenLDAP.
 Name: openldap
 Version: %{version_23}
-Release: 12%{?dist}.3
+Release: 12%{?dist}.5
 License: OpenLDAP
 Group: System Environment/Daemons
 Source0: ftp://ftp.OpenLDAP.org/pub/OpenLDAP/openldap-release/openldap-%{version_23}.tgz
@@ -58,6 +58,8 @@ Patch19: openldap-2.3.43-tls-connection.patch
 Patch20: openldap-2.3.43-tls-null-char.patch
 Patch21: openldap-2.3.43-modrdn-segfault.patch
 Patch22: openldap-2.3.43-rh620621.patch
+Patch23: openldap-2.3.43-allow-delete-userpassword.patch
+Patch24: openldap-2.3.43-add-ldap_init_fd.patch
 
 # Patches for 2.2.29 for the compat-openldap package.
 Patch100: openldap-2.2.13-tls-fix-connection-test.patch
@@ -229,6 +231,8 @@ pushd openldap-%{version_23}
 %patch20 -p1 -b .tls-null-char
 %patch21 -p1 -b .modrdn-segfault
 %patch22 -p1 -b .rh620621
+%patch23 -p1 -b .allow-delete-userpassword
+%patch24 -p1 -b .add-ldap_init_fd
 
 cp %{_datadir}/libtool/config.{sub,guess} build/
 popd
@@ -889,6 +893,12 @@ exec > /dev/null 2> /dev/null
 %attr(0644,root,root)      %{evolution_connector_libdir}/*.a
 
 %changelog
+* Fri Jan 21 2011 Jan Vcelak <jvcelak@redhat.com> 2.3.43-12.5
+- backport: ldap_init_fd() API function (#671341)
+
+* Thu Jan 13 2011 Jan Vcelak <jvcelak@redhat.com> 2.3.43-12.4
+- fix: ppolicy crash while replace-deleting userPassword attribute (#669043)
+
 * Tue Nov 16 2010 Jan Vcelak <jvcelak@redhat.com> 2.3.43-12.3
 - fix: connection freeze when using TLS (#653910)
 
