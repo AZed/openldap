@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/include/ldap_queue.h,v 1.13.2.4 2009/01/22 00:00:52 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2001-2009 The OpenLDAP Foundation.
+ * Copyright 2001-2010 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

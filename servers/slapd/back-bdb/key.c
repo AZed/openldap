@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/key.c,v 1.20.2.5 2009/01/22 00:01:05 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2009 The OpenLDAP Foundation.
+ * Copyright 2000-2010 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

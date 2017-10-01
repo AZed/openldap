@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/extended.c,v 1.36.2.10 2009/09/29 21:47:37 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2009 The OpenLDAP Foundation.
+ * Copyright 2003-2010 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

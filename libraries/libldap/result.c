@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/libraries/libldap/result.c,v 1.124.2.20 2009/11/18 17:04:31 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2009 The OpenLDAP Foundation.
+ * Copyright 1998-2010 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -747,8 +747,9 @@ nextresp2:
 			}
 
 			/* Do we need to check for referrals? */
-			if ( LDAP_BOOL_GET(&ld->ld_options, LDAP_BOOL_REFERRALS) ||
-					lr->lr_parent != NULL )
+			if ( tag != LDAP_RES_BIND &&
+				( LDAP_BOOL_GET(&ld->ld_options, LDAP_BOOL_REFERRALS) ||
+					lr->lr_parent != NULL ))
 			{
 				char		**refs = NULL;
 				ber_len_t	len;

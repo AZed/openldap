@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/include/ac/unistd.h,v 1.37.2.5 2009/08/13 00:11:17 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2009 The OpenLDAP Foundation.
+ * Copyright 1998-2010 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/suffixmassage.c,v 1.7.2.4 2009/01/22 00:01:08 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2009 The OpenLDAP Foundation.
+ * Copyright 2003-2010 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

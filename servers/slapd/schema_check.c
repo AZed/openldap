@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/schema_check.c,v 1.103.2.11 2009/05/06 19:06:16 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2009 The OpenLDAP Foundation.
+ * Copyright 1998-2010 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

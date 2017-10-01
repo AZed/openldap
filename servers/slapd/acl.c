@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/acl.c,v 1.303.2.23 2009/09/29 21:55:18 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2009 The OpenLDAP Foundation.
+ * Copyright 1998-2010 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -2132,7 +2132,16 @@ acl_set_cb_gather( Operation *op, SlapReply *rs )
 		}
 
 	} else {
-		assert( rs->sr_type == REP_RESULT );
+		switch ( rs->sr_type ) {
+		case REP_SEARCHREF:
+		case REP_INTERMEDIATE:
+			/* ignore */
+			break;
+
+		default:
+			assert( rs->sr_type == REP_RESULT );
+			break;
+		}
 	}
 
 	return 0;

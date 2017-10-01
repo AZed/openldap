@@ -1,7 +1,7 @@
 /* $OpenLDAP: pkg/ldap/tests/progs/slapd-modify.c,v 1.19.2.7 2009/01/22 00:01:17 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2009 The OpenLDAP Foundation.
+ * Copyright 1999-2010 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

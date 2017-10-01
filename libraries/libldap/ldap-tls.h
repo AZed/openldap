@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/libraries/libldap/ldap-tls.h,v 1.3.2.2 2009/10/30 17:48:16 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2008-2009 The OpenLDAP Foundation.
+ * Copyright 2008-2010 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/libraries/liblutil/ldif.c,v 1.15.2.8 2009/07/08 00:28:21 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2009 The OpenLDAP Foundation.
+ * Copyright 1998-2010 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

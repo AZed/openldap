@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/back-relay/back-relay.h,v 1.6.2.6 2009/10/31 00:15:21 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2004-2009 The OpenLDAP Foundation.
+ * Copyright 2004-2010 The OpenLDAP Foundation.
  * Portions Copyright 2004 Pierangelo Masarati.
  * All rights reserved.
  *

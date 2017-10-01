@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/libraries/libldap/apitest.c,v 1.25.2.4 2009/01/22 00:00:54 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2009 The OpenLDAP Foundation.
+ * Copyright 1998-2010 The OpenLDAP Foundation.
  * Portions Copyright 1998-2003 Kurt D. Zeilenga.
  * All rights reserved.
  *

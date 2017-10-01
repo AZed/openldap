@@ -2,7 +2,7 @@ dnl OpenLDAP Autoconf Macros
 dnl $OpenLDAP: pkg/ldap/build/openldap.m4,v 1.157.2.9 2009/01/22 00:00:41 kurt Exp $
 dnl This work is part of OpenLDAP Software <http://www.openldap.org/>.
 dnl
-dnl Copyright 1998-2009 The OpenLDAP Foundation.
+dnl Copyright 1998-2010 The OpenLDAP Foundation.
 dnl All rights reserved.
 dnl
 dnl Redistribution and use in source and binary forms, with or without

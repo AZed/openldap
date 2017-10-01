@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/operation.c,v 1.46.2.6 2009/04/27 22:50:10 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2001-2009 The OpenLDAP Foundation.
+ * Copyright 2001-2010 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * All rights reserved.
  *

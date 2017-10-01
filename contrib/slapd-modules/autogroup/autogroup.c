@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/contrib/slapd-modules/autogroup/autogroup.c,v 1.2.2.5 2009/09/29 21:52:13 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2007-2009 The OpenLDAP Foundation.
+ * Copyright 2007-2010 The OpenLDAP Foundation.
  * Portions Copyright 2007 Michał Szulczyński.
  * Portions Copyright 2009 Howard Chu.
  * All rights reserved.

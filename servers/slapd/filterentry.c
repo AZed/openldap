@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/filterentry.c,v 1.104.2.8 2009/11/18 01:26:53 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2009 The OpenLDAP Foundation.
+ * Copyright 1998-2010 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

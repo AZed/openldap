@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/include/ac/socket.h,v 1.67.2.6 2009/10/31 00:00:31 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2009 The OpenLDAP Foundation.
+ * Copyright 1998-2010 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
