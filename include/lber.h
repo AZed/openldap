@@ -1,7 +1,7 @@
 /* $OpenLDAP: pkg/ldap/include/lber.h,v 1.83.2.9 2004/03/17 20:15:31 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2004 The OpenLDAP Foundation.
+ * Copyright 1998-2005 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -584,11 +584,11 @@ ber_bvdup LDAP_P((
 
 LBER_F( struct berval * )
 ber_mem2bv LDAP_P((
-	LDAP_CONST char *, ber_len_t len, int dup, struct berval *bv));
+	LDAP_CONST char *, ber_len_t len, int duplicate, struct berval *bv));
 
 LBER_F( struct berval * )
 ber_str2bv LDAP_P((
-	LDAP_CONST char *, ber_len_t len, int dup, struct berval *bv));
+	LDAP_CONST char *, ber_len_t len, int duplicate, struct berval *bv));
 
 #define	ber_bvstr(a)	((ber_str2bv)((a), 0, 0, NULL))
 #define	ber_bvstrdup(a)	((ber_str2bv)((a), 0, 1, NULL))

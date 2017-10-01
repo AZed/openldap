@@ -1,7 +1,7 @@
 dnl $OpenLDAP: pkg/ldap/configure.in,v 1.478.2.19 2004/04/16 15:21:40 kurt Exp $
 dnl This work is part of OpenLDAP Software <http://www.openldap.org/>.
 dnl
-dnl Copyright 1998-2004 The OpenLDAP Foundation.
+dnl Copyright 1998-2005 The OpenLDAP Foundation.
 dnl All rights reserved.
 dnl
 dnl Redistribution and use in source and binary forms, with or without
@@ -23,7 +23,7 @@ define([AC_INIT_BINSH],
 
 # This work is part of OpenLDAP Software <http://www.openldap.org/>.
 #
-# Copyright 1998-2004 The OpenLDAP Foundation.
+# Copyright 1998-2005 The OpenLDAP Foundation.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -34,7 +34,7 @@ define([AC_INIT_BINSH],
 # top-level directory of the distribution or, alternatively, at
 # <http://www.OpenLDAP.org/license.html>.
 
-echo "Copyright 1998-2004 The OpenLDAP Foundation. All rights reserved."
+echo "Copyright 1998-2005 The OpenLDAP Foundation. All rights reserved."
 echo "	Restrictions apply, see COPYRIGHT and LICENSE files."
 ])dnl
 dnl ----------------------------------------------------------------
@@ -366,18 +366,11 @@ else
 		AC_MSG_ERROR([NDBM only supports LDBM type hash])
 	fi
 
-	if test $ol_enable_bdb = yes -o $ol_enable_hdb = yes ; then
+	if test $ol_enable_bdb != no -o $ol_enable_hdb != no ; then
 		if test $ol_with_ldbm_api = auto ; then
 			ol_with_ldbm_api=berkeley
 		elif test $ol_with_ldbm_api != berkeley ; then
 			AC_MSG_ERROR([LDBM API not compatible with BDB/HDB])
-		fi
-
-	elif test $ol_enable_bdb = auto ; then
-		if test $ol_with_ldbm_api != berkeley \
-			-o $ol_with_ldbm_api != auto ; then
-			AC_MSG_WARN([LDBM API not compatible with BDB, disabling BDB])
-			ol_enable_bdb=no
 		fi
 	fi
 fi
@@ -897,6 +890,11 @@ fi
 if test $ac_cv_func_res_query = no ; then 
 	AC_CHECK_LIB(resolv, __res_query)
 	ac_cv_func_res_query=$ac_cv_lib_resolv___res_query
+fi
+
+if test $ac_cv_func_res_query = no ; then 
+	AC_CHECK_LIB(resolv, _res_9_query)
+	ac_cv_func_res_query=$ac_cv_lib_resolv_res_9_query
 fi
 
 if test "$ac_cv_func_res_query" = yes ; then
@@ -1834,21 +1832,16 @@ if test $ol_with_ldbm_api = auto \
 	fi
 fi
 
-if test $ol_enable_bdb = yes -a $ol_link_ldbm != berkeley ; then
-	AC_MSG_ERROR(BDB: BerkeleyDB not available)
-elif test $ol_enable_bdb != no -a $ol_link_ldbm = berkeley ; then
-	OL_BDB_COMPAT
-
-	if test $ol_cv_bdb_compat = yes ; then
-		ol_enable_bdb=yes
-	elif test $ol_enable_bdb = yes ; then
-		AC_MSG_ERROR([BDB: BerkeleyDB version incompatible])
+if test $ol_enable_bdb != no -o $ol_enable_hdb != no; then
+	if test $ol_link_ldbm != berkeley ; then
+		AC_MSG_ERROR(BDB/HDB: BerkeleyDB not available)
 	else
-		ol_enable_bdb=no
+		OL_BDB_COMPAT
+
+		if test $ol_cv_bdb_compat != yes ; then
+			AC_MSG_ERROR([BDB/HDB: BerkeleyDB version incompatible])
+		fi
 	fi
-fi
-if test $ol_enable_hdb = yes -a $ol_link_ldbm != berkeley ; then
-	AC_MSG_ERROR([HDB: BerkeleyDB not available])
 fi
 
 if test $ol_link_ldbm = no -a $ol_with_ldbm_type = btree ; then
@@ -1902,6 +1895,12 @@ if test $ol_link_ldbm = no -a $ol_enable_ldbm != no ; then
 
 	AC_MSG_WARN(disabling LDBM)
 	ol_enable_ldbm=no
+fi
+
+if test $ol_enable_bdb = yes -o \
+	$ol_enable_hdb = yes -o \
+	$ol_enable_ldbm = yes ; then
+	SLAPD_LIBS="$SLAPD_LIBS \$(LDBM_LIBS)"
 fi
 
 dnl ----------------------------------------------------------------

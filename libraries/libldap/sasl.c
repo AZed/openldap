@@ -1,7 +1,7 @@
 /* $OpenLDAP: pkg/ldap/libraries/libldap/sasl.c,v 1.50.2.4 2004/01/01 18:16:30 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2004 The OpenLDAP Foundation.
+ * Copyright 1998-2005 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -120,14 +120,14 @@ ldap_sasl_bind(
 			cred );
 		
 	} else if ( cred == NULL || cred->bv_val == NULL ) {
-		/* SASL bind w/o creditials */
+		/* SASL bind w/o credentials */
 		rc = ber_printf( ber, "{it{ist{sN}N}" /*}*/,
 			id, LDAP_REQ_BIND,
 			ld->ld_version, dn, LDAP_AUTH_SASL,
 			mechanism );
 
 	} else {
-		/* SASL bind w/ creditials */
+		/* SASL bind w/ credentials */
 		rc = ber_printf( ber, "{it{ist{sON}N}" /*}*/,
 			id, LDAP_REQ_BIND,
 			ld->ld_version, dn, LDAP_AUTH_SASL,

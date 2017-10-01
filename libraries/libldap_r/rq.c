@@ -1,7 +1,7 @@
 /* $OpenLDAP: pkg/ldap/libraries/libldap_r/rq.c,v 1.6.2.6 2004/01/01 18:16:30 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2004 The OpenLDAP Foundation.
+ * Copyright 2003-2005 The OpenLDAP Foundation.
  * Portions Copyright 2003 IBM Corporation.
  * All rights reserved.
  *
@@ -66,12 +66,11 @@ ldap_pvt_runqueue_remove(
 			break;
 	}
 
-	assert ( e == entry );
+	assert( e == entry );
 
 	LDAP_STAILQ_REMOVE( &rq->task_list, entry, re_s, tnext );
 
 	LDAP_FREE( entry );
-
 }
 
 struct re_s*
@@ -148,7 +147,7 @@ ldap_pvt_runqueue_resched(
 
 	LDAP_STAILQ_REMOVE( &rq->task_list, entry, re_s, tnext );
 
-	if ( entry->interval.tv_sec && !defer ) {
+	if ( !defer ) {
 		entry->next_sched.tv_sec = time( NULL ) + entry->interval.tv_sec;
 	} else {
 		entry->next_sched.tv_sec = 0;

@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/database.c,v 1.30.2.8 2004/04/06 18:16:02 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2001-2004 The OpenLDAP Foundation.
+ * Copyright 2001-2005 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * All rights reserved.
  *
@@ -80,7 +80,7 @@ monitor_subsys_database_init(
 		bi = be->bd_info;
 
 		if ( strcmp( be->bd_info->bi_type, "over" ) == 0 ) {
-			oi = (slap_overinfo *)be->bd_info;
+			oi = (slap_overinfo *)be->bd_info->bi_private;
 			bi = oi->oi_orig;
 		}
 

@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/extended.c,v 1.9.2.6 2004/04/12 16:00:58 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2004 The OpenLDAP Foundation.
+ * Copyright 2003-2005 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -100,6 +100,7 @@ ldap_back_exop_passwd(
 	LDAPMessage *res;
 	ber_int_t msgid;
 	int rc, isproxy;
+	int do_retry = 1;
 	dncookie dc;
 
 	lc = ldap_back_getconn(op, rs);
@@ -133,18 +134,18 @@ ldap_back_exop_passwd(
 		}
 	}
 
+retry:
 	rc = ldap_passwd(lc->ld, isproxy ? &mdn : NULL,
 		qpw->rs_old.bv_val ? &qpw->rs_old : NULL,
 		qpw->rs_new.bv_val ? &qpw->rs_new : NULL,
 		op->o_ctrls, NULL, &msgid);
 
-	if (mdn.bv_val != op->o_req_dn.bv_val) {
-		free(mdn.bv_val);
-	}
-
 	if (rc == LDAP_SUCCESS) {
 		if (ldap_result(lc->ld, msgid, 1, NULL, &res) == -1) {
 			ldap_get_option(lc->ld, LDAP_OPT_ERROR_NUMBER, &rc);
+			ldap_back_freeconn( op, lc );
+			lc = NULL;
+
 		} else {
 			/* sigh. parse twice, because parse_passwd doesn't give
 			 * us the err / match / msg info.
@@ -168,6 +169,10 @@ ldap_back_exop_passwd(
 	}
 	if (rc != LDAP_SUCCESS) {
 		rs->sr_err = slap_map_api2result( rs );
+		if ( rs->sr_err == LDAP_UNAVAILABLE && do_retry ) {
+			do_retry = 0;
+			if ( ldap_back_retry( lc, op, rs )) goto retry;
+		}
 		send_ldap_result(op, rs);
 		if (rs->sr_matched) free((char *)rs->sr_matched);
 		if (rs->sr_text) free((char *)rs->sr_text);
@@ -175,5 +180,9 @@ ldap_back_exop_passwd(
 		rs->sr_text = NULL;
 		rc = -1;
 	}
+	if (mdn.bv_val != op->o_req_dn.bv_val) {
+		free(mdn.bv_val);
+	}
+
 	return rc;
 }

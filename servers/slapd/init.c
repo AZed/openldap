@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/init.c,v 1.59.2.7 2004/05/21 02:11:38 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2004 The OpenLDAP Foundation.
+ * Copyright 1998-2005 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -257,6 +257,9 @@ int slap_destroy(void)
 		slap_name, 0, 0 );
 #endif
 
+	if ( default_referral ) {
+		ber_bvarray_free( default_referral );
+	}
 
 	rc = backend_destroy();
 

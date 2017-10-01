@@ -1,7 +1,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/daemon.c,v 1.273.2.10 2004/04/12 18:13:21 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2004 The OpenLDAP Foundation.
+ * Copyright 1998-2005 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -1170,6 +1170,7 @@ slapd_daemon_task(
 	int l;
 	time_t	last_idle_check = 0;
 	struct timeval idle;
+	int ebadf = 0;
 
 #define SLAPD_IDLE_CHECK_LIMIT 4
 
@@ -1269,7 +1270,6 @@ slapd_daemon_task(
 		int at;
 		ber_socket_t nfds;
 #define SLAPD_EBADF_LIMIT 16
-		int ebadf = 0;
 
 		time_t	now;
 
@@ -1451,6 +1451,7 @@ slapd_daemon_task(
 
 		case 0:		/* timeout - let threads run */
 			ebadf = 0;
+#ifndef HAVE_YIELDING_SELECT
 #ifdef NEW_LOGGING
 			LDAP_LOG( CONNECTION, DETAIL2,
 				   "slapd_daemon_task: select timeout - yielding\n", 0, 0, 0 );
@@ -1460,6 +1461,7 @@ slapd_daemon_task(
 #endif
 
 			ldap_pvt_thread_yield();
+#endif
 			continue;
 
 		default:	/* something happened - deal with it */
@@ -1535,6 +1537,11 @@ slapd_daemon_task(
 			FD_CLR( slap_listeners[l]->sl_sd, &readfds );
 			FD_CLR( slap_listeners[l]->sl_sd, &writefds );
 
+#  ifdef LDAP_PF_LOCAL
+			/* FIXME: apparently accept doesn't fill
+			 * the sun_path sun_path member */
+			from.sa_un_addr.sun_path[0] = '\0';
+#  endif /* LDAP_PF_LOCAL */
 			s = accept( slap_listeners[l]->sl_sd,
 				(struct sockaddr *) &from, &len );
 			if ( s == AC_SOCKET_INVALID ) {
@@ -1927,7 +1934,9 @@ slapd_daemon_task(
 				slapd_close( rd );
 			}
 		}
+#ifndef HAVE_YIELDING_SELECT
 		ldap_pvt_thread_yield();
+#endif
 	}
 
 	if( slapd_shutdown == 1 ) {
@@ -2141,4 +2150,9 @@ void slapd_add_internal(ber_socket_t s, int isactive) {
 
 Listener ** slapd_get_listeners(void) {
 	return slap_listeners;
+}
+
+void slap_wake_listener()
+{
+	WAKE_LISTENER(1);
 }

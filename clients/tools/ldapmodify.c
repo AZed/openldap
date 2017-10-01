@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/clients/tools/ldapmodify.c,v 1.139.2.8 2004/04/06 16:49:54 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2004 The OpenLDAP Foundation.
+ * Copyright 1998-2005 The OpenLDAP Foundation.
  * Portions Copyright 1998-2003 Kurt D. Zeilenga.
  * Portions Copyright 1998-2001 Net Boolean Incorporated.
  * Portions Copyright 2001-2003 IBM Corporation.
@@ -316,7 +316,7 @@ main( int argc, char **argv )
 		)
 	{
 		int err;
-		int i;
+		int i = 0;
 		LDAPControl c[1];
 
 #ifdef LDAP_GROUP_TRANSACTION

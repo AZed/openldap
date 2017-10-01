@@ -19,7 +19,7 @@ REQUIRED SOFTWARE
         POSIX REGEX software (required)
 
     SLAPD:
-        BDB backend requires Sleepycat Berkeley DB 4.2
+        BDB backend requires Sleepycat Berkeley DB 4.3
         LDBM backend requires a compatible database manager
             [Berkeley DB, GDBM, etc.]
 
@@ -80,7 +80,7 @@ $OpenLDAP: pkg/ldap/README,v 1.35.2.8 2004/05/19 01:21:55 kurt Exp $
 
 This work is part of OpenLDAP Software <http://www.openldap.org/>.
 
-Copyright 1998-2004 The OpenLDAP Foundation.  All rights reserved.
+Copyright 1998-2005 The OpenLDAP Foundation.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted only as authorized by the OpenLDAP

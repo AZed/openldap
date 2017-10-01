@@ -1,5 +1,5 @@
 .TH SLAPD.CONF 5 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 1998-2004 The OpenLDAP Foundation All Rights Reserved.
+.\" Copyright 1998-2005 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .\" $OpenLDAP: pkg/ldap/doc/man/man5/slapd.conf.5,v 1.133.2.16 2004/05/21 23:35:59 kurt Exp $
 .SH NAME
@@ -669,7 +669,8 @@ The replaced SASL name can be either a DN or an LDAP URI. If the
 latter, the server will use the URI to search its own database(s)
 and, if the search returns exactly one entry, the SASL name is
 replaced by the DN of that entry.   The LDAP URI must have no
-hostport, attrs, or extensions components, e.g.
+hostport, attrs, or extensions components, but the filter is mandatory,
+e.g.
 .RS
 .TP
 .B ldap:///OU=Accounts,DC=example,DC=com??one?(UID=$1)
@@ -1267,7 +1268,7 @@ when initially populating a database).  If the rootdn is within
 a namingContext (suffix) of the database, a simple bind password
 may also be provided using the
 .B rootpw
-directive.
+directive. Note that the rootdn is always needed when using syncrepl.
 .TP
 .B rootpw <password>
 Specify a password (or hash of the password) for the rootdn.  The
@@ -1316,6 +1317,7 @@ one subordinate to another subordinate within the namingContext.
 .B [timelimit=<limit>]
 .B [schemachecking=on|off]
 .B [updatedn=<dn>]
+.B [starttls=yes|critical]
 .B [bindmethod=simple|sasl]
 .B [binddn=<dn>]
 .B [saslmech=<mech>]
@@ -1390,11 +1392,20 @@ The
 parameter specifies the DN in the consumer site
 which is allowed to make changes to the replica.
 The DN should have read/write access to the replica database.
-Generally, this DN
+Generally, this DN should be the same as the
+.B rootdn
+of the replica database and
 .I should not
 be the same as the
 .B rootdn
 of the master database.
+The
+.B starttls
+parameter specifies use of the StartTLS extended operation to establish
+a TLS session before Binding to the provider. If the
+.B critical
+argument is supplied, the session will be aborted if the StartTLS request
+fails. Otherwise the syncrepl session continues without TLS.
 A
 .B bindmethod
 of 

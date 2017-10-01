@@ -2,7 +2,7 @@ dnl OpenLDAP Autoconf Macros
 dnl $OpenLDAP: pkg/ldap/build/openldap.m4,v 1.124.2.8 2004/04/21 19:16:40 kurt Exp $
 dnl This work is part of OpenLDAP Software <http://www.openldap.org/>.
 dnl
-dnl Copyright 1998-2004 The OpenLDAP Foundation.
+dnl Copyright 1998-2005 The OpenLDAP Foundation.
 dnl All rights reserved.
 dnl
 dnl Redistribution and use in source and binary forms, with or without
@@ -285,7 +285,7 @@ AC_DEFUN([OL_BERKELEY_DB_TRY],
 			minor < DB_VERSION_MINOR )
 		{
 			printf("Berkeley DB version mismatch\n"
-				"\texpected: %s\n\tgot: %s\n",
+				"\theader: %s\n\tlibrary: %s\n",
 				DB_VERSION_STRING, version);
 			return 1;
 		}
@@ -315,6 +315,10 @@ dnl Try to locate appropriate library
 AC_DEFUN([OL_BERKELEY_DB_LINK],
 [ol_cv_lib_db=no
 OL_BERKELEY_DB_TRY(ol_cv_db_none)
+OL_BERKELEY_DB_TRY(ol_cv_db_db43,[-ldb43])
+OL_BERKELEY_DB_TRY(ol_cv_db_db_43,[-ldb-43])
+OL_BERKELEY_DB_TRY(ol_cv_db_db_4_dot_3,[-ldb-4.3])
+OL_BERKELEY_DB_TRY(ol_cv_db_db_4_3,[-ldb-4-3])
 OL_BERKELEY_DB_TRY(ol_cv_db_db42,[-ldb42])
 OL_BERKELEY_DB_TRY(ol_cv_db_db_42,[-ldb-42])
 OL_BERKELEY_DB_TRY(ol_cv_db_db_4_dot_2,[-ldb-4.2])
@@ -366,7 +370,7 @@ main()
 
 	if( major != DB_VERSION_MAJOR || minor < DB_VERSION_MINOR ) {
 		printf("Berkeley DB version mismatch\n"
-			"\texpected: %s\n\tgot: %s\n",
+			"\theader: %s\n\tlibrary: %s\n",
 			DB_VERSION_STRING, version);
 		return 1;
 	}

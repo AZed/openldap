@@ -1,7 +1,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/saslauthz.c,v 1.88.2.16 2004/06/04 03:39:43 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2004 The OpenLDAP Foundation.
+ * Copyright 1998-2005 The OpenLDAP Foundation.
  * Portions Copyright 2000 Mark Adamson, Carnegie Mellon.
  * All rights reserved.
  *
@@ -312,18 +312,29 @@ is_dn:		bv.bv_len = uri->bv_len - (bv.bv_val - uri->bv_val);
 	}
 		
 	rc = ldap_url_parse( uri->bv_val, &ludp );
-	if ( rc == LDAP_URL_ERR_BADSCHEME ) {
+ 	switch ( rc ) {
+ 	case LDAP_URL_SUCCESS:
+#if 0 /* leave this for later releases */
+ 		if ( strcasecmp( ludp->lud_scheme, "ldap" ) != 0 ) {
+ 			/*
+ 			 * must be ldap:///
+ 			 */
+ 			return LDAP_PROTOCOL_ERROR;
+ 		}
+#endif
+ 		break;
+ 
+ 	case LDAP_URL_ERR_BADSCHEME:
 		/* last chance: assume it's a(n exact) DN ... */
 		bv.bv_val = uri->bv_val;
 		*scope = LDAP_X_SCOPE_EXACT;
 		goto is_dn;
-	}
 
-	if ( rc != LDAP_URL_SUCCESS ) {
+	default:
 		return LDAP_PROTOCOL_ERROR;
 	}
 
-	if (( ludp->lud_host && *ludp->lud_host )
+	if ( ( ludp->lud_host && *ludp->lud_host )
 		|| ludp->lud_attrs || ludp->lud_exts )
 	{
 		/* host part must be empty */
@@ -749,9 +760,11 @@ exact_match:
 #endif
 	op.o_conn = opx->o_conn;
 	op.o_connid = opx->o_connid;
-	op.o_req_dn = op.o_req_ndn;
+	/* use req_ndn as req_dn instead of non-pretty base of uri */
+	if( !BER_BVISNULL( &op.o_req_dn ) ) ch_free( op.o_req_dn.bv_val );
+	ber_dupbv_x( &op.o_req_dn, &op.o_req_ndn, op.o_tmpmemctx );
 	op.oq_search.rs_slimit = 1;
-	op.oq_search.rs_tlimit = -1;
+	op.oq_search.rs_tlimit = SLAP_NO_LIMIT;
 	op.o_sync_slog_size = -1;
 
 	op.o_bd->be_search( &op, &rs );
@@ -763,8 +776,8 @@ exact_match:
 	}
 
 CONCLUDED:
-	if( op.o_req_dn.bv_val && op.o_req_dn.bv_val != op.o_req_ndn.bv_val ) ch_free( op.o_req_dn.bv_val );
-	if( op.o_req_ndn.bv_val ) sl_free( op.o_req_ndn.bv_val, opx->o_tmpmemctx );
+	if( !BER_BVISNULL( &op.o_req_dn ) ) sl_free( op.o_req_dn.bv_val, opx->o_tmpmemctx );
+	if( !BER_BVISNULL( &op.o_req_ndn ) ) sl_free( op.o_req_ndn.bv_val, opx->o_tmpmemctx );
 	if( op.oq_search.rs_filter ) filter_free_x( opx, op.oq_search.rs_filter );
 	if( op.ors_filterstr.bv_val ) ch_free( op.ors_filterstr.bv_val );
 
@@ -808,8 +821,7 @@ slap_sasl_check_authz( Operation *op,
 	   assertDN->bv_val, ad->ad_cname.bv_val, searchDN->bv_val);
 #endif
 
-	rc = backend_attribute( op, NULL,
-		searchDN, ad, &vals );
+	rc = backend_attribute( op, NULL, searchDN, ad, &vals, ACL_AUTH );
 	if( rc != LDAP_SUCCESS ) goto COMPLETE;
 
 	/* Check if the *assertDN matches any **vals */
@@ -922,7 +934,13 @@ void slap_sasl2dn( Operation *opx,
 		op.o_req_ndn.bv_val, op.oq_search.rs_scope, 0 );
 #endif
 
-	if(( op.o_bd == NULL ) || ( op.o_bd->be_search == NULL)) {
+	if ( ( op.o_bd == NULL ) || ( op.o_bd->be_search == NULL) ) {
+		goto FINISHED;
+	}
+
+	/* Must run an internal search. */
+	if ( op.ors_filter == NULL ) {
+		rc = LDAP_FILTER_ERROR;
 		goto FINISHED;
 	}
 
@@ -943,9 +961,11 @@ void slap_sasl2dn( Operation *opx,
 #endif
 	op.oq_search.rs_deref = LDAP_DEREF_NEVER;
 	op.oq_search.rs_slimit = 1;
-	op.oq_search.rs_tlimit = -1;
+	op.oq_search.rs_tlimit = SLAP_NO_LIMIT;
 	op.oq_search.rs_attrsonly = 1;
-	op.o_req_dn = op.o_req_ndn;
+	/* use req_ndn as req_dn instead of non-pretty base of uri */
+	if( !BER_BVISNULL( &op.o_req_dn ) ) ch_free( op.o_req_dn.bv_val );
+	ber_dupbv_x( &op.o_req_dn, &op.o_req_ndn, op.o_tmpmemctx );
 
 	op.o_bd->be_search( &op, &rs );
 	
@@ -953,8 +973,8 @@ FINISHED:
 	if( sasldn->bv_len ) {
 		opx->o_conn->c_authz_backend = op.o_bd;
 	}
-	if( op.o_req_dn.bv_len ) ch_free( op.o_req_dn.bv_val );
-	if( op.o_req_ndn.bv_len ) sl_free( op.o_req_ndn.bv_val, opx->o_tmpmemctx );
+	if( !BER_BVISNULL( &op.o_req_dn ) ) sl_free( op.o_req_dn.bv_val, opx->o_tmpmemctx );
+	if( !BER_BVISNULL( &op.o_req_ndn ) ) sl_free( op.o_req_ndn.bv_val, opx->o_tmpmemctx );
 	if( op.oq_search.rs_filter ) filter_free_x( opx, op.oq_search.rs_filter );
 	if( op.ors_filterstr.bv_len ) ch_free( op.ors_filterstr.bv_val );
 

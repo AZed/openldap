@@ -1,7 +1,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/modrdn.c,v 1.114.2.9 2004/04/12 18:20:12 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2004 The OpenLDAP Foundation.
+ * Copyright 1998-2005 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -519,6 +519,7 @@ slap_modrdn2mods(
 				"(new) not allowed\n", 
 				new_rdn[ a_cnt ]->la_attr.bv_val, 0, 0 );
 #endif
+			rs->sr_text = "access to naming attributes (new) not allowed";
 			rs->sr_err = LDAP_INSUFFICIENT_ACCESS;
 			goto done;
 		}
@@ -537,7 +538,7 @@ slap_modrdn2mods(
 				desc->ad_type->sat_syntax,
 				desc->ad_type->sat_equality,
 				&mod_tmp->sml_values[0],
-				&mod_tmp->sml_nvalues[0], op->o_tmpmemctx );
+				&mod_tmp->sml_nvalues[0], NULL );
 			mod_tmp->sml_nvalues[1].bv_val = NULL;
 		} else {
 			mod_tmp->sml_nvalues = NULL;
@@ -588,6 +589,7 @@ slap_modrdn2mods(
 					old_rdn[ d_cnt ]->la_attr.bv_val,
 					0, 0 );
 #endif
+				rs->sr_text = "access to naming attributes (old) not allowed";
 				rs->sr_err = LDAP_INSUFFICIENT_ACCESS;
 				goto done;
 			}
@@ -619,7 +621,7 @@ slap_modrdn2mods(
 	
 done:
 
-	if ( !repl_user ) {
+	if ( rs->sr_err == LDAP_SUCCESS && !repl_user ) {
 		char textbuf[ SLAP_TEXT_BUFLEN ];
 		size_t textlen = sizeof textbuf;
 
@@ -630,7 +632,8 @@ done:
 			/* empty */
 		}
 
-		rs->sr_err = slap_mods_opattrs( op, mod, modtail, &rs->sr_text, textbuf, textlen );
+		rs->sr_err = slap_mods_opattrs( op, mod, modtail,
+						&rs->sr_text, textbuf, textlen, 1 );
 	}
 
 	/* LDAP v2 supporting correct attribute handling. */

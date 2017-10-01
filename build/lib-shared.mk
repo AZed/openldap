@@ -1,5 +1,5 @@
-# $OpenLDAP: pkg/ldap/build/lib-shared.mk,v 1.17.2.2 2004/01/01 18:16:25 kurt Exp $
-## Copyright 1998-2004 The OpenLDAP Foundation.
+# $OpenLDAP$
+## Copyright 1998-2005 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without

@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/sl_malloc.c,v 1.12.2.5 2004/06/04 03:39:43 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2004 The OpenLDAP Foundation.
+ * Copyright 2003-2005 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -195,7 +195,8 @@ sl_realloc( void *ptr, ber_len_t size, void *ctx )
 		new = p;
 	
 	/* If reallocing the last block, we can grow it */
-	} else if ( (char *)ptr + p[-1] == sh->h_last ) {
+	} else if ( (char *)ptr + p[-1] == sh->h_last &&
+		(char *)ptr + size < (char *)sh->h_end ) {
 		new = p;
 		sh->h_last = (char *) sh->h_last + size - p[-1];
 		p[-1] = size;

@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/operational.c,v 1.16.2.2 2004/01/01 18:16:36 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2004 The OpenLDAP Foundation.
+ * Copyright 2000-2005 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -39,7 +39,19 @@ bdb_hasSubordinates(
 	
 	assert( e );
 
+	/* NOTE: this should never happen, but it actually happens
+	 * when using back-relay; until we find a better way to
+	 * preserve entry's private information while rewriting it,
+	 * let's disable the hasSubordinate feature for back-relay.
+	 */
+	if ( BEI( e ) == NULL ) {
+		return LDAP_OTHER;
+	}
+
 retry:
+	/* FIXME: we can no longer assume the entry's e_private
+	 * field is correctly populated; so we need to reacquire
+	 * it with reader lock */
 	rc = bdb_cache_children( op, NULL, e );
 	
 	switch( rc ) {
@@ -64,7 +76,8 @@ retry:
 			db_strerror(rc), rc, 0 );
 #else
 		Debug(LDAP_DEBUG_ARGS, 
-			"<=- bdb_hasSubordinates: has_children failed: %s (%d)\n", 
+			"<=- " LDAP_XSTRING(bdb_hasSubordinates)
+			": has_children failed: %s (%d)\n", 
 			db_strerror(rc), rc, 0 );
 #endif
 		rc = LDAP_OTHER;

@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/libraries/liblber/encode.c,v 1.55.2.3 2004/01/01 18:16:29 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2004 The OpenLDAP Foundation.
+ * Copyright 1998-2005 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -547,8 +547,9 @@ ber_put_seqorset( BerElement *ber )
 
 	if ( (next = (*sos)->sos_next) == NULL ) {
 		/* write the tag */
-		if ( (taglen = ber_put_tag( ber, (*sos)->sos_tag, 1 )) == -1 )
+		if ( (taglen = ber_put_tag( ber, (*sos)->sos_tag, 1 )) == -1 ) {
 			return( -1 );
+		}
 
 		if ( ber->ber_options & LBER_USE_DER ) {
 			/* Write the length in the minimum # of octets */

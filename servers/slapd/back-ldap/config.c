@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/config.c,v 1.44.2.7 2004/04/06 18:16:01 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2004 The OpenLDAP Foundation.
+ * Copyright 2003-2005 The OpenLDAP Foundation.
  * Portions Copyright 1999-2003 Howard Chu.
  * Portions Copyright 2000-2003 Pierangelo Masarati.
  * All rights reserved.
@@ -31,6 +31,9 @@
 #include "slap.h"
 #include "back-ldap.h"
 #include "lutil.h"
+#undef ldap_debug
+/* for advanced URL parsing */
+#include "../../../libraries/libldap/ldap-int.h"
 
 static SLAP_EXTOP_MAIN_FN ldap_back_exop_whoami;
 
@@ -70,7 +73,8 @@ ldap_back_db_config(
 
 	/* URI of server to query (preferred over "server" directive) */
 	} else if ( strcasecmp( argv[0], "uri" ) == 0 ) {
-		LDAPURLDesc	tmplud;
+		LDAPURLDesc	*tmpludp;
+		int		urlrc, i;
 
 		if (argc != 2) {
 			fprintf( stderr, "%s: line %d: "
@@ -86,47 +90,71 @@ ldap_back_db_config(
 			ldap_free_urldesc( li->lud );
 		}
 
-		if ( ldap_url_parse( argv[ 1 ], &li->lud ) != LDAP_URL_SUCCESS ) {
+		urlrc = ldap_url_parselist( &li->lud, argv[ 1 ] );
+		if ( urlrc != LDAP_URL_SUCCESS ) {
+			char	*why;
+
+			switch ( urlrc ) {
+			case LDAP_URL_ERR_MEM:
+				why = "no memory";
+				break;
+			case LDAP_URL_ERR_PARAM:
+		  		why = "parameter is bad";
+				break;
+			case LDAP_URL_ERR_BADSCHEME:
+				why = "URL doesn't begin with \"[c]ldap[si]://\"";
+				break;
+			case LDAP_URL_ERR_BADENCLOSURE:
+				why = "URL is missing trailing \">\"";
+				break;
+			case LDAP_URL_ERR_BADURL:
+				why = "URL is bad";
+			case LDAP_URL_ERR_BADHOST:
+				why = "host/port is bad";
+				break;
+			case LDAP_URL_ERR_BADATTRS:
+				why = "bad (or missing) attributes";
+				break;
+			case LDAP_URL_ERR_BADSCOPE:
+				why = "scope string is invalid (or missing)";
+				break;
+			case LDAP_URL_ERR_BADFILTER:
+				why = "bad or missing filter";
+				break;
+			case LDAP_URL_ERR_BADEXTS:
+				why = "bad or missing extensions";
+				break;
+			default:
+				why = "unknown reason";
+				break;
+			}
 			fprintf( stderr, "%s: line %d: "
-				"unable to parse uri \"%s\" "
-				"in \"uri <uri>\" line\n",
-				fname, lineno, argv[ 1 ] );
+					"unable to parse uri \"%s\" "
+					"in \"uri <uri>\" line: %s\n",
+					fname, lineno, argv[ 1 ], why );
 			return 1;
 		}
 
-		if ( ( li->lud->lud_dn != NULL && li->lud->lud_dn[0] != '\0' )
-				|| li->lud->lud_attrs != NULL
-				|| li->lud->lud_filter != NULL
-				|| li->lud->lud_exts != NULL )
+		for ( i = 0, tmpludp = li->lud;
+				tmpludp;
+				i++, tmpludp = tmpludp->lud_next )
 		{
-			fprintf( stderr, "%s: line %d: "
-				"warning, only protocol, "
-				"host and port allowed "
-				"in \"uri <uri>\" line\n",
-				fname, lineno );
+			if ( ( tmpludp->lud_dn != NULL
+						&& tmpludp->lud_dn[0] != '\0' )
+					|| tmpludp->lud_attrs != NULL
+					|| tmpludp->lud_filter != NULL
+					|| tmpludp->lud_exts != NULL )
+			{
+				fprintf( stderr, "%s: line %d: "
+						"warning, only protocol, "
+						"host and port allowed "
+						"in \"uri <uri>\" statement "
+						"for uri #%d of \"%s\"\n",
+						fname, lineno, i, argv[1] );
+			}
 		}
 
-#if 0
-		tmplud = *lud;
-		tmplud.lud_dn = "";
-		tmplud.lud_attrs = NULL;
-		tmplud.lud_filter = NULL;
-		if ( !ldap_is_ldapi_url( argv[ 1 ] ) ) {
-			tmplud.lud_exts = NULL;
-			tmplud.lud_crit_exts = 0;
-		}
-		
-		li->url = ldap_url_desc2str( &tmplud );
-		if ( li->url == NULL ) {
-			fprintf( stderr, "%s: line %d: "
-				"unable to rebuild uri \"%s\" "
-				"in \"uri <uri>\" line\n",
-				fname, lineno, argv[ 1 ] );
-			return 1;
-		}
-#else
 		li->url = ch_strdup( argv[ 1 ] );
-#endif
 
 	/* name to use for ldap_back_group */
 	} else if ( strcasecmp( argv[0], "binddn" ) == 0 ) {
@@ -491,6 +519,7 @@ ldap_back_exop_whoami(
 		LDAPMessage *res;
 		Operation op2 = *op;
 		ber_int_t msgid;
+		int do_retry = 1;
 
 		ctrls[0] = &c;
 		op2.o_ndn = op->o_conn->c_ndn;
@@ -505,11 +534,20 @@ ldap_back_exop_whoami(
 		strcpy(c.ldctl_value.bv_val, "dn:");
 		strcpy(c.ldctl_value.bv_val+3, op->o_ndn.bv_val);
 
+retry:
 		rs->sr_err = ldap_whoami(lc->ld, ctrls, NULL, &msgid);
 		if (rs->sr_err == LDAP_SUCCESS) {
 			if (ldap_result(lc->ld, msgid, 1, NULL, &res) == -1) {
 				ldap_get_option(lc->ld, LDAP_OPT_ERROR_NUMBER,
 					&rs->sr_err);
+				if ( rs->sr_err = LDAP_SERVER_DOWN && do_retry ) {
+					do_retry = 0;
+					if ( ldap_back_retry( lc, op, rs ))
+						goto retry;
+				}
+				ldap_back_freeconn( op, lc );
+				lc = NULL;
+
 			} else {
 				rs->sr_err = ldap_parse_whoami(lc->ld, res, &bv);
 				ldap_msgfree(res);

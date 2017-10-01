@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/slapcommon.h,v 1.1.2.2 2004/03/18 01:01:02 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2004 The OpenLDAP Foundation.
+ * Copyright 1998-2005 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

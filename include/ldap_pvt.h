@@ -1,7 +1,7 @@
 /* $OpenLDAP: pkg/ldap/include/ldap_pvt.h,v 1.73.2.4 2004/01/01 18:16:28 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  * 
- * Copyright 1998-2004 The OpenLDAP Foundation.
+ * Copyright 1998-2005 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -34,6 +34,10 @@ ldap_pvt_url_scheme2proto LDAP_P((
 LDAP_F ( int )
 ldap_pvt_url_scheme2tls LDAP_P((
 	const char * ));
+
+LDAP_F ( int )
+ldap_pvt_url_scheme_port LDAP_P((
+	const char *, int ));
 
 struct ldap_url_desc; /* avoid pulling in <ldap.h> */
 
@@ -179,7 +183,9 @@ LDAP_F (int) ldap_pvt_sasl_install LDAP_P(( struct sockbuf *, void * ));
 LDAP_F (void) ldap_pvt_sasl_remove LDAP_P(( struct sockbuf * ));
 #endif /* HAVE_CYRUS_SASL */
 
+#ifndef LDAP_PVT_SASL_LOCAL_SSF
 #define LDAP_PVT_SASL_LOCAL_SSF	71	/* SSF for Unix Domain Sockets */
+#endif
 
 struct ldap;
 struct ldapmsg;

@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/back-ldap.h,v 1.42.2.7 2004/04/06 20:29:28 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2004 The OpenLDAP Foundation.
+ * Copyright 1999-2005 The OpenLDAP Foundation.
  * Portions Copyright 2000-2003 Pierangelo Masarati.
  * Portions Copyright 1999-2003 Howard Chu.
  * All rights reserved.
@@ -35,7 +35,6 @@ LDAP_BEGIN_DECL
 
 struct slap_conn;
 struct slap_op;
-struct slap_backend_db;
 
 struct ldapconn {
 	struct slap_conn	*conn;
@@ -79,7 +78,6 @@ struct ldaprwmap {
 };
 
 struct ldapinfo {
-	struct slap_backend_db	*be;
 	char		*url;
 	LDAPURLDesc	*lud;
 	struct berval binddn;
@@ -120,8 +118,10 @@ typedef struct dncookie {
 #endif
 } dncookie;
 
+int ldap_back_freeconn( Operation *op, struct ldapconn *lc );
 struct ldapconn *ldap_back_getconn(struct slap_op *op, struct slap_rep *rs);
 int ldap_back_dobind(struct ldapconn *lc, Operation *op, SlapReply *rs);
+int ldap_back_retry(struct ldapconn *lc, Operation *op, SlapReply *rs);
 int ldap_back_map_result(SlapReply *rs);
 int ldap_back_op_result(struct ldapconn *lc, Operation *op, SlapReply *rs,
 	ber_int_t msgid, int sendok);
@@ -139,6 +139,8 @@ int mapping_cmp (const void *, const void *);
 int mapping_dup (void *, void *);
 
 void ldap_back_map_init ( struct ldapmap *lm, struct ldapmapping ** );
+int ldap_back_mapping ( struct ldapmap *map, struct berval *s, struct ldapmapping **m,
+	int remap );
 void ldap_back_map ( struct ldapmap *map, struct berval *s, struct berval *m,
 	int remap );
 #define BACKLDAP_MAP	0

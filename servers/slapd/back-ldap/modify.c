@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/modify.c,v 1.40.2.8 2004/04/15 01:41:49 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2004 The OpenLDAP Foundation.
+ * Copyright 1999-2005 The OpenLDAP Foundation.
  * Portions Copyright 1999-2003 Howard Chu.
  * Portions Copyright 2000-2003 Pierangelo Masarati.
  * All rights reserved.
@@ -47,6 +47,7 @@ ldap_back_modify(
 	ber_int_t msgid;
 	dncookie dc;
 	int isupdate;
+	int do_retry = 1;
 #ifdef LDAP_BACK_PROXY_AUTHZ 
 	LDAPControl **ctrls = NULL;
 #endif /* LDAP_BACK_PROXY_AUTHZ */
@@ -100,7 +101,8 @@ ldap_back_modify(
 		}
 
 		if ( ml->sml_desc == slap_schema.si_ad_objectClass 
-				|| ml->sml_desc == slap_schema.si_ad_structuralObjectClass ) {
+				|| ml->sml_desc == slap_schema.si_ad_structuralObjectClass )
+		{
 			is_oc = 1;
 			mapped = ml->sml_desc->ad_cname;
 
@@ -122,25 +124,40 @@ ldap_back_modify(
 				for (j = 0; ml->sml_values[j].bv_val; j++);
 				mods[i].mod_bvalues = (struct berval **)ch_malloc((j+1) *
 					sizeof(struct berval *));
-				for (j = 0; ml->sml_values[j].bv_val; j++) {
-					ldap_back_map(&li->rwmap.rwm_oc,
+				for (j = 0; ml->sml_values[j].bv_val; ) {
+					struct ldapmapping	*mapping = NULL;
+					
+					ldap_back_mapping(&li->rwmap.rwm_oc,
 							&ml->sml_values[j],
-							&mapped, BACKLDAP_MAP);
-					if (mapped.bv_val == NULL || mapped.bv_val[0] == '\0') {
-						continue;
+							&mapping, BACKLDAP_MAP);
+					if ( mapping == NULL ) {
+						if ( li->rwmap.rwm_oc.drop_missing ) {
+							continue;
+						}
+						mods[i].mod_bvalues[j] = &ml->sml_values[j];
+						
+					} else {
+						mods[i].mod_bvalues[j] = &mapping->dst;
 					}
-					mods[i].mod_bvalues[j] = &mapped;
+					j++;
 				}
+
+				if ( j == 0 ) {
+					ch_free( mods[i].mod_bvalues );
+					continue;
+				}
+
 				mods[i].mod_bvalues[j] = NULL;
 
 			} else {
 				if ( ml->sml_desc->ad_type->sat_syntax ==
-					slap_schema.si_syn_distinguishedName ) {
+					slap_schema.si_syn_distinguishedName )
+				{
 					ldap_dnattr_rewrite( &dc, ml->sml_values );
-				}
 
-				if ( ml->sml_values == NULL ) {	
-					continue;
+					if ( ml->sml_values == NULL ) {	
+						continue;
+					}
 				}
 
 				for (j = 0; ml->sml_values[j].bv_val; j++);
@@ -162,10 +179,13 @@ ldap_back_modify(
 #ifdef LDAP_BACK_PROXY_AUTHZ
 	rc = ldap_back_proxy_authz_ctrl( lc, op, rs, &ctrls );
 	if ( rc != LDAP_SUCCESS ) {
+		send_ldap_result( op, rs );
+		rc = -1;
 		goto cleanup;
 	}
 #endif /* LDAP_BACK_PROXY_AUTHZ */
 
+retry:
 	rs->sr_err = ldap_modify_ext( lc->ld, mdn.bv_val, modv,
 #ifdef LDAP_BACK_PROXY_AUTHZ
 			ctrls,
@@ -173,6 +193,11 @@ ldap_back_modify(
 			op->o_ctrls,
 #endif /* ! LDAP_BACK_PROXY_AUTHZ */
 			NULL, &msgid );
+	rc = ldap_back_op_result( lc, op, rs, msgid, 1 );
+	if ( rs->sr_err == LDAP_UNAVAILABLE && do_retry ) {
+		do_retry = 0;
+		if ( ldap_back_retry (lc, op, rs )) goto retry;
+	}
 
 cleanup:;
 #ifdef LDAP_BACK_PROXY_AUTHZ
@@ -191,13 +216,6 @@ cleanup:;
 	ch_free( mods );
 	ch_free( modv );
 
-#ifdef LDAP_BACK_PROXY_AUTHZ
-	if ( rc != LDAP_SUCCESS ) {
-		send_ldap_result( op, rs );
-		return -1;
-	}
-#endif /* LDAP_BACK_PROXY_AUTHZ */
-
-	return ldap_back_op_result( lc, op, rs, msgid, 1 );
+	return rc;
 }
 

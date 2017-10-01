@@ -37,10 +37,6 @@ A N N O U N C E M E N T -- OpenLDAP 2.2
         * LDAPC++ - a LDAP C++ SDK
         * LDAP SASL - An "auxprop" plugin for Cyrus SASL
 
-    This release contains a number of major code changes.  It
-    might be a bit rough around the edges.  Use with appropriate
-    caution.
-
 
 ACKNOWLEDGEMENTS
 
@@ -104,6 +100,6 @@ SUPPORTED PLATFORMS
 ---
 OpenLDAP is a registered trademark of the OpenLDAP Foundation.
 
-Copyright 1999-2004 The OpenLDAP Foundation, Redwood City,
+Copyright 1999-2005 The OpenLDAP Foundation, Redwood City,
 California, USA.  All Rights Reserved.  Permission to copy and
 distribute verbatim copies of this document is granted.

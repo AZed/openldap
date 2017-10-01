@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/map.c,v 1.16.2.5 2004/03/17 20:59:58 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2004 The OpenLDAP Foundation.
+ * Copyright 1998-2005 The OpenLDAP Foundation.
  * Portions Copyright 1999-2003 Howard Chu.
  * Portions Copyright 2000-2003 Pierangelo Masarati.
  * All rights reserved.
@@ -80,32 +80,48 @@ ldap_back_map_init ( struct ldapmap *lm, struct ldapmapping **m )
 	*m = mapping;
 }
 
+int
+ldap_back_mapping ( struct ldapmap *map, struct berval *s, struct ldapmapping **m,
+	int remap )
+{
+	Avlnode *tree;
+	struct ldapmapping fmapping;
+
+	assert( m );
+
+	if ( remap == BACKLDAP_REMAP ) {
+		tree = map->remap;
+	} else {
+		tree = map->map;
+	}
+
+	fmapping.src = *s;
+	*m = (struct ldapmapping *)avl_find( tree, (caddr_t)&fmapping, mapping_cmp );
+	if ( *m == NULL ) {
+		return map->drop_missing;
+	}
+
+	return 0;
+}
+
 void
 ldap_back_map ( struct ldapmap *map, struct berval *s, struct berval *bv,
 	int remap )
 {
-	Avlnode *tree;
-	struct ldapmapping *mapping, fmapping;
+	struct ldapmapping *mapping;
 
-	if (remap == BACKLDAP_REMAP)
-		tree = map->remap;
-	else
-		tree = map->map;
-
-	bv->bv_len = 0;
-	bv->bv_val = NULL;
-	fmapping.src = *s;
-	mapping = (struct ldapmapping *)avl_find( tree, (caddr_t)&fmapping, mapping_cmp );
-	if (mapping != NULL) {
-		if ( mapping->dst.bv_val )
+	BER_BVZERO( bv );
+	( void )ldap_back_mapping( map, s, &mapping, remap );
+	if ( mapping != NULL ) {
+		if ( !BER_BVISNULL( &mapping->dst ) ) {
 			*bv = mapping->dst;
+		}
 		return;
 	}
 
-	if (!map->drop_missing)
+	if ( !map->drop_missing ) {
 		*bv = *s;
-
-	return;
+	}
 }
 
 int
@@ -541,6 +557,8 @@ ldap_dnattr_rewrite(
 	struct berval	bv;
 	int		i, last;
 
+	assert( a_vals != NULL );
+
 	for ( last = 0; a_vals[last].bv_val != NULL; last++ );
 	last--;
 
@@ -583,6 +601,8 @@ ldap_dnattr_result_rewrite(
 	struct berval	bv;
 	int		i, last;
 
+	assert( a_vals != NULL );
+
 	for ( last = 0; a_vals[last].bv_val; last++ );
 	last--;
 
@@ -594,7 +614,7 @@ ldap_dnattr_result_rewrite(
 			 * legal to trim values when adding/modifying;
 			 * it should be when searching (e.g. ACLs).
 			 */
-			LBER_FREE( &a_vals[i].bv_val );
+			LBER_FREE( a_vals[i].bv_val );
 			if ( last > i ) {
 				a_vals[i] = a_vals[last];
 			}

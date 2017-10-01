@@ -1,7 +1,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/search.c,v 1.60.2.11 2004/04/12 16:08:15 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2004 The OpenLDAP Foundation.
+ * Copyright 1999-2005 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * Portions Copyright 1999-2003 Howard Chu.
  * All rights reserved.
@@ -124,11 +124,11 @@ meta_back_search( Operation *op, SlapReply *rs )
 			ldap_set_option( lsc->ld, LDAP_OPT_DEREF,
 					( void * )&op->ors_deref);
 		}
-		if ( op->ors_tlimit != -1 ) {
+		if ( op->ors_tlimit != SLAP_NO_LIMIT ) {
 			ldap_set_option( lsc->ld, LDAP_OPT_TIMELIMIT,
 					( void * )&op->ors_tlimit);
 		}
-		if ( op->ors_slimit != -1 ) {
+		if ( op->ors_slimit != SLAP_NO_LIMIT ) {
 			ldap_set_option( lsc->ld, LDAP_OPT_SIZELIMIT,
 					( void * )&op->ors_slimit);
 		}
@@ -185,6 +185,8 @@ meta_back_search( Operation *op, SlapReply *rs )
 				goto new_candidate;
 			}
 
+		} else {
+			is_scope++;
 		}
 
 		/*
@@ -388,6 +390,7 @@ new_candidate:;
 
 				rc = ldap_parse_reference( lsc->ld, res,
 						&references, &rs->sr_ctrls, 1 );
+				res = NULL;
 
 				if ( rc != LDAP_SUCCESS ) {
 					continue;
@@ -421,9 +424,6 @@ new_candidate:;
 					ldap_controls_free( rs->sr_ctrls );
 					rs->sr_ctrls = NULL;
 				}
-
-				ldap_msgfree( res );
-				res = NULL;
 
 			} else {
 				rs->sr_err = ldap_result2error( lsc->ld,
@@ -588,7 +588,7 @@ meta_send_entry(
 	 * FIXME: should we log anything, or delegate to dnNormalize?
 	 */
 	if ( dnNormalize( 0, NULL, NULL, &ent.e_name, &ent.e_nname,
-		&op->o_tmpmemctx ) != LDAP_SUCCESS )
+		op->o_tmpmemctx ) != LDAP_SUCCESS )
 	{
 		return LDAP_INVALID_DN_SYNTAX;
 	}
@@ -706,7 +706,7 @@ meta_send_entry(
 					attr->a_desc->ad_type->sat_syntax,
 					attr->a_desc->ad_type->sat_equality,
 					&attr->a_vals[i], &attr->a_nvals[i],
-					op->o_tmpmemctx );
+					NULL );
 			}
 			attr->a_nvals[i].bv_val = NULL;
 			attr->a_nvals[i].bv_len = 0;

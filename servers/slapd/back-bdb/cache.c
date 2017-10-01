@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/cache.c,v 1.38.2.8 2004/01/01 18:16:35 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2004 The OpenLDAP Foundation.
+ * Copyright 2000-2005 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,10 +26,16 @@
 
 #include "back-bdb.h"
 
-static int	bdb_cache_delete_internal(Cache *cache, EntryInfo *e);
+#ifdef BDB_HIER
+#define bdb_cache_lru_add	hdb_cache_lru_add
+#endif
+
+static int	bdb_cache_delete_internal(Cache *cache, EntryInfo *e, int decr);
 #ifdef LDAP_DEBUG
 static void	bdb_lru_print(Cache *cache);
 #endif
+
+static int bdb_txn_get( Operation *op, DB_ENV *env, DB_TXN **txn, int reset );
 
 static EntryInfo *
 bdb_cache_entryinfo_new( Cache *cache )
@@ -74,8 +80,8 @@ bdb_cache_entry_db_relock(
 
 	if ( !lock ) return 0;
 
-	lockobj.data = ei;
-	lockobj.size = sizeof(ei->bei_parent) + sizeof(ei->bei_id);
+	lockobj.data = &ei->bei_id;
+	lockobj.size = sizeof(ei->bei_id) + 1;
 
 	list[0].op = DB_LOCK_PUT;
 	list[0].lock = *lock;
@@ -86,16 +92,10 @@ bdb_cache_entry_db_relock(
 	rc = env->lock_vec(env, locker, tryOnly ? DB_LOCK_NOWAIT : 0,
 		list, 2, NULL );
 
-	if (rc) {
-#ifdef NEW_LOGGING
-		LDAP_LOG( CACHE, DETAIL1, 
-			"bdb_cache_entry_db_relock: entry %ld, rw %d, rc %d\n",
-			ei->bei_id, rw, rc );
-#else
+	if (rc && !tryOnly) {
 		Debug( LDAP_DEBUG_TRACE,
 			"bdb_cache_entry_db_relock: entry %ld, rw %d, rc %d\n",
 			ei->bei_id, rw, rc );
-#endif
 	} else {
 		*lock = list[1].lock;
 	}
@@ -121,21 +121,15 @@ bdb_cache_entry_db_lock( DB_ENV *env, u_int32_t locker, EntryInfo *ei,
 	else
 		db_rw = DB_LOCK_READ;
 
-	lockobj.data = ei;
-	lockobj.size = sizeof(ei->bei_parent) + sizeof(ei->bei_id);
+	lockobj.data = &ei->bei_id;
+	lockobj.size = sizeof(ei->bei_id) + 1;
 
 	rc = LOCK_GET(env, locker, tryOnly ? DB_LOCK_NOWAIT : 0,
 					&lockobj, db_rw, lock);
-	if (rc) {
-#ifdef NEW_LOGGING
-		LDAP_LOG( CACHE, DETAIL1, 
-			"bdb_cache_entry_db_lock: entry %ld, rw %d, rc %d\n",
-			ei->bei_id, rw, rc );
-#else
+	if (rc && !tryOnly) {
 		Debug( LDAP_DEBUG_TRACE,
 			"bdb_cache_entry_db_lock: entry %ld, rw %d, rc %d\n",
 			ei->bei_id, rw, rc );
-#endif
 	}
 	return rc;
 #endif /* NO_THREADS */
@@ -179,6 +173,7 @@ bdb_cache_entryinfo_destroy( EntryInfo *e )
 	} else { \
 		(cache)->c_lrutail = (ei)->bei_lruprev; \
 	} \
+	(ei)->bei_lrunext = (ei)->bei_lruprev = NULL; \
 } while(0)
 
 #define LRU_ADD( cache, ei ) do { \
@@ -249,6 +244,7 @@ bdb_entryinfo_add_internal(
 		ei->bei_rdn.bv_val = NULL;
 #endif
 	} else {
+		bdb->bi_cache.c_eiused++;
 		ber_dupbv( &ei2->bei_nrdn, &ei->bei_nrdn );
 		avl_insert( &ei->bei_parent->bei_kids, ei2, bdb_rdn_cmp,
 			avl_dup_error );
@@ -290,6 +286,16 @@ bdb_cache_find_ndn(
 		ptr = ndn->bv_val + ndn->bv_len - op->o_bd->be_nsuffix[0].bv_len;
 		ei.bei_nrdn.bv_val = ptr;
 		ei.bei_nrdn.bv_len = op->o_bd->be_nsuffix[0].bv_len;
+		/* Skip to next rdn if suffix is empty */
+		if ( ei.bei_nrdn.bv_len == 0 ) {
+			for (ptr = ei.bei_nrdn.bv_val - 2; ptr > ndn->bv_val
+				&& !DN_SEPARATOR(*ptr); ptr--) /* empty */;
+			if ( ptr >= ndn->bv_val ) {
+				if (DN_SEPARATOR(*ptr)) ptr++;
+				ei.bei_nrdn.bv_len = ei.bei_nrdn.bv_val - ptr;
+				ei.bei_nrdn.bv_val = ptr;
+			}
+		}
 		eip = &bdb->bi_cache.c_dntree;
 	}
 	
@@ -371,6 +377,7 @@ hdb_cache_find_parent(
 
 	ei.bei_id = id;
 	ei.bei_kids = NULL;
+	ei.bei_ckids = 0;
 
 	for (;;) {
 		rc = hdb_dn2id_parent( op, txn, &ei, &eip.bei_id );
@@ -385,6 +392,8 @@ hdb_cache_find_parent(
 		ein->bei_kids = ei.bei_kids;
 		ein->bei_nrdn = ei.bei_nrdn;
 		ein->bei_rdn = ei.bei_rdn;
+		ein->bei_ckids = ei.bei_ckids;
+		ei.bei_ckids = 0;
 		
 		/* This node is not fully connected yet */
 		ein->bei_state = CACHE_ENTRY_NOT_LINKED;
@@ -406,6 +415,7 @@ hdb_cache_find_parent(
 				bdb_cache_entryinfo_lock( ein );
 				avl_insert( &ein->bei_kids, (caddr_t)ei2,
 					bdb_rdn_cmp, avl_dup_error );
+				ein->bei_ckids++;
 				bdb_cache_entryinfo_unlock( ein );
 			}
 
@@ -429,6 +439,7 @@ hdb_cache_find_parent(
 		} else {
 			ei2 = &bdb->bi_cache.c_dntree;
 		}
+		bdb->bi_cache.c_eiused++;
 		ldap_pvt_thread_rdwr_wunlock( &bdb->bi_cache.c_rwlock );
 
 		/* Got the parent, link in and we're done. */
@@ -437,6 +448,7 @@ hdb_cache_find_parent(
 			ein->bei_parent = ei2;
 			avl_insert( &ei2->bei_kids, (caddr_t)ein, bdb_rdn_cmp,
 				avl_dup_error);
+			ei2->bei_ckids++;
 			bdb_cache_entryinfo_unlock( ei2 );
 			bdb_cache_entryinfo_lock( eir );
 
@@ -448,6 +460,7 @@ hdb_cache_find_parent(
 		}
 		ei.bei_kids = NULL;
 		ei.bei_id = eip.bei_id;
+		ei.bei_ckids = 1;
 		avl_insert( &ei.bei_kids, (caddr_t)ein, bdb_rdn_cmp,
 			avl_dup_error );
 	}
@@ -522,13 +535,16 @@ bdb_cache_lru_add(
 			/* If we can successfully writelock it, then
 			 * the object is idle.
 			 */
-			if ( bdb_cache_entry_db_lock( bdb->bi_dbenv, locker, elru, 1, 1,
+			if ( bdb_cache_entry_db_lock( bdb->bi_dbenv, bdb->bi_cache.c_locker, elru, 1, 1,
 				lockp ) == 0 ) {
+				int stop = 0;
+
 				/* If there's no entry, or this node is in
 				 * the process of linking into the cache,
-				 * skip it.
+				 * or this node is being deleted, skip it.
 				 */
-				if ( !elru->bei_e || (elru->bei_state & CACHE_ENTRY_NOT_LINKED) ) {
+				if ( !elru->bei_e || (elru->bei_state & 
+					( CACHE_ENTRY_NOT_LINKED | CACHE_ENTRY_DELETED ))) {
 					bdb_cache_entry_db_unlock( bdb->bi_dbenv, lockp );
 					continue;
 				}
@@ -536,10 +552,13 @@ bdb_cache_lru_add(
 				elru->bei_e->e_private = NULL;
 				bdb_entry_return( elru->bei_e );
 				elru->bei_e = NULL;
-				bdb_cache_entry_db_unlock( bdb->bi_dbenv, lockp );
+				ldap_pvt_thread_rdwr_wlock( &bdb->bi_cache.c_rwlock );
 				--bdb->bi_cache.c_cursize;
-				if (bdb->bi_cache.c_cursize < bdb->bi_cache.c_maxsize)
-					break;
+				if (bdb->bi_cache.c_cursize <= bdb->bi_cache.c_maxsize)
+					stop = 1;
+				ldap_pvt_thread_rdwr_wunlock( &bdb->bi_cache.c_rwlock );
+				bdb_cache_entry_db_unlock( bdb->bi_dbenv, lockp );
+				if (stop) break;
 			}
 		}
 	}
@@ -552,7 +571,8 @@ bdb_cache_find_info(
 	struct bdb_info *bdb,
 	ID id )
 {
-	EntryInfo ei, *ei2;
+	EntryInfo	ei = { 0 },
+			*ei2;
 
 	ei.bei_id = id;
 
@@ -581,9 +601,8 @@ bdb_cache_find_id(
 {
 	struct bdb_info *bdb = (struct bdb_info *) op->o_bd->be_private;
 	Entry	*ep = NULL;
-	int	rc = 0;
-	EntryInfo ei;
-	int lru_del = 0;
+	int	rc = 0, load = 0;
+	EntryInfo ei = { 0 };
 
 	ei.bei_id = id;
 
@@ -645,65 +664,142 @@ again:	ldap_pvt_thread_rdwr_rlock( &bdb->bi_cache.c_rwlock );
 		if ( (*eip)->bei_state & CACHE_ENTRY_DELETED ) {
 			rc = DB_NOTFOUND;
 		} else {
-			bdb_cache_entry_db_lock( bdb->bi_dbenv, locker, *eip, 0, 0, lock );
-			if ( !(*eip)->bei_e ) {
-				if (!ep) {
-					rc = bdb_id2entry( op->o_bd, tid, id, &ep );
-				}
-				if ( rc == 0 ) {
-					bdb_cache_entry_db_relock( bdb->bi_dbenv, locker,
-						*eip, 1, 0, lock );
-					/* Make sure no other modifier beat us to it */
-					if ( (*eip)->bei_e ) {
-						bdb_entry_return( ep );
-						ep = NULL;
+			/* Make sure only one thread tries to load the entry */
+load1:		if ( !(*eip)->bei_e && !((*eip)->bei_state & CACHE_ENTRY_LOADING)) {
+				load = 1;
+				(*eip)->bei_state |= CACHE_ENTRY_LOADING;
+			}
+			if ( islocked ) {
+				bdb_cache_entryinfo_unlock( *eip );
+				islocked = 0;
+			}
+			rc = bdb_cache_entry_db_lock( bdb->bi_dbenv, locker, *eip, 0, 0, lock );
+			if ( (*eip)->bei_state & CACHE_ENTRY_DELETED ) {
+				rc = DB_NOTFOUND;
+				bdb_cache_entry_db_unlock( bdb->bi_dbenv, lock );
+			} else if ( rc == 0 ) {
+				if ( load ) {
+					DB_TXN *ltid;
+					u_int32_t locker2 = locker;
+
+					/* We don't wrap entire read operations in txn's, but
+					 * we need our cache entry lock and any DB page locks
+					 * to be associated, in order for deadlock detection
+					 * to work properly. So if we need to read from the DB,
+					 * we use a long-lived per-thread txn for this step.
+					 */
+					if ( !ep && !tid ) {
+						rc = bdb_txn_get( op, bdb->bi_dbenv, &ltid, 0 );
+						if ( ltid )
+							locker2 = TXN_ID( ltid );
 					} else {
+						ltid = tid;
+					}
+					/* Give up original read lock, obtain write lock with
+					 * (possibly) new locker ID.
+					 */
+				    if ( rc == 0 ) {
+						rc = bdb_cache_entry_db_relock( bdb->bi_dbenv, locker2,
+							*eip, 1, 0, lock );
+					}
+					if ( rc == 0 && !ep) {
+						rc = bdb_id2entry( op->o_bd, ltid, id, &ep );
+					}
+					if ( rc == 0 ) {
 						ep->e_private = *eip;
 #ifdef BDB_HIER
 						bdb_fix_dn( ep, 0 );
 #endif
 						(*eip)->bei_e = ep;
+						ep = NULL;
 					}
-					bdb_cache_entry_db_relock( bdb->bi_dbenv, locker,
-						*eip, 0, 0, lock );
-				}
-			} else {
-				/* If we had the entry already, this item
-				 * is on the LRU list.
-				 */
-				lru_del = 1;
+					(*eip)->bei_state ^= CACHE_ENTRY_LOADING;
+					if ( rc == 0 ) {
+						/* If we succeeded, downgrade back to a readlock. */
+						rc = bdb_cache_entry_db_relock( bdb->bi_dbenv, locker,
+							*eip, 0, 0, lock );
+					} else {
+						/* Otherwise, release the lock. */
+						bdb_cache_entry_db_unlock( bdb->bi_dbenv, lock );
+					}
+					if ( locker2 != locker ) {
+						/* If we're using the per-thread txn, release all
+						 * of its page locks now.
+						 */
+						DB_LOCKREQ list;
+						list.op = DB_LOCK_PUT_ALL;
+						list.obj = NULL;
+						bdb->bi_dbenv->lock_vec( bdb->bi_dbenv, locker2,
+							0, &list, 1, NULL );
+						/* If this txn was deadlocked, we must abort it
+						 * and invalidate this per-thread txn.
+						 */
+						if ( rc == DB_LOCK_DEADLOCK ) {
+							bdb_txn_get( op, bdb->bi_dbenv, &ltid, 1 );
+						}
+					}
+				} else if ( !(*eip)->bei_e ) {
+					/* Some other thread is trying to load the entry,
+					 * give it a chance to finish.
+					 */
+					bdb_cache_entry_db_unlock( bdb->bi_dbenv, lock );
+					ldap_pvt_thread_yield();
+					bdb_cache_entryinfo_lock( *eip );
+					islocked = 1;
+					goto load1;
 #ifdef BDB_HIER
-				rc = bdb_fix_dn( (*eip)->bei_e, 1 );
-				if ( rc ) {
-					bdb_cache_entry_db_relock( bdb->bi_dbenv,
-						locker, *eip, 1, 0, lock );
-					/* check again in case other modifier did it already */
-					if ( bdb_fix_dn( (*eip)->bei_e, 1 ) )
-						rc = bdb_fix_dn( (*eip)->bei_e, 2 );
-					bdb_cache_entry_db_relock( bdb->bi_dbenv,
-						locker, *eip, 0, 0, lock );
-				}
+				} else {
+					/* Check for subtree renames
+					 */
+					rc = bdb_fix_dn( (*eip)->bei_e, 1 );
+					if ( rc ) {
+						bdb_cache_entry_db_relock( bdb->bi_dbenv,
+							locker, *eip, 1, 0, lock );
+						/* check again in case other modifier did it already */
+						if ( bdb_fix_dn( (*eip)->bei_e, 1 ) )
+							rc = bdb_fix_dn( (*eip)->bei_e, 2 );
+						bdb_cache_entry_db_relock( bdb->bi_dbenv,
+							locker, *eip, 0, 0, lock );
+					}
 #endif
+				}
+
 			}
 		}
 	}
-	if ( rc == 0 ) {
-		/* set lru mutex */
-		ldap_pvt_thread_mutex_lock( &bdb->bi_cache.lru_mutex );
-		/* if entry is old, remove from old spot on LRU list */
-		if ( lru_del ) {
-			LRU_DELETE( &bdb->bi_cache, *eip );
-		} else {
-		/* if entry is new, bump cache size */
-			bdb->bi_cache.c_cursize++;
-		}
-		/* lru_mutex is unlocked for us */
-		bdb_cache_lru_add( bdb, locker, *eip );
-	}
-
 	if ( islocked ) {
 		bdb_cache_entryinfo_unlock( *eip );
 	}
+	if ( ep ) {
+		bdb_entry_return( ep );
+	}
+	if ( rc == 0 ) {
+
+		if ( load ) {
+			ldap_pvt_thread_rdwr_wlock( &bdb->bi_cache.c_rwlock );
+			bdb->bi_cache.c_cursize++;
+			ldap_pvt_thread_rdwr_wunlock( &bdb->bi_cache.c_rwlock );
+		}
+
+		ldap_pvt_thread_mutex_lock( &bdb->bi_cache.lru_mutex );
+
+		/* If the LRU list has only one entry and this is it, it
+		 * doesn't need to be added again.
+		 */
+		if ( bdb->bi_cache.c_lruhead == bdb->bi_cache.c_lrutail &&
+			bdb->bi_cache.c_lruhead == *eip ) {
+			ldap_pvt_thread_mutex_unlock( &bdb->bi_cache.lru_mutex );
+		} else {
+
+			/* if entry is on LRU list, remove from old spot */
+			if ( (*eip)->bei_lrunext || (*eip)->bei_lruprev ) {
+				LRU_DELETE( &bdb->bi_cache, *eip );
+			}
+			/* lru_mutex is unlocked for us */
+			bdb_cache_lru_add( bdb, locker, *eip );
+		}
+	}
+
 	return rc;
 }
 
@@ -739,11 +835,23 @@ bdb_cache_add(
 {
 	EntryInfo *new, ei;
 	struct berval rdn = e->e_name;
+	DB_LOCK lock;
 	int rc;
 
 	ei.bei_id = e->e_id;
 	ei.bei_parent = eip;
 	ei.bei_nrdn = *nrdn;
+	ei.bei_lockpad = 0;
+
+	/* Lock this entry so that bdb_add can run to completion.
+	 * It can only fail if BDB has run out of lock resources.
+	 */
+	rc = bdb_cache_entry_db_lock( bdb->bi_dbenv, locker, &ei, 1, 0, &lock );
+	if ( rc ) {
+		bdb_cache_entryinfo_unlock( eip );
+		return rc;
+	}
+
 #ifdef BDB_HIER
 	if ( nrdn->bv_len != e->e_nname.bv_len ) {
 		char *ptr = strchr( rdn.bv_val, ',' );
@@ -755,7 +863,10 @@ bdb_cache_add(
 
 	rc = bdb_entryinfo_add_internal( bdb, &ei, &new );
 	/* bdb_csn_commit can cause this when adding the database root entry */
-	if ( new->bei_e ) bdb_entry_return( new->bei_e );
+	if ( new->bei_e ) {
+		new->bei_e->e_private = NULL;
+		bdb_entry_return( new->bei_e );
+	}
 	new->bei_e = e;
 	e->e_private = new;
 	new->bei_state = CACHE_ENTRY_NO_KIDS | CACHE_ENTRY_NO_GRANDKIDS;
@@ -763,15 +874,17 @@ bdb_cache_add(
 	if (eip->bei_parent) {
 		eip->bei_parent->bei_state &= ~CACHE_ENTRY_NO_GRANDKIDS;
 	}
+	bdb_cache_entryinfo_unlock( eip );
+
+	++bdb->bi_cache.c_cursize;
+	ldap_pvt_thread_rdwr_wunlock( &bdb->bi_cache.c_rwlock );
 
 	/* set lru mutex */
 	ldap_pvt_thread_mutex_lock( &bdb->bi_cache.lru_mutex );
-	++bdb->bi_cache.c_cursize;
+
 	/* lru_mutex is unlocked for us */
 	bdb_cache_lru_add( bdb, locker, new );
 
-	bdb_cache_entryinfo_unlock( eip );
-	ldap_pvt_thread_rdwr_wunlock( &bdb->bi_cache.c_rwlock );
 	return rc;
 }
 
@@ -784,19 +897,20 @@ bdb_cache_modify(
 	DB_LOCK *lock )
 {
 	EntryInfo *ei = BEI(e);
-	
+	int rc;
 	/* Get write lock on data */
-	bdb_cache_entry_db_relock( env, locker, ei, 1, 0, lock );
+	rc = bdb_cache_entry_db_relock( env, locker, ei, 1, 0, lock );
 
 	/* If we've done repeated mods on a cached entry, then e_attrs
 	 * is no longer contiguous with the entry, and must be freed.
 	 */
-	if ( (void *)e->e_attrs != (void *)(e+1) ) {
-		attrs_free( e->e_attrs );
+	if ( ! rc ) {
+		if ( (void *)e->e_attrs != (void *)(e+1) ) {
+			attrs_free( e->e_attrs ); 
+		}
+		e->e_attrs = newAttrs;
 	}
-	e->e_attrs = newAttrs;
-
-	return 0;
+	return rc;
 }
 
 /*
@@ -814,10 +928,11 @@ bdb_cache_modrdn(
 {
 	EntryInfo *ei = BEI(e), *pei;
 	struct berval rdn;
-	int rc = 0;
+	int rc;
 
 	/* Get write lock on data */
-	bdb_cache_entry_db_relock( env, locker, ei, 1, 0, lock );
+	rc =  bdb_cache_entry_db_relock( env, locker, ei, 1, 0, lock );
+	if ( rc ) return rc;
 
 	/* If we've done repeated mods on a cached entry, then e_attrs
 	 * is no longer contiguous with the entry, and must be freed.
@@ -900,31 +1015,22 @@ bdb_cache_delete(
 	bdb_cache_entryinfo_lock( ei );
 
 	/* Get write lock on the data */
-	bdb_cache_entry_db_relock( env, locker, ei, 1, 0, lock );
+	rc = bdb_cache_entry_db_relock( env, locker, ei, 1, 0, lock );
+	if ( rc ) {
+		/* couldn't lock, undo and give up */
+		ei->bei_state ^= CACHE_ENTRY_DELETED;
+		bdb_cache_entryinfo_unlock( ei );
+		return rc;
+	}
 
-	/* set cache write lock */
-	ldap_pvt_thread_rdwr_wlock( &cache->c_rwlock );
-
-	/* Lock the parent's kids tree */
-	bdb_cache_entryinfo_lock( ei->bei_parent );
-
-#ifdef NEW_LOGGING
-	LDAP_LOG( CACHE, ENTRY, 
-		"bdb_cache_delete: delete %ld.\n", e->e_id, 0, 0 );
-#else
 	Debug( LDAP_DEBUG_TRACE, "====> bdb_cache_delete( %ld )\n",
 		e->e_id, 0, 0 );
-#endif
 
 	/* set lru mutex */
 	ldap_pvt_thread_mutex_lock( &cache->lru_mutex );
-	rc = bdb_cache_delete_internal( cache, e->e_private );
+	rc = bdb_cache_delete_internal( cache, e->e_private, 1 );
 	/* free lru mutex */
 	ldap_pvt_thread_mutex_unlock( &cache->lru_mutex );
-
-	/* free cache write lock */
-	ldap_pvt_thread_rdwr_wunlock( &cache->c_rwlock );
-	bdb_cache_entryinfo_unlock( ei->bei_parent );
 
 	/* Leave entry info locked */
 
@@ -934,13 +1040,13 @@ bdb_cache_delete(
 void
 bdb_cache_delete_cleanup(
 	Cache *cache,
-	Entry *e )
+	EntryInfo *ei )
 {
-	EntryInfo *ei = BEI(e);
-
-	ei->bei_e = NULL;
-	e->e_private = NULL;
-	bdb_entry_return( e );
+	if ( ei->bei_e ) {
+		ei->bei_e->e_private = NULL;
+		bdb_entry_return( ei->bei_e );
+		ei->bei_e = NULL;
+	}
 
 	free( ei->bei_nrdn.bv_val );
 	ei->bei_nrdn.bv_val = NULL;
@@ -965,13 +1071,20 @@ bdb_cache_delete_cleanup(
 static int
 bdb_cache_delete_internal(
     Cache	*cache,
-    EntryInfo		*e )
+    EntryInfo		*e,
+    int		decr )
 {
 	int rc = 0;	/* return code */
 
+	/* set cache write lock */
+	ldap_pvt_thread_rdwr_wlock( &cache->c_rwlock );
+
+	/* Lock the parent's kids tree */
+	bdb_cache_entryinfo_lock( e->bei_parent );
+
 #ifdef BDB_HIER
 	e->bei_parent->bei_ckids--;
-	if ( e->bei_parent->bei_dkids ) e->bei_parent->bei_dkids--;
+	if ( decr && e->bei_parent->bei_dkids ) e->bei_parent->bei_dkids--;
 #endif
 	/* dn tree */
 	if ( avl_delete( &e->bei_parent->bei_kids, (caddr_t) e, bdb_rdn_cmp )
@@ -989,14 +1102,15 @@ bdb_cache_delete_internal(
 		return rc;
 	}
 
+	cache->c_eiused--;
+
 	/* lru */
 	LRU_DELETE( cache, e );
-	cache->c_cursize--;
+	if ( e->bei_e ) cache->c_cursize--;
 
-	/*
-	 * flag entry to be freed later by a call to cache_return_entry()
-	 */
-	e->bei_state |= CACHE_ENTRY_DELETED;
+	/* free cache write lock */
+	ldap_pvt_thread_rdwr_wunlock( &cache->c_rwlock );
+	bdb_cache_entryinfo_unlock( e->bei_parent );
 
 	return( 0 );
 }
@@ -1023,14 +1137,14 @@ bdb_cache_release_all( Cache *cache )
 	/* set lru mutex */
 	ldap_pvt_thread_mutex_lock( &cache->lru_mutex );
 
-#ifdef NEW_LOGGING
-	LDAP_LOG( CACHE, ENTRY, "bdb_cache_release_all: enter\n", 0, 0, 0 );
-#else
 	Debug( LDAP_DEBUG_TRACE, "====> bdb_cache_release_all\n", 0, 0, 0 );
-#endif
 
 	avl_free( cache->c_dntree.bei_kids, NULL );
 	avl_free( cache->c_idtree, bdb_entryinfo_release );
+	for (;cache->c_eifree;cache->c_eifree = cache->c_lruhead) {
+		cache->c_lruhead = cache->c_eifree->bei_lrunext;
+		bdb_cache_entryinfo_destroy(cache->c_eifree);
+	}
 	cache->c_lruhead = NULL;
 	cache->c_lrutail = NULL;
 
@@ -1059,6 +1173,62 @@ bdb_lru_print( Cache *cache )
 }
 #endif
 
+static void
+bdb_txn_free( void *key, void *data )
+{
+	DB_TXN *txn = data;
+	TXN_ABORT( txn );
+}
+
+/* Obtain a long-lived transaction for the current thread.
+ * If reset == 1, remove the current transaction. */
+static int
+bdb_txn_get( Operation *op, DB_ENV *env, DB_TXN **txn, int reset )
+{
+	int i, rc, lockid;
+	void *ctx, *data = NULL;
+
+	/* If no op was provided, try to find the ctx anyway... */
+	if ( op ) {
+		ctx = op->o_threadctx;
+	} else {
+		ctx = ldap_pvt_thread_pool_context();
+	}
+
+	/* Shouldn't happen unless we're single-threaded */
+	if ( !ctx ) {
+		*txn = NULL;
+		return 0;
+	}
+
+	if ( reset ) {
+		TXN_ABORT( *txn );
+		return ldap_pvt_thread_pool_setkey( ctx, ((char *)env)+1, NULL, NULL );
+	}
+
+	if ( ldap_pvt_thread_pool_getkey( ctx, ((char *)env)+1, &data, NULL ) ||
+		data == NULL ) {
+		for ( i=0, rc=1; rc != 0 && i<4; i++ ) {
+			rc = TXN_BEGIN( env, NULL, txn, 0 );
+			if (rc) ldap_pvt_thread_yield();
+		}
+		if ( rc != 0) {
+			return rc;
+		}
+		if ( ( rc = ldap_pvt_thread_pool_setkey( ctx, ((char *)env)+1,
+			*txn, bdb_txn_free ) ) ) {
+			TXN_ABORT( *txn );
+			Debug( LDAP_DEBUG_ANY, "bdb_txn_get: err %s(%d)\n",
+				db_strerror(rc), rc, 0 );
+
+			return rc;
+		}
+	} else {
+		*txn = data;
+	}
+	return 0;
+}
+
 #ifdef BDB_REUSE_LOCKERS
 static void
 bdb_locker_id_free( void *key, void *data )
@@ -1070,19 +1240,12 @@ bdb_locker_id_free( void *key, void *data )
 	rc = XLOCK_ID_FREE( env, lockid );
 	if ( rc == EINVAL ) {
 		DB_LOCKREQ lr;
-#ifdef NEW_LOGGING
-		LDAP_LOG( BACK_BDB, ERR,
-			"bdb_locker_id_free: %d err %s(%d)\n",
-			lockid, db_strerror(rc), rc );
-#else
 		Debug( LDAP_DEBUG_ANY,
 			"bdb_locker_id_free: %d err %s(%d)\n",
 			lockid, db_strerror(rc), rc );
-#endif
-		memset( &lr, 0, sizeof(lr) );
-
 		/* release all locks held by this locker. */
 		lr.op = DB_LOCK_PUT_ALL;
+		lr.obj = NULL;
 		env->lock_vec( env, lockid, 0, &lr, 1, NULL );
 		XLOCK_ID_FREE( env, lockid );
 	}
@@ -1122,13 +1285,8 @@ bdb_locker_id( Operation *op, DB_ENV *env, int *locker )
 		if ( ( rc = ldap_pvt_thread_pool_setkey( ctx, env,
 			data, bdb_locker_id_free ) ) ) {
 			XLOCK_ID_FREE( env, lockid );
-#ifdef NEW_LOGGING
-			LDAP_LOG( BACK_BDB, ERR, "bdb_locker_id: err %s(%d)\n",
-				db_strerror(rc), rc, 0 );
-#else
 			Debug( LDAP_DEBUG_ANY, "bdb_locker_id: err %s(%d)\n",
 				db_strerror(rc), rc, 0 );
-#endif
 
 			return rc;
 		}
@@ -1148,7 +1306,7 @@ bdb_cache_delete_entry(
 	DB_LOCK *lock )
 {
 	ldap_pvt_thread_rdwr_wlock( &bdb->bi_cache.c_rwlock );
-	if ( bdb_cache_entry_db_lock( bdb->bi_dbenv, locker, ei, 1, 1, lock ) == 0 )
+	if ( bdb_cache_entry_db_lock( bdb->bi_dbenv, bdb->bi_cache.c_locker, ei, 1, 1, lock ) == 0 )
 	{
 		if ( ei->bei_e && !(ei->bei_state & CACHE_ENTRY_NOT_LINKED )) {
 			LRU_DELETE( &bdb->bi_cache, ei );

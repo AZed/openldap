@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/modify.c,v 1.76.2.11 2004/02/24 16:31:27 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2004 The OpenLDAP Foundation.
+ * Copyright 2000-2005 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -44,13 +44,8 @@ int bdb_modify_internal(
 	Attribute 	*ap;
 	int			glue_attr_delete = 0;
 
-#ifdef NEW_LOGGING
-	LDAP_LOG ( OPERATION, ENTRY, "bdb_modify_internal: 0x%08lx: %s\n", 
-		e->e_id, e->e_dn, 0 );
-#else
 	Debug( LDAP_DEBUG_TRACE, "bdb_modify_internal: 0x%08lx: %s\n",
 		e->e_id, e->e_dn, 0);
-#endif
 
 	if ( !acl_check_modlist( op, e, modlist )) {
 		return LDAP_INSUFFICIENT_ACCESS;
@@ -97,96 +92,55 @@ int bdb_modify_internal(
 
 		switch ( mod->sm_op ) {
 		case LDAP_MOD_ADD:
-#ifdef NEW_LOGGING
-			LDAP_LOG ( OPERATION, DETAIL1, "bdb_modify_internal: add\n", 0,0,0);
-#else
 			Debug(LDAP_DEBUG_ARGS, "bdb_modify_internal: add\n", 0, 0, 0);
-#endif
 			err = modify_add_values( e, mod, get_permissiveModify(op),
 				text, textbuf, textlen );
 			if( err != LDAP_SUCCESS ) {
-#ifdef NEW_LOGGING
-				LDAP_LOG ( OPERATION, ERR, 
-					"bdb_modify_internal: %d %s\n", err, *text, 0 );
-#else
 				Debug(LDAP_DEBUG_ARGS, "bdb_modify_internal: %d %s\n",
 					err, *text, 0);
-#endif
 			}
 			break;
 
 		case LDAP_MOD_DELETE:
-			if ( glue_attr_delete )
+			if ( glue_attr_delete ) {
+				err = LDAP_SUCCESS;
 				break;
-#ifdef NEW_LOGGING
-			LDAP_LOG ( OPERATION, DETAIL1, 
-				"bdb_modify_internal: delete\n", 0, 0, 0 );
-#else
+			}
+
 			Debug(LDAP_DEBUG_ARGS, "bdb_modify_internal: delete\n", 0, 0, 0);
-#endif
 			err = modify_delete_values( e, mod, get_permissiveModify(op),
 				text, textbuf, textlen );
 			assert( err != LDAP_TYPE_OR_VALUE_EXISTS );
 			if( err != LDAP_SUCCESS ) {
-#ifdef NEW_LOGGING
-				LDAP_LOG ( OPERATION, ERR, 
-					"bdb_modify_internal: %d %s\n", err, *text, 0 );
-#else
 				Debug(LDAP_DEBUG_ARGS, "bdb_modify_internal: %d %s\n",
 					err, *text, 0);
-#endif
 			}
 			break;
 
 		case LDAP_MOD_REPLACE:
-#ifdef NEW_LOGGING
-			LDAP_LOG ( OPERATION, DETAIL1, 
-				"bdb_modify_internal: replace\n", 0, 0, 0 );
-#else
 			Debug(LDAP_DEBUG_ARGS, "bdb_modify_internal: replace\n", 0, 0, 0);
-#endif
 			err = modify_replace_values( e, mod, get_permissiveModify(op),
 				text, textbuf, textlen );
 			if( err != LDAP_SUCCESS ) {
-#ifdef NEW_LOGGING
-				LDAP_LOG ( OPERATION, ERR, 
-					"bdb_modify_internal: %d %s\n", err, *text, 0 );
-#else
 				Debug(LDAP_DEBUG_ARGS, "bdb_modify_internal: %d %s\n",
 					err, *text, 0);
-#endif
 			}
 			break;
 
 		case LDAP_MOD_INCREMENT:
-#ifdef NEW_LOGGING
-			LDAP_LOG ( OPERATION, DETAIL1, 
-				"bdb_modify_internal: increment\n", 0, 0, 0 );
-#else
 			Debug(LDAP_DEBUG_ARGS,
 				"bdb_modify_internal: increment\n", 0, 0, 0);
-#endif
 			err = modify_increment_values( e, mod, get_permissiveModify(op),
 				text, textbuf, textlen );
 			if( err != LDAP_SUCCESS ) {
-#ifdef NEW_LOGGING
-				LDAP_LOG ( OPERATION, ERR, 
-					"bdb_modify_internal: %d %s\n", err, *text, 0 );
-#else
 				Debug(LDAP_DEBUG_ARGS,
 					"bdb_modify_internal: %d %s\n",
 					err, *text, 0);
-#endif
 			}
 			break;
 
 		case SLAP_MOD_SOFTADD:
-#ifdef NEW_LOGGING
-			LDAP_LOG ( OPERATION, DETAIL1, 
-				"bdb_modify_internal: softadd\n",0,0,0 );
-#else
 			Debug(LDAP_DEBUG_ARGS, "bdb_modify_internal: softadd\n", 0, 0, 0);
-#endif
  			/* Avoid problems in index_add_mods()
  			 * We need to add index if necessary.
  			 */
@@ -202,33 +156,18 @@ int bdb_modify_internal(
  			}
 
 			if( err != LDAP_SUCCESS ) {
-#ifdef NEW_LOGGING
-				LDAP_LOG ( OPERATION, ERR, 
-					"bdb_modify_internal: %d %s\n", err, *text, 0 );
-#else
 				Debug(LDAP_DEBUG_ARGS, "bdb_modify_internal: %d %s\n",
 					err, *text, 0);
-#endif
 			}
  			break;
 
 		default:
-#ifdef NEW_LOGGING
-				LDAP_LOG ( OPERATION, ERR, 
-					"bdb_modify_internal: invalid op %d\n", mod->sm_op, 0, 0 );
-#else
 			Debug(LDAP_DEBUG_ANY, "bdb_modify_internal: invalid op %d\n",
 				mod->sm_op, 0, 0);
-#endif
 			*text = "Invalid modify operation";
 			err = LDAP_OTHER;
-#ifdef NEW_LOGGING
-				LDAP_LOG ( OPERATION, ERR, 
-					"bdb_modify_internal: %d %s\n", err, *text, 0 );
-#else
 			Debug(LDAP_DEBUG_ARGS, "bdb_modify_internal: %d %s\n",
 				err, *text, 0);
-#endif
 		}
 
 		if ( err != LDAP_SUCCESS ) {
@@ -263,18 +202,16 @@ int bdb_modify_internal(
 	rc = entry_schema_check( op->o_bd, e, save_attrs, text, textbuf, textlen );
 	if ( rc != LDAP_SUCCESS || op->o_noop ) {
 		attrs_free( e->e_attrs );
+		/* clear the indexing flags */
+		for ( ap = save_attrs; ap != NULL; ap = ap->a_next ) {
+			ap->a_flags = 0;
+		}
 		e->e_attrs = save_attrs;
 
 		if ( rc != LDAP_SUCCESS ) {
-#ifdef NEW_LOGGING
-			LDAP_LOG ( OPERATION, ERR, "bdb_modify_internal: "
-				"entry failed schema check %s\n", 
-				*text, 0, 0 );
-#else
 			Debug( LDAP_DEBUG_ANY,
 				"entry failed schema check: %s\n",
 				*text, 0, 0 );
-#endif
 		}
 
 		/* if NOOP then silently revert to saved attrs */
@@ -292,15 +229,9 @@ int bdb_modify_internal(
 			if ( rc != LDAP_SUCCESS ) {
 				attrs_free( e->e_attrs );
 				e->e_attrs = save_attrs;
-#ifdef NEW_LOGGING
-				LDAP_LOG ( OPERATION, ERR, 
-					"bdb_modify_internal: attribute index delete failure\n",
-					0, 0, 0 );
-#else
 				Debug( LDAP_DEBUG_ANY,
 				       "Attribute index delete failure",
 				       0, 0, 0 );
-#endif
 				return rc;
 			}
 			ap->a_flags &= ~SLAP_ATTR_IXDEL;
@@ -316,15 +247,9 @@ int bdb_modify_internal(
 			if ( rc != LDAP_SUCCESS ) {
 				attrs_free( e->e_attrs );
 				e->e_attrs = save_attrs;
-#ifdef NEW_LOGGING
-				LDAP_LOG ( OPERATION, ERR, 
-					"bdb_modify_internal: attribute index add failure\n", 
-					0, 0, 0 );
-#else
 				Debug( LDAP_DEBUG_ANY,
 				       "Attribute index add failure",
 				       0, 0, 0 );
-#endif
 				return rc;
 			}
 			ap->a_flags &= ~SLAP_ATTR_IXADD;
@@ -345,14 +270,16 @@ bdb_modify( Operation *op, SlapReply *rs )
 	char textbuf[SLAP_TEXT_BUFLEN];
 	size_t textlen = sizeof textbuf;
 	DB_TXN	*ltid = NULL, *lt2;
-	struct bdb_op_info opinfo;
-	Entry		dummy;
+	struct bdb_op_info opinfo = {0};
+	Entry		dummy = {0};
 
 	u_int32_t	locker = 0;
 	DB_LOCK		lock;
 
 	int		num_retries = 0;
 
+	LDAPControl **preread_ctrl = NULL;
+	LDAPControl **postread_ctrl = NULL;
 	LDAPControl *ctrls[SLAP_MAX_RESPONSE_CONTROLS];
 	int num_ctrls = 0;
 
@@ -363,24 +290,23 @@ bdb_modify( Operation *op, SlapReply *rs )
 	Entry		*ctxcsn_e;
 	int			ctxcsn_added = 0;
 
-#ifdef NEW_LOGGING
-	LDAP_LOG ( OPERATION, ENTRY, "bdb_modify: %s\n", op->o_req_dn.bv_val, 0, 0 );
-#else
-	Debug( LDAP_DEBUG_ARGS, "bdb_modify: %s\n", op->o_req_dn.bv_val, 0, 0 );
-#endif
+	Debug( LDAP_DEBUG_ARGS, LDAP_XSTRING(bdb_modify) ": %s\n",
+		op->o_req_dn.bv_val, 0, 0 );
+
+	ctrls[num_ctrls] = NULL;
 
 	if( 0 ) {
 retry:	/* transaction retry */
+		if ( dummy.e_attrs ) {
+			attrs_free( dummy.e_attrs );
+			dummy.e_attrs = NULL;
+		}
 		if( e != NULL ) {
 			bdb_unlocked_cache_return_entry_w(&bdb->bi_cache, e);
 			e = NULL;
 		}
-#ifdef NEW_LOGGING
-		LDAP_LOG ( OPERATION, DETAIL1, "bdb_modify: retrying...\n", 0, 0, 0 );
-#else
 		Debug(LDAP_DEBUG_TRACE,
-			"bdb_modify: retrying...\n", 0, 0, 0);
-#endif
+			LDAP_XSTRING(bdb_modify) ": retrying...\n", 0, 0, 0);
 
 		pm_list = LDAP_LIST_FIRST(&op->o_pm_list);
 		while ( pm_list != NULL ) {
@@ -408,14 +334,9 @@ retry:	/* transaction retry */
 		bdb->bi_db_opflags );
 	rs->sr_text = NULL;
 	if( rs->sr_err != 0 ) {
-#ifdef NEW_LOGGING
-		LDAP_LOG ( OPERATION, DETAIL1, 
-			"bdb_modify: txn_begin failed: %s (%d)\n", db_strerror(rs->sr_err), rs->sr_err, 0 );
-#else
 		Debug( LDAP_DEBUG_TRACE,
-			"bdb_modify: txn_begin failed: %s (%d)\n",
-			db_strerror(rs->sr_err), rs->sr_err, 0 );
-#endif
+			LDAP_XSTRING(bdb_modify) ": txn_begin failed: "
+			"%s (%d)\n", db_strerror(rs->sr_err), rs->sr_err, 0 );
 		rs->sr_err = LDAP_OTHER;
 		rs->sr_text = "internal error";
 		goto return_results;
@@ -435,14 +356,9 @@ retry:	/* transaction retry */
 		locker, &lock );
 
 	if ( rs->sr_err != 0 ) {
-#ifdef NEW_LOGGING
-		LDAP_LOG ( OPERATION, DETAIL1, 
-			"bdb_modify: dn2entry failed: (%d)\n", rs->sr_err, 0, 0 );
-#else
 		Debug( LDAP_DEBUG_TRACE,
-			"bdb_modify: dn2entry failed (%d)\n",
+			LDAP_XSTRING(bdb_modify) ": dn2entry failed (%d)\n",
 			rs->sr_err, 0, 0 );
-#endif
 		switch( rs->sr_err ) {
 		case DB_LOCK_DEADLOCK:
 		case DB_LOCK_NOTGRANTED:
@@ -462,7 +378,10 @@ retry:	/* transaction retry */
 	e = ei->bei_e;
 	/* acquire and lock entry */
 	/* FIXME: dn2entry() should return non-glue entry */
-	if (( rs->sr_err == DB_NOTFOUND ) || ( !manageDSAit && e && is_entry_glue( e ))) {
+	if (( rs->sr_err == DB_NOTFOUND ) ||
+		( !manageDSAit && e && is_entry_glue( e )))
+	{
+		BerVarray deref = NULL;
 		if ( e != NULL ) {
 			rs->sr_matched = ch_strdup( e->e_dn );
 			rs->sr_ref = is_entry_referral( e )
@@ -472,7 +391,6 @@ retry:	/* transaction retry */
 			e = NULL;
 
 		} else {
-			BerVarray deref = NULL;
 			if ( !LDAP_STAILQ_EMPTY( &op->o_bd->be_syncinfo )) {
 				syncinfo_t *si;
 				LDAP_STAILQ_FOREACH( si, &op->o_bd->be_syncinfo, si_next ) {
@@ -484,7 +402,7 @@ retry:	/* transaction retry */
 				deref = default_referral;
 			}
 			rs->sr_ref = referral_rewrite( deref, NULL, &op->o_req_dn,
-				LDAP_SCOPE_DEFAULT );
+					LDAP_SCOPE_DEFAULT );
 		}
 
 		rs->sr_err = LDAP_REFERRAL;
@@ -492,6 +410,9 @@ retry:	/* transaction retry */
 
 		if ( rs->sr_ref != default_referral ) {
 			ber_bvarray_free( rs->sr_ref );
+		}
+		if ( deref != default_referral ) {
+			ber_bvarray_free( deref );
 		}
 		free( (char *)rs->sr_matched );
 		rs->sr_ref = NULL;
@@ -504,13 +425,9 @@ retry:	/* transaction retry */
 		/* entry is a referral, don't allow modify */
 		rs->sr_ref = get_entry_referrals( op, e );
 
-#ifdef NEW_LOGGING
-		LDAP_LOG ( OPERATION, DETAIL1, "bdb_modify: entry is referral\n", 0, 0, 0 );
-#else
 		Debug( LDAP_DEBUG_TRACE,
-			"bdb_modify: entry is referral\n",
+			LDAP_XSTRING(bdb_modify) ": entry is referral\n",
 			0, 0, 0 );
-#endif
 
 		rs->sr_err = LDAP_REFERRAL;
 		rs->sr_matched = e->e_name.bv_val;
@@ -530,28 +447,32 @@ retry:	/* transaction retry */
 	}
 
 	if ( rs->sr_err == LDAP_SUCCESS && !op->o_noop && !op->o_no_psearch ) {
-		ldap_pvt_thread_rdwr_rlock( &bdb->bi_pslist_rwlock );
+		ldap_pvt_thread_rdwr_wlock( &bdb->bi_pslist_rwlock );
 		LDAP_LIST_FOREACH ( ps_list, &bdb->bi_psearch_list, o_ps_link ) {
-			bdb_psearch(op, rs, ps_list, e, LDAP_PSEARCH_BY_PREMODIFY );
+			rc = bdb_psearch(op, rs, ps_list, e, LDAP_PSEARCH_BY_PREMODIFY );
+			if ( rc ) {
+				Debug( LDAP_DEBUG_TRACE,
+					LDAP_XSTRING(bdb_modify)
+					": persistent search failed (%d,%d)\n",
+					rc, rs->sr_err, 0 );
+			}
 		}
-		ldap_pvt_thread_rdwr_runlock( &bdb->bi_pslist_rwlock );
+		ldap_pvt_thread_rdwr_wunlock( &bdb->bi_pslist_rwlock );
 	}
 
 	if( op->o_preread ) {
+		if( preread_ctrl == NULL ) {
+			preread_ctrl = &ctrls[num_ctrls++];
+			ctrls[num_ctrls] = NULL;
+		}
 		if ( slap_read_controls( op, rs, e,
-			&slap_pre_read_bv, &ctrls[num_ctrls] ) )
+			&slap_pre_read_bv, preread_ctrl ) )
 		{
-#ifdef NEW_LOGGING
-			LDAP_LOG ( OPERATION, DETAIL1,
-				"<=- bdb_modify: pre-read failed!\n", 0, 0, 0 );
-#else
 			Debug( LDAP_DEBUG_TRACE,
-				"<=- bdb_modify: pre-read failed!\n", 0, 0, 0 );
-#endif
+				"<=- " LDAP_XSTRING(bdb_modify)
+				": pre-read failed!\n", 0, 0, 0 );
 			goto return_results;
 		}
-		ctrls[++num_ctrls] = NULL;
-		op->o_preread = 0; /* prevent redo on retry */
 	}
 
 	/* nested transaction */
@@ -559,14 +480,10 @@ retry:	/* transaction retry */
 		bdb->bi_db_opflags );
 	rs->sr_text = NULL;
 	if( rs->sr_err != 0 ) {
-#ifdef NEW_LOGGING
-		LDAP_LOG ( OPERATION, ERR, 
-			"bdb_modify: txn_begin(2) failed: %s (%d)\n", db_strerror(rs->sr_err), rs->sr_err, 0 );
-#else
 		Debug( LDAP_DEBUG_TRACE,
-			"bdb_modify: txn_begin(2) failed: %s (%d)\n",
+			LDAP_XSTRING(bdb_modify) ": txn_begin(2) failed: "
+			"%s (%d)\n",
 			db_strerror(rs->sr_err), rs->sr_err, 0 );
-#endif
 		rs->sr_err = LDAP_OTHER;
 		rs->sr_text = "internal error";
 		goto return_results;
@@ -577,17 +494,14 @@ retry:	/* transaction retry */
 		&dummy, &rs->sr_text, textbuf, textlen );
 
 	if( rs->sr_err != LDAP_SUCCESS ) {
-#ifdef NEW_LOGGING
-		LDAP_LOG ( OPERATION, ERR, 
-			"bdb_modify: modify failed (%d)\n", rs->sr_err, 0, 0 );
-#else
 		Debug( LDAP_DEBUG_TRACE,
-			"bdb_modify: modify failed (%d)\n",
+			LDAP_XSTRING(bdb_modify) ": modify failed (%d)\n",
 			rs->sr_err, 0, 0 );
-#endif
 		if ( (rs->sr_err == LDAP_INSUFFICIENT_ACCESS) && opinfo.boi_err ) {
 			rs->sr_err = opinfo.boi_err;
 		}
+		/* Only free attrs if they were dup'd.  */
+		if ( dummy.e_attrs == e->e_attrs ) dummy.e_attrs = NULL;
 		switch( rs->sr_err ) {
 		case DB_LOCK_DEADLOCK:
 		case DB_LOCK_NOTGRANTED:
@@ -596,35 +510,12 @@ retry:	/* transaction retry */
 		goto return_results;
 	}
 
-	if( op->o_postread ) {
-		if( slap_read_controls( op, rs, e,
-			&slap_post_read_bv, &ctrls[num_ctrls] ) )
-		{
-#ifdef NEW_LOGGING
-			LDAP_LOG ( OPERATION, DETAIL1,
-				"<=- bdb_modify: post-read failed!\n", 0, 0, 0 );
-#else
-			Debug( LDAP_DEBUG_TRACE,
-				"<=- bdb_modify: post-read failed!\n", 0, 0, 0 );
-#endif
-			goto return_results;
-		}
-		ctrls[++num_ctrls] = NULL;
-		op->o_postread = 0;  /* prevent redo on retry */
-		/* FIXME: should read entry on the last retry */
-	}
-
 	/* change the entry itself */
 	rs->sr_err = bdb_id2entry_update( op->o_bd, lt2, &dummy );
 	if ( rs->sr_err != 0 ) {
-#ifdef NEW_LOGGING
-		LDAP_LOG ( OPERATION, ERR, 
-			"bdb_modify: id2entry update failed (%d)\n", rs->sr_err, 0, 0 );
-#else
 		Debug( LDAP_DEBUG_TRACE,
-			"bdb_modify: id2entry update failed (%d)\n",
-			rs->sr_err, 0, 0 );
-#endif
+			LDAP_XSTRING(bdb_modify) ": id2entry update failed "
+			"(%d)\n", rs->sr_err, 0, 0 );
 		switch( rs->sr_err ) {
 		case DB_LOCK_DEADLOCK:
 		case DB_LOCK_NOTGRANTED:
@@ -651,6 +542,21 @@ retry:	/* transaction retry */
 		}
 	}
 
+	if( op->o_postread ) {
+		if( postread_ctrl == NULL ) {
+			postread_ctrl = &ctrls[num_ctrls++];
+			ctrls[num_ctrls] = NULL;
+		}
+		if( slap_read_controls( op, rs, &dummy,
+			&slap_post_read_bv, postread_ctrl ) )
+		{
+			Debug( LDAP_DEBUG_TRACE,
+				"<=- " LDAP_XSTRING(bdb_modify)
+				": post-read failed!\n", 0, 0, 0 );
+			goto return_results;
+		}
+	}
+
 	if( op->o_noop ) {
 		if ( ( rs->sr_err = TXN_ABORT( ltid ) ) != 0 ) {
 			rs->sr_text = "txn_abort (no-op) failed";
@@ -659,7 +565,14 @@ retry:	/* transaction retry */
 			goto return_results;
 		}
 	} else {
-		bdb_cache_modify( e, dummy.e_attrs, bdb->bi_dbenv, locker, &lock );
+		e->e_ocflags = dummy.e_ocflags;
+		rc = bdb_cache_modify( e, dummy.e_attrs, bdb->bi_dbenv, locker, &lock );
+		switch( rc ) {
+		case DB_LOCK_DEADLOCK:
+		case DB_LOCK_NOTGRANTED:
+			goto retry;
+		}
+		dummy.e_attrs = NULL;
 
 		if ( LDAP_STAILQ_EMPTY( &op->o_bd->be_syncinfo )) {
 			if ( ctxcsn_added ) {
@@ -670,20 +583,34 @@ retry:	/* transaction retry */
 
 		if ( rs->sr_err == LDAP_SUCCESS ) {
 			/* Loop through in-scope entries for each psearch spec */
-			ldap_pvt_thread_rdwr_rlock( &bdb->bi_pslist_rwlock );
+			ldap_pvt_thread_rdwr_wlock( &bdb->bi_pslist_rwlock );
 			LDAP_LIST_FOREACH ( ps_list, &bdb->bi_psearch_list, o_ps_link ) {
-				bdb_psearch( op, rs, ps_list, e, LDAP_PSEARCH_BY_MODIFY );
+				rc = bdb_psearch( op, rs, ps_list, e, LDAP_PSEARCH_BY_MODIFY );
+				if ( rc ) {
+					Debug( LDAP_DEBUG_TRACE,
+						LDAP_XSTRING(bdb_modify)
+						": persistent search failed "
+						"(%d,%d)\n",
+						rc, rs->sr_err, 0 );
+				}
 			}
-			ldap_pvt_thread_rdwr_runlock( &bdb->bi_pslist_rwlock );
 			pm_list = LDAP_LIST_FIRST(&op->o_pm_list);
 			while ( pm_list != NULL ) {
-				bdb_psearch(op, rs, pm_list->ps_op,
+				rc = bdb_psearch(op, rs, pm_list->ps_op,
 							e, LDAP_PSEARCH_BY_SCOPEOUT);
+				if ( rc ) {
+					Debug( LDAP_DEBUG_TRACE,
+						LDAP_XSTRING(bdb_modify)
+						": persistent search failed "
+						"(%d,%d)\n",
+						rc, rs->sr_err, 0 );
+				}
 				LDAP_LIST_REMOVE ( pm_list, ps_link );
 				pm_prev = pm_list;
 				pm_list = LDAP_LIST_NEXT ( pm_list, ps_link );
 				ch_free( pm_prev );
 			}
+			ldap_pvt_thread_rdwr_wunlock( &bdb->bi_pslist_rwlock );
 		}
 
 		rs->sr_err = TXN_COMMIT( ltid, 0 );
@@ -692,39 +619,29 @@ retry:	/* transaction retry */
 	op->o_private = NULL;
 
 	if( rs->sr_err != 0 ) {
-#ifdef NEW_LOGGING
-		LDAP_LOG ( OPERATION, ERR, 
-			"bdb_modify: txn_%s failed %s (%d)\n", 
-			op->o_noop ? "abort (no_op)" : "commit",
-			db_strerror(rs->sr_err), rs->sr_err );
-#else
 		Debug( LDAP_DEBUG_TRACE,
-			"bdb_modify: txn_%s failed: %s (%d)\n",
+			LDAP_XSTRING(bdb_modify) ": txn_%s failed: %s (%d)\n",
 			op->o_noop ? "abort (no-op)" : "commit",
 			db_strerror(rs->sr_err), rs->sr_err );
-#endif
 		rs->sr_err = LDAP_OTHER;
 		rs->sr_text = "commit failed";
 
 		goto return_results;
 	}
 
-#ifdef NEW_LOGGING
-	LDAP_LOG ( OPERATION, DETAIL1, 
-		"bdb_modify: updated%s id=%08lx dn=\"%s\"\n", 
-		op->o_noop ? " (no_op)" : "", e->e_id, e->e_dn );
-#else
 	Debug( LDAP_DEBUG_TRACE,
-		"bdb_modify: updated%s id=%08lx dn=\"%s\"\n",
+		LDAP_XSTRING(bdb_modify) ": updated%s id=%08lx dn=\"%s\"\n",
 		op->o_noop ? " (no-op)" : "",
-		e->e_id, e->e_dn );
-#endif
+		dummy.e_id, op->o_req_dn.bv_val );
 
 	rs->sr_err = LDAP_SUCCESS;
 	rs->sr_text = NULL;
 	if( num_ctrls ) rs->sr_ctrls = ctrls;
 
 return_results:
+	if( dummy.e_attrs ) {
+		attrs_free( dummy.e_attrs );
+	}
 	send_ldap_result( op, rs );
 
 	if( rs->sr_err == LDAP_SUCCESS && bdb->bi_txn_cp ) {
@@ -748,6 +665,15 @@ done:
 
 	if( e != NULL ) {
 		bdb_unlocked_cache_return_entry_w (&bdb->bi_cache, e);
+	}
+
+	if( preread_ctrl != NULL ) {
+		slap_sl_free( (*preread_ctrl)->ldctl_value.bv_val, op->o_tmpmemctx );
+		slap_sl_free( *preread_ctrl, op->o_tmpmemctx );
+	}
+	if( postread_ctrl != NULL ) {
+		slap_sl_free( (*postread_ctrl)->ldctl_value.bv_val, op->o_tmpmemctx );
+		slap_sl_free( *postread_ctrl, op->o_tmpmemctx );
 	}
 	return rs->sr_err;
 }

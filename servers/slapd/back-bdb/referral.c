@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/referral.c,v 1.28.2.3 2004/04/06 18:16:01 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2004 The OpenLDAP Foundation.
+ * Copyright 2000-2005 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -73,7 +73,8 @@ dn2entry_retry:
 			db_strerror(rc), rc, 0 );
 #else
 		Debug( LDAP_DEBUG_TRACE,
-			"bdb_referrals: dn2entry failed: %s (%d)\n",
+			LDAP_XSTRING(bdb_referrals)
+			": dn2entry failed: %s (%d)\n",
 			db_strerror(rc), rc, 0 ); 
 #endif
 		send_ldap_error( op, rs, LDAP_OTHER, "internal error" );
@@ -91,7 +92,8 @@ dn2entry_retry:
 			(long) op->o_tag, op->o_req_dn.bv_val, e->e_name.bv_val );
 #else
 			Debug( LDAP_DEBUG_TRACE,
-				"bdb_referrals: op=%ld target=\"%s\" matched=\"%s\"\n",
+				LDAP_XSTRING(bdb_referrals)
+				": op=%ld target=\"%s\" matched=\"%s\"\n",
 				(long) op->o_tag, op->o_req_dn.bv_val, e->e_name.bv_val );
 #endif
 
@@ -114,7 +116,7 @@ dn2entry_retry:
 
 		if( rs->sr_ref != NULL ) {
 			/* send referrals */
-			rs->sr_err = LDAP_REFERRAL;
+			rc = rs->sr_err = LDAP_REFERRAL;
 			send_ldap_result( op, rs );
 			ber_bvarray_free( rs->sr_ref );
 			rs->sr_ref = NULL;
@@ -144,7 +146,8 @@ dn2entry_retry:
 			(long) op->o_tag, op->o_req_dn.bv_val, e->e_name.bv_val );
 #else
 		Debug( LDAP_DEBUG_TRACE,
-			"bdb_referrals: op=%ld target=\"%s\" matched=\"%s\"\n",
+			LDAP_XSTRING(bdb_referrals)
+			": op=%ld target=\"%s\" matched=\"%s\"\n",
 			(long) op->o_tag, op->o_req_dn.bv_val, e->e_name.bv_val );
 #endif
 

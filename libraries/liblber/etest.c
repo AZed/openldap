@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/libraries/liblber/etest.c,v 1.28.2.3 2004/01/01 18:16:29 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2004 The OpenLDAP Foundation.
+ * Copyright 1998-2005 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -64,6 +64,7 @@ int
 main( int argc, char **argv )
 {
 	char	*s;
+	int tag;
 
 	int			fd, rc;
 	BerElement	*ber;
@@ -143,9 +144,13 @@ main( int argc, char **argv )
 			break;
 
 		case 's':	/* string */
-		case 't':	/* tag for the next element */
 			buf = getbuf();
 			rc = ber_printf( ber, fmt, buf );
+			break;
+		case 't':	/* tag for the next element */
+			buf = getbuf();
+			tag = atoi(buf);
+			rc = ber_printf( ber, fmt, tag );
 			break;
 
 		default:

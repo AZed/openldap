@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/id2entry.c,v 1.47.2.3 2004/01/01 18:16:36 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2004 The OpenLDAP Foundation.
+ * Copyright 2000-2005 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -202,6 +202,10 @@ int bdb_entry_release(
 			SLAP_TRUNCATE_MODE, SLAP_UNDEFINED_MODE */
  
 	if ( slapMode == SLAP_SERVER_MODE ) {
+		/* If not in our cache, just free it */
+		if ( !e->e_private ) {
+			return bdb_entry_return( e );
+		}
 		/* free entry and reader or writer lock */
 		if ( o ) {
 			boi = (struct bdb_op_info *)o->o_private;
@@ -210,9 +214,21 @@ int bdb_entry_release(
 		if ( !boi || boi->boi_txn ) {
 			bdb_unlocked_cache_return_entry_rw( &bdb->bi_cache, e, rw );
 		} else {
-			bdb_cache_return_entry_rw( bdb->bi_dbenv, &bdb->bi_cache, e, rw, &boi->boi_lock );
-			o->o_tmpfree( boi, o->o_tmpmemctx );
-			o->o_private = NULL;
+			struct bdb_lock_info *bli, *prev;
+			for ( prev=(struct bdb_lock_info *)&boi->boi_locks,
+				bli = boi->boi_locks; bli; prev=bli, bli=bli->bli_next ) {
+				if ( bli->bli_id == e->e_id ) {
+					bdb_cache_return_entry_rw( bdb->bi_dbenv, &bdb->bi_cache,
+						e, rw, &bli->bli_lock );
+					prev->bli_next = bli->bli_next;
+					o->o_tmpfree( bli, o->o_tmpmemctx );
+					break;
+				}
+			}
+			if ( !boi->boi_locks ) {
+				o->o_tmpfree( boi, o->o_tmpmemctx );
+				o->o_private = NULL;
+			}
 		}
 	} else {
 		if (e->e_private != NULL)
@@ -261,7 +277,7 @@ int bdb_entry_get(
 #endif
 
 	if( op ) boi = (struct bdb_op_info *) op->o_private;
-	if( boi != NULL && op->o_bd == boi->boi_bdb ) {
+	if( boi != NULL && op->o_bd->be_private == boi->boi_bdb->be_private ) {
 		txn = boi->boi_txn;
 		locker = boi->boi_locker;
 	}
@@ -328,7 +344,6 @@ dn2entry_retry:
 		ndn->bv_val, 0, 0 ); 
 #endif
 
-#ifdef BDB_ALIASES
 	/* find attribute values */
 	if( is_entry_alias( e ) ) {
 #ifdef NEW_LOGGING
@@ -341,7 +356,6 @@ dn2entry_retry:
 		rc = LDAP_ALIAS_PROBLEM;
 		goto return_results;
 	}
-#endif
 
 	if( is_entry_referral( e ) ) {
 #ifdef NEW_LOGGING
@@ -372,15 +386,33 @@ return_results:
 	if( rc != LDAP_SUCCESS ) {
 		/* free entry */
 		bdb_cache_return_entry_rw(bdb->bi_dbenv, &bdb->bi_cache, e, rw, &lock);
+
 	} else {
-		*ent = e;
-		/* big drag. we need a place to store a read lock so we can
-		 * release it later??
-		 */
-		if ( op && !boi ) {
-			boi = op->o_tmpcalloc(1,sizeof(struct bdb_op_info),op->o_tmpmemctx);
-			boi->boi_lock = lock;
-			op->o_private = boi;
+		if ( slapMode == SLAP_SERVER_MODE ) {
+			*ent = e;
+			/* big drag. we need a place to store a read lock so we can
+			 * release it later?? If we're in a txn, nothing is needed
+			 * here because the locks will go away with the txn.
+			 */
+			if ( op ) {
+				if ( !boi ) {
+					boi = op->o_tmpcalloc(1,sizeof(struct bdb_op_info),op->o_tmpmemctx);
+					boi->boi_bdb = op->o_bd;
+					op->o_private = boi;
+				}
+				if ( !boi->boi_txn ) {
+					struct bdb_lock_info *bli;
+					bli = op->o_tmpalloc( sizeof(struct bdb_lock_info),
+						op->o_tmpmemctx );
+					bli->bli_next = boi->boi_locks;
+					bli->bli_id = e->e_id;
+					bli->bli_lock = lock;
+					boi->boi_locks = bli;
+				}
+			}
+		} else {
+			*ent = entry_dup( e );
+			bdb_cache_return_entry_rw(bdb->bi_dbenv, &bdb->bi_cache, e, rw, &lock);
 		}
 	}
 

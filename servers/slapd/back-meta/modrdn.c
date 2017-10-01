@@ -1,7 +1,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/modrdn.c,v 1.15.2.4 2004/04/12 16:08:15 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2004 The OpenLDAP Foundation.
+ * Copyright 1999-2005 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * Portions Copyright 1999-2003 Howard Chu.
  * All rights reserved.
@@ -75,7 +75,7 @@ meta_back_modrdn( Operation *op, SlapReply *rs )
 		int nsCandidate, version = LDAP_VERSION3;
 
 		nsCandidate = meta_back_select_unique_candidate( li,
-				op->oq_modrdn.rs_newSup );
+				op->oq_modrdn.rs_nnewSup );
 
 		if ( nsCandidate != candidate ) {
 			/*

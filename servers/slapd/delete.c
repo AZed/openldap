@@ -1,7 +1,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/delete.c,v 1.95.2.9 2004/04/12 18:20:12 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2004 The OpenLDAP Foundation.
+ * Copyright 1998-2005 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -211,10 +211,11 @@ do_delete(
 #endif
 		{
 			slap_callback cb = { NULL, slap_replog_cb, NULL, NULL };
+			char csnbuf[ LDAP_LUTIL_CSNSTR_BUFSIZE ];
 
 			if ( !repl_user ) {
-				struct berval csn = { 0 , NULL };
-				char csnbuf[ LDAP_LUTIL_CSNSTR_BUFSIZE ];
+				struct berval csn = BER_BVNULL;
+				char csnbuf[LDAP_LUTIL_CSNSTR_BUFSIZE];
 				slap_get_csn( op, csnbuf, sizeof(csnbuf), &csn, 1 );
 			}
 

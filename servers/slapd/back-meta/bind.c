@@ -1,7 +1,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/bind.c,v 1.29.2.8 2004/04/12 16:08:15 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2004 The OpenLDAP Foundation.
+ * Copyright 1999-2005 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * Portions Copyright 1999-2003 Howard Chu.
  * All rights reserved.
@@ -195,7 +195,6 @@ meta_back_do_single_bind(
 	ber_int_t	msgid;
 	dncookie	dc;
 	struct metasingleconn	*lsc = &lc->conns[ candidate ];
-	LDAPMessage	*res;
 	
 	/*
 	 * Rewrite the bind dn if needed
@@ -222,9 +221,37 @@ meta_back_do_single_bind(
 	/* FIXME: this fixes the bind problem right now; we need
 	 * to use the asynchronous version to get the "matched"
 	 * and more in case of failure ... */
-	rs->sr_err = ldap_sasl_bind_s(lsc->ld, mdn.bv_val,
+	rs->sr_err = ldap_sasl_bind( lsc->ld, mdn.bv_val,
 			LDAP_SASL_SIMPLE, &op->oq_bind.rb_cred,
-			op->o_ctrls, NULL, NULL);
+			op->o_ctrls, NULL, &msgid );
+	if ( rs->sr_err == LDAP_SUCCESS ) {
+		LDAPMessage	*res;
+		struct timeval	tv = { 0, 0 };
+		int		rc;
+
+retry:;
+		switch ( ldap_result( lsc->ld, msgid, 0, &tv, &res ) ) {
+		case 0:
+			tv.tv_sec = 0;
+			tv.tv_usec = 1000;	/* 0.001 s */
+			ldap_pvt_thread_yield();
+			goto retry;
+
+		case -1:
+			ldap_get_option( lsc->ld, LDAP_OPT_ERROR_NUMBER,
+					&rs->sr_err );
+			break;
+
+		default:
+			rc = ldap_parse_result( lsc->ld, res, &rs->sr_err,
+					NULL, NULL, NULL, NULL, 1 );
+			if ( rc != LDAP_SUCCESS ) {
+				rs->sr_err = rc;
+			}
+			break;
+		}
+	}
+
 	if ( rs->sr_err != LDAP_SUCCESS ) {
 		rs->sr_err = slap_map_api2result( rs );
 		goto return_results;
@@ -283,6 +310,7 @@ meta_back_dobind( struct metaconn *lc, Operation *op )
 	for ( i = 0, lsc = lc->conns; !META_LAST(lsc); ++i, ++lsc ) {
 		int		rc;
 		struct berval	cred = BER_BVC("");
+		int		msgid;
 
 		/*
 		 * Not a candidate or something wrong with this target ...
@@ -329,10 +357,37 @@ meta_back_dobind( struct metaconn *lc, Operation *op )
 			lsc->cred.bv_len = 0;
 		}
 
-		rc = ldap_sasl_bind_s(lsc->ld, "", LDAP_SASL_SIMPLE, &cred,
-				op->o_ctrls, NULL, NULL);
+		rc = ldap_sasl_bind( lsc->ld, "", LDAP_SASL_SIMPLE, &cred,
+				op->o_ctrls, NULL, &msgid );
+		if ( rc == LDAP_SUCCESS ) {
+			LDAPMessage	*res;
+			struct timeval	tv = { 0, 0 };
+			int		err;
+
+retry:;
+			switch ( ldap_result( lsc->ld, msgid, 0, &tv, &res ) ) {
+			case 0:
+				tv.tv_sec = 0;
+				tv.tv_usec = 1000;	/* 0.001 s */
+				ldap_pvt_thread_yield();
+				goto retry;
+
+			case -1:
+				ldap_get_option( lsc->ld, LDAP_OPT_ERROR_NUMBER,
+						&rc );
+				break;
+
+			default:
+				rc = ldap_parse_result( lsc->ld, res, &err,
+						NULL, NULL, NULL, NULL, 1 );
+				if ( rc == LDAP_SUCCESS ) {
+					rc = err;
+				}
+				break;
+			}
+		}
+
 		if ( rc != LDAP_SUCCESS ) {
-			
 #ifdef NEW_LOGGING
 			LDAP_LOG( BACK_META, WARNING,
 					"meta_back_dobind: (anonymous)"

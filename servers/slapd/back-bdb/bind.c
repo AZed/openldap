@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/bind.c,v 1.31.2.5 2004/04/06 18:16:01 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2004 The OpenLDAP Foundation.
+ * Copyright 2000-2005 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -43,13 +43,9 @@ bdb_bind( Operation *op, SlapReply *rs )
 	u_int32_t	locker;
 	DB_LOCK		lock;
 
-#ifdef NEW_LOGGING
-	LDAP_LOG ( OPERATION, ARGS,
-		"==> bdb_bind: dn: %s\n", op->o_req_dn.bv_val, 0, 0 );
-#else
 	Debug( LDAP_DEBUG_ARGS,
-		"==> bdb_bind: dn: %s\n", op->o_req_dn.bv_val, 0, 0);
-#endif
+		"==> " LDAP_XSTRING(bdb_bind) ": dn: %s\n",
+		op->o_req_dn.bv_val, 0, 0);
 
 	/* allow noauth binds */
 	if ( op->oq_bind.rb_method == LDAP_AUTH_SIMPLE && be_isroot_pw( op )) {
@@ -112,46 +108,23 @@ dn2entry_retry:
 #ifdef BDB_SUBENTRIES
 	if ( is_entry_subentry( e ) ) {
 		/* entry is an subentry, don't allow bind */
-#ifdef NEW_LOGGING
-		LDAP_LOG ( OPERATION, DETAIL1, 
-			"bdb_bind: entry is subentry\n", 0, 0, 0 );
-#else
 		Debug( LDAP_DEBUG_TRACE, "entry is subentry\n", 0,
 			0, 0 );
-#endif
 		rs->sr_err = LDAP_INVALID_CREDENTIALS;
 		goto done;
 	}
 #endif
 
-#ifdef BDB_ALIASES
 	if ( is_entry_alias( e ) ) {
 		/* entry is an alias, don't allow bind */
-#ifdef NEW_LOGGING
-		LDAP_LOG ( OPERATION, DETAIL1,
-			"bdb_bind: entry is alias\n", 0, 0, 0 );
-#else
 		Debug( LDAP_DEBUG_TRACE, "entry is alias\n", 0, 0, 0 );
-#endif
-
-#if 1
 		rs->sr_err = LDAP_INVALID_CREDENTIALS;
-#else
-		rs->sr_err = LDAP_ALIAS_PROBLEM;
-		rs->sr_text = "entry is alias";
-#endif
 		goto done;
 	}
-#endif
 
 	if ( is_entry_referral( e ) ) {
-#ifdef NEW_LOGGING
-		LDAP_LOG ( OPERATION, DETAIL1, 
-			"bdb_bind: entry is referral\n", 0, 0, 0 );
-#else
 		Debug( LDAP_DEBUG_TRACE, "entry is referral\n", 0,
 			0, 0 );
-#endif
 		rs->sr_err = LDAP_INVALID_CREDENTIALS;
 		goto done;
 	}
@@ -161,20 +134,12 @@ dn2entry_retry:
 		rs->sr_err = access_allowed( op, e,
 			password, NULL, ACL_AUTH, NULL );
 		if ( ! rs->sr_err ) {
-#if 1
 			rs->sr_err = LDAP_INVALID_CREDENTIALS;
-#else
-			rs->sr_err = LDAP_INSUFFICIENT_ACCESS;
-#endif
 			goto done;
 		}
 
 		if ( (a = attr_find( e->e_attrs, password )) == NULL ) {
-#if 1
 			rs->sr_err = LDAP_INVALID_CREDENTIALS;
-#else
-			rs->sr_err = LDAP_INAPPROPRIATE_AUTH;
-#endif
 			goto done;
 		}
 

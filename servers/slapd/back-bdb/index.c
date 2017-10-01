@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/index.c,v 1.38.2.7 2004/04/12 18:20:13 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2004 The OpenLDAP Foundation.
+ * Copyright 2000-2005 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -247,7 +247,7 @@ static int indexer(
 
 		if( rc == LDAP_SUCCESS && keys != NULL ) {
 			for( i=0; keys[i].bv_val != NULL; i++ ) {
-				bdb_key_change( op->o_bd, db, txn, &keys[i], id, opid );
+				rc = bdb_key_change( op->o_bd, db, txn, &keys[i], id, opid );
 				if( rc ) {
 					ber_bvarray_free_x( keys, op->o_tmpmemctx );
 					goto done;

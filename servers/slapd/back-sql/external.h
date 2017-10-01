@@ -1,7 +1,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/external.h,v 1.8.2.3 2004/01/20 23:44:21 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2004 The OpenLDAP Foundation.
+ * Copyright 1999-2005 The OpenLDAP Foundation.
  * Portions Copyright 1999 Dmitry Kovalev.
  * All rights reserved.
  *
@@ -23,7 +23,7 @@
 
 LDAP_BEGIN_DECL
 
-extern BI_init		sql_back_initialize;
+extern BI_init		backsql_initialize;
 extern BI_destroy	backsql_destroy;
 
 extern BI_db_init	backsql_db_init;

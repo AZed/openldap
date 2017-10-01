@@ -1,7 +1,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/modify.c,v 1.21.2.6 2004/04/15 01:41:49 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2004 The OpenLDAP Foundation.
+ * Copyright 1999-2005 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * Portions Copyright 1999-2003 Howard Chu.
  * All rights reserved.
@@ -90,17 +90,26 @@ meta_back_modify( Operation *op, SlapReply *rs )
 
 	dc.ctx = "modifyAttrDN";
 	for ( i = 0, ml = op->oq_modify.rs_modlist; ml; ml = ml->sml_next ) {
-		int j;
+		int	j, is_oc = 0;
 
 		if ( ml->sml_desc->ad_type->sat_no_user_mod  ) {
 			continue;
 		}
 
-		ldap_back_map( &li->targets[ candidate ]->rwmap.rwm_at,
-				&ml->sml_desc->ad_cname, &mapped,
-				BACKLDAP_MAP );
-		if ( mapped.bv_val == NULL || mapped.bv_val[0] == '\0' ) {
-			continue;
+		if ( ml->sml_desc == slap_schema.si_ad_objectClass 
+				|| ml->sml_desc == slap_schema.si_ad_structuralObjectClass )
+		{
+			is_oc = 1;
+			mapped = ml->sml_desc->ad_cname;
+
+		} else {
+			ldap_back_map(&li->targets[ candidate ]->rwmap.rwm_at,
+					&ml->sml_desc->ad_cname,
+					&mapped, BACKLDAP_MAP);
+			if ( mapped.bv_val == NULL || mapped.bv_val[0] == '\0' )
+			{
+				continue;
+			}
 		}
 
 		modv[ i ] = &mods[ i ];
@@ -112,18 +121,53 @@ meta_back_modify( Operation *op, SlapReply *rs )
 		 * to allow their use in ACLs at the back-ldap
 		 * level.
 		 */
-		if ( strcmp( ml->sml_desc->ad_type->sat_syntax->ssyn_oid,
-					SLAPD_DN_SYNTAX ) == 0 ) {
-			( void )ldap_dnattr_rewrite( &dc, ml->sml_values );
-		}
+		if ( ml->sml_values != NULL ) {
+			if ( is_oc ) {
+				for (j = 0; ml->sml_values[j].bv_val; j++);
+				mods[i].mod_bvalues = (struct berval **)ch_malloc((j+1) *
+					sizeof(struct berval *));
+				for (j = 0; ml->sml_values[j].bv_val; ) {
+					struct ldapmapping	*mapping = NULL;
+					
+					ldap_back_mapping(&li->targets[ candidate ]->rwmap.rwm_oc,
+							&ml->sml_values[j],
+							&mapping, BACKLDAP_MAP);
+					if ( mapping == NULL ) {
+						if ( li->targets[ candidate ]->rwmap.rwm_oc.drop_missing ) {
+							continue;
+						}
+						mods[i].mod_bvalues[j] = &ml->sml_values[j];
+						
+					} else {
+						mods[i].mod_bvalues[j] = &mapping->dst;
+					}
+					j++;
+				}
 
-		if ( ml->sml_values != NULL ){
-			for (j = 0; ml->sml_values[ j ].bv_val; j++);
-			mods[ i ].mod_bvalues = (struct berval **)ch_malloc((j+1) *
-				sizeof(struct berval *));
-			for (j = 0; ml->sml_values[ j ].bv_val; j++)
-				mods[ i ].mod_bvalues[ j ] = &ml->sml_values[j];
-			mods[ i ].mod_bvalues[ j ] = NULL;
+				if ( j == 0 ) {
+					ch_free( mods[i].mod_bvalues );
+					continue;
+				}
+
+				mods[i].mod_bvalues[j] = NULL;
+
+			} else {
+				if ( strcmp( ml->sml_desc->ad_type->sat_syntax->ssyn_oid,
+						SLAPD_DN_SYNTAX ) == 0 )
+				{
+					( void )ldap_dnattr_rewrite( &dc, ml->sml_values );
+					if ( ml->sml_values == NULL ) {
+						continue;
+					}
+				}
+
+				for (j = 0; ml->sml_values[ j ].bv_val; j++);
+				mods[ i ].mod_bvalues = (struct berval **)ch_malloc((j+1) *
+					sizeof(struct berval *));
+				for (j = 0; ml->sml_values[ j ].bv_val; j++)
+					mods[ i ].mod_bvalues[ j ] = &ml->sml_values[j];
+				mods[ i ].mod_bvalues[ j ] = NULL;
+			}
 
 		} else {
 			mods[ i ].mod_bvalues = NULL;

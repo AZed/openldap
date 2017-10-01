@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/init.c,v 1.84.2.5 2004/04/12 18:20:14 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2004 The OpenLDAP Foundation.
+ * Copyright 1998-2005 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -47,6 +47,9 @@ ldbm_back_initialize(
 	static char *controls[] = {
 		LDAP_CONTROL_MANAGEDSAIT,
 		LDAP_CONTROL_VALUESRETURNFILTER,
+#ifdef LDAP_CONTROL_X_PERMISSIVE_MODIFY
+		LDAP_CONTROL_X_PERMISSIVE_MODIFY,
+#endif
 		NULL
 	};
 

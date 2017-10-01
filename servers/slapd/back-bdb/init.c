@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/init.c,v 1.132.2.8 2004/04/12 18:20:13 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2004 The OpenLDAP Foundation.
+ * Copyright 2000-2005 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -67,13 +67,9 @@ bdb_db_init( BackendDB *be )
 {
 	struct bdb_info	*bdb;
 
-#ifdef NEW_LOGGING
-	LDAP_LOG( BACK_BDB, ENTRY, "bdb_db_init", 0, 0, 0 );
-#else
 	Debug( LDAP_DEBUG_ANY,
-		"bdb_db_init: Initializing BDB database\n",
-		0, 0, 0 );
-#endif
+		LDAP_XSTRING(bdb_db_init) ": Initializing "
+		BDB_UCTYPE " database\n", 0, 0, 0 );
 
 	/* allocate backend-database-specific stuff */
 	bdb = (struct bdb_info *) ch_calloc( 1, sizeof(struct bdb_info) );
@@ -138,24 +134,14 @@ bdb_db_open( BackendDB *be )
 	char path[MAXPATHLEN];
 #endif
 
-#ifdef NEW_LOGGING
-	LDAP_LOG( BACK_BDB, ARGS, 
-		"bdb_db_open: %s\n", be->be_suffix[0].bv_val, 0, 0 );
-#else
 	Debug( LDAP_DEBUG_ARGS,
 		"bdb_db_open: %s\n",
 		be->be_suffix[0].bv_val, 0, 0 );
-#endif
 
 #ifndef BDB_MULTIPLE_SUFFIXES
 	if ( be->be_suffix[1].bv_val ) {
-#ifdef NEW_LOGGING
-	LDAP_LOG( BACK_BDB, ERR, 
-		"bdb_db_open: only one suffix allowed\n", 0, 0, 0 );
-#else
 	Debug( LDAP_DEBUG_ANY,
 		"bdb_db_open: only one suffix allowed\n", 0, 0, 0 );
-#endif
 		return -1;
 	}
 #endif
@@ -163,15 +149,9 @@ bdb_db_open( BackendDB *be )
 
 	rc = db_env_create( &bdb->bi_dbenv, 0 );
 	if( rc != 0 ) {
-#ifdef NEW_LOGGING
-		LDAP_LOG( BACK_BDB, ERR, 
-			"bdb_db_open: db_env_create failed: %s (%d)\n", 
-			db_strerror(rc), rc, 0 );
-#else
 		Debug( LDAP_DEBUG_ANY,
 			"bdb_db_open: db_env_create failed: %s (%d)\n",
 			db_strerror(rc), rc, 0 );
-#endif
 		return rc;
 	}
 
@@ -196,14 +176,15 @@ bdb_db_open( BackendDB *be )
 	bdb->bi_dbenv->set_errcall( bdb->bi_dbenv, bdb_errcall );
 	bdb->bi_dbenv->set_lk_detect( bdb->bi_dbenv, bdb->bi_lock_detect );
 
-#ifdef SLAP_IDL_CACHE
+	/* One long-lived TXN per thread, two TXNs per write op */
+	bdb->bi_dbenv->set_tx_max( bdb->bi_dbenv, connection_pool_max * 3 );
+
 	if ( bdb->bi_idl_cache_max_size ) {
 		bdb->bi_idl_tree = NULL;
 		ldap_pvt_thread_rdwr_init( &bdb->bi_idl_tree_rwlock );
 		ldap_pvt_thread_mutex_init( &bdb->bi_idl_tree_lrulock );
 		bdb->bi_idl_cache_size = 0;
 	}
-#endif
 
 #ifdef BDB_SUBDIRS
 	{
@@ -230,15 +211,9 @@ bdb_db_open( BackendDB *be )
 #endif
 		rc = bdb->bi_dbenv->set_tmp_dir( bdb->bi_dbenv, dir );
 		if( rc != 0 ) {
-#ifdef NEW_LOGGING
-			LDAP_LOG( BACK_BDB, ERR, 
-				"bdb_db_open: set_tmp_dir(%s) failed: %s (%d)\n", 
-				dir, db_strerror(rc), rc );
-#else
 			Debug( LDAP_DEBUG_ANY,
 				"bdb_db_open: set_tmp_dir(%s) failed: %s (%d)\n",
 				dir, db_strerror(rc), rc );
-#endif
 			return rc;
 		}
 
@@ -248,15 +223,9 @@ bdb_db_open( BackendDB *be )
 #endif
 		rc = bdb->bi_dbenv->set_lg_dir( bdb->bi_dbenv, dir );
 		if( rc != 0 ) {
-#ifdef NEW_LOGGING
-			LDAP_LOG( BACK_BDB, ERR, 
-				"bdb_db_open: set_lg_dir(%s) failed: %s (%d)\n", 
-				dir, db_strerror(rc), rc );
-#else
 			Debug( LDAP_DEBUG_ANY,
 				"bdb_db_open: set_lg_dir(%s) failed: %s (%d)\n",
 				dir, db_strerror(rc), rc );
-#endif
 			return rc;
 		}
 
@@ -266,28 +235,28 @@ bdb_db_open( BackendDB *be )
 #endif
 		rc = bdb->bi_dbenv->set_data_dir( bdb->bi_dbenv, dir );
 		if( rc != 0 ) {
-#ifdef NEW_LOGGING
-			LDAP_LOG( BACK_BDB, ERR, 
-				"bdb_db_open: set_data_dir(%s) failed: %s (%d)\n",
-				dir, db_strerror(rc), rc );
-#else
 			Debug( LDAP_DEBUG_ANY,
 				"bdb_db_open: set_data_dir(%s) failed: %s (%d)\n",
 				dir, db_strerror(rc), rc );
-#endif
 			return rc;
 		}
 	}
 #endif
 
-#ifdef NEW_LOGGING
-	LDAP_LOG( BACK_BDB, DETAIL1, 
-		"bdb_db_open: dbenv_open %s\n", bdb->bi_dbenv_home, 0, 0 );
-#else
+	if( bdb->bi_dbenv_xflags != 0 ) {
+		rc = bdb->bi_dbenv->set_flags( bdb->bi_dbenv,
+			bdb->bi_dbenv_xflags, 1);
+		if( rc != 0 ) {
+			Debug( LDAP_DEBUG_ANY,
+				"bdb_db_open: dbenv_set_flags failed: %s (%d)\n",
+				db_strerror(rc), rc, 0 );
+			return rc;
+		}
+	}
+
 	Debug( LDAP_DEBUG_TRACE,
 		"bdb_db_open: dbenv_open(%s)\n",
 		bdb->bi_dbenv_home, 0, 0);
-#endif
 
 #ifdef HAVE_EBCDIC
 	strcpy( path, bdb->bi_dbenv_home );
@@ -303,33 +272,10 @@ bdb_db_open( BackendDB *be )
 		bdb->bi_dbenv_mode );
 #endif
 	if( rc != 0 ) {
-#ifdef NEW_LOGGING
-		LDAP_LOG( BACK_BDB, ERR, 
-			"bdb_db_open: dbenv_open failed: %s (%d)\n", 
-			db_strerror(rc), rc, 0 );
-#else
 		Debug( LDAP_DEBUG_ANY,
 			"bdb_db_open: dbenv_open failed: %s (%d)\n",
 			db_strerror(rc), rc, 0 );
-#endif
 		return rc;
-	}
-
-	if( bdb->bi_dbenv_xflags != 0 ) {
-		rc = bdb->bi_dbenv->set_flags( bdb->bi_dbenv,
-			bdb->bi_dbenv_xflags, 1);
-		if( rc != 0 ) {
-#ifdef NEW_LOGGING
-			LDAP_LOG( BACK_BDB, ERR, 
-				"bdb_db_open: dbenv_set_flags failed: %s (%d)\n", 
-				db_strerror(rc), rc, 0 );
-#else
-			Debug( LDAP_DEBUG_ANY,
-				"bdb_db_open: dbenv_set_flags failed: %s (%d)\n",
-				db_strerror(rc), rc, 0 );
-#endif
-			return rc;
-		}
 	}
 
 	flags = DB_THREAD | bdb->bi_db_opflags;
@@ -345,15 +291,9 @@ bdb_db_open( BackendDB *be )
 
 		rc = db_create( &db->bdi_db, bdb->bi_dbenv, 0 );
 		if( rc != 0 ) {
-#ifdef NEW_LOGGING
-			LDAP_LOG( BACK_BDB, ERR, 
-				"bdb_db_open: db_create(%s) failed: %s (%d)\n", 
-				bdb->bi_dbenv_home, db_strerror(rc), rc );
-#else
 			Debug( LDAP_DEBUG_ANY,
 				"bdb_db_open: db_create(%s) failed: %s (%d)\n",
 				bdb->bi_dbenv_home, db_strerror(rc), rc );
-#endif
 			return rc;
 		}
 
@@ -412,15 +352,9 @@ bdb_db_open( BackendDB *be )
 #endif
 
 		if( rc != 0 ) {
-#ifdef NEW_LOGGING
-			LDAP_LOG( BACK_BDB, ERR, 
-				"bdb_db_open: db_create(%s) failed: %s (%d)\n", 
-				bdb->bi_dbenv_home, db_strerror(rc), rc );
-#else
 			Debug( LDAP_DEBUG_ANY,
 				"bdb_db_open: db_open(%s) failed: %s (%d)\n",
 				bdb->bi_dbenv_home, db_strerror(rc), rc );
-#endif
 			return rc;
 		}
 
@@ -435,17 +369,13 @@ bdb_db_open( BackendDB *be )
 	/* get nextid */
 	rc = bdb_last_id( be, NULL );
 	if( rc != 0 ) {
-#ifdef NEW_LOGGING
-			LDAP_LOG( BACK_BDB, ERR, 
-				"bdb_db_open: last_id(%s) failed: %s (%d)\n", 
-				bdb->bi_dbenv_home, db_strerror(rc), rc );
-#else
 		Debug( LDAP_DEBUG_ANY,
 			"bdb_db_open: last_id(%s) failed: %s (%d)\n",
 			bdb->bi_dbenv_home, db_strerror(rc), rc );
-#endif
 		return rc;
 	}
+
+	XLOCK_ID(bdb->bi_dbenv, &bdb->bi_cache.c_locker);
 
 	/* <insert> open (and create) index databases */
 	return 0;
@@ -457,9 +387,7 @@ bdb_db_close( BackendDB *be )
 	int rc;
 	struct bdb_info *bdb = (struct bdb_info *) be->be_private;
 	struct bdb_db_info *db;
-#ifdef SLAP_IDL_CACHE
 	bdb_idl_cache_entry_t *entry, *next_entry;
-#endif
 
 	while( bdb->bi_ndatabases-- ) {
 		db = bdb->bi_databases[bdb->bi_ndatabases];
@@ -474,7 +402,6 @@ bdb_db_close( BackendDB *be )
 
 	bdb_cache_release_all (&bdb->bi_cache);
 
-#ifdef SLAP_IDL_CACHE
 	if ( bdb->bi_idl_cache_max_size ) {
 		ldap_pvt_thread_rdwr_wlock ( &bdb->bi_idl_tree_rwlock );
 		avl_free( bdb->bi_idl_tree, NULL );
@@ -489,7 +416,8 @@ bdb_db_close( BackendDB *be )
 		}
 		ldap_pvt_thread_rdwr_wunlock ( &bdb->bi_idl_tree_rwlock );
 	}
-#endif
+
+	XLOCK_ID_FREE(bdb->bi_dbenv, bdb->bi_cache.c_locker);
 
 	return 0;
 }
@@ -499,35 +427,26 @@ bdb_db_destroy( BackendDB *be )
 {
 	int rc;
 	struct bdb_info *bdb = (struct bdb_info *) be->be_private;
+	Operation *ps = NULL;
+	Operation *psn = NULL;
+	void *saved_tmpmemctx = NULL;
 
 	/* close db environment */
 	if( bdb->bi_dbenv ) {
 		/* force a checkpoint */
 		rc = TXN_CHECKPOINT( bdb->bi_dbenv, 0, 0, DB_FORCE );
 		if( rc != 0 ) {
-#ifdef NEW_LOGGING
-			LDAP_LOG( BACK_BDB, ERR, 
-				"bdb_db_destroy: txn_checkpoint failed: %s (%d)\n",
-				db_strerror(rc), rc, 0 );
-#else
 			Debug( LDAP_DEBUG_ANY,
 				"bdb_db_destroy: txn_checkpoint failed: %s (%d)\n",
 				db_strerror(rc), rc, 0 );
-#endif
 		}
 
 		rc = bdb->bi_dbenv->close( bdb->bi_dbenv, 0 );
 		bdb->bi_dbenv = NULL;
 		if( rc != 0 ) {
-#ifdef NEW_LOGGING
-			LDAP_LOG( BACK_BDB, ERR, 
-				"bdb_db_destroy: close failed: %s (%d)\n", 
-				db_strerror(rc), rc, 0 );
-#else
 			Debug( LDAP_DEBUG_ANY,
 				"bdb_db_destroy: close failed: %s (%d)\n",
 				db_strerror(rc), rc, 0 );
-#endif
 			return rc;
 		}
 	}
@@ -540,12 +459,78 @@ bdb_db_destroy( BackendDB *be )
 	ldap_pvt_thread_rdwr_destroy ( &bdb->bi_pslist_rwlock );
 	ldap_pvt_thread_mutex_destroy( &bdb->bi_lastid_mutex );
 	ldap_pvt_thread_mutex_destroy( &bdb->bi_database_mutex );
-#ifdef SLAP_IDL_CACHE
 	if ( bdb->bi_idl_cache_max_size ) {
 		ldap_pvt_thread_rdwr_destroy( &bdb->bi_idl_tree_rwlock );
 		ldap_pvt_thread_mutex_destroy( &bdb->bi_idl_tree_lrulock );
 	}
-#endif
+
+	ps = LDAP_LIST_FIRST( &bdb->bi_psearch_list );
+
+	if ( ps ) {
+		psn = LDAP_LIST_NEXT( ps, o_ps_link );
+		if ( ps->o_savmemctx ) {
+			ps->o_tmpmemctx = ps->o_savmemctx;
+			ps->o_tmpmfuncs = &sl_mfuncs;
+			ber_set_option(ps->o_ber, LBER_OPT_BER_MEMCTX, &ps->o_savmemctx);
+		}
+		saved_tmpmemctx = ps->o_tmpmemctx;
+
+		if (!BER_BVISNULL(&ps->o_req_dn)) {
+			slap_sl_free( ps->o_req_dn.bv_val, ps->o_tmpmemctx);
+		}
+		if (!BER_BVISNULL(&ps->o_req_ndn)) {
+			slap_sl_free( ps->o_req_ndn.bv_val, ps->o_tmpmemctx);
+		}
+		if (!BER_BVISNULL(&ps->ors_filterstr)) {
+			slap_sl_free( ps->ors_filterstr.bv_val, ps->o_tmpmemctx);
+		}
+		if (ps->ors_filter != NULL) {
+			filter_free_x( ps, ps->ors_filter );
+		}
+		if (ps->ors_attrs != NULL) {
+			ps->o_tmpfree(ps->ors_attrs, ps->o_tmpmemctx);
+		}
+
+		slap_op_free( ps );
+
+		if ( saved_tmpmemctx ) {
+			sl_mem_destroy( NULL, saved_tmpmemctx );
+		}
+	}
+
+	while ( psn ) {
+		ps = psn;
+		psn = LDAP_LIST_NEXT( ps, o_ps_link );
+
+		if ( ps->o_savmemctx ) {
+			ps->o_tmpmemctx = ps->o_savmemctx;
+			ps->o_tmpmfuncs = &sl_mfuncs;
+			ber_set_option(ps->o_ber, LBER_OPT_BER_MEMCTX, &ps->o_savmemctx);
+		}
+		saved_tmpmemctx = ps->o_tmpmemctx;
+
+		if (!BER_BVISNULL(&ps->o_req_dn)) {
+			slap_sl_free( ps->o_req_dn.bv_val, ps->o_tmpmemctx);
+		}
+		if (!BER_BVISNULL(&ps->o_req_ndn)) {
+			slap_sl_free( ps->o_req_ndn.bv_val, ps->o_tmpmemctx);
+		}
+		if (!BER_BVISNULL(&ps->ors_filterstr)) {
+			slap_sl_free( ps->ors_filterstr.bv_val, ps->o_tmpmemctx);
+		}
+		if (ps->ors_filter != NULL) {
+			filter_free_x( ps, ps->ors_filter );
+		}
+		if (ps->ors_attrs != NULL) {
+			ps->o_tmpfree(ps->ors_attrs, ps->o_tmpmemctx);
+		}
+
+		slap_op_free( ps );
+
+		if ( saved_tmpmemctx ) {
+			sl_mem_destroy( NULL, saved_tmpmemctx );
+		}
+	}
 
 	ch_free( bdb );
 	be->be_private = NULL;
@@ -584,31 +569,29 @@ bdb_initialize(
 		LDAP_CONTROL_SUBENTRIES,
 #endif
  		LDAP_CONTROL_VALUESRETURNFILTER,
+#ifdef LDAP_CONTROL_X_PERMISSIVE_MODIFY
+		LDAP_CONTROL_X_PERMISSIVE_MODIFY,
+#endif
 		NULL
 	};
 
 	/* initialize the underlying database system */
-#ifdef NEW_LOGGING
-	LDAP_LOG( BACK_BDB, ENTRY, "bdb_db_initialize\n", 0, 0, 0 );
-#else
-	Debug( LDAP_DEBUG_TRACE, "bdb_initialize: initialize BDB backend\n",
-		0, 0, 0 );
-#endif
+	Debug( LDAP_DEBUG_TRACE,
+		LDAP_XSTRING(bdb_back_initialize) ": initialize " 
+		BDB_UCTYPE " backend\n", 0, 0, 0 );
 
 	bi->bi_flags |=
 		SLAP_BFLAG_INCREMENT |
 #ifdef BDB_SUBENTRIES
 		SLAP_BFLAG_SUBENTRIES |
 #endif
-#ifdef BDB_ALIASES
 		SLAP_BFLAG_ALIASES |
-#endif
 		SLAP_BFLAG_REFERRALS;
 
 	bi->bi_controls = controls;
 
 	{	/* version check */
-		int major, minor, patch;
+		int major, minor, patch, ver;
 		char *version = db_version( &major, &minor, &patch );
 #ifdef HAVE_EBCDIC
 		char v2[1024];
@@ -622,30 +605,18 @@ bdb_initialize(
 		version = v2;
 #endif
 
-		if( major != DB_VERSION_MAJOR ||
-			minor != DB_VERSION_MINOR ||
-			patch < DB_VERSION_PATCH )
+		ver = (major << 24) | (minor << 16) | patch;
+		if( ver < DB_VERSION_FULL )
 		{
-#ifdef NEW_LOGGING
-			LDAP_LOG( BACK_BDB, ERR, 
-				"bdb_initialize: BDB library version mismatch:"
-				" expected " DB_VERSION_STRING ","
-				" got %s\n", version, 0, 0 );
-#else
 			Debug( LDAP_DEBUG_ANY,
-				"bdb_initialize: BDB library version mismatch:"
+				LDAP_XSTRING(bdb_back_initialize) ": "
+				"BDB library version mismatch:"
 				" expected " DB_VERSION_STRING ","
 				" got %s\n", version, 0, 0 );
-#endif
 		}
 
-#ifdef NEW_LOGGING
-		LDAP_LOG( BACK_BDB, DETAIL1, 
-			"bdb_db_initialize: %s\n", version, 0, 0 );
-#else
-		Debug( LDAP_DEBUG_ANY, "bdb_initialize: %s\n",
-			version, 0, 0 );
-#endif
+		Debug( LDAP_DEBUG_ANY, LDAP_XSTRING(bdb_back_initialize)
+			": %s\n", version, 0, 0 );
 	}
 
 	db_env_set_func_free( ber_memfree );
@@ -687,7 +658,7 @@ bdb_initialize(
 	bi->bi_op_unbind = 0;
 
 	bi->bi_op_abandon = bdb_abandon;
-	bi->bi_op_cancel = bdb_cancel;
+	bi->bi_op_cancel = bdb_abandon;
 
 	bi->bi_extended = bdb_extended;
 

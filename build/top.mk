@@ -1,5 +1,5 @@
-# $OpenLDAP: pkg/ldap/build/top.mk,v 1.78.2.7 2004/04/12 18:21:07 kurt Exp $
-## Copyright 1998-2004 The OpenLDAP Foundation.
+# $OpenLDAP$
+## Copyright 1998-2005 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -97,7 +97,7 @@ LTFLAGS_MOD = $(@PLAT@_LTFLAGS_MOD)
 
 # platform-specific LINK_LIBS defined in various Makefile.in files.
 # LINK_LIBS referenced in library and module link commands.
-LINK_LIBS = $(@PLAT@_LINK_LIBS)
+LINK_LIBS = $(MOD_LIBS) $(@PLAT@_LINK_LIBS)
 
 LTSTATIC = @LTSTATIC@
 

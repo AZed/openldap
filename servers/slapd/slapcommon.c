@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/slapcommon.c,v 1.2.2.4 2004/04/12 18:13:21 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2004 The OpenLDAP Foundation.
+ * Copyright 1998-2005 The OpenLDAP Foundation.
  * Portions Copyright 1998-2003 Kurt D. Zeilenga.
  * Portions Copyright 2003 IBM Corporation.
  * All rights reserved.
@@ -49,25 +49,29 @@ usage( int tool, const char *progname )
 {
 	char *options = NULL;
 	fprintf( stderr,
-		"usage: %s [-v] [-c] [-d debuglevel] [-f configfile]\n",
+		"usage: %s [-v] [-c] [-d debuglevel] [-f configfile]",
 		progname );
 
 	switch( tool ) {
 	case SLAPADD:
-		options = "\t[-n databasenumber | -b suffix]\n"
+		options = "\n\t[-n databasenumber | -b suffix]\n"
 			"\t[-l ldiffile] [-u] [-p [-w] | -r [-i syncreplidlist] [-w]]\n";
 		break;
 
 	case SLAPCAT:
-		options = "\t[-n databasenumber | -b suffix] [-l ldiffile] [-m] [-k]\n";
+		options = "\n\t[-n databasenumber | -b suffix] [-l ldiffile] [-m] [-k]\n";
 		break;
 
 	case SLAPDN:
-		options = "\tDN [...]\n";
+		options = " DN [...]\n";
 		break;
 
 	case SLAPINDEX:
-		options = "\t[-n databasenumber | -b suffix]\n";
+		options = "\n\t[-n databasenumber | -b suffix]\n";
+		break;
+
+	case SLAPTEST:
+		options = " [-u]\n";
 		break;
 	}
 
@@ -121,8 +125,14 @@ slap_tool_init(
 		break;
 
 	case SLAPDN:
-	case SLAPTEST:
 		options = "d:f:v";
+		mode |= SLAP_TOOL_READMAIN | SLAP_TOOL_READONLY;
+		break;
+
+	case SLAPTEST:
+		options = "d:f:uv";
+		mode |= SLAP_TOOL_READMAIN | SLAP_TOOL_READONLY;
+		break;
 		break;
 
 	case SLAPINDEX:
@@ -131,8 +141,7 @@ slap_tool_init(
 		break;
 
 	default:
-		fprintf( stderr, "%s: unknown tool mode (%d)\n",
-		         progname, tool );
+		fprintf( stderr, "%s: unknown tool mode (%d)\n", progname, tool );
 		exit( EXIT_FAILURE );
 	}
 
@@ -140,8 +149,7 @@ slap_tool_init(
 	while ( (i = getopt( argc, argv, options )) != EOF ) {
 		switch ( i ) {
 		case 'b':
-			base.bv_val = strdup( optarg );
-			base.bv_len = strlen( base.bv_val );
+			ber_str2bv( optarg, 0, 1, &base );
 			break;
 
 		case 'c':	/* enable continue mode */
@@ -270,7 +278,7 @@ slap_tool_init(
 	if ( ldiffile == NULL ) {
 		ldiffp = tool == SLAPCAT ? stdout : stdin;
 
-	} else if( (ldiffp = fopen( ldiffile, tool == SLAPCAT ? "w" : "r" ))
+	} else if ( ( ldiffp = fopen( ldiffile, tool == SLAPCAT ? "w" : "r" ) )
 		== NULL )
 	{
 		perror( ldiffile );
@@ -348,7 +356,8 @@ slap_tool_init(
 	switch ( tool ) {
 	case SLAPDN:
 	case SLAPTEST:
-		return;
+		be = NULL;
+		goto startup;
 
 	default:
 		break;
@@ -444,19 +453,35 @@ slap_tool_init(
 		be = &backends[dbnum];
 	}
 
+startup:;
+
 #ifdef CSRIMALLOC
 	mal_leaktrace(1);
 #endif
 
-	if ( slap_startup( be ) ) {
-		fprintf( stderr, "slap_startup failed\n" );
+	if ( !dryrun && slap_startup( be ) ) {
+
+		switch ( tool ) {
+		case SLAPTEST:
+			fprintf( stderr, "slap_startup failed "
+					"(test would succeed using "
+					"the -u switch)\n" );
+			break;
+
+		default:
+			fprintf( stderr, "slap_startup failed\n" );
+			break;
+		}
+		
 		exit( EXIT_FAILURE );
 	}
 }
 
 void slap_tool_destroy( void )
 {
-	slap_shutdown( be );
+	if ( !dryrun && be != NULL ) {
+		slap_shutdown( be );
+	}
 	slap_destroy();
 #ifdef SLAPD_MODULES
 	if ( slapMode == SLAP_SERVER_MODE ) {

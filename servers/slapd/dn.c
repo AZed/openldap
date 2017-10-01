@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/dn.c,v 1.144.2.7 2004/04/12 18:13:21 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2004 The OpenLDAP Foundation.
+ * Copyright 1998-2005 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -700,6 +700,33 @@ dnParent(
 	return;
 }
 
+/*
+ * dnRdn - dn's rdn, in-place
+ * note: the incoming dn is assumed to be normalized/prettyfied,
+ * so that escaped rdn/ava separators are in '\'+hexpair form
+ */
+void
+dnRdn( 
+	struct berval	*dn, 
+	struct berval	*rdn )
+{
+	char	*p;
+
+	*rdn = *dn;
+	p = strchr( dn->bv_val, ',' );
+
+	/* one-level dn */
+	if ( p == NULL ) {
+		return;
+	}
+
+	assert( DN_SEPARATOR( p[ 0 ] ) );
+	assert( ATTR_LEADCHAR( p[ 1 ] ) );
+	rdn->bv_len = p - dn->bv_val;
+
+	return;
+}
+
 int
 dnExtractRdn( 
 	struct berval	*dn, 
@@ -851,7 +878,7 @@ build_new_dn( struct berval * new_dn,
 	new_dn->bv_len = parent_dn->bv_len + newrdn->bv_len + 1;
 	new_dn->bv_val = (char *) sl_malloc( new_dn->bv_len + 1, memctx );
 
-	ptr = lutil_strcopy( new_dn->bv_val, newrdn->bv_val );
+	ptr = lutil_strncopy( new_dn->bv_val, newrdn->bv_val, newrdn->bv_len );
 	*ptr++ = ',';
 	strcpy( ptr, parent_dn->bv_val );
 }
@@ -893,6 +920,19 @@ dnIsSuffix(
 
 	/* compare */
 	return( strcmp( dn->bv_val + d, suffix->bv_val ) == 0 );
+}
+
+int
+dnIsOneLevelRDN( struct berval *rdn )
+{
+	ber_len_t	len = rdn->bv_len;
+	for ( ; len--; ) {
+		if ( DN_SEPARATOR( rdn->bv_val[ len ] ) ) {
+			return 0;
+		}
+	}
+
+	return 1;
 }
 
 #ifdef HAVE_TLS

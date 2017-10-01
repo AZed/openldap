@@ -2,7 +2,7 @@
 # $OpenLDAP: pkg/ldap/tests/scripts/defines.sh,v 1.67.2.6 2004/03/17 20:59:59 kurt Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2004 The OpenLDAP Foundation.
+## Copyright 1998-2005 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without

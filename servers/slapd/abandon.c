@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/abandon.c,v 1.36.2.3 2004/06/04 03:39:43 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2004 The OpenLDAP Foundation.
+ * Copyright 1998-2005 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -102,7 +102,9 @@ do_abandon( Operation *op, SlapReply *rs )
 
 	LDAP_STAILQ_FOREACH( o, &op->o_conn->c_pending_ops, o_next ) {
 		if ( o->o_msgid == id ) {
-			LDAP_STAILQ_REMOVE( &op->o_conn->c_pending_ops, o, slap_op, o_next );
+			LDAP_STAILQ_REMOVE( &op->o_conn->c_pending_ops,
+				o, slap_op, o_next );
+			LDAP_STAILQ_NEXT(o, o_next) = NULL;
 			op->o_conn->c_n_ops_pending--;
 			slap_op_free( o );
 			goto done;
@@ -112,11 +114,8 @@ do_abandon( Operation *op, SlapReply *rs )
 done:
 
 	op->orn_msgid = id;
-	for ( i = 0; i < nbackends; i++ ) {
-		op->o_bd = &backends[i];
 
-		if( op->o_bd->be_abandon ) op->o_bd->be_abandon( op, rs );
-	}
+	fe_op_abandon( op, rs );
 
 	ldap_pvt_thread_mutex_unlock( &op->o_conn->c_mutex );
 
@@ -128,5 +127,19 @@ done:
 	Debug( LDAP_DEBUG_TRACE, "do_abandon: op=%ld %sfound\n",
 		(long) id, o ? "" : "not ", 0 );
 #endif
+	return LDAP_SUCCESS;
+}
+
+int fe_op_abandon( Operation *op, SlapReply *rs )
+{
+	int i;
+
+	for ( i = 0; i < nbackends; i++ ) {
+		op->o_bd = &backends[i];
+		if ( op->o_bd->be_abandon ) {
+			(void)op->o_bd->be_abandon( op, rs );
+		}
+	}
+
 	return LDAP_SUCCESS;
 }

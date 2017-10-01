@@ -1,7 +1,7 @@
 /* $OpenLDAP: pkg/ldap/libraries/liblutil/ntservice.c,v 1.26.2.2 2004/01/01 18:16:31 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2004 The OpenLDAP Foundation.
+ * Copyright 1998-2005 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -300,7 +300,7 @@ static void *stop_status_routine( void *ptr )
 
 
 
-void WINAPI lutil_ServiceCtrlHandler( IN DWORD Opcode)
+static void WINAPI lutil_ServiceCtrlHandler( IN DWORD Opcode)
 {
 	switch (Opcode)
 	{

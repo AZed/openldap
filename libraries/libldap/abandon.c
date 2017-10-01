@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/libraries/libldap/abandon.c,v 1.31.2.4 2004/02/23 22:08:05 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2004 The OpenLDAP Foundation.
+ * Copyright 1998-2005 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

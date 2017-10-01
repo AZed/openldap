@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/schema_prep.c,v 1.104.2.10 2004/04/28 23:26:30 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2004 The OpenLDAP Foundation.
+ * Copyright 1998-2005 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -57,31 +57,26 @@ oidValidate(
 		}
 
 	} else {
+		int sep = 0;
 		while( OID_LEADCHAR( val.bv_val[0] ) ) {
-			if ( val.bv_len == 1 ) {
-				return LDAP_SUCCESS;
-			}
-
-			if ( val.bv_val[0] == '0' ) {
-				break;
-			}
-
 			val.bv_val++;
 			val.bv_len--;
 
-			while ( OID_LEADCHAR( val.bv_val[0] )) {
-				val.bv_val++;
-				val.bv_len--;
-
-				if ( val.bv_len == 0 ) {
-					return LDAP_SUCCESS;
+			if ( val.bv_val[-1] != '0' ) {
+				while ( OID_LEADCHAR( val.bv_val[0] )) {
+					val.bv_val++;
+					val.bv_len--;
 				}
 			}
 
-			if( !OID_SEPARATOR( val.bv_val[0] )) {
-				break;
+			if( val.bv_len == 0 ) {
+				if( sep == 0 ) break;
+				return LDAP_SUCCESS;
 			}
 
+			if( !OID_SEPARATOR( val.bv_val[0] )) break;
+
+			sep++;
 			val.bv_val++;
 			val.bv_len--;
 		}
@@ -500,7 +495,7 @@ static struct slap_schema_ad_map {
 			"EQUALITY booleanMatch "
 			"SYNTAX 1.3.6.1.4.1.1466.115.121.1.7 "
 			"SINGLE-VALUE NO-USER-MODIFICATION USAGE directoryOperation )",
-		NULL, 0,
+		NULL, SLAP_AT_DYNAMIC,
 		NULL, NULL,
 		NULL, NULL, NULL, NULL, NULL,
 		offsetof(struct slap_internal_schema, si_ad_hasSubordinates) },
@@ -509,7 +504,7 @@ static struct slap_schema_ad_map {
 			"EQUALITY distinguishedNameMatch "
 			"SYNTAX 1.3.6.1.4.1.1466.115.121.1.12 SINGLE-VALUE "
 			"NO-USER-MODIFICATION USAGE directoryOperation )",
-		NULL, 0,
+		NULL, SLAP_AT_DYNAMIC,
 		NULL, NULL,
 		NULL, NULL, NULL, NULL, NULL,
 		offsetof(struct slap_internal_schema, si_ad_subschemaSubentry) },
