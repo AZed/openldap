@@ -1,17 +1,17 @@
 # We distribute own version of Berkeley DB to prevent 
 # problems on db4.rpm upgrade - some versions of db4 do
 # not work with some versions of OpenLDAP.
-%define db_version 4.6.21
+%define db_version 4.7.25
 %define ldbm_backend berkeley
-%define version 2.4.12
+%define version 2.4.15
 %define evolution_connector_prefix %{_libdir}/evolution-openldap
 %define evolution_connector_includedir %{evolution_connector_prefix}/include
 %define evolution_connector_libdir %{evolution_connector_prefix}/%{_lib}
 
-Summary: The configuration files, libraries, and documentation for OpenLDAP
+Summary: LDAP support libraries
 Name: openldap
 Version: %{version}
-Release: 1%{?dist}
+Release: 3%{?dist}
 License: OpenLDAP
 Group: System Environment/Daemons
 Source0: ftp://ftp.OpenLDAP.org/pub/OpenLDAP/openldap-release/openldap-%{version}.tgz
@@ -34,13 +34,15 @@ Patch5: openldap-2.4.6-nosql.patch
 Patch6: openldap-2.3.19-gethostbyXXXX_r.patch
 Patch9: openldap-2.3.37-smbk5pwd.patch
 Patch10: openldap-2.4.6-multilib.patch
+Patch11: openldap-2.4.12-options.patch
 
 # Patches for the evolution library
 Patch200: openldap-2.4.6-evolution-ntlm.patch
 
 # Patches for db4 library
-Patch400: patch.4.6.21.1
-Patch401: patch.4.6.21.2
+Patch400: patch.4.7.25.1
+Patch401: patch.4.7.25.2
+Patch402: patch.4.7.25.3
 
 URL: http://www.openldap.org/
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
@@ -63,7 +65,7 @@ over the Internet. The openldap package contains configuration files,
 libraries, and documentation for OpenLDAP.
 
 %package devel
-Summary: OpenLDAP development libraries and header files
+Summary: LDAP development libraries and header files
 Group: Development/Libraries
 Requires: openldap = %{version}-%{release}, cyrus-sasl-devel >= 2.1
 Provides: openldap-evolution-devel = %{version}-%{release}
@@ -77,7 +79,7 @@ this package only if you plan to develop or will need to compile
 customized LDAP clients.
 
 %package servers
-Summary: OpenLDAP servers and related files
+Summary: LDAP server
 # OpenLDAP server includes Berkeley DB library, which is licensed under Sleepycat and BSD licenses)
 License: OpenLDAP and (Sleepycat and BSD)
 Requires: fileutils, make, openldap = %{version}-%{release}, openssl, /usr/sbin/useradd, /sbin/chkconfig, /sbin/runuser
@@ -92,7 +94,7 @@ similar to the way DNS (Domain Name System) information is propagated
 over the Internet. This package contains the slapd server and related files.
 
 %package servers-sql
-Summary: OpenLDAP server SQL support module
+Summary: SQL support module for OpenLDAP server
 Requires: openldap-servers = %{version}-%{release}
 Group: System Environment/Daemons
 
@@ -106,7 +108,7 @@ over the Internet. This package contains a loadable module which the
 slapd server can use to read data from an RDBMS.
 
 %package clients
-Summary: Client programs for OpenLDAP
+Summary: LDAP client utilities
 Requires: openldap = %{version}-%{release}
 Group: Applications/Internet
 
@@ -125,6 +127,7 @@ programs needed for accessing and modifying OpenLDAP directories.
 pushd db-%{db_version}
 %patch400 -p0 -b .patch1
 %patch401 -p0 -b .patch2
+%patch402 -p0 -b .patch3
 popd
 
 pushd openldap-%{version}
@@ -137,8 +140,9 @@ pushd openldap-%{version}
 %patch6 -p1 -b .gethostbyname_r
 %patch9 -p1 -b .smbk5pwd
 %patch10 -p1 -b .multilib
+%patch11 -p1 -b .options
 
-cp %{_datadir}/libtool/config.{sub,guess} build/
+cp %{_datadir}/libtool/config/config.{sub,guess} build/
 popd
 
 # Set up a build tree for a static version of libldap with the hooks for the
@@ -600,7 +604,28 @@ fi
 %attr(0644,root,root)      %{evolution_connector_libdir}/*.a
 
 %changelog
-* Wed Oct 15 2008 Jan Safranek <jsafranek@redhat.com> 2.4.11-1
+* Thu Apr 09 2009 Jan Zeleny <jzeleny@redhat.com> 2.4.15-3
+- extended previous patch (#481310) to remove options cfMP
+  from some client tools
+- correction of patch setugid (#494330)
+
+* Thu Mar 26 2009 Jan Zeleny <jzeleny@redhat.com> 2.4.15-2
+- removed -f option from some client tools (#481310)
+
+* Wed Feb 25 2009 Jan Safranek <jsafranek@redhat.com> 2.4.15-1
+- new upstream release
+
+* Tue Feb 17 2009 Jan Safranek <jsafranek@redhat.com> 2.4.14-1
+- new upstream release
+- upgraded to db-4.7.25
+
+* Sat Jan 17 2009 Tomas Mraz <tmraz@redhat.com> 2.4.12-3
+- rebuild with new openssl
+
+* Mon Dec 15 2008 Caolán McNamara <caolanm@redhat.com> 2.4.12-2
+- rebuild for libltdl, i.e. copy config.sub|guess from new location
+
+* Wed Oct 15 2008 Jan Safranek <jsafranek@redhat.com> 2.4.12-1
 - new upstream release
 
 * Mon Oct 13 2008 Jan Safranek <jsafranek@redhat.com> 2.4.11-3

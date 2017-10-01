@@ -1,24 +1,14 @@
 Don't read the user's configuration file if we're running in a setuid
 or setgid application.
-diff -up openldap-2.4.11/libraries/libldap/init.c.patch3 openldap-2.4.11/libraries/libldap/init.c
---- openldap-2.4.11/libraries/libldap/init.c.patch3	2008-09-01 09:57:09.000000000 +0200
-+++ openldap-2.4.11/libraries/libldap/init.c	2008-09-01 09:57:09.000000000 +0200
-@@ -609,10 +609,11 @@ void ldap_int_initialize( struct ldapopt
- 		if( user != NULL ) {
- 			gopts->ldo_def_sasl_authcid = LDAP_STRDUP( user );
- 		}
--    }
-+	}
+diff -up openldap-2.4.14/libraries/libldap/init.c.setugid openldap-2.4.14/libraries/libldap/init.c
+--- openldap-2.4.14/libraries/libldap/init.c.setugid	2009-02-17 08:31:19.000000000 +0100
++++ openldap-2.4.14/libraries/libldap/init.c	2009-02-17 08:39:01.000000000 +0100
+@@ -634,7 +634,7 @@ void ldap_int_initialize( struct ldapopt
+ 	openldap_ldap_init_w_sysconf(LDAP_CONF_FILE);
+ 
+ #ifdef HAVE_GETEUID
+-	if ( geteuid() != getuid() )
++	if ( geteuid() != getuid() || getegid() != getgid() )
+ 		return;
  #endif
  
- 	openldap_ldap_init_w_sysconf(LDAP_CONF_FILE);
-+	if( ( getuid() == geteuid() ) && ( getgid() == getegid() ) ) {
- 	openldap_ldap_init_w_userconf(LDAP_USERRC_FILE);
- 
- 	{
-@@ -642,4 +643,5 @@ void ldap_int_initialize( struct ldapopt
- 	}
- 
- 	openldap_ldap_init_w_env(gopts, NULL);
-+	}
- }
