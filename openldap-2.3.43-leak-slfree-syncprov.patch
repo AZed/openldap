@@ -1,0 +1,37 @@
+Memory leaks in syncrepl and slap_sl_free
+
+If slap_sl_malloc does not have enough free memory to allocate, it fallbacks
+to ch_alloc. Using ch_free in slap_sl_free solves the problem. However this
+patch fixes the consequence, not the cause.
+
+Resolves: #750538
+Author: proposed by the customer
+
+diff --git a/servers/slapd/overlays/syncprov.c b/servers/slapd/overlays/syncprov.c
+index 7c8fce2..0a41074 100644
+--- a/servers/slapd/overlays/syncprov.c
++++ b/servers/slapd/overlays/syncprov.c
+@@ -1753,6 +1753,9 @@ static int
+ syncprov_search_cleanup( Operation *op, SlapReply *rs )
+ {
+ 	if ( rs->sr_ctrls ) {
++		if(rs->sr_ctrls[0] && rs->sr_ctrls[0]->ldctl_value.bv_val){
++			op->o_tmpfree( rs->sr_ctrls[0]->ldctl_value.bv_val, op->o_tmpmemctx);
++		}
+ 		op->o_tmpfree( rs->sr_ctrls[0], op->o_tmpmemctx );
+ 		op->o_tmpfree( rs->sr_ctrls, op->o_tmpmemctx );
+ 		rs->sr_ctrls = NULL;
+diff --git a/servers/slapd/sl_malloc.c b/servers/slapd/sl_malloc.c
+index d4a9176..509dc9b 100644
+--- a/servers/slapd/sl_malloc.c
++++ b/servers/slapd/sl_malloc.c
+@@ -423,7 +423,7 @@ slap_sl_free(void *ptr, void *ctx)
+ 	int i, inserted = 0;
+ 
+ 	if (!sh || ptr < sh->sh_base || ptr >= sh->sh_end) {
+-		ber_memfree_x(ptr, NULL);
++		ch_free(ptr);
+ 	} else if (sh->sh_stack && (char *)ptr + p[-1] == sh->sh_last) {
+ 		p--;
+ 		sh->sh_last = p;
+

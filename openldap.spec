@@ -16,7 +16,7 @@
 Summary: The configuration files, libraries, and documentation for OpenLDAP.
 Name: openldap
 Version: %{version_23}
-Release: 12%{?dist}.9
+Release: 12%{?dist}.10
 License: OpenLDAP
 Group: System Environment/Daemons
 Source0: ftp://ftp.OpenLDAP.org/pub/OpenLDAP/openldap-release/openldap-%{version_23}.tgz
@@ -63,6 +63,7 @@ Patch24: openldap-2.3.43-add-ldap_init_fd.patch
 Patch25: openldap-2.3.43-connections-concurrent-access.patch
 Patch26: openldap-2.3.43-cve-ppolicy-forward-updates.patch
 Patch27: openldap-2.3.43-dns-priority.patch
+Patch28: openldap-2.3.43-leak-slfree-syncprov.patch
 
 # Patches for 2.2.29 for the compat-openldap package.
 Patch100: openldap-2.2.13-tls-fix-connection-test.patch
@@ -239,6 +240,7 @@ pushd openldap-%{version_23}
 %patch25 -p1 -b .connections-concurrent-access
 %patch26 -p1 -b .cve-ppolicy-forward-updates
 %patch27 -p1 -b .dns-priority
+%patch28 -p1 -b .leak-slfree-syncprov
 
 cp %{_datadir}/libtool/config.{sub,guess} build/
 popd
@@ -900,6 +902,9 @@ exec > /dev/null 2> /dev/null
 %attr(0644,root,root)      %{evolution_connector_libdir}/*.a
 
 %changelog
+* Tue Nov 01 2011 Jan Vcelak <jvcelak@redhat.com> 2.3.43-12.10
+- fix: memory leaks in syncrepl and slap_sl_free (#750538)
+
 * Tue Sep 20 2011 Jan Vcelak <jvcelak@redhat.com> 2.3.43-12.9
 - new feature update: honor priority/weight with ldap_domain2hostlist (#734143)
 
