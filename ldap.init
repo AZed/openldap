@@ -32,7 +32,6 @@ SLAPD_LDAPI="no"
 SLAPD_LDAPS="no"
 SLAPD_URLS=""
 SLAPD_SHUTDOWN_TIMEOUT=3
-SLAPD_ULIMIT_SETTINGS=""
 # OPTIONS, SLAPD_OPTIONS and KTB5_KTNAME are not defined
 
 # Source an auxiliary options file if we have one
@@ -114,7 +113,7 @@ function configtest() {
 	slaptestflags=""
 	dbdirs=""
     if [ -d $configdir ]; then
-	    for configfile in `ls -1 $configdir/cn\=config/olcDatabase*.ldif`; do
+	    for configfile in `ls -1 $configdir/cn\=config/olcDatabase*`; do
 		    dbdirs=$dbdirs"
 		    "`LANG=C egrep '^olcDbDirectory[[:space:]]*:[[:space:]]+[[:print:]]+$' $configfile | sed 's,^olcDbDirectory: ,,'`
 	    done
@@ -145,15 +144,7 @@ function configtest() {
 	fi
 	# Unaccessible TLS configuration files.
     if [ -d $configdir ]; then
-		tlsconfigs=`LANG=C awk '/^olcTLS/ {
-				while (/^olcTLS/) {
-					if (/^olc(TLSCertificateKeyFile|TLSCertificateFile|TLSCACertificateFile)[ \t]*:[\t]*/) {
-						do { printf gensub(/^ /,"",1); getline } while (/^ /)
-						printf "\n" ;
-					}
-					else break; 
-				}
-			}' $configdir/cn\=config.ldif | awk '{print $2}'`
+	    tlsconfigs=`LANG=C egrep '^olc(TLSCACertificateFile|TLSCertificateFile|TLSCertificateKeyFile)[[:space:]]*:[[:space:]]' $configdir/cn\=config.ldif | awk '{print $2}'`
     elif [ -f $configfile ]; then
 	    tlsconfigs=`LANG=C egrep '^(TLSCACertificateFile|TLSCertificateFile|TLSCertificateKeyFile)[[:space:]]+' $configfile | awk '{print $2}'`
     fi
@@ -208,12 +199,11 @@ function start() {
 	fi
 	# Start daemons.
 	echo -n $"Starting $prog: "
-	ulimit $SLAPD_ULIMIT_SETTINGS > /dev/null 2>&1
 	daemon --pidfile=$pidfile --check=$prog ${slapd} -h "\"$harg\"" -u ${user} $OPTIONS $SLAPD_OPTIONS 
 	RETVAL=$?
 	if [ $RETVAL -eq 0 ]; then
 		touch $lockfile
-		ln -s $slapd_pidfile $pidfile
+		ln $slapd_pidfile $pidfile
 	fi
 	echo
 	return $RETVAL
@@ -253,6 +243,7 @@ case "$1" in
 	RETVAL=$?
 	;;
     restart|force-reload)
+	status -p $pidfile ${slapd} > /dev/null 2>&1 || exit 7
 	stop
 	start
 	RETVAL=$?
@@ -263,12 +254,12 @@ case "$1" in
 	start
 	;;
     usage)
-	echo $"Usage: $0 {start|stop|restart|force-reload|status|try-restart|condrestart|configtest|usage}"
+	echo $"Usage: $0 {start|stop|restart|status|condrestart|configtest|usage}"
 	RETVAL=0
 	;;
     *)
-	echo $"Usage: $0 {start|stop|restart|force-reload|status|try-restart|condrestart|configtest|usage}"
-	RETVAL=2
+	echo $"Usage: $0 {start|stop|restart|status|condrestart|configtest|usage}"
+	RETVAL=3
 esac
 
 exit $RETVAL

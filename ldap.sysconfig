@@ -29,7 +29,3 @@
 
 # Maximum allowed time to wait for slapd shutdown on 'service ldap stop' (in seconds)
 #SLAPD_SHUTDOWN_TIMEOUT=3
-
-# Parameters to ulimit called right before starting slapd
-# - use this to change system limits for slapd
-#SLAPD_ULIMIT_SETTINGS=""

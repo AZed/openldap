@@ -1,23 +1,21 @@
 # We distribute own version of Berkeley DB to prevent 
 # problems on db4.rpm upgrade - some versions of db4 do
 # not work with some versions of OpenLDAP.
-%define db_version 4.8.24
+%define db_version 4.8.26
 %define ldbm_backend berkeley
-%define version_main 2.4.19
-%define version_compat 2.3.43
+%define version 2.4.21
 %define evolution_connector_prefix %{_libdir}/evolution-openldap
 %define evolution_connector_includedir %{evolution_connector_prefix}/include
 %define evolution_connector_libdir %{evolution_connector_prefix}/%{_lib}
 
 Summary: LDAP support libraries
 Name: openldap
-Version: %{version_main}
-Release: 15%{?dist}.2
+Version: %{version}
+Release: 4%{?dist}
 License: OpenLDAP
 Group: System Environment/Daemons
-Source0: ftp://ftp.OpenLDAP.org/pub/OpenLDAP/openldap-release/openldap-%{version_main}.tgz
-Source1: ftp://ftp.OpenLDAP.org/pub/OpenLDAP/openldap-release/openldap-%{version_compat}.tgz
-Source2: http://download.oracle.com/berkeley-db/db-%{db_version}.tar.gz
+Source0: ftp://ftp.OpenLDAP.org/pub/OpenLDAP/openldap-release/openldap-%{version}.tgz
+Source1: http://download.oracle.com/berkeley-db/db-%{db_version}.tar.gz
 Source3: README.migration
 Source4: ldap.init
 Source5: migration-tools.txt
@@ -28,43 +26,22 @@ Source10: ldap.sysconfig
 
 # Patches for 2.4
 Patch0: openldap-2.4.6-config.patch
-# also used for compat-openldap
 Patch1: openldap-2.0.11-ldaprc.patch
-Patch2: openldap-2.4.14-setugid.patch
+Patch2: openldap-2.2.13-setugid.patch
 Patch3: openldap-2.4.6-pie.patch
 Patch4: openldap-2.3.11-toollinks.patch
-Patch5: openldap-2.4.11-nosql.patch
-# also used for compat-openldap
+Patch5: openldap-2.4.6-nosql.patch
 Patch6: openldap-2.3.19-gethostbyXXXX_r.patch
 Patch9: openldap-2.3.37-smbk5pwd.patch
 Patch10: openldap-2.4.6-multilib.patch
 Patch11: openldap-2.4.16-doc-cacertdir.patch
-Patch12: openldap-2.4.19-tls-accept.patch
-Patch13: openldap-2.4.19-dn2id-segfault.patch
-Patch14: openldap-2.4.19-man-conversion.patch
-Patch15: openldap-2.4.19-modrdn-segfault.patch
-Patch16: openldap-2.4.19-cve-ppolicy-forward-updates.patch
-Patch17: openldap-2.4.19-cve-ndb-bind-rootdn.patch
-Patch18: openldap-2.4.19-security-dos-empty-modrdn.patch
-
-# Patches specific for compat-openldap
-# This is the same patch as Patch2
-# Since the code is different in compat, we have to keep it this way
-Patch100: openldap-2.2.13-setugid.patch
-# This is the same patch as Patch5
-# Since the code is different in compat, we have to keep it this way
-Patch101: openldap-2.3.11-nosql.patch
-Patch102: openldap-2.3.27-config-sasl-options.patch
-Patch103: openldap-2.3.42-network-timeout.patch
-Patch104: openldap-2.3.43-chase-referral.patch
-Patch105: openldap-2.3.43-tls-null-char.patch
-Patch106: openldap-2.3.43-compat-macros.patch
+Patch12: openldap-2.4.21-dn2id-segfault.patch
 
 # Patches for the evolution library
 Patch200: openldap-2.4.6-evolution-ntlm.patch
 
 URL: http://www.openldap.org/
-BuildRoot: %{_tmppath}/%{name}-%{version_main}-root
+BuildRoot: %{_tmppath}/%{name}-%{version}-root
 BuildRequires: cyrus-sasl-devel >= 2.1, gdbm-devel, libtool >= 1.5.6-2, krb5-devel
 BuildRequires: openssl-devel, pam-devel, perl, pkgconfig, tcp_wrappers-devel,
 BuildRequires: unixODBC-devel, libtool-ltdl-devel, groff
@@ -86,8 +63,8 @@ libraries, and documentation for OpenLDAP.
 %package devel
 Summary: LDAP development libraries and header files
 Group: Development/Libraries
-Requires: openldap = %{version_main}-%{release}, cyrus-sasl-devel >= 2.1
-Provides: openldap-evolution-devel = %{version_main}-%{release}
+Requires: openldap = %{version}-%{release}, cyrus-sasl-devel >= 2.1
+Provides: openldap-evolution-devel = %{version}-%{release}
 
 %description devel
 The openldap-devel package includes the development libraries and
@@ -101,7 +78,7 @@ customized LDAP clients.
 Summary: LDAP server
 # OpenLDAP server includes Berkeley DB library, which is licensed under Sleepycat and BSD licenses)
 License: OpenLDAP and (Sleepycat and BSD)
-Requires: fileutils, make, openldap = %{version_main}-%{release}, openssl, /usr/sbin/useradd, /usr/sbin/groupadd, /sbin/chkconfig, /sbin/runuser
+Requires: fileutils, make, openldap = %{version}-%{release}, openssl, /usr/sbin/useradd, /usr/sbin/groupadd, /sbin/chkconfig, /sbin/runuser
 Group: System Environment/Daemons
 
 %description servers
@@ -114,7 +91,7 @@ over the Internet. This package contains the slapd server and related files.
 
 %package servers-sql
 Summary: SQL support module for OpenLDAP server
-Requires: openldap-servers = %{version_main}-%{release}
+Requires: openldap-servers = %{version}-%{release}
 Group: System Environment/Daemons
 
 %description servers-sql
@@ -128,7 +105,7 @@ slapd server can use to read data from an RDBMS.
 
 %package clients
 Summary: LDAP client utilities
-Requires: openldap = %{version_main}-%{release}
+Requires: openldap = %{version}-%{release}
 Group: Applications/Internet
 
 %description clients
@@ -140,28 +117,10 @@ similar to the way DNS (Domain Name System) information is propagated
 over the Internet. The openldap-clients package contains the client
 programs needed for accessing and modifying OpenLDAP directories.
 
-# Declare this subpackage LAST.  This version tag redefines %%{version}, so
-# any future use would reference the wrong version.
-%package -n compat-openldap
-Summary: OpenLDAP compatibility shared libraries.
-Group: System Environment/Libraries
-# Require the current OpenLDAP libraries package in an attempt to ensure that
-# we have a /etc/openldap/ldap.conf file on the system.
-Requires: openldap = %{version_main}-%{release}
-# We want to ensure that version comparisons for this package always sort in
-# the same order as the main openldap package.
-Version: %{version_main}_%{version_compat}
-
-%description -n compat-openldap
-OpenLDAP is an open source suite of LDAP (Lightweight Directory Access
-Protocol) applications and development tools.  The compat-openldap package
-includes older versions of the OpenLDAP shared libraries which may be
-required by some applications.
-
 %prep
-%setup -q -c -a 1 -a 2
+%setup -q -c -a 1
 
-pushd openldap-%{version_main}
+pushd openldap-%{version}
 %patch0 -p1 -b .config
 %patch1 -p1 -b .ldaprc
 %patch2 -p1 -b .setugid
@@ -172,13 +131,7 @@ pushd openldap-%{version_main}
 %patch9 -p1 -b .smbk5pwd
 %patch10 -p1 -b .multilib
 %patch11 -p1 -b .cacertdir
-%patch12 -p1 -b .tls-accept
-%patch13 -p1 -b .dn2id-segfault
-%patch14 -p1 -b .conversion
-%patch15 -p1 -b .modrdn-segfault
-%patch16 -p1 -b .cve-ppolicy-forward-updates
-%patch17 -p1 -b .cve-ndb-bind-rootdn
-%patch18 -p1 -b .security-dos-empty-modrdn
+%patch12 -p1 -b .segfault
 
 cp %{_datadir}/libtool/config/config.{sub,guess} build/
 popd
@@ -187,33 +140,15 @@ popd
 # non-standard NTLM bind type which is needed to connect to Win2k GC servers
 # (Win2k3 supports SASL with DIGEST-MD5, so this shouldn't be needed for those
 # servers, though as of version 1.4 the connector doesn't try SASL first).
-if ! cp -al openldap-%{version_main} evo-openldap-%{version_main} ; then
-     rm -fr evo-openldap-%{version_main}
-     cp -a  openldap-%{version_main} evo-openldap-%{version_main}
+if ! cp -al openldap-%{version} evo-openldap-%{version} ; then
+     rm -fr evo-openldap-%{version}
+     cp -a  openldap-%{version} evo-openldap-%{version}
 fi
-pushd evo-openldap-%{version_main}
+pushd evo-openldap-%{version}
 %patch200 -p1 -b .evolution-ntlm
 popd
 
-pushd openldap-%{version_compat}
-%patch1 -p1 -b .ldaprc
-%patch6 -p1 -b .gethostbyname_r
-%patch100 -p1 -b .setugid
-%patch101 -p1 -b .nosql
-%patch102 -p1 -b .sasl
-%patch103 -p1 -b .network-timeout
-%patch104 -p1 -b .chase-referral
-%patch105 -p1 -b .tls-null-char
-%patch106 -p1 -b .macros
-	for subdir in build-servers build-compat ; do
-		mkdir $subdir
-		ln -s ../configure $subdir
-	done
-	#$autodir/bin/autoconf
-	autoconf
-popd
-
-pushd openldap-%{version_main}
+pushd openldap-%{version}
     for subdir in build-servers build-clients ; do
         mkdir $subdir
         ln -s ../configure $subdir
@@ -257,18 +192,9 @@ ln -sf libslapd_db.so ${dbdir}/%{_lib}/${subdir}/libdb.so
 popd
 
 export CPPFLAGS="-I${dbdir}/include"
-export CFLAGS="$CPPFLAGS $RPM_OPT_FLAGS -fno-strict-aliasing -D_REENTRANT -fPIC -D_GNU_SOURCE"
+export CFLAGS="$CPPFLAGS $RPM_OPT_FLAGS -D_REENTRANT -fPIC -D_GNU_SOURCE"
 export LDFLAGS="-L${dbdir}/%{_lib}"
 export LD_LIBRARY_PATH=${dbdir}/%{_lib}${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
-
-# Build the client libraries for the compat package.
-pushd openldap-%{version_compat}/build-compat
-%configure \
---disable-slapd --disable-slurpd \
---with-threads=posix --enable-static --enable-shared --enable-dynamic \
---enable-local --with-tls --with-cyrus-sasl --without-kerberos
-make %{_smp_mflags}
-popd
 
 build() {
 %configure \
@@ -298,7 +224,7 @@ make %{_smp_mflags} LIBTOOL="$libtool"
 # Build the servers with Kerberos support (for password checking, mainly).
 LIBS=-lpthread; export LIBS
 LD_LIBRARY_PATH=${dbdir}/%{_lib}${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}; export LD_LIBRARY_PATH
-pushd openldap-%{version_main}/build-servers
+pushd openldap-%{version}/build-servers
 build \
     --enable-plugins \
     --enable-slapd \
@@ -327,7 +253,7 @@ popd
 
 # Build clients without Kerberos password-checking support, which is only
 # useful in the server anyway, to avoid stray dependencies.
-pushd openldap-%{version_main}/build-clients
+pushd openldap-%{version}/build-clients
 build \
     --disable-slapd \
     --enable-shared \
@@ -338,7 +264,7 @@ popd
 
 # Build evolution-specific clients just as we would normal clients, except with
 # a different installation directory in mind and no shared libraries.
-pushd evo-openldap-%{version_main}
+pushd evo-openldap-%{version}
 build \
     --disable-slapd \
     --disable-shared \
@@ -355,16 +281,6 @@ popd
 libtool='%{_bindir}/libtool'
 tagname=CC; export tagname
 
-# Install the 2.0 or 2.1 shared libraries for compatibility.  The two sets of
-# libraries share sonames, so we have to choose one or the other.
-mkdir -p $RPM_BUILD_ROOT/%{_libdir}/
-pushd openldap-%{version_compat}/build-compat/libraries
-	make install DESTDIR=$RPM_BUILD_ROOT
-	rm $RPM_BUILD_ROOT/%{_libdir}/*.a
-	rm $RPM_BUILD_ROOT/%{_libdir}/*.la
-	rm $RPM_BUILD_ROOT/%{_libdir}/*.so
-popd
-
 mkdir -p $RPM_BUILD_ROOT/%{_libdir}/
 
 pushd db-instroot/%{_lib}/
@@ -376,7 +292,7 @@ pushd db-%{db_version}
 mv LICENSE LICENSE.bdb-backend
 popd
 
-pushd openldap-%{version_main}/build-servers
+pushd openldap-%{version}/build-servers
 make install DESTDIR=$RPM_BUILD_ROOT libdir=%{_libdir} LIBTOOL="$libtool" STRIP=""
 popd
 
@@ -389,7 +305,7 @@ popd
 
 # Install clients and shared libraries.  Install the evo-specific versions
 # first so that any conflicting files are overwritten by generic versions.
-pushd evo-openldap-%{version_main}
+pushd evo-openldap-%{version}
 make install DESTDIR=$RPM_BUILD_ROOT \
     includedir=%{evolution_connector_includedir} \
     libdir=%{evolution_connector_libdir} \
@@ -399,7 +315,7 @@ make install DESTDIR=$RPM_BUILD_ROOT \
 install -m644 %SOURCE9 \
     $RPM_BUILD_ROOT/%{evolution_connector_prefix}/
 popd
-pushd openldap-%{version_main}/build-clients
+pushd openldap-%{version}/build-clients
 make install DESTDIR=$RPM_BUILD_ROOT libdir=%{_libdir} LIBTOOL="$libtool" STRIP=""
 popd
 
@@ -447,7 +363,7 @@ install -m644 %SOURCE6 \
 mv $RPM_BUILD_ROOT%{_sysconfdir}/openldap/schema/README README.schema
 mv $RPM_BUILD_ROOT%{_sysconfdir}/openldap/DB_CONFIG.example DB_CONFIG.example
 chmod 0644 DB_CONFIG.example
-chmod 0644 openldap-%{version_main}/servers/slapd/back-sql/rdbms_depend/timesten/*.sh
+chmod 0644 openldap-%{version}/servers/slapd/back-sql/rdbms_depend/timesten/*.sh
 
 # Move slapd and slurpd out of _libdir
 mv $RPM_BUILD_ROOT/%{_libdir}/slapd $RPM_BUILD_ROOT/%{_sbindir}/
@@ -473,7 +389,6 @@ rm -f $RPM_BUILD_ROOT/%{_libdir}/openldap/*.so
 
 rm -f $RPM_BUILD_ROOT%{_localstatedir}/openldap-data/DB_CONFIG.example
 rmdir $RPM_BUILD_ROOT%{_localstatedir}/openldap-data
-
 
 %clean 
 rm -rf $RPM_BUILD_ROOT
@@ -503,7 +418,7 @@ if [ "$1" = "2" ]; then
     NEW_BDB_VERSION=$( echo %{db_version} | sed 's/.[0-9]*$//' )
 
     OLD_SLAPD_VERSION=$( rpm -q --qf "%{VERSION}" openldap-servers | sed 's/\.[0-9]*$//' )
-    NEW_SLAPD_VERSION=$( echo %{version_main} | sed 's/\.[0-9]*$//' )
+    NEW_SLAPD_VERSION=$( echo %{version} | sed 's/\.[0-9]*$//' )
     # we need to detect how is the init script named
     # - in older versions ldap
     # - in newer versions slapd
@@ -570,9 +485,7 @@ fi
 # If there's a /var/lib/ldap/need_db_upgrade file, run db_upgrade and delete it.
 # It was created by the % pre above.
 if [ -f /var/lib/ldap/need_db_upgrade ]; then
-	if ls /var/lib/ldap/*.bdb > /dev/null 2>&1; then
-		/sbin/runuser -m -s /usr/sbin/slapd_db_upgrade -- "ldap"  -h /var/lib/ldap /var/lib/ldap/*.bdb
-	fi
+    /sbin/runuser -m -s /usr/sbin/slapd_db_upgrade -- "ldap"  -h /var/lib/ldap /var/lib/ldap/*.bdb
     /sbin/runuser -m -s /usr/sbin/slapd_db_checkpoint -- "ldap" -h /var/lib/ldap -1
     rm -f /var/lib/ldap/need_db_upgrade
 fi
@@ -597,6 +510,7 @@ fi
 if [ -f %{_sysconfdir}/openldap/slapd.conf ]; then
     # if there is no slapd.conf, we probably already have new configuration in place
     mv %{_sysconfdir}/openldap/slapd.conf %{_sysconfdir}/openldap/slapd.conf.bak
+    mkdir -p %{_sysconfdir}/openldap/slapd.d/
     lines=`egrep -n '^(database|backend)' %{_sysconfdir}/openldap/slapd.conf.bak | cut -d: -f1 | head -n 1`
     lines=$(($lines-1))
     head -n $lines %{_sysconfdir}/openldap/slapd.conf.bak > %{_sysconfdir}/openldap/slapd.conf
@@ -613,7 +527,6 @@ EOF
     chmod -R 000 %{_sysconfdir}/openldap/slapd.d
     chmod -R u+rwX %{_sysconfdir}/openldap/slapd.d
     rm -f %{_sysconfdir}/openldap/slapd.conf
-	rm -f %{_sharedstatedir}/ldap/__db* %{_sharedstatedir}/ldap/alock
 fi
 
 
@@ -648,11 +561,11 @@ fi
 
 %files
 %defattr(-,root,root)
-%doc openldap-%{version_main}/ANNOUNCEMENT
-%doc openldap-%{version_main}/CHANGES
-%doc openldap-%{version_main}/COPYRIGHT
-%doc openldap-%{version_main}/LICENSE
-%doc openldap-%{version_main}/README
+%doc openldap-%{version}/ANNOUNCEMENT
+%doc openldap-%{version}/CHANGES
+%doc openldap-%{version}/COPYRIGHT
+%doc openldap-%{version}/LICENSE
+%doc openldap-%{version}/README
 %attr(0755,root,root) %dir %{_sysconfdir}/openldap
 %attr(0755,root,root) %dir %{_sysconfdir}/openldap/cacerts
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/openldap/ldap*.conf
@@ -662,30 +575,21 @@ fi
 %attr(0644,root,root) %{_mandir}/man5/ldif.5*
 %attr(0644,root,root) %{_mandir}/man5/ldap.conf.5*
 
-%files -n compat-openldap
-%defattr(-,root,root)
-%doc openldap-%{version_compat}/ANNOUNCEMENT
-%doc openldap-%{version_compat}/COPYRIGHT
-%doc openldap-%{version_compat}/LICENSE
-%attr(0755,root,root) %{_libdir}/liblber-2.3.so.*
-%attr(0755,root,root) %{_libdir}/libldap-2.3.so.*
-%attr(0755,root,root) %{_libdir}/libldap_r-2.3.so.*
-
 %files servers
 %defattr(-,root,root)
 %doc db-%{db_version}/LICENSE.bdb-backend
 %doc README.upgrading
 %doc README.migration
-%doc openldap-%{version_main}/contrib/slapd-modules/smbk5pwd/README.smbk5pwd
-%doc openldap-%{version_main}/doc/guide/admin/*.html
-%doc openldap-%{version_main}/doc/guide/admin/*.png
+%doc openldap-%{version}/contrib/slapd-modules/smbk5pwd/README.smbk5pwd
+%doc openldap-%{version}/doc/guide/admin/*.html
+%doc openldap-%{version}/doc/guide/admin/*.png
 %attr(0644,root,root) %doc DB_CONFIG.example
 %doc README.schema
 %ghost %config(noreplace) %{_sysconfdir}/pki/tls/certs/slapd.pem
 %attr(0755,root,root) %{_sysconfdir}/rc.d/init.d/slapd
 %attr(0640,root,ldap) %config(noreplace,missingok) %{_sysconfdir}/openldap/slapd.conf
 %attr(0640,root,ldap) %ghost %{_sysconfdir}/openldap/slapd.conf.bak
-%attr(0750,ldap,ldap) %dir %{_sysconfdir}/openldap/slapd.d
+%attr(0640,ldap,ldap) %ghost %{_sysconfdir}/openldap/slapd.d
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/sysconfig/ldap
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/openldap/schema/*.schema*
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/openldap/schema/*.ldif
@@ -703,8 +607,8 @@ fi
 
 %files servers-sql
 %defattr(-,root,root)
-%doc openldap-%{version_main}/servers/slapd/back-sql/docs/*
-%doc openldap-%{version_main}/servers/slapd/back-sql/rdbms_depend
+%doc openldap-%{version}/servers/slapd/back-sql/docs/*
+%doc openldap-%{version}/servers/slapd/back-sql/rdbms_depend
 %attr(0755,root,root) %{_libdir}/openldap/back_sql*.so.*
 %attr(0755,root,root) %{_libdir}/openldap/back_sql.la
 
@@ -715,7 +619,7 @@ fi
 
 %files devel
 %defattr(-,root,root)
-%doc openldap-%{version_main}/doc/drafts openldap-%{version_main}/doc/rfc
+%doc openldap-%{version}/doc/drafts openldap-%{version}/doc/rfc
 %attr(0755,root,root) %{_libdir}/libl*.so
 %attr(0644,root,root) %{_includedir}/*
 %attr(0644,root,root) %{_mandir}/man3/*
@@ -727,76 +631,36 @@ fi
 %attr(0644,root,root)      %{evolution_connector_libdir}/*.a
 
 %changelog
-* Tue Mar 01 2011 Jan Vcelak <jvcelak@redhat.com> 2.4.19-15.2
-- fix: security - DoS when submitting special MODRDN request (#680975)
+* Wed Feb 24 2010 Jan Zeleny <jzeleny@redhat.com> - 2.4.21-4
+- fixed SIGSEGV when deleting data using hdb (#562227)
 
-* Mon Feb 28 2011 Jan Vcelak <jvcelak@redhat.com> 2.4.19-15.1
-- fix: CVE-2011-1024 ppolicy forwarded bind failure messages cause success
-- fix: CVE-2011-1025 rootpw is not verified for ndb backend
+* Mon Feb 01 2010 Jan Zeleny <jzeleny@redhat.com> - 2.4.21-3
+- fixed broken link /usr/sbin/slapschema (#559873)
 
-* Fri Jun 25 2010 Jan Zeleny <jzeleny@redhat.com> - 2.4.19-15
-- fixed regression caused by tls accept patch (#608112)
+* Tue Jan 19 2010 Jan Zeleny <jzeleny@redhat.com> - 2.4.21-2
+- removed some static libraries from openldap-devel (#556090)
 
-* Tue Jun 22 2010 Jan Zeleny <jzeleny@redhat.com> - 2.4.19-14
-- fixed segfault issue in modrdn (#606369)
+* Mon Jan 11 2010 Jan Zeleny <jzeleny@redhat.com> - 2.4.21-1
+- rebased openldap to 2.4.21
+- rebased bdb to 4.8.26
 
-* Fri Jun 18 2010 Jan Vcelak <jvcelak@redhat.com> 2.4.19-13
-- implementation of ulimit settings for slapd (#602458)
+* Mon Nov 23 2009 Jan Zeleny <jzeleny@redhat.com> - 2.4.19-3
+- minor corrections in init script
 
-* Wed May 26 2010 Jan Zeleny <jzeleny@redhat.com> - 2.4.19-12
-- updated man pages - only slaptest can convert configuration schema
-  (#584787)
-- openldap compiled with -fno-strict-aliasing (#596193)
-
-* Thu May 06 2010 Jan Zeleny <jzeleny@redhat.com> - 2.4.19-11
-- added compat package
-
-* Tue Apr 27 2010 Jan Zeleny <jzeleny@redhat.com> - 2.4.19-10
-- updated overlay list in config file (#586143)
-- config dir slapd.d added to package payload (#585276)
-- init script now creates only symlink, not harldink, in /var/run (#584870)
-
-* Mon Apr 19 2010 Jan Zeleny <jzeleny@redhat.com> - 2.4.19-9
-- fixed broken link /usr/sbin/slapschema (#583568)
-- removed some static libraries from openldap-devel (#583575)
-
-* Fri Apr 16 2010 Jan Zeleny <jzeleny@redhat.com> - 2.4.19-8
-- updated spec file - clean files generated by configuration conversion
-  (#582327)
-
-* Mon Mar 22 2010 Jan Zeleny <jzeleny@redhat.com> - 2.4.19-7
-- updated usage line in init script
-- changed return code when calling init script with bad arguments
-
-* Mon Mar 22 2010 Jan Zeleny <jzeleny@redhat.com> - 2.4.19-6
-- fixed segfault when using hdb backend (#575403)
-
-* Fri Mar 19 2010 Jan Zeleny <jzeleny@redhat.com> - 2.4.19-5
-- minor corrections of init script (fedora bugs #571235, #570057, #573804)
-
-* Wed Feb 10 2010 Jan Zeleny <jzeleny@redhat.com> - 2.4.19-4
-- removed syncprov.la from config file (#563472)
-
-* Wed Feb 03 2010 Jan Zeleny <jzeleny@redhat.com> - 2.4.19-3
-- updated post scriptlet (#561352)
-
-* Mon Nov 23 2009 Jan Zeleny <jzeleny@redhat.com> - 2.4.19-2
-- minor changes in init script
-
-* Wed Nov 18 2009 Jan Zeleny <jzeleny@redhat.com> - 2.4.19-1
+* Mon Nov 16 2009 Jan Zeleny <jzeleny@redhat.com> - 2.4.19-2
 - fixed tls connection accepting when TLSVerifyClient = allow
 - /etc/openldap/ldap.conf removed from files owned by openldap-servers
 - minor changes in spec file to supress warnings
 - some changes in init script, so it would be possible to use it when
   using old configuration style
+
+* Fri Nov 06 2009 Jan Zeleny <jzeleny@redhat.com> - 2.4.19-1
 - rebased openldap to 2.4.19
 - rebased bdb to 4.8.24
 
-* Wed Oct 07 2009 Jan Zeleny <jzeleny@redhat.com> 2.4.18-5
+* Wed Oct 07 2009 Jan Zeleny <jzeleny@redhat.com> 2.4.18-4
 - updated smbk5pwd patch to be linked with libldap (#526500)
-
-* Wed Sep 30 2009 Jan Zeleny <jzeleny@redhat.com> 2.4.18-4
-- buffer overflow patch from upstream
+- the last buffer overflow patch replaced with the one from upstream
 - added /etc/openldap/slapd.d and /etc/openldap/slapd.conf.bak
   to files owned by openldap-servers
 
