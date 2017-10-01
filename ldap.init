@@ -16,7 +16,7 @@
 # Source networking configuration and check that networking is up.
 if [ -r /etc/sysconfig/network ] ; then
 	. /etc/sysconfig/network
-	[ ${NETWORKING} = "no" ] && exit 0
+	[ ${NETWORKING} = "no" ] && exit 1
 fi
 
 # Source an auxiliary options file if we have one, and pick up OPTIONS,
@@ -29,8 +29,8 @@ fi
 slapd=/usr/sbin/slapd
 slurpd=/usr/sbin/slurpd
 slaptest=/usr/sbin/slaptest
-[ -x ${slapd} ] || exit 0
-[ -x ${slurpd} ] || exit 0
+[ -x ${slapd} ] || exit 1
+[ -x ${slurpd} ] || exit 1
 
 RETVAL=0
 
@@ -203,14 +203,21 @@ case "$1" in
 	;;
     start)
 	start
+	RETVAL=$?
 	;;
     stop)
 	stop
+	RETVAL=$?
 	;;
     status)
 	status ${slapd}
+	RETVAL=$?
 	if grep -q "^replogfile" /etc/openldap/slapd.conf ; then
 	    status ${slurpd}
+	    RET=$?
+	    if [ $RET -ne 0 ] ; then
+		RETVAL=$RET;
+	    fi
 	fi
 	;;
     restart)
@@ -220,7 +227,8 @@ case "$1" in
     condrestart)
 	if [ -f /var/lock/subsys/ldap ] ; then
 	    stop
-	    start
+ 	    start
+	    RETVAL=$?
 	fi
 	;;
     *)

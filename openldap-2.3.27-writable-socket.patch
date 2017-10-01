@@ -1,0 +1,33 @@
+--- openldap-2.3.27/servers/slapd/daemon.c.old	2006-05-11 20:33:31.000000000 +0200
++++ openldap-2.3.27/servers/slapd/daemon.c	2006-10-12 12:02:31.000000000 +0200
+@@ -1030,14 +1030,22 @@
+ #endif
+ 		}
+ 
+-		if (bind(l.sl_sd, *sal, addrlen)) {
+-			err = sock_errno();
+-			Debug( LDAP_DEBUG_ANY,
+-				"daemon: bind(%ld) failed errno=%d (%s)\n",
+-				(long) l.sl_sd, err, sock_errstr(err) );
+-			tcp_close( l.sl_sd );
+-			sal++;
+-			continue;
++		{
++			int result;
++			mode_t old_umask;
++
++			old_umask = umask(0);
++			result = bind(l.sl_sd, *sal, addrlen);
++			umask(old_umask);
++			if (result) {
++				err = sock_errno();
++				Debug( LDAP_DEBUG_ANY,
++					"daemon: bind(%ld) failed errno=%d (%s)\n",
++					(long) l.sl_sd, err, sock_errstr(err) );
++				tcp_close( l.sl_sd );
++				sal++;
++				continue;
++			}
+ 		}
+ 
+ 		switch ( (*sal)->sa_family ) {

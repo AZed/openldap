@@ -13,7 +13,7 @@
 Summary: The configuration files, libraries, and documentation for OpenLDAP.
 Name: openldap
 Version: %{version_23}
-Release: 5
+Release: 8
 License: OpenLDAP
 Group: System Environment/Daemons
 Source0: ftp://ftp.OpenLDAP.org/pub/OpenLDAP/openldap-release/openldap-%{version_23}.tgz
@@ -41,6 +41,10 @@ Patch6: openldap-2.3.11-nosql.patch
 #Patch7: openldap-2.3.19-nostrip.patch
 Patch8: openldap-2.3.19-gethostbyXXXX_r.patch
 Patch9: openldap-2.3.27-getdn.patch
+Patch10: openldap-2.3.27-config-sasl-options.patch
+Patch11: openldap-2.3.27-timeout-option.patch
+Patch12: openldap-2.3.27-writable-socket.patch
+Patch13: openldap-2.3.27-acl-memleak.patch
 
 # Patches for 2.2.29 for the compat-openldap package.
 Patch100: openldap-2.2.13-tls-fix-connection-test.patch
@@ -176,6 +180,10 @@ pushd openldap-%{version_23}
 #%patch7 -p1 -b .nostrip
 %patch8 -p1 -b .gethostbyname_r
 %patch9 -p1 -b .getdn
+%patch10 -p1 -b .sasl
+%patch11 -p1 -b .timeout
+%patch12 -p1 -b .socket
+%patch13 -p1 -b .acl-memleak
 
 cp %{_datadir}/libtool/config.{sub,guess} build/
 popd
@@ -553,11 +561,29 @@ if /usr/sbin/useradd -c "LDAP User" -u 55 \
 	fi
 fi
 
+# See if slapd has been configured and (ever) started 
+files=$(echo /var/lib/ldap/{[a]lock,*.bdb,*.dbd,log.*,__db.*})
+if [ "$files" != '/var/lib/ldap/[a]lock /var/lib/ldap/*.bdb /var/lib/ldap/*.dbd /var/lib/ldap/log.* /var/lib/ldap/__db.*' ] ; then
+        # Save an ldif of the database where the "%post servers" scriptlet can
+        # restore it.  Also save the database files to a "rpmorig" directory
+        # Just In Case (TM)
+        if /sbin/runuser -m -s /usr/sbin/slapcat -- ldap -l /var/lib/ldap/upgrade.ldif > /dev/null 2>&1 ; then
+                if [ -s /var/lib/ldap/upgrade.ldif ] ; then
+                        /bin/rm -fr /var/lib/ldap/rpmorig > /dev/null 2>&1 || :
+                        mkdir /var/lib/ldap/rpmorig
+                        mv /var/lib/ldap/{alock,*.bdb,*.dbd,__db.*,log.*} /var/lib/ldap/rpmorig > /dev/null 2>&1 || :
+                        cp -f /var/lib/ldap/DB_CONFIG /var/lib/ldap/rpmorig > /dev/null 2>&1 || :
+                else
+                        /bin/rm -f /var/lib/ldap/upgrade.ldif
+                fi
+        fi
+fi
+
 %post servers
 /sbin/ldconfig
 /sbin/chkconfig --add ldap
 # If there's a /var/lib/ldap/upgrade.ldif file, slapadd it and delete it.
-# It was created by the uninstall of the previous version.
+# It was created by the %pre and contains data of the previous version.
 if [ -f /var/lib/ldap/upgrade.ldif ] ; then
 	/sbin/runuser -m -s /usr/sbin/slapadd -- "ldap" -l /var/lib/ldap/upgrade.ldif
 	rm /var/lib/ldap/upgrade.ldif
@@ -586,21 +612,50 @@ if [ "$1" = "0" ] ; then
 	/sbin/service ldap stop > /dev/null 2>&1 || :
 	/sbin/chkconfig --del ldap
 fi
-# Save an ldif of the database where the "% post servers" scriptlet can
-# restore it.  Also save the database files to a "rpmorig" directory
-# Just In Case (TM)
-if /usr/sbin/slapcat -l /var/lib/ldap/upgrade.ldif > /dev/null 2>&1 ; then
-	rm -fr /var/lib/ldap/rpmorig > /dev/null 2>&1 || :
-	mkdir /var/lib/ldap/rpmorig
-	mv /var/lib/ldap/{alock,*.bdb,__db.*,log.*} /var/lib/ldap/rpmorig > /dev/null 2>&1 || :
-	cp -f /var/lib/ldap/DB_CONFIG /var/lib/ldap/rpmorig > /dev/null 2>&1 || :
-fi
 
 %postun servers
 /sbin/ldconfig
 if [ $1 -ge 1 ] ; then
 	/sbin/service ldap condrestart > /dev/null 2>&1 || :
 fi
+
+%posttrans servers
+# prev. versions of openldap-servers package exported the database
+# to /var/lib/ldap/upgrade.ldif and moved the database to
+# /var/lib/rpmorig in %preun, assuming that %post will be called
+# later and restore the DB from there. Unfortunatelly this
+# assumption is wrong, %preun is called after %post ->
+# in the end the database is moved to /var/lib/rpmorig
+# and nobody restores it.
+# Let's restore it here:
+# If there's a /var/lib/ldap/upgrade.ldif file, slapadd it and delete it.
+# It was created by the uninstall of the previous version.
+if [ -f /var/lib/ldap/upgrade.ldif ] ; then
+	STARTAGAIN=0
+	/sbin/service ldap status >/dev/null 2>/dev/null
+	if [ "$?" = "0" ] ; then
+		service ldap stop
+		STARTAGAIN=1
+	fi
+
+	# set the database owner - #preun of prev. version could create
+	# the database with root:root owner (!)
+	if [ -d /var/lib/ldap ] ; then
+		for dbfile in /var/lib/ldap/* ; do
+			if [ -f $dbfile ] ; then
+				chown ldap:ldap $dbfile
+			fi
+		done
+	fi
+
+	/sbin/runuser -m -s /usr/sbin/slapadd -- "ldap" -l /var/lib/ldap/upgrade.ldif >/dev/null 2>/dev/null
+	rm /var/lib/ldap/upgrade.ldif
+	if [ "$STARTAGAIN" = 1 ] ; then
+		service ldap start
+	fi
+fi
+exec > /dev/null 2> /dev/null
+
 
 %files
 %defattr(-,root,root)
@@ -695,6 +750,21 @@ fi
 %attr(0644,root,root)      %{evolution_connector_libdir}/*.a
 
 %changelog
+* Mon Jun 25 2007 Jan Safranek <jsafranek@redhat.com> 2.3.27-8
+- Fix initscript return codes again (#242665)
+
+* Thu Jun 21 2007 Jan Safranek <jsafranek@redhat.com> 2.3.27-7
+- Fix package upgrade when previous instance was never started
+  (part of #240834)
+
+* Mon Jun 12 2007 Jan Safranek <jsafranek@redhat.com> 2.3.27-6
+- Include sals patch to close #230395
+- Include manual bind timeout patch to close #230388
+- Include patch to allow write access to ldap socket to close #237417
+- Fix the upgrade logic so database is not deleted on upgrade (#240834)
+- Fix the memory leak on ACL rules (#241636)
+- Fix initscript return codes (#242665)
+
 * Fri Dec 22 2006 Jay Fenlason <fenlason@redhat.com> 2.3.27-5
 - Include the -getdn patch to close
   bz#214768: CVE-2006-5779 Specially crafted authcid makes OpenLDAP fail an assertion
