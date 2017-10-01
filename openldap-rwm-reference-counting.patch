@@ -1,5 +1,5 @@
 Author: Jan Synáček <jsynacek@redhat.com>
-Resolves: #1060851
+Resolves: #1061405
 Upstream ITS: #7723
 
 Correctly count references in rwm overlay.

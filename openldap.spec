@@ -5,7 +5,7 @@
 
 Name: openldap
 Version: 2.4.39
-Release: 4%{?dist}
+Release: 6%{?dist}
 Summary: LDAP support libraries
 Group: System Environment/Daemons
 License: OpenLDAP
@@ -50,6 +50,12 @@ Patch19: openldap-switch-to-lt_dlopenadvise-to-get-RTLD_GLOBAL-set.patch
 Patch20: openldap-ldapi-sasl.patch
 # rwm reference counting fix, pending upstream inclusion
 Patch21: openldap-rwm-reference-counting.patch
+# upstreamed, ITS #7979
+Patch22: openldap-support-tlsv1-and-later.patch
+# upstreamed, ITS #7933
+Patch23: openldap-olcfrontend-config.patch
+# pending upstream inclusion, ITS #7744
+Patch24: openldap-man-tls-reqcert.patch
 
 # Fedora specific patches
 Patch100: openldap-autoconf-pkgconfig-nss.patch
@@ -60,6 +66,7 @@ BuildRequires: glibc-devel, libtool, libtool-ltdl-devel, groff, perl, perl-devel
 # smbk5pwd overlay:
 BuildRequires: openssl-devel
 Requires: nss-tools
+Requires(post): rpm, coreutils
 
 %description
 OpenLDAP is an open source suite of LDAP (Lightweight Directory Access
@@ -167,6 +174,9 @@ AUTOMAKE=%{_bindir}/true autoreconf -fi
 %patch19 -p1
 %patch20 -p1
 %patch21 -p1
+%patch22 -p1
+%patch23 -p1
+%patch24 -p1
 
 %patch102 -p1
 
@@ -288,7 +298,7 @@ install -m 0700 -d %{buildroot}%{_sharedstatedir}/ldap
 install -m 0755 -d %{buildroot}%{_localstatedir}/run/openldap
 
 # setup autocreation of runtime directories on tmpfs
-mkdir -p %{buildroot}%{_tmpfilesdir}
+mkdir -p %{buildroot}%{_tmpfilesdir}/
 install -m 0644 %SOURCE3 %{buildroot}%{_tmpfilesdir}/slapd.conf
 
 # install default ldap.conf (customized)
@@ -536,8 +546,8 @@ exit 0
 %config(noreplace) %dir %attr(0750,ldap,ldap) %{_sysconfdir}/openldap/slapd.d
 %config(noreplace) %{_sysconfdir}/openldap/schema
 %config(noreplace) %{_sysconfdir}/sysconfig/slapd
+%config(noreplace) %{_tmpfilesdir}/slapd.conf
 %config(noreplace) %{_sysconfdir}/openldap/check_password.conf
-%{_tmpfilesdir}/slapd.conf
 %dir %attr(0700,ldap,ldap) %{_sharedstatedir}/ldap
 %dir %attr(-,ldap,ldap) %{_localstatedir}/run/openldap
 %{_unitdir}/slapd.service
@@ -602,49 +612,49 @@ exit 0
 %{_mandir}/man3/*
 
 %changelog
-* Mon Jul 14 2014 Jan Synáček <jsynacek@redhat.com> - 2.4.39-4
-- fix: fix typo in generate-server-cert.sh (#1117229)
+* Thu Dec  4 2014 Jan Synáček <jsynacek@redhat.com> - 2.4.39-6
+- refix: slapd.ldif olcFrontend missing important/required objectclass (#1132094)
 
-* Fri May 30 2014 Jan Synáček <jsynacek@redhat.com> - 2.4.39-3
-- fix: remove correct tmp file when generating server cert (#1103102)
+* Fri Nov 28 2014 Jan Synáček <jsynacek@redhat.com> - 2.4.39-5
+- add documentation reference to service file (#1087288)
+- fix: tls_reqcert try has bad behavior (#1027613)
 
-* Tue Feb  4 2014 Jan Synáček <jsynacek@redhat.com> - 2.4.39-2
-- CVE-2013-4449: segfault on certain queries with rwm overlay (#1060851)
+* Tue Nov 25 2014 Jan Synáček <jsynacek@redhat.com> - 2.4.39-4
+- support TLS 1.1 and later (#1160468)
+- fix: /etc/openldap/certs directory is empty after installation (#1064251)
+- fix: Typo in script to generate /usr/libexec/openldap/generate-server-cert.sh (#1087490)
+- fix: remove correct tmp file when generating server cert (#1103101)
+- fix: slapd.ldif olcFrontend missing important/required objectclass (#1132094)
 
-* Wed Jan 29 2014 Jan Synáček <jsynacek@redhat.com> - 2.4.39-1
-- new upstream release (#1059186)
+* Wed Feb 26 2014 Jan Synáček <jsynacek@redhat.com> - 2.4.39-3
+- move tmpfiles config to correct location (#1069513)
 
-* Mon Nov 18 2013 Jan Synáček <jsynacek@redhat.com> - 2.4.38-1
-- new upstream release (#1031608)
+* Wed Feb  5 2014 Jan Synáček <jsynacek@redhat.com> - 2.4.39-2
+- CVE-2013-4449: segfault on certain queries with rwm overlay (#1061405)
 
-* Mon Nov 11 2013 Jan Synáček <jsynacek@redhat.com> - 2.4.37-2
-- fix: slaptest incorrectly handles 'include' directives containing a custom file (#1028935)
+* Thu Jan 30 2014 Jan Synáček <jsynacek@redhat.com> - 2.4.39-1
+- new upstream release (#1040324)
 
-* Wed Oct 30 2013 Jan Synáček <jsynacek@redhat.com> - 2.4.37-1
-- new upstream release (#1023916)
-- fix: missing a linefeed at the end of file /etc/openldap/ldap.conf (#1019836)
+* Fri Jan 24 2014 Daniel Mach <dmach@redhat.com> - 2.4.35-12
+- Mass rebuild 2014-01-24
 
-* Mon Oct 21 2013 Jan Synáček <jsynacek@redhat.com> - 2.4.36-4
-- fix: slapd daemon fails to start with segmentation fault on s390x (#1020661)
+* Thu Jan 16 2014 Jan Synáček <jsynacek@redhat.com> - 2.4.35-11
+- fix: missing EOL at the end of default /etc/openldap/ldap.conf (#1053005)
 
-* Tue Oct 15 2013 Jan Synáček <jsynacek@redhat.com> - 2.4.36-3
-- rebuilt for libdb-5.3.28
+* Fri Dec 27 2013 Daniel Mach <dmach@redhat.com> - 2.4.35-10
+- Mass rebuild 2013-12-27
 
-* Mon Oct 14 2013 Jan Synáček <jsynacek@redhat.com> - 2.4.36-2
-- fix: CLDAP is broken for IPv6 (#1018688)
+* Tue Dec 17 2013 Jan Synáček <jsynacek@redhat.com> - 2.4.35-9
+- fix: more typos in manpages (#948562)
 
-* Wed Sep  4 2013 Jan Synáček <jsynacek@redhat.com> - 2.4.36-2
-- fix: typos in manpages
+* Wed Nov 13 2013 Jan Synáček <jsynacek@redhat.com> - 2.4.35-8
+- fix: slaptest incorrectly handles 'include' directives containing a custom file (#1023415)
 
-* Tue Aug 20 2013 Jan Synáček <jsynacek@redhat.com> - 2.4.36-1
-- new upstream release
-  + compile-in mdb backend
+* Mon Oct 14 2013 Jan Synáček <jsynacek@redhat.com> - 2.4.35-7
+- fix: CLDAP is broken for IPv6 (#1007421)
 
-* Sat Aug 03 2013 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 2.4.35-7
-- Rebuilt for https://fedoraproject.org/wiki/Fedora_20_Mass_Rebuild
-
-* Wed Jul 17 2013 Petr Pisar <ppisar@redhat.com> - 2.4.35-6
-- Perl 5.18 rebuild
+* Wed Sep  4 2013 Jan Synáček <jsynacek@redhat.com> - 2.4.35-6
+- fix: typos in manpages (#948562)
 
 * Fri Jun 14 2013 Jan Synáček <jsynacek@redhat.com> - 2.4.35-5
 - fix: using slaptest to convert slapd.conf to LDIF format ignores "loglevel 0"

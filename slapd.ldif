@@ -88,6 +88,7 @@ include: file:///etc/openldap/schema/core.ldif
 
 dn: olcDatabase=frontend,cn=config
 objectClass: olcDatabaseConfig
+objectClass: olcFrontendConfig
 olcDatabase: frontend
 #
 # Sample global access control policy:
