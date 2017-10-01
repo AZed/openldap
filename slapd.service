@@ -9,7 +9,6 @@ Environment="SLAPD_URLS=ldap:/// ldapi:///" "SLAPD_OPTIONS="
 EnvironmentFile=/etc/sysconfig/slapd
 ExecStartPre=/usr/libexec/openldap/check-config.sh
 ExecStart=/usr/sbin/slapd -u ldap -h ${SLAPD_URLS} $SLAPD_OPTIONS
-TimeoutSec=3
 
 [Install]
 WantedBy=multi-user.target

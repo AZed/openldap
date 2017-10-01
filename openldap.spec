@@ -7,8 +7,8 @@
 %global systemctl_bin /usr/bin/systemctl
 
 Name: openldap
-Version: 2.4.30
-Release: 2%{?dist}
+Version: 2.4.33
+Release: 3%{?dist}
 Summary: LDAP support libraries
 Group: System Environment/Daemons
 License: OpenLDAP
@@ -37,22 +37,28 @@ Patch5: openldap-ldaprc-currentdir.patch
 Patch6: openldap-userconfig-setgid.patch
 Patch7: openldap-dns-priority.patch
 Patch8: openldap-syncrepl-unset-tls-options.patch
-Patch9: openldap-constraint-count.patch
-Patch10: openldap-man-sasl-nocanon.patch
-Patch11: openldap-ld_defconn-rebind.patch
+Patch9: openldap-man-sasl-nocanon.patch
+Patch10: openldap-ai-addrconfig.patch
+Patch11: openldap-nss-update-list-of-ciphers.patch
+Patch12: openldap-tls-no-reuse-of-tls_session.patch
+Patch13: openldap-nss-regex-search-hashed-cacert-dir.patch
+Patch14: openldap-nss-ignore-certdb-type-prefix.patch
+Patch15: openldap-nss-certs-from-certdb-fallback-pem.patch
+Patch16: openldap-rwm-slapd-segfault-modrdn.patch
 
 # Fedora specific patches
-Patch100: openldap-fedora-systemd.patch
+Patch100: openldap-autoconf-pkgconfig-nss.patch
+Patch101: openldap-autoreconf.patch
+Patch102: openldap-fedora-systemd.patch
 
 # patches for the evolution library (see README.evolution)
 Patch200: openldap-evolution-ntlm.patch
-
-BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 BuildRequires: cyrus-sasl-devel, nss-devel, krb5-devel, tcp_wrappers-devel, unixODBC-devel
 BuildRequires: glibc-devel, libtool, libtool-ltdl-devel, groff, perl
 # smbk5pwd overlay:
 BuildRequires: openssl-devel
+Requires: nss-tools
 
 %description
 OpenLDAP is an open source suite of LDAP (Lightweight Directory Access
@@ -80,12 +86,12 @@ customized LDAP clients.
 %package servers
 Summary: LDAP server
 License: OpenLDAP
-Requires: openldap%{?_isa} = %{version}-%{release}, libdb-utils, nss-tools
+Requires: openldap%{?_isa} = %{version}-%{release}, libdb-utils
 Requires(pre): shadow-utils
 Requires(post): systemd-units, systemd-sysv, chkconfig
 Requires(preun): systemd-units
 Requires(postun): systemd-units
-BuildRequires: libdb-devel%{?_isa}
+BuildRequires: libdb-devel
 BuildRequires: systemd-units
 Group: System Environment/Daemons
 # migrationtools (slapadd functionality):
@@ -130,9 +136,15 @@ programs needed for accessing and modifying OpenLDAP directories.
 %prep
 %setup -q -c -a 0
 
-# setup tree for openldap
-
 pushd openldap-%{version}
+
+# use pkg-config for Mozilla NSS library
+%patch100 -p1
+%patch101 -p1
+
+# alternative include paths for Mozilla NSS
+ln -s %{_includedir}/nss3 include/nss
+ln -s %{_includedir}/nspr4 include/nspr
 
 %patch0 -p1
 %patch1 -p1
@@ -146,15 +158,13 @@ pushd openldap-%{version}
 %patch9 -p1
 %patch10 -p1
 %patch11 -p1
+%patch12 -p1
+%patch13 -p1
+%patch14 -p1
+%patch15 -p1
+%patch16 -p1
 
-%patch100 -p1
-
-cp %{_datadir}/libtool/config/config.{sub,guess} build/
-
-for subdir in build-servers build-clients ; do
-	mkdir $subdir
-	ln -s ../configure $subdir
-done
+%patch102 -p1
 
 # build smbk5pwd with other overlays
 ln -s ../../../contrib/slapd-modules/smbk5pwd/smbk5pwd.c servers/slapd/overlays
@@ -168,8 +178,7 @@ done
 
 popd
 
-# setup tree for openldap with evolution-specific patches
-
+# patched static libraries for Evolution
 if ! cp -al openldap-%{version} evo-openldap-%{version} ; then
 	rm -fr evo-openldap-%{version}
 	cp -a  openldap-%{version} evo-openldap-%{version}
@@ -180,141 +189,97 @@ popd
 
 %build
 
-libtool='%{_bindir}/libtool'
-export tagname=CC
+# avoid stray dependencies (linker flag --as-needed)
+# enable experimental support for LDAP over UDP (LDAP_CONNECTIONLESS)
+export CFLAGS="%{optflags} -Wl,--as-needed -DLDAP_CONNECTIONLESS"
 
-export CPPFLAGS="-I%_includedir/nss3 -I%_includedir/nspr4"
-export CFLAGS="$RPM_OPT_FLAGS $CPPFLAGS -fPIC -D_REENTRANT -DLDAP_CONNECTIONLESS -D_GNU_SOURCE -DHAVE_TLS -DHAVE_MOZNSS -DSLAPD_LMHASH"
-export NSS_LIBS="-lssl3 -lsmime3 -lnss3 -lnssutil3 -lplds4 -lplc4 -lnspr4"
-export LIBS=""
-
-build() {
-
+pushd openldap-%{version}
 %configure \
-    --with-threads=posix \
-    \
-    --enable-local \
-    --enable-rlookups \
-    \
-    --with-tls=no \
-    --with-cyrus-sasl \
-    \
-    --enable-wrappers \
-    \
-    --enable-passwd \
-    \
-    --enable-cleartext \
-    --enable-crypt \
-    --enable-spasswd \
-    --disable-lmpasswd \
-    --enable-modules \
-    --disable-sql \
-    \
-    --libexecdir=%{_libdir} \
-    $@
+	--enable-debug \
+	--enable-dynamic \
+	--enable-syslog \
+	--enable-proctitle \
+	--enable-ipv6 \
+	--enable-local \
+	\
+	--enable-slapd \
+	--enable-dynacl \
+	--enable-aci \
+	--enable-cleartext \
+	--enable-crypt \
+	--enable-lmpasswd \
+	--enable-spasswd \
+	--enable-modules \
+	--enable-rewrite \
+	--enable-rlookups \
+	--enable-slapi \
+	--disable-slp \
+	--enable-wrappers \
+	\
+	--enable-backends=mod \
+	--enable-bdb=yes \
+	--enable-hdb=yes \
+	--enable-monitor=yes \
+	--disable-ndb \
+	--disable-perl \
+	\
+	--enable-overlays=mod \
+	\
+	--disable-static \
+	--enable-shared \
+	\
+	--with-cyrus-sasl \
+	--without-fetch \
+	--with-threads \
+	--with-pic \
+	--with-tls=moznss \
+	--with-gnu-ld \
+	\
+	--libexecdir=%{_libdir}
 
-# allow #include <nss/file.h> and <nspr/file.h>
-pushd include
-if [ ! -d nss ] ; then
-    ln -s %{_includedir}/nss3 nss
-fi
-if [ ! -d nspr ] ; then
-    ln -s %{_includedir}/nspr4 nspr
-fi
+make %{_smp_mflags}
 popd
 
-make %{_smp_mflags} LIBTOOL="$libtool"
-
-}
-
-# Kerberos support:
-# - enabled in server (mainly for password checking)
-# - disabled in clients (not needed, to avoid stray dependencies)
-
-# build servers
-export LIBS="$NSS_LIBS -lpthread"
-pushd openldap-%{version}/build-servers
-build \
-    --enable-slapd \
-    --enable-bdb \
-    --enable-dnssrv=mod \
-    --enable-hdb \
-    --enable-ldap=mod \
-    --enable-meta=mod \
-    --enable-monitor \
-    --enable-null=mod \
-    --enable-shell=mod \
-    --enable-sql=mod \
-    --enable-mdb=mod \
-    --disable-ndb \
-    --enable-passwd=mod \
-    --enable-sock=mod \
-    --disable-perl \
-    --enable-relay=mod \
-    --enable-overlays=mod \
-    --enable-dynacl \
-    --enable-aci=yes \
-    --disable-shared \
-    --disable-dynamic
-popd
-
-# build clients
-export LIBS="$NSS_LIBS"
-pushd openldap-%{version}/build-clients
-build \
-    --disable-slapd \
-    --enable-shared \
-    --enable-dynamic \
-    --without-kerberos \
-    --with-pic
-popd
-
-# build evolution-specific clients
-# (specific patch, different installation directory, no shared libraries)
+# build patched static library for Evolution
 pushd evo-openldap-%{version}
-build \
-    --disable-slapd \
-    --disable-shared \
-    --disable-dynamic \
-    --enable-static \
-    --without-kerberos \
-    --with-pic \
-    --includedir=%{evolution_connector_includedir} \
-    --libdir=%{evolution_connector_libdir}
+%configure \
+	--enable-debug \
+	--disable-dynamic \
+	--disable-syslog \
+	--disable-proctitle \
+	--enable-ipv6 \
+	--disable-local \
+	\
+	--disable-slapd \
+	\
+	--enable-static \
+	--disable-shared \
+	\
+	--with-cyrus-sasl \
+	--without-fetch \
+	--with-threads \
+	--with-pic \
+	--with-tls=moznss \
+	--with-gnu-ld \
+	\
+	--includedir=%{evolution_connector_includedir} \
+	--libdir=%{evolution_connector_libdir}
+
+make %{_smp_mflags}
 popd
 
 %install
-rm -rf %{buildroot}
-libtool='%{_bindir}/libtool'
-export tagname=CC
 
 mkdir -p %{buildroot}%{_libdir}/
 
-# install servers
-pushd openldap-%{version}/build-servers
-make install DESTDIR=%{buildroot} \
-	libdir=%{_libdir} \
-	LIBTOOL="$libtool" \
-	STRIP=""
-popd
-
-# install evolution-specific clients (conflicting files will be overwriten by generic version)
+# install evolution-specific libraries (conflicting files will be overwriten by generic version)
 pushd evo-openldap-%{version}
-make install DESTDIR=%{buildroot} \
-    includedir=%{evolution_connector_includedir} \
-    libdir=%{evolution_connector_libdir} \
-    LIBTOOL="$libtool" \
-    STRIP=""
-install -m 644 %SOURCE100 \
-    %{buildroot}%{evolution_connector_prefix}/
+make install DESTDIR=%{buildroot} STRIP=""
+install -m 644 %SOURCE100 %{buildroot}%{evolution_connector_prefix}/
 popd
 
-# install clients
-pushd openldap-%{version}/build-clients
-make install DESTDIR=%{buildroot} \
-	libdir=%{_libdir} \
-	LIBTOOL="$libtool" \
-	STRIP=""
+pushd openldap-%{version}
+make install DESTDIR=%{buildroot} STRIP=""
 popd
 
 # setup directories for TLS certificates
@@ -389,10 +354,7 @@ chmod 0644 %{buildroot}%{_datadir}/openldap-servers/DB_CONFIG.example
 
 # remove files which we don't want packaged
 rm -f %{buildroot}%{_libdir}/*.la
-rm -f %{buildroot}%{_libdir}/*.a
 rm -f %{buildroot}%{evolution_connector_libdir}/*.la
-rm -f %{buildroot}%{evolution_connector_libdir}/*.so*
-rm -f %{buildroot}%{_libdir}/openldap/*.a
 rm -f %{buildroot}%{_libdir}/openldap/*.so
 
 rm -f %{buildroot}%{_localstatedir}/openldap-data/DB_CONFIG.example
@@ -581,6 +543,7 @@ exit 0
 %{_libdir}/liblber-2.4*.so.*
 %{_libdir}/libldap-2.4*.so.*
 %{_libdir}/libldap_r-2.4*.so.*
+%{_libdir}/libslapi-2.4*.so.*
 %{_mandir}/man5/ldif.5*
 %{_mandir}/man5/ldap.conf.5*
 
@@ -651,12 +614,95 @@ exit 0
 
 %files devel
 %doc openldap-%{version}/doc/drafts openldap-%{version}/doc/rfc
-%{_libdir}/libl*.so
+%{_libdir}/lib*.so
 %{_includedir}/*
 %{_mandir}/man3/*
 %{evolution_connector_prefix}/
 
 %changelog
+* Wed Oct 31 2012 Jan Vcelak <jvcelak@redhat.com> 2.4.33-3
+- fix update: libldap does not load PEM certificate if certdb is used as TLS_CACERTDIR (#857455)
+
+* Fri Oct 12 2012 Jan Vcelak <jvcelak@redhat.com> 2.4.33-2
+- fix: slapd with rwm overlay segfault following ldapmodify (#865685)
+
+* Thu Oct 11 2012 Jan Vcelak <jvcelak@redhat.com> 2.4.33-1
+- new upstream release:
+  + slapd: ACLs, syncrepl
+  + backends: locking and memory management in MDB
+  + manpages: slapo-refint
+- patch update: MozNSS certificate database in SQL format cannot be used (#860317)
+- fix: slapd.service should not use /tmp (#859019)
+
+* Fri Sep 14 2012 Jan Vcelak <jvcelak@redhat.com> 2.4.32-3
+- fix: some TLS ciphers cannot be enabled (#852338)
+- fix: connection hangs after fallback to second server when certificate hostname verification fails (#852476)
+- fix: not all certificates in OpenSSL compatible CA certificate directory format are loaded (#852786)
+- fix: MozNSS certificate database in SQL format cannot be used (#857373)
+- fix: libldap does not load PEM certificate if certdb is used as TLS_CACERTDIR (#857455)
+
+* Mon Aug 20 2012 Jan Vcelak <jvcelak@redhat.com> 2.4.32-2
+- enhancement: TLS, prefer private keys from authenticated slots
+- enhancement: TLS, allow certificate specification including token name
+- resolve TLS failures in replication in 389 Directory Server
+
+* Wed Aug 01 2012 Jan Vcelak <jvcelak@redhat.com> 2.4.32-1
+- new upstream release
+  + library: double free, SASL handling
+  + tools: read SASL_NOCANON from config file
+  + slapd: config index renumbering, duplicate error response
+  + backends: various fixes in mdb, bdb/hdb, ldap
+  + accesslog, syncprov: fix memory leaks in with replication
+  + sha2: portability, thread safety, support SSHA256,384,512
+  + documentation fixes
+
+* Sat Jul 21 2012 Jan Vcelak <jvcelak@redhat.com> 2.4.31-7
+- fix: slapd refuses to set up TLS with self-signed PEM certificate (#842022)
+
+* Fri Jul 20 2012 Jan Vcelak <jvcelak@redhat.com> 2.4.31-6
+- multilib fix: move libslapi from openldap-servers to openldap package
+
+* Thu Jul 19 2012 Jan Vcelak <jvcelak@redhat.com> 2.4.31-5
+- fix: querying for IPv6 DNS records when IPv6 is disabled on the host (#835013)
+- fix: smbk5pwd module computes invalid LM hashes (#841560)
+
+* Wed Jul 18 2012 Jan Vcelak <jvcelak@redhat.com> 2.4.31-4
+- modify the package build process
+  + fix autoconfig files to detect Mozilla NSS library using pkg-config
+  + remove compiler flags which are not needed currently
+  + build server, client and library together
+  + avoid stray dependencies by using --as-needed linker flag
+  + enable SLAPI interface in slapd
+
+* Wed Jun 27 2012 Jan Vcelak <jvcelak@redhat.com> 2.4.31-3
+- update fix: count constraint broken when using multiple modifications (#795766)
+- fix: invalid order of TLS shutdown operations (#808464)
+- fix: TLS error messages overwriting in tlsm_verify_cert() (#810462)
+- fix: reading pin from file can make all TLS connections hang (#829317)
+- CVE-2012-2668: cipher suite selection by name can be ignored (#825875)
+- fix: slapd fails to start on reboot (#829272)
+- fix: default cipher suite is always selected (#828790)
+- fix: less influence between individual TLS contexts:
+  - replication with TLS does not work (#795763)
+  - possibly others
+
+* Fri May 18 2012 Jan Vcelak <jvcelak@redhat.com> 2.4.31-2
+- fix: nss-tools package is required by the base package, not the server subpackage
+- fix: MozNSS CA certdir does not work together with PEM CA cert file (#819536)
+
+* Tue Apr 24 2012 Jan Vcelak <jvcelak@redhat.com> 2.4.31-1
+- new upstream release
+  + library: IPv6 url detection
+  + library: rebinding to failed connections
+  + server: various fixes in mdb backend
+  + server: various fixes in replication
+  + server: various fixes in overlays and minor backends
+  + documentation fixes
+- remove patches which were merged upstream
+
+* Thu Apr 05 2012 Jan Vcelak <jvcelak@redhat.com> 2.4.30-3
+- rebuild due to libdb rebase
+
 * Mon Mar 26 2012 Jan Synáček <jsynacek@redhat.com> 2.4.30-2
 - fix: Re-binding to a failed connection can segfault (#784989)
 
