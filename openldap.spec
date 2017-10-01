@@ -5,7 +5,7 @@
 
 Name: openldap
 Version: 2.4.40
-Release: 2%{?dist}
+Release: 3%{?dist}
 Summary: LDAP support libraries
 Group: System Environment/Daemons
 License: OpenLDAP
@@ -48,6 +48,8 @@ Patch19: openldap-switch-to-lt_dlopenadvise-to-get-RTLD_GLOBAL-set.patch
 Patch20: openldap-ldapi-sasl.patch
 # TLSv1 support, already included upstream
 Patch21: openldap-support-tlsv1-and-later.patch
+# CVE-2015-1545, already upstream
+Patch22: openldap-require-non-empty-attributelist.patch
 
 # Fedora specific patches
 Patch100: openldap-autoconf-pkgconfig-nss.patch
@@ -164,6 +166,7 @@ AUTOMAKE=%{_bindir}/true autoreconf -fi
 %patch19 -p1
 %patch20 -p1
 %patch21 -p1
+%patch22 -p1
 
 %patch102 -p1
 
@@ -576,6 +579,9 @@ exit 0
 %{_mandir}/man3/*
 
 %changelog
+* Tue Feb 10 2015 Jan Synáček <jsynacek@redhat.com> - 2.4.40-3
+- CVE-2015-1545: slapd crashes on search with deref control (#1190645)
+
 * Fri Nov 14 2014 Jan Synáček <jsynacek@redhat.com> - 2.4.40-2
 - enhancement: support TLSv1 and later (#1160466)
 
