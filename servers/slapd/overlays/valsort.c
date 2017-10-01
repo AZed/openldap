@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/overlays/valsort.c,v 1.9.2.7 2007/06/08 08:13:18 hyc Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2005-2007 The OpenLDAP Foundation.
+ * Copyright 2005-2008 The OpenLDAP Foundation.
  * Portions copyright 2005 Symas Corporation.
  * All rights reserved.
  *

@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/acl.c,v 1.250.2.28 2007/04/01 21:31:25 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2007 The OpenLDAP Foundation.
+ * Copyright 1998-2008 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

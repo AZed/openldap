@@ -1,7 +1,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/saslauthz.c,v 1.144.2.19 2007/01/02 21:43:57 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2007 The OpenLDAP Foundation.
+ * Copyright 1998-2008 The OpenLDAP Foundation.
  * Portions Copyright 2000 Mark Adamson, Carnegie Mellon.
  * All rights reserved.
  *

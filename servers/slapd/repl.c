@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/repl.c,v 1.65.2.10 2007/01/02 21:43:57 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2007 The OpenLDAP Foundation.
+ * Copyright 1998-2008 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -168,7 +168,7 @@ replog( Operation *op )
 	int     count = 0;
 #endif
 	int	subsets = 0;
-	long	now = slap_get_time();
+	long	now;
 	char	*replogfile;
 
 	replogfile = op->o_bd->be_replogfile ? op->o_bd->be_replogfile :
@@ -183,6 +183,7 @@ replog( Operation *op )
 		return;
 	}
 
+	now = slap_get_time();
 	for ( i = 0; op->o_bd->be_replica != NULL && op->o_bd->be_replica[i] != NULL; i++ ) {
 		/* check if dn's suffix matches legal suffixes, if any */
 		if ( op->o_bd->be_replica[i]->ri_nsuffix != NULL ) {

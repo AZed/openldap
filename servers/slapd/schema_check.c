@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/schema_check.c,v 1.94.2.8 2007/01/02 21:43:57 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2007 The OpenLDAP Foundation.
+ * Copyright 1998-2008 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -328,11 +328,11 @@ entry_schema_check(
 				ObjectClass *xc = NULL;
 				for( j=0; aoc->a_vals[j].bv_val; j++ ) {
 					if( i != j ) {
-						xc = oc_bvfind( &aoc->a_vals[i] );
+						xc = oc_bvfind( &aoc->a_vals[j] );
 						if( xc == NULL ) {
 							snprintf( textbuf, textlen, 
 								"unrecognized objectClass '%s'",
-								aoc->a_vals[i].bv_val );
+								aoc->a_vals[j].bv_val );
 
 							Debug( LDAP_DEBUG_ANY,
 								"entry_check_schema(%s): %s\n",
@@ -356,8 +356,8 @@ entry_schema_check(
 					}
 				}
 
-				if( xc == NULL ) {
-					snprintf( textbuf, textlen, "instanstantiation of "
+				if( xc != NULL ) {
+					snprintf( textbuf, textlen, "instantiation of "
 						"abstract objectClass '%s' not allowed",
 						aoc->a_vals[i].bv_val );
 

@@ -1,7 +1,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/back-meta.h,v 1.23.2.22 2007/01/27 23:56:43 ando Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2007 The OpenLDAP Foundation.
+ * Copyright 1999-2008 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * Portions Copyright 1999-2003 Howard Chu.
  * All rights reserved.

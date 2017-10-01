@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/libraries/liblber/sockbuf.c,v 1.60.2.8 2007/06/10 18:43:56 hallvard Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2007 The OpenLDAP Foundation.
+ * Copyright 1998-2008 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

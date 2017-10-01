@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/dn2entry.c,v 1.25.2.5 2007/01/02 21:44:00 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2007 The OpenLDAP Foundation.
+ * Copyright 2000-2008 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -45,7 +45,7 @@ bdb_dn2entry(
 
 	*e = NULL;
 
-	rc = bdb_cache_find_ndn( op, tid, dn, &ei );
+	rc = bdb_cache_find_ndn( op, locker, dn, &ei );
 	if ( rc ) {
 		if ( matched && rc == DB_NOTFOUND ) {
 			/* Set the return value, whether we have its entry
@@ -73,7 +73,7 @@ bdb_dn2entry(
 			/* always return EntryInfo */
 			if ( ei->bei_parent ) {
 				ei = ei->bei_parent;
-				rc2 = bdb_cache_find_id( op, tid, ei->bei_id, &ei, 1,
+				rc2 = bdb_cache_find_id( op, tid, ei->bei_id, &ei, 0,
 					locker, lock );
 				if ( rc2 ) rc = rc2;
 			}

@@ -1,7 +1,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/daemon.c,v 1.318.2.32 2007/07/23 20:34:28 hallvard Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2007 The OpenLDAP Foundation.
+ * Copyright 1998-2008 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -810,9 +810,9 @@ slapd_clr_write( ber_socket_t s, int wake )
 {
 	ldap_pvt_thread_mutex_lock( &slap_daemon.sd_mutex );
 
-	assert( SLAP_SOCK_IS_ACTIVE( s ));
-
 	if ( SLAP_SOCK_IS_WRITE( s )) {
+		assert( SLAP_SOCK_IS_ACTIVE( s ));
+
 		SLAP_SOCK_CLR_WRITE( s );
 		slap_daemon.sd_nwriters--;
 	}

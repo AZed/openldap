@@ -1,7 +1,7 @@
 /* $OpenLDAP: pkg/ldap/libraries/libldap/controls.c,v 1.45.2.3 2007/01/02 21:43:48 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2007 The OpenLDAP Foundation.
+ * Copyright 1998-2008 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -442,7 +442,8 @@ ldap_create_control(
 		return LDAP_NO_MEMORY;
 	}
 
-	if ( ber_flatten2( ber, &ctrl->ldctl_value, 1 ) == -1 ) {
+	BER_BVZERO( &ctrl->ldctl_value );
+	if ( ber != NULL && ber_flatten2( ber, &ctrl->ldctl_value, 1 ) == -1 ) {
 		LDAP_FREE( ctrl );
 		return LDAP_NO_MEMORY;
 	}

@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/backover.c,v 1.31.2.22 2007/07/12 00:42:42 hyc Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2007 The OpenLDAP Foundation.
+ * Copyright 2003-2008 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -147,6 +147,7 @@ over_db_config(
 			ca.bi = &on->on_bi;
 			ct = config_find_keyword( on->on_bi.bi_cf_ocs->co_table, &ca );
 			if ( ct ) {
+				ca.table = on->on_bi.bi_cf_ocs->co_type;
 				rc = config_add_vals( ct, &ca );
 				if ( rc != SLAP_CONF_UNKNOWN )
 					break;

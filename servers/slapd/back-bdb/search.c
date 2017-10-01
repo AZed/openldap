@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/search.c,v 1.221.2.16 2007/07/20 22:42:26 hyc Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2007 The OpenLDAP Foundation.
+ * Copyright 2000-2008 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -1221,20 +1221,6 @@ parse_paged_cookie( Operation *op, SlapReply *rs )
 			goto done;
 		}
 
-	} else {
-		/* Initial request.  Initialize state. */
-#if 0
-		if ( op->o_conn->c_pagedresults_state.ps_cookie != 0 ) {
-			/* There's another pagedResults control on the
-			 * same connection; reject new pagedResults controls 
-			 * (allowed by RFC2696) */
-			rs->sr_text = "paged results cookie unavailable; try later";
-			rc = LDAP_UNWILLING_TO_PERFORM;
-			goto done;
-		}
-#endif
-		ps->ps_cookie = 0;
-		ps->ps_count = 0;
 	}
 
 done:;

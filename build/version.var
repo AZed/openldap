@@ -2,7 +2,7 @@
 # $OpenLDAP: pkg/ldap/build/version.var,v 1.7.2.94 2007/08/20 17:43:48 kurt Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2007 The OpenLDAP Foundation.
+## Copyright 1998-2008 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -15,9 +15,9 @@
 ol_package=OpenLDAP
 ol_major=2
 ol_minor=3
-ol_patch=38
-ol_api_inc=20338
+ol_patch=43
+ol_api_inc=20343
 ol_api_current=2
-ol_api_revision=26
+ol_api_revision=31
 ol_api_age=2
-ol_release_date="2007/08/20"
+ol_release_date="2008/07/16"

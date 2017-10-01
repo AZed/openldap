@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/alock.h,v 1.1.2.4 2007/01/02 21:43:54 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2005-2007 The OpenLDAP Foundation.
+ * Copyright 2005-2008 The OpenLDAP Foundation.
  * Portions Copyright 2004-2005 Symas Corporation.
  * All rights reserved.
  *

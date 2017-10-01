@@ -2,7 +2,7 @@
 # $OpenLDAP: pkg/ldap/servers/slapd/back-hdb/Makefile.in,v 1.9.2.5 2007/01/02 21:44:01 kurt Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2007 The OpenLDAP Foundation.
+## Copyright 1998-2008 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -57,7 +57,7 @@ LIBBASE = back_hdb
 XINCPATH = -I.. -I$(srcdir)/.. -I$(srcdir) -I$(XXDIR)
 XDEFS = $(MODULES_CPPFLAGS)
 
-depend-common: .links
+depend-local-lib: .links
 
 all-local-lib:	../.backend
 

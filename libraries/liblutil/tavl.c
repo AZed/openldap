@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/libraries/liblutil/tavl.c,v 1.10.2.4 2007/01/02 21:43:52 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2005-2007 The OpenLDAP Foundation.
+ * Copyright 2005-2008 The OpenLDAP Foundation.
  * Portions Copyright (c) 2005 by Howard Chu, Symas Corp.
  * All rights reserved.
  *

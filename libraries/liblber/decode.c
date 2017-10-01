@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/libraries/liblber/decode.c,v 1.101.2.4 2007/01/02 21:43:48 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2007 The OpenLDAP Foundation.
+ * Copyright 1998-2008 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -373,7 +373,7 @@ ber_get_stringbvl( bgbvr *b, ber_len_t *rlen )
 	case BvOff:
 		*b->res.ba = ber_memalloc_x( (n+1) * b->siz, b->ber->ber_memctx );
 		if ( *b->res.ba == NULL ) return LBER_DEFAULT;
-		((struct berval *)((long)(*b->res.ba) + n*b->siz +
+		((struct berval *)((char *)(*b->res.ba) + n*b->siz +
 			b->off))->bv_val = NULL;
 		break;
 	}
@@ -406,7 +406,7 @@ ber_get_stringbvl( bgbvr *b, ber_len_t *rlen )
 			*bvp = bv;
 			break;
 		case BvOff:
-			*(BerVarray)((long)(*b->res.ba)+n*b->siz+b->off) = bv;
+			*(BerVarray)((char *)(*b->res.ba)+n*b->siz+b->off) = bv;
 			break;
 		}
 	}

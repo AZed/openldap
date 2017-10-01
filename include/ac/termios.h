@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/include/ac/termios.h,v 1.16.2.3 2007/01/02 21:43:47 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2007 The OpenLDAP Foundation.
+ * Copyright 1998-2008 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -17,7 +17,7 @@
 #ifndef _AC_TERMIOS_H
 #define _AC_TERMIOS_H
 
-#ifdef HAVE_POSIX_TERMIOS
+#ifdef HAVE_TERMIOS_H
 #include <termios.h>
 
 #ifdef GCWINSZ_IN_SYS_IOCTL

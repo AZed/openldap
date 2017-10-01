@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/modrdn.c,v 1.160.2.12 2007/01/02 21:44:00 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2007 The OpenLDAP Foundation.
+ * Copyright 2000-2008 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -510,7 +510,7 @@ retry:	/* transaction retry */
 
 	/* Shortcut the search */
 	nei = neip ? neip : eip;
-	rs->sr_err = bdb_cache_find_ndn ( op, ltid, &new_ndn, &nei );
+	rs->sr_err = bdb_cache_find_ndn ( op, locker, &new_ndn, &nei );
 	if ( nei ) bdb_cache_entryinfo_unlock( nei );
 	switch( rs->sr_err ) {
 	case DB_LOCK_DEADLOCK:
@@ -519,6 +519,9 @@ retry:	/* transaction retry */
 	case DB_NOTFOUND:
 		break;
 	case 0:
+		/* Allow rename to same DN */
+		if ( nei == ei )
+			break;
 		rs->sr_err = LDAP_ALREADY_EXISTS;
 		goto return_results;
 	default:
@@ -729,6 +732,8 @@ retry:	/* transaction retry */
 		} else {
 			rs->sr_err = LDAP_X_NO_OPERATION;
 			ltid = NULL;
+			/* Only free attrs if they were dup'd.  */
+			if ( dummy.e_attrs == e->e_attrs ) dummy.e_attrs = NULL;
 			goto return_results;
 		}
 

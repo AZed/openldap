@@ -2,7 +2,7 @@
 /* syncprov.c - syncrepl provider */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2004-2007 The OpenLDAP Foundation.
+ * Copyright 2004-2008 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -1503,7 +1503,7 @@ syncprov_op_response( Operation *op, SlapReply *rs )
 	{
 		struct berval maxcsn = BER_BVNULL;
 		char cbuf[LDAP_LUTIL_CSNSTR_BUFSIZE];
-		int do_check=0;
+		int do_check = 0, have_psearches;
 
 		/* Update our context CSN */
 		cbuf[0] = '\0';
@@ -1548,7 +1548,10 @@ syncprov_op_response( Operation *op, SlapReply *rs )
 		opc->sctxcsn.bv_val = cbuf;
 
 		/* Handle any persistent searches */
-		if ( si->si_ops ) {
+		ldap_pvt_thread_mutex_lock( &si->si_ops_mutex );
+		have_psearches = ( si->si_ops != NULL );
+		ldap_pvt_thread_mutex_unlock( &si->si_ops_mutex );
+		if ( have_psearches ) {
 			switch(op->o_tag) {
 			case LDAP_REQ_ADD:
 			case LDAP_REQ_MODIFY:
@@ -1653,12 +1656,19 @@ syncprov_op_mod( Operation *op, SlapReply *rs )
 {
 	slap_overinst		*on = (slap_overinst *)op->o_bd->bd_info;
 	syncprov_info_t		*si = on->on_bi.bi_private;
+	slap_callback *cb;
+	opcookie *opc;
+	int have_psearches, cbsize;
 
-	slap_callback *cb = op->o_tmpcalloc(1, sizeof(slap_callback)+
-		sizeof(opcookie) +
-		(si->si_ops ? sizeof(modinst) : 0 ),
-		op->o_tmpmemctx);
-	opcookie *opc = (opcookie *)(cb+1);
+	ldap_pvt_thread_mutex_lock( &si->si_ops_mutex );
+	have_psearches = ( si->si_ops != NULL );
+	ldap_pvt_thread_mutex_unlock( &si->si_ops_mutex );
+
+	cbsize = sizeof(slap_callback) + sizeof(opcookie) +
+		(have_psearches ? sizeof(modinst) : 0 );
+
+	cb = op->o_tmpcalloc(1, cbsize, op->o_tmpmemctx);
+	opc = (opcookie *)(cb+1);
 	opc->son = on;
 	cb->sc_response = syncprov_op_response;
 	cb->sc_cleanup = syncprov_op_cleanup;
@@ -1669,7 +1679,7 @@ syncprov_op_mod( Operation *op, SlapReply *rs )
 	/* If there are active persistent searches, lock this operation.
 	 * See seqmod.c for the locking logic on its own.
 	 */
-	if ( si->si_ops ) {
+	if ( have_psearches ) {
 		modtarget *mt, mtdummy;
 		modinst *mi;
 
@@ -1716,7 +1726,7 @@ syncprov_op_mod( Operation *op, SlapReply *rs )
 		}
 	}
 
-	if (( si->si_ops || si->si_logs ) && op->o_tag != LDAP_REQ_ADD )
+	if (( have_psearches || si->si_logs ) && op->o_tag != LDAP_REQ_ADD )
 		syncprov_matchops( op, opc, 1 );
 
 	return SLAP_CB_CONTINUE;
@@ -1830,12 +1840,10 @@ syncprov_detach_op( Operation *op, syncops *so, slap_overinst *on )
 	op2->o_do_not_cache = 1;
 
 	/* Add op2 to conn so abandon will find us */
-	ldap_pvt_thread_mutex_lock( &op->o_conn->c_mutex );
 	op->o_conn->c_n_ops_executing++;
 	op->o_conn->c_n_ops_completed--;
 	LDAP_STAILQ_INSERT_TAIL( &op->o_conn->c_ops, op2, o_next );
 	so->s_flags |= PS_IS_DETACHED;
-	ldap_pvt_thread_mutex_unlock( &op->o_conn->c_mutex );
 
 	/* Prevent anyone else from trying to send a result for this op */
 	op->o_abandon = 1;
@@ -1846,6 +1854,7 @@ syncprov_search_response( Operation *op, SlapReply *rs )
 {
 	searchstate *ss = op->o_callback->sc_private;
 	slap_overinst *on = ss->ss_on;
+	syncprov_info_t *si = (syncprov_info_t *)on->on_bi.bi_private;
 	sync_control *srs = op->o_controls[slap_cids.sc_LDAPsync];
 
 	if ( rs->sr_type == REP_SEARCH || rs->sr_type == REP_SEARCHREF ) {
@@ -1865,8 +1874,9 @@ syncprov_search_response( Operation *op, SlapReply *rs )
 			a = attr_find( rs->sr_operational_attrs, slap_schema.si_ad_entryCSN );
 		}
 		if ( a ) {
+			/* If not a persistent search */
 			/* Make sure entry is less than the snapshot'd contextCSN */
-			if ( ber_bvcmp( &a->a_nvals[0], &ss->ss_ctxcsn ) > 0 ) {
+			if ( !ss->ss_so && ber_bvcmp( &a->a_nvals[0], &ss->ss_ctxcsn ) > 0 ) {
 				Debug( LDAP_DEBUG_SYNC, "Entry %s CSN %s greater than snapshot %s\n",
 					rs->sr_entry->e_name.bv_val,
 					a->a_nvals[0].bv_val,
@@ -1887,8 +1897,16 @@ syncprov_search_response( Operation *op, SlapReply *rs )
 		rs->sr_ctrls = op->o_tmpalloc( sizeof(LDAPControl *)*2,
 			op->o_tmpmemctx );
 		rs->sr_ctrls[1] = NULL;
-		rs->sr_err = syncprov_state_ctrl( op, rs, rs->sr_entry,
-			LDAP_SYNC_ADD, rs->sr_ctrls, 0, 0, NULL );
+		/* If we're in delta-sync mode, always send a cookie */
+		if ( si->si_nopres && si->si_usehint && a ) {
+			struct berval cookie;
+			slap_compose_sync_cookie( op, &cookie, a->a_nvals, srs->sr_state.rid );
+			rs->sr_err = syncprov_state_ctrl( op, rs, rs->sr_entry,
+				LDAP_SYNC_ADD, rs->sr_ctrls, 0, 1, &cookie );
+		} else {
+			rs->sr_err = syncprov_state_ctrl( op, rs, rs->sr_entry,
+				LDAP_SYNC_ADD, rs->sr_ctrls, 0, 0, NULL );
+		}
 	} else if ( rs->sr_type == REP_RESULT && rs->sr_err == LDAP_SUCCESS ) {
 		struct berval cookie;
 
@@ -1913,15 +1931,27 @@ syncprov_search_response( Operation *op, SlapReply *rs )
 
 			/* Detach this Op from frontend control */
 			ldap_pvt_thread_mutex_lock( &ss->ss_so->s_mutex );
+			ldap_pvt_thread_mutex_lock( &op->o_conn->c_mutex );
 
-			/* Turn off the refreshing flag */
-			ss->ss_so->s_flags ^= PS_IS_REFRESHING;
+			/* But not if this connection was closed along the way */
+			if ( op->o_abandon ) {
+				ldap_pvt_thread_mutex_unlock( &op->o_conn->c_mutex );
+				ldap_pvt_thread_mutex_unlock( &ss->ss_so->s_mutex );
+				/* syncprov_ab_cleanup will free this syncop */
+				return SLAPD_ABANDON;
 
-			syncprov_detach_op( op, ss->ss_so, on );
+			} else {
+				/* Turn off the refreshing flag */
+				ss->ss_so->s_flags ^= PS_IS_REFRESHING;
 
-			/* If there are queued responses, fire them off */
-			if ( ss->ss_so->s_res )
-				syncprov_qstart( ss->ss_so );
+				syncprov_detach_op( op, ss->ss_so, on );
+
+				ldap_pvt_thread_mutex_unlock( &op->o_conn->c_mutex );
+
+				/* If there are queued responses, fire them off */
+				if ( ss->ss_so->s_res )
+					syncprov_qstart( ss->ss_so );
+			}
 			ldap_pvt_thread_mutex_unlock( &ss->ss_so->s_mutex );
 
 			return LDAP_SUCCESS;

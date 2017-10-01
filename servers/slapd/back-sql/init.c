@@ -1,7 +1,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/init.c,v 1.47.2.13 2007/01/02 21:44:07 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2007 The OpenLDAP Foundation.
+ * Copyright 1999-2008 The OpenLDAP Foundation.
  * Portions Copyright 1999 Dmitry Kovalev.
  * Portions Copyright 2002 Pierangelo Masarati.
  * All rights reserved.
@@ -477,7 +477,11 @@ backsql_db_open(
 			"connection failed, exiting\n", 0, 0, 0 );
 		return 1;
 	}
-
+	if ( backsql_load_schema_map( bi, dbh ) != LDAP_SUCCESS ) {
+		Debug( LDAP_DEBUG_TRACE, "backsql_db_open(): "
+			"schema mapping failed, exiting\n", 0, 0, 0 );
+		return 1;
+	}
 	if ( backsql_free_db_conn( op ) != SQL_SUCCESS ) {
 		Debug( LDAP_DEBUG_TRACE, "backsql_db_open(): "
 			"connection free failed\n", 0, 0, 0 );

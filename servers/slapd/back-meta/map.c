@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/map.c,v 1.1.2.14 2007/02/26 19:40:12 ando Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2007 The OpenLDAP Foundation.
+ * Copyright 1998-2008 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -57,6 +57,7 @@
 #include <ac/socket.h>
 
 #include "slap.h"
+#include "lutil.h"
 #include "../back-ldap/back-ldap.h"
 #include "back-meta.h"
 
@@ -212,6 +213,7 @@ map_attr_value(
 		int			remap )
 {
 	struct berval		vtmp;
+	char			uuid[ LDAP_LUTIL_UUIDSTR_BUFSIZE ];
 	int			freeval = 0;
 
 	ldap_back_map( &dc->target->mt_rwmap.rwm_at, &ad->ad_cname, mapped_attr, remap );
@@ -257,6 +259,14 @@ map_attr_value(
 		case LDAP_OTHER:
 			return -1;
 		}
+
+	} else if ( ad->ad_type->sat_syntax == slap_schema.si_ad_entryUUID->ad_type->sat_syntax ) {
+		vtmp.bv_len = lutil_uuidstr_from_normalized( value->bv_val,
+			value->bv_len, uuid, LDAP_LUTIL_UUIDSTR_BUFSIZE );
+		if ( vtmp.bv_len < 0 ) {
+			return -1;
+		}
+		vtmp.bv_val = uuid;
 
 	} else if ( ad == slap_schema.si_ad_objectClass || ad == slap_schema.si_ad_structuralObjectClass ) {
 		ldap_back_map( &dc->target->mt_rwmap.rwm_oc, value, &vtmp, remap );

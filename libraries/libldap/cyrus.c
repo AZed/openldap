@@ -1,7 +1,7 @@
 /* $OpenLDAP: pkg/ldap/libraries/libldap/cyrus.c,v 1.112.2.16 2007/01/02 21:43:48 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2007 The OpenLDAP Foundation.
+ * Copyright 1998-2008 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -898,6 +898,8 @@ ldap_int_sasl_external(
 	sasl_conn_t *ctx;
 #if SASL_VERSION_MAJOR < 2
 	sasl_external_properties_t extprops;
+#else
+	sasl_ssf_t sasl_ssf = ssf;
 #endif
 
 	ctx = conn->lconn_sasl_authctx;
@@ -907,7 +909,7 @@ ldap_int_sasl_external(
 	}
    
 #if SASL_VERSION_MAJOR >= 2
-	sc = sasl_setprop( ctx, SASL_SSF_EXTERNAL, &ssf );
+	sc = sasl_setprop( ctx, SASL_SSF_EXTERNAL, &sasl_ssf );
 	if ( sc == SASL_OK )
 		sc = sasl_setprop( ctx, SASL_AUTH_EXTERNAL, authid );
 #else
@@ -1205,6 +1207,8 @@ ldap_int_sasl_set_option( LDAP *ld, int option, void *arg )
 		int sc;
 #if SASL_VERSION_MAJOR < 2
 		sasl_external_properties_t extprops;
+#else
+		sasl_ssf_t sasl_ssf;
 #endif
 		sasl_conn_t *ctx;
 
@@ -1219,7 +1223,8 @@ ldap_int_sasl_set_option( LDAP *ld, int option, void *arg )
 		}
 
 #if SASL_VERSION_MAJOR >= 2
-		sc = sasl_setprop( ctx, SASL_SSF_EXTERNAL, arg);
+		sasl_ssf = * (ber_len_t *)arg;
+		sc = sasl_setprop( ctx, SASL_SSF_EXTERNAL, &sasl_ssf);
 #else
 		memset(&extprops, 0L, sizeof(extprops));
 

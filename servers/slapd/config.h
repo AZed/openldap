@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/config.h,v 1.2.2.13 2007/01/02 21:43:55 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2007 The OpenLDAP Foundation.
+ * Copyright 1998-2008 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -141,6 +141,7 @@ typedef struct config_args_s {
 	Entry *ca_entry;	/* entry being modified */
 	void *private;	/* anything */
 	ConfigDriver *cleanup;
+	ConfigType table;	/* which config table did we come from */
 } ConfigArgs;
 
 /* If lineno is zero, we have an actual LDAP Add request from a client.

@@ -2,7 +2,7 @@
 # $OpenLDAP: pkg/ldap/servers/slapd/back-perl/SampleLDAP.pm,v 1.8.2.4 2007/06/18 13:31:06 hallvard Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2007 The OpenLDAP Foundation.
+## Copyright 1998-2008 The OpenLDAP Foundation.
 ## Portions Copyright 1999 John C. Quillan.
 ## All rights reserved.
 ##

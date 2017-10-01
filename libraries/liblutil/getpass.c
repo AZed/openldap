@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/libraries/liblutil/getpass.c,v 1.15.2.3 2007/01/02 21:43:52 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2007 The OpenLDAP Foundation.
+ * Copyright 1998-2008 The OpenLDAP Foundation.
  * Portions Copyright 1998-2003 Kurt D. Zeilenga.
  * All rights reserved.
  *
@@ -60,7 +60,7 @@
 char *
 lutil_getpass( const char *prompt )
 {
-#if !defined(HAVE_POSIX_TERMIOS) && !defined(HAVE_SGTTY_H)
+#if !defined(HAVE_TERMIOS_H) && !defined(HAVE_SGTTY_H)
 	static char buf[256];
 	int i, c;
 

@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/overlays/dynlist.c,v 1.5.2.12 2007/06/04 21:14:22 ando Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2007 The OpenLDAP Foundation.
+ * Copyright 2003-2008 The OpenLDAP Foundation.
  * Portions Copyright 2004-2005 Pierangelo Masarati.
  * All rights reserved.
  *

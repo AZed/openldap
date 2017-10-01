@@ -1,7 +1,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/bind.c,v 1.40.2.31 2007/03/09 16:23:16 ando Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2007 The OpenLDAP Foundation.
+ * Copyright 1999-2008 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * Portions Copyright 1999-2003 Howard Chu.
  * All rights reserved.
@@ -189,6 +189,10 @@ meta_back_bind( Operation *op, SlapReply *rs )
 
 		if ( lerr != LDAP_SUCCESS ) {
 			rc = rs->sr_err = lerr;
+			/* Mark the meta_conn struct as tainted so
+			 * it'll be freed by meta_conn_back_destroy below */
+			LDAP_BACK_CONN_TAINTED_SET( mc );
+
 			/* FIXME: in some cases (e.g. unavailable)
 			 * do not assume it's not candidate; rather
 			 * mark this as an error to be eventually

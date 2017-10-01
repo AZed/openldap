@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/overlays/overlays.c,v 1.12.2.9 2007/01/02 21:44:08 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2007 The OpenLDAP Foundation.
+ * Copyright 2003-2008 The OpenLDAP Foundation.
  * Copyright 2003 by Howard Chu.
  * All rights reserved.
  *

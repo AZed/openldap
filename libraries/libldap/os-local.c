@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/libraries/libldap/os-local.c,v 1.37.2.9 2007/06/10 18:39:53 hallvard Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2007 The OpenLDAP Foundation.
+ * Copyright 1998-2008 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -47,6 +47,9 @@
 #ifdef HAVE_IO_H
 #include <io.h>
 #endif /* HAVE_IO_H */
+#ifdef HAVE_FCNTL_H
+#include <fcntl.h>
+#endif
 
 #include "ldap-int.h"
 #include "ldap_defaults.h"
@@ -89,6 +92,9 @@ ldap_pvt_socket(LDAP *ld)
 {
 	ber_socket_t s = socket(PF_LOCAL, SOCK_STREAM, 0);
 	oslocal_debug(ld, "ldap_new_socket: %d\n",s,0,0);
+#ifdef FD_CLOEXEC
+	fcntl(s, F_SETFD, FD_CLOEXEC);
+#endif
 	return ( s );
 }
 

@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/clients/tools/common.h,v 1.11.2.8 2007/08/13 20:03:51 ando Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2007 The OpenLDAP Foundation.
+ * Copyright 1998-2008 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

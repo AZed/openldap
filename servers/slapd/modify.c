@@ -1,7 +1,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/modify.c,v 1.227.2.25 2007/01/02 21:43:56 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2007 The OpenLDAP Foundation.
+ * Copyright 1998-2008 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -734,6 +734,7 @@ int slap_mods_check(
 							"%s: value #%ld normalization failed",
 							ml->sml_type.bv_val, (long) nvals );
 						*text = textbuf;
+						BER_BVZERO( &ml->sml_nvalues[nvals] );
 						return rc;
 					}
 				}
@@ -825,6 +826,7 @@ void slap_mods_opattrs(
 		timestamp.bv_val = timebuf;
 		for ( modtail = modsp; *modtail; modtail = &(*modtail)->sml_next ) {
 			if ( (*modtail)->sml_op != LDAP_MOD_ADD &&
+				(*modtail)->sml_op != SLAP_MOD_SOFTADD &&
 				(*modtail)->sml_op != LDAP_MOD_REPLACE ) continue;
 			if ( (*modtail)->sml_desc == slap_schema.si_ad_entryCSN ) {
 				csn = (*modtail)->sml_values[0];
@@ -850,11 +852,10 @@ void slap_mods_opattrs(
 			csn = op->o_csn;
 		}
 		ptr = ber_bvchr( &csn, '#' );
-		if ( ptr && ptr < &csn.bv_val[csn.bv_len] ) {
-			timestamp.bv_len = ptr - csn.bv_val;
-			if ( timestamp.bv_len >= sizeof( timebuf ))
-				timestamp.bv_len = sizeof( timebuf ) - 1;
-			strncpy( timebuf, csn.bv_val, timestamp.bv_len );
+		if ( ptr ) {
+			timestamp.bv_len = STRLENOF("YYYYMMDDHHMMSSZ");
+			AC_MEMCPY( timebuf, csn.bv_val, timestamp.bv_len );
+			timebuf[timestamp.bv_len-1] = 'Z';
 			timebuf[timestamp.bv_len] = '\0';
 		} else {
 			time_t now = slap_get_time();

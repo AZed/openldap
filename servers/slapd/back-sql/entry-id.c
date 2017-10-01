@@ -1,7 +1,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/entry-id.c,v 1.46.2.13 2007/08/11 07:39:30 ando Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2007 The OpenLDAP Foundation.
+ * Copyright 1999-2008 The OpenLDAP Foundation.
  * Portions Copyright 1999 Dmitry Kovalev.
  * Portions Copyright 2002 Pierangelo Masarati.
  * Portions Copyright 2004 Mark Adamson.

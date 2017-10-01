@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/bind.c,v 1.85.2.36 2007/03/19 14:52:17 ando Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2007 The OpenLDAP Foundation.
+ * Copyright 1999-2008 The OpenLDAP Foundation.
  * Portions Copyright 2000-2003 Pierangelo Masarati.
  * Portions Copyright 1999-2003 Howard Chu.
  * All rights reserved.
@@ -1311,15 +1311,26 @@ retry_lock:;
 
 		lutil_sasl_freedefs( defaults );
 
-		rs->sr_err = slap_map_api2result( rs );
-		if ( rs->sr_err != LDAP_SUCCESS ) {
+		switch ( rs->sr_err ) {
+		case LDAP_SUCCESS:
+			LDAP_BACK_CONN_ISBOUND_SET( lc );
+			break;
+
+		case LDAP_LOCAL_ERROR:
+			/* list client API error codes that require
+			 * to taint the connection */
+			/* FIXME: should actually retry? */
+			LDAP_BACK_CONN_TAINTED_SET( lc );
+
+			/* fallthru */
+
+		default:
 			LDAP_BACK_CONN_ISBOUND_CLEAR( lc );
+			rs->sr_err = slap_map_api2result( rs );
 			if ( sendok & LDAP_BACK_SENDERR ) {
 				send_ldap_result( op, rs );
 			}
-
-		} else {
-			LDAP_BACK_CONN_ISBOUND_SET( lc );
+			break;
 		}
 
 		if ( LDAP_BACK_QUARANTINE( li ) ) {
@@ -1999,15 +2010,26 @@ ldap_back_proxy_authz_bind(
 				LDAP_SASL_QUIET, lutil_sasl_interact,
 				defaults );
 
-		rs->sr_err = slap_map_api2result( rs );
-		if ( rs->sr_err != LDAP_SUCCESS ) {
+		switch ( rs->sr_err ) {
+		case LDAP_SUCCESS:
+			LDAP_BACK_CONN_ISBOUND_SET( lc );
+			break;
+
+		case LDAP_LOCAL_ERROR:
+			/* list client API error codes that require
+			 * to taint the connection */
+			/* FIXME: should actually retry? */
+			LDAP_BACK_CONN_TAINTED_SET( lc );
+
+			/* fallthru */
+
+		default:
 			LDAP_BACK_CONN_ISBOUND_CLEAR( lc );
+			rs->sr_err = slap_map_api2result( rs );
 			if ( sendok & LDAP_BACK_SENDERR ) {
 				send_ldap_result( op, rs );
 			}
-
-		} else {
-			LDAP_BACK_CONN_ISBOUND_SET( lc );
+			break;
 		}
 
 		lutil_sasl_freedefs( defaults );
@@ -2133,7 +2155,8 @@ ldap_back_proxy_authz_ctrl(
 	 * but if it is not set this test fails.  We need a different
 	 * means to detect if idassert is enabled */
 	if ( ( BER_BVISNULL( &si->si_bc.sb_authcId ) || BER_BVISEMPTY( &si->si_bc.sb_authcId ) )
-			&& ( BER_BVISNULL( &si->si_bc.sb_binddn ) || BER_BVISEMPTY( &si->si_bc.sb_binddn ) ) )
+		&& ( BER_BVISNULL( &si->si_bc.sb_binddn ) || BER_BVISEMPTY( &si->si_bc.sb_binddn ) )
+		&& BER_BVISNULL( &si->si_bc.sb_saslmech ) )
 	{
 		goto done;
 	}

@@ -1,7 +1,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/overlays/ppolicy.c,v 1.31.2.35 2007/08/16 18:49:56 hyc Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2004-2007 The OpenLDAP Foundation.
+ * Copyright 2004-2008 The OpenLDAP Foundation.
  * Portions Copyright 2004-2005 Howard Chu, Symas Corporation.
  * Portions Copyright 2004 Hewlett-Packard Company.
  * All rights reserved.
@@ -1573,7 +1573,7 @@ ppolicy_modify( Operation *op, SlapReply *rs )
 				}
 			}
 
-		} else if ( !is_at_operational( ml->sml_desc->ad_type ) ) {
+		} else if ( !(ml->sml_flags & SLAP_MOD_INTERNAL) && !is_at_operational( ml->sml_desc->ad_type ) ) {
 			mod_pw_only = 0;
 			/* modifying something other than password */
 		}

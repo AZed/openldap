@@ -1,7 +1,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slurpd/ldap_op.c,v 1.53.2.5 2007/01/02 21:44:11 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2007 The OpenLDAP Foundation.
+ * Copyright 1998-2008 The OpenLDAP Foundation.
  * Portions Copyright 2003 Mark Benson.
  * All rights reserved.
  *

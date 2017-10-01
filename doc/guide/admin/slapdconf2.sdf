@@ -1,5 +1,5 @@
-# $OpenLDAP: pkg/openldap-guide/admin/slapdconf2.sdf,v 1.1.2.14 2007/04/06 03:59:58 quanah Exp $
-# Copyright 2005-2007 The OpenLDAP Foundation, All Rights Reserved.
+# $OpenLDAP$
+# Copyright 2005-2008 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 
 H1: Configuring slapd

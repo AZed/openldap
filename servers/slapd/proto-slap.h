@@ -1,7 +1,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/proto-slap.h,v 1.552.2.43 2007/07/23 20:10:22 hallvard Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2007 The OpenLDAP Foundation.
+ * Copyright 1998-2008 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -1596,7 +1596,7 @@ LDAP_SLAPD_F (Filter *) str2filter_x LDAP_P(( Operation *op, const char *str ));
  * syncrepl.c
  */
 
-LDAP_SLAPD_F (void)  syncrepl_add_glue LDAP_P(( 
+LDAP_SLAPD_F (int)  syncrepl_add_glue LDAP_P(( 
 					Operation*, Entry* ));
 LDAP_SLAPD_F (void) syncinfo_free LDAP_P(( struct syncinfo_s * ));
 

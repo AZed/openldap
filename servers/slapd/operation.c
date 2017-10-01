@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/operation.c,v 1.63.2.9 2007/01/02 21:43:57 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2007 The OpenLDAP Foundation.
+ * Copyright 1998-2008 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -121,8 +121,8 @@ slap_op_free( Operation *op )
 void
 slap_op_time(time_t *t, int *nop)
 {
-	*t = slap_get_time();
 	ldap_pvt_thread_mutex_lock( &slap_op_mutex );
+	*t = slap_get_time();
 	if ( *t == last_time ) {
 		*nop = ++last_incr;
 	} else {

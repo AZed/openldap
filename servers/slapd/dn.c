@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/dn.c,v 1.170.2.12 2007/08/04 20:35:38 hyc Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2007 The OpenLDAP Foundation.
+ * Copyright 1998-2008 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

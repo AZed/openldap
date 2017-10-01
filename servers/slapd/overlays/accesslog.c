@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/overlays/accesslog.c,v 1.2.2.23 2007/01/25 12:42:01 hyc Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2005-2007 The OpenLDAP Foundation.
+ * Copyright 2005-2008 The OpenLDAP Foundation.
  * Portions copyright 2004-2005 Symas Corporation.
  * All rights reserved.
  *
@@ -910,9 +910,17 @@ static int accesslog_response(Operation *op, SlapReply *rs) {
 		return SLAP_CB_CONTINUE;
 
 	if ( lo->mask & LOG_OP_WRITES ) {
+		slap_callback *cb;
 		ldap_pvt_thread_mutex_lock( &li->li_log_mutex );
 		old = li->li_old;
 		li->li_old = NULL;
+		/* Disarm mod_cleanup */
+		for ( cb = op->o_callback; cb; cb = cb->sc_next ) {
+			if ( cb->sc_private == (void *)on ) {
+				cb->sc_private = NULL;
+				break;
+			}
+		}
 		ldap_pvt_thread_mutex_unlock( &li->li_op_mutex );
 	}
 
@@ -1224,15 +1232,38 @@ accesslog_op_bind( Operation *op, SlapReply *rs )
 }
 
 static int
+accesslog_mod_cleanup( Operation *op, SlapReply *rs )
+{
+	slap_callback *sc = op->o_callback;
+	slap_overinst *on = sc->sc_private;
+	op->o_callback = sc->sc_next;
+
+	op->o_tmpfree( sc, op->o_tmpmemctx );
+
+	if ( on ) {
+		BackendInfo *bi = op->o_bd->bd_info;
+		op->o_bd->bd_info = (BackendInfo *)on;
+		accesslog_response( op, rs );
+		op->o_bd->bd_info = bi;
+	}
+	return 0;
+}
+
+static int
 accesslog_op_mod( Operation *op, SlapReply *rs )
 {
 	slap_overinst *on = (slap_overinst *)op->o_bd->bd_info;
 	log_info *li = on->on_bi.bi_private;
 
 	if ( li->li_ops & LOG_OP_WRITES ) {
-		/* FIXME: this needs to be a recursive mutex to allow
-		 * overlays like refint to keep working.
-		 */
+		slap_callback *cb = op->o_tmpalloc( sizeof( slap_callback ), op->o_tmpmemctx ), *cb2;
+		cb->sc_cleanup = accesslog_mod_cleanup;
+		cb->sc_response = NULL; 
+		cb->sc_private = on;
+		cb->sc_next = NULL;
+		for ( cb2 = op->o_callback; cb2->sc_next; cb2 = cb2->sc_next );
+		cb2->sc_next = cb;
+
 		ldap_pvt_thread_mutex_lock( &li->li_op_mutex );
 		if ( li->li_oldf && ( op->o_tag == LDAP_REQ_DELETE ||
 			op->o_tag == LDAP_REQ_MODIFY )) {

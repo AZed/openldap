@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/back-bdb.h,v 1.117.2.14 2007/08/06 12:32:51 ando Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2007 The OpenLDAP Foundation.
+ * Copyright 2000-2008 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -83,7 +83,7 @@ typedef struct bdb_entry_info {
 	 * to avoid conflicting with BDB's internal locks. So add a byte here
 	 * that is always zero.
 	 */
-	char bei_lockpad;
+	short bei_lockpad;
 
 	short bei_state;
 #define	CACHE_ENTRY_DELETED	1
