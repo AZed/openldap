@@ -1,3 +1,4 @@
+// $OpenLDAP$
 /*
  * Copyright 2000, OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -6,6 +7,8 @@
 
 #include "LDAPModList.h"
 #include "debug.h"
+
+#include <cstdlib>
 
 using namespace std;
 
@@ -34,4 +37,12 @@ LDAPMod** LDAPModList::toLDAPModArray(){
 	    ret[j]=i->toLDAPMod();
     }
     return ret;
+}
+
+bool LDAPModList::empty() const {
+    return m_modList.empty();
+}
+
+unsigned int LDAPModList::size() const {
+    return m_modList.size();
 }

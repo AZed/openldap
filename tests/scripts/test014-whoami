@@ -428,7 +428,7 @@ esac
 
 BINDDN="cn=Bjorn Jensen,ou=Information Technology Division,ou=People,dc=example,dc=com"
 BINDPW=bjorn
-AUTHZID="dn:"
+AUTHZID="dn:cn=don't!"
 echo "Testing ldapwhoami as ${BINDDN} for ${AUTHZID} (no authzTo; should fail)..."
 $LDAPWHOAMI -h $LOCALHOST -p $PORT1 -D "$BINDDN" -w $BINDPW \
 	-e \!authzid="$AUTHZID"
@@ -457,9 +457,12 @@ fi
 test $KILLSERVERS != no && kill -HUP $KILLPIDS
 
 echo ">>>>> Test succeeded"
+
+test $KILLSERVERS != no && wait
+
 exit 0
 
 ## Note to developers: when SLAPD_DEBUG=-1 the command
 ## awk '/^do_extended$/ {if (c) {print c} c=0} /<===slap_sasl_match:/ {c++} END {print c}' $TESTDIR/slapd.1.log
-## must return the sequence 1 2 3 4 5 6 7 8 9 9 1 2 3 4 5 6 7 8 9 9 9 1
+## must return the sequence 1 2 3 4 5 6 7 8 8 8 1 2 3 4 5 6 7 8 8 8 8 1
 ## to indicate that the authzFrom and authzTo rules applied in the right order.

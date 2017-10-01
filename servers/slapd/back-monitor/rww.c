@@ -86,30 +86,11 @@ monitor_subsys_rww_init(
 	ep = &mp->mp_children;
 
 	for ( i = 0; i < MONITOR_RWW_LAST; i++ ) {
-		char			buf[ BACKMONITOR_BUFSIZE ];
 		struct berval		nrdn, bv;
 		Entry			*e;
 		
-		snprintf( buf, sizeof( buf ),
-			"dn: %s,%s\n"
-			"objectClass: %s\n"
-			"structuralObjectClass: %s\n"
-			"cn: %s\n"
-			"creatorsName: %s\n"
-			"modifiersName: %s\n"
-			"createTimestamp: %s\n"
-			"modifyTimestamp: %s\n",
-			monitor_rww[ i ].rdn.bv_val,
-			ms->mss_dn.bv_val,
-			mi->mi_oc_monitorCounterObject->soc_cname.bv_val,
-			mi->mi_oc_monitorCounterObject->soc_cname.bv_val,
-			&monitor_rww[ i ].rdn.bv_val[ STRLENOF( "cn=" ) ],
-			mi->mi_creatorsName.bv_val,
-			mi->mi_creatorsName.bv_val,
-			mi->mi_startTime.bv_val,
-			mi->mi_startTime.bv_val );
-	
-		e = str2entry( buf );
+		e = monitor_entry_stub( &ms->mss_dn, &ms->mss_ndn, &monitor_rww[i].rdn,
+			mi->mi_oc_monitorCounterObject, mi, NULL, NULL );
 		if ( e == NULL ) {
 			Debug( LDAP_DEBUG_ANY,
 				"monitor_subsys_rww_init: "
@@ -123,7 +104,7 @@ monitor_subsys_rww_init(
 		ber_dupbv( &monitor_rww[ i ].nrdn, &nrdn );
 	
 		BER_BVSTR( &bv, "0" );
-		attr_merge_one( e, mi->mi_ad_monitorCounter, &bv, &bv );
+		attr_merge_normalize_one( e, mi->mi_ad_monitorCounter, &bv, NULL );
 	
 		mp = monitor_entrypriv_create();
 		if ( mp == NULL ) {
@@ -181,7 +162,7 @@ monitor_subsys_rww_update(
 	struct berval	nrdn;
 
 	Attribute	*a;
-	char 		buf[] = "+9223372036854775807L";
+	char 		buf[LDAP_PVT_INTTYPE_CHARS(long)];
 	long		num = 0;
 	ber_len_t	len;
 

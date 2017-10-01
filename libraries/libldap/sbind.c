@@ -15,9 +15,6 @@
 /* Portions Copyright (c) 1993 Regents of the University of Michigan.
  * All rights reserved.
  */
-/* Portions Copyright (C) The Internet Society (1997)
- * ASN.1 fragments are from RFC 2251; see RFC for full legal notices.
- */
 
 /*
  *	BindRequest ::= SEQUENCE {
@@ -25,10 +22,8 @@
  *		name		DistinguishedName,	 -- who
  *		authentication	CHOICE {
  *			simple		[0] OCTET STRING -- passwd
-#ifdef LDAP_API_FEATURE_X_OPENLDAP_V2_KBIND
- *			krbv42ldap	[1] OCTET STRING
- *			krbv42dsa	[2] OCTET STRING
-#endif
+ *			krbv42ldap	[1] OCTET STRING  -- OBSOLETE
+ *			krbv42dsa	[2] OCTET STRING  -- OBSOLETE
  *			sasl		[3] SaslCredentials	-- LDAPv3
  *		}
  *	}

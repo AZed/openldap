@@ -24,8 +24,11 @@
 #include <stdio.h>
 
 #include <ac/socket.h>
+#include <ac/param.h>
+#include <ac/string.h>
 
 #include "slap.h"
+#include "config.h"
 #include "proto-dnssrv.h"
 
 int
@@ -67,9 +70,7 @@ dnssrv_back_initialize(
 	bi->bi_connection_init = 0;
 	bi->bi_connection_destroy = 0;
 
-#ifdef SLAP_OVERLAY_ACCESS
 	bi->bi_access_allowed = slap_access_always_allowed;
-#endif /* SLAP_OVERLAY_ACCESS */
 
 	return 0;
 }
@@ -91,14 +92,16 @@ dnssrv_back_open(
 
 int
 dnssrv_back_db_init(
-    Backend	*be )
+	Backend	*be,
+	ConfigReply *cr)
 {
 	return 0;
 }
 
 int
 dnssrv_back_db_destroy(
-    Backend	*be )
+	Backend	*be,
+	ConfigReply *cr )
 {
 	return 0;
 }

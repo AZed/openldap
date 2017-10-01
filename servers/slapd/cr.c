@@ -30,7 +30,7 @@ struct cindexrec {
 };
 
 static Avlnode	*cr_index = NULL;
-static LDAP_STAILQ_HEAD(CRList, slap_content_rule) cr_list
+static LDAP_STAILQ_HEAD(CRList, ContentRule) cr_list
 	= LDAP_STAILQ_HEAD_INITIALIZER(cr_list);
 
 static int
@@ -372,38 +372,101 @@ cr_add(
 	scr->scr_sclass = oc_find(cr->cr_oid);
 	if ( !scr->scr_sclass ) {
 		*err = cr->cr_oid;
-		return SLAP_SCHERR_CLASS_NOT_FOUND;
+		code = SLAP_SCHERR_CLASS_NOT_FOUND;
+		goto fail;
 	}
 
 	/* check object class usage */
 	if( scr->scr_sclass->soc_kind != LDAP_SCHEMA_STRUCTURAL )
 	{
 		*err = cr->cr_oid;
-		return SLAP_SCHERR_CR_BAD_STRUCT;
+		code = SLAP_SCHERR_CR_BAD_STRUCT;
+		goto fail;
 	}
 
 	if( scr->scr_sclass->soc_flags & SLAP_OC_OPERATIONAL ) op++;
 
 	code = cr_add_auxiliaries( scr, &op, err );
-	if ( code != 0 ) return code;
+	if ( code != 0 ) goto fail;
 
 	code = cr_create_required( scr, &op, err );
-	if ( code != 0 ) return code;
+	if ( code != 0 ) goto fail;
 
 	code = cr_create_allowed( scr, &op, err );
-	if ( code != 0 ) return code;
+	if ( code != 0 ) goto fail;
 
 	code = cr_create_precluded( scr, &op, err );
-	if ( code != 0 ) return code;
+	if ( code != 0 ) goto fail;
 
 	if( user && op ) {
-		return SLAP_SCHERR_CR_BAD_AUX;
+		code = SLAP_SCHERR_CR_BAD_AUX;
+		goto fail;
 	}
 
 	code = cr_insert(scr,err);
 	if ( code == 0 && rscr )
 		*rscr = scr;
 	return code;
+fail:
+	ch_free( scr );
+	return code;
+}
+
+void
+cr_unparse( BerVarray *res, ContentRule *start, ContentRule *end, int sys )
+{
+	ContentRule *cr;
+	int i, num;
+	struct berval bv, *bva = NULL, idx;
+	char ibuf[32];
+
+	if ( !start )
+		start = LDAP_STAILQ_FIRST( &cr_list );
+
+	/* count the result size */
+	i = 0;
+	for ( cr=start; cr; cr=LDAP_STAILQ_NEXT(cr, scr_next)) {
+		if ( sys && !(cr->scr_flags & SLAP_CR_HARDCODE)) continue;
+		i++;
+		if ( cr == end ) break;
+	}
+	if (!i) return;
+
+	num = i;
+	bva = ch_malloc( (num+1) * sizeof(struct berval) );
+	BER_BVZERO( bva );
+	idx.bv_val = ibuf;
+	if ( sys ) {
+		idx.bv_len = 0;
+		ibuf[0] = '\0';
+	}
+	i = 0;
+	for ( cr=start; cr; cr=LDAP_STAILQ_NEXT(cr, scr_next)) {
+		LDAPContentRule lcr, *lcrp;
+		if ( sys && !(cr->scr_flags & SLAP_CR_HARDCODE)) continue;
+		if ( cr->scr_oidmacro ) {
+			lcr = cr->scr_crule;
+			lcr.cr_oid = cr->scr_oidmacro;
+			lcrp = &lcr;
+		} else {
+			lcrp = &cr->scr_crule;
+		}
+		if ( ldap_contentrule2bv( lcrp, &bv ) == NULL ) {
+			ber_bvarray_free( bva );
+		}
+		if ( !sys ) {
+			idx.bv_len = sprintf(idx.bv_val, "{%d}", i);
+		}
+		bva[i].bv_len = idx.bv_len + bv.bv_len;
+		bva[i].bv_val = ch_malloc( bva[i].bv_len + 1 );
+		strcpy( bva[i].bv_val, ibuf );
+		strcpy( bva[i].bv_val + idx.bv_len, bv.bv_val );
+		i++;
+		bva[i].bv_val = NULL;
+		ldap_memfree( bv.bv_val );
+		if ( cr == end ) break;
+	}
+	*res = bva;
 }
 
 void

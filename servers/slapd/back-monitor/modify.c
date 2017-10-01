@@ -45,15 +45,12 @@ monitor_back_modify( Operation *op, SlapReply *rs )
 	if ( e == NULL ) {
 		rs->sr_err = LDAP_NO_SUCH_OBJECT;
 		if ( matched ) {
-#ifdef SLAP_ACL_HONOR_DISCLOSE
 			if ( !access_allowed_mask( op, matched,
 					slap_schema.si_ad_entry,
 					NULL, ACL_DISCLOSE, NULL, NULL ) )
 			{
 				/* do nothing */ ;
-			} else 
-#endif /* SLAP_ACL_HONOR_DISCLOSE */
-			{
+			} else {
 				rs->sr_matched = matched->e_dn;
 			}
 		}
@@ -65,7 +62,7 @@ monitor_back_modify( Operation *op, SlapReply *rs )
 		return rs->sr_err;
 	}
 
-	if ( !acl_check_modlist( op, e, op->oq_modify.rs_modlist )) {
+	if ( !acl_check_modlist( op, e, op->orm_modlist )) {
 		rc = LDAP_INSUFFICIENT_ACCESS;
 
 	} else {
@@ -75,7 +72,6 @@ monitor_back_modify( Operation *op, SlapReply *rs )
 		rc = monitor_entry_modify( op, rs, e );
 	}
 
-#ifdef SLAP_ACL_HONOR_DISCLOSE
 	if ( rc != LDAP_SUCCESS ) {
 		if ( !access_allowed_mask( op, e, slap_schema.si_ad_entry,
 				NULL, ACL_DISCLOSE, NULL, NULL ) )

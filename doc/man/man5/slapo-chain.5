@@ -3,7 +3,7 @@
 .\" Copying restrictions apply.  See the COPYRIGHT file.
 .\" $OpenLDAP: pkg/ldap/doc/man/man5/slapo-chain.5,v 1.1.2.9 2008/02/11 23:24:09 kurt Exp $
 .SH NAME
-slapo-chain \- chain overlay
+slapo-chain \- chain overlay to slapd
 .SH SYNOPSIS
 ETCDIR/slapd.conf
 .SH DESCRIPTION
@@ -20,8 +20,8 @@ by means of the \fIidentity assertion\fP feature of back-ldap
 (see
 .BR slapd-ldap (5)
 for details), which is essentially based on the
-.B proxyAuthz
-control (see \fIdraft-weltman-ldapv3-proxy\fP for details.)
+.B proxied authorization
+control [RFC 4370].
 Referral chasing can be controlled by the client by issuing the 
 \fBchaining\fP control
 (see \fIdraft-sermersheim-ldap-chaining\fP for details.)
@@ -40,7 +40,7 @@ related to the instances of the \fIldap\fP backend that may be implicitly
 instantiated by the overlay may assume a special meaning when used 
 in conjunction with this overlay.  They are described in
 .BR slapd-ldap (5),
-and they also need be prefixed by
+and they also need to be prefixed by
 .BR chain\- .
 .TP
 .B overlay chain

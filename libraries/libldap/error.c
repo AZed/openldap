@@ -12,9 +12,6 @@
  * top-level directory of the distribution or, alternatively, at
  * <http://www.OpenLDAP.org/license.html>.
  */
-/* Portions Copyright (C) The Internet Society (1997)
- * ASN.1 fragments are from RFC 2251; see RFC for full legal notices.
- */
 
 #include "portable.h"
 
@@ -65,7 +62,6 @@ static struct ldaperror ldap_builtin_errlist[] = {
 	{LDAP_IS_LEAF, 					N_("Entry is a leaf")},
 	{LDAP_ALIAS_DEREF_PROBLEM,	 	N_("Alias dereferencing problem")},
 
-	{LDAP_PROXY_AUTHZ_FAILURE,		N_("Proxy Authorization Failure")},
 	{LDAP_INAPPROPRIATE_AUTH, 		N_("Inappropriate authentication")},
 	{LDAP_INVALID_CREDENTIALS, 		N_("Invalid credentials")},
 	{LDAP_INSUFFICIENT_ACCESS, 		N_("Insufficient access")},
@@ -83,7 +79,34 @@ static struct ldaperror ldap_builtin_errlist[] = {
 	{LDAP_RESULTS_TOO_LARGE,		N_("Results too large")},
 	{LDAP_AFFECTS_MULTIPLE_DSAS,	N_("Operation affects multiple DSAs")},
 
-	{LDAP_OTHER, 					N_("Internal (implementation specific) error")},
+	{LDAP_OTHER, 					N_("Other (e.g., implementation specific) error")},
+
+	{LDAP_CANCELLED,				N_("Cancelled")},
+	{LDAP_NO_SUCH_OPERATION,		N_("No Operation to Cancel")},
+	{LDAP_TOO_LATE,					N_("Too Late to Cancel")},
+	{LDAP_CANNOT_CANCEL,			N_("Cannot Cancel")},
+
+	{LDAP_ASSERTION_FAILED,			N_("Assertion Failed")},
+	{LDAP_X_ASSERTION_FAILED,		N_("Assertion Failed (X)")},
+
+	{LDAP_PROXIED_AUTHORIZATION_DENIED, N_("Proxied Authorization Denied")},
+	{LDAP_X_PROXY_AUTHZ_FAILURE,		N_("Proxy Authorization Failure (X)")},
+
+	{LDAP_SYNC_REFRESH_REQUIRED,	N_("Content Sync Refresh Required")},
+	{LDAP_X_SYNC_REFRESH_REQUIRED,	N_("Content Sync Refresh Required (X)")},
+
+	{LDAP_X_NO_OPERATION,			N_("No Operation (X)")},
+
+	{LDAP_CUP_RESOURCES_EXHAUSTED,	N_("LCUP Resources Exhausted")},
+	{LDAP_CUP_SECURITY_VIOLATION,	N_("LCUP Security Violation")},
+	{LDAP_CUP_INVALID_DATA,			N_("LCUP Invalid Data")},
+	{LDAP_CUP_UNSUPPORTED_SCHEME,	N_("LCUP Unsupported Scheme")},
+	{LDAP_CUP_RELOAD_REQUIRED,		N_("LCUP Reload Required")},
+
+#ifdef LDAP_X_TXN
+	{LDAP_X_TXN_SPECIFY_OKAY,		N_("TXN specify okay")},
+	{LDAP_X_TXN_ID_INVALID,			N_("TXN ID is invalid")},
+#endif
 
 	{LDAP_CANCELLED,				N_("Cancelled")},
 	{LDAP_NO_SUCH_OPERATION,		N_("No Operation to Cancel")},
@@ -324,22 +347,13 @@ ldap_parse_result(
 	ber = ber_dup( lm->lm_ber );
 
 	if ( ld->ld_version < LDAP_VERSION2 ) {
-#ifdef LDAP_NULL_IS_NULL
 		tag = ber_scanf( ber, "{iA}",
 			&ld->ld_errno, &ld->ld_error );
-#else /* ! LDAP_NULL_IS_NULL */
-		tag = ber_scanf( ber, "{ia}",
-			&ld->ld_errno, &ld->ld_error );
-#endif /* ! LDAP_NULL_IS_NULL */
 
 	} else {
 		ber_len_t len;
 
-#ifdef LDAP_NULL_IS_NULL
 		tag = ber_scanf( ber, "{iAA" /*}*/,
-			&ld->ld_errno, &ld->ld_matched, &ld->ld_error );
-#else /* ! LDAP_NULL_IS_NULL */
-		tag = ber_scanf( ber, "{iaa" /*}*/,
 			&ld->ld_errno, &ld->ld_matched, &ld->ld_error );
 #endif /* ! LDAP_NULL_IS_NULL */
 
@@ -402,17 +416,13 @@ ldap_parse_result(
 	}
 	if ( errcode == LDAP_SUCCESS ) {
 		if( matcheddnp != NULL ) {
-#ifdef LDAP_NULL_IS_NULL
 			if ( ld->ld_matched )
-#endif /* LDAP_NULL_IS_NULL */
 			{
 				*matcheddnp = LDAP_STRDUP( ld->ld_matched );
 			}
 		}
 		if( errmsgp != NULL ) {
-#ifdef LDAP_NULL_IS_NULL
 			if ( ld->ld_error )
-#endif /* LDAP_NULL_IS_NULL */
 			{
 				*errmsgp = LDAP_STRDUP( ld->ld_error );
 			}

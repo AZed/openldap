@@ -32,7 +32,7 @@
 #include "slapcommon.h"
 #include "ldif.h"
 
-static int gotsig;
+static volatile sig_atomic_t gotsig;
 
 static RETSIGTYPE
 slapcat_sig( int sig )
@@ -123,8 +123,13 @@ slapcat( int argc, char **argv )
 			break;
 		}
 
-		fputs( data, ldiffp->fp );
-		fputs( "\n", ldiffp->fp );
+		if ( fputs( data, ldiffp->fp ) == EOF ||
+			fputs( "\n", ldiffp->fp ) == EOF ) {
+			fprintf(stderr, "%s: error writing output.\n",
+				progname);
+			rc = EXIT_FAILURE;
+			break;
+		}
 	}
 
 	be->be_entry_close( be );

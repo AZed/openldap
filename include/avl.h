@@ -59,6 +59,8 @@ struct avlnode {
 #define EH 	0
 #define RH 	1
 
+#define avl_bf2str(bf)	((bf) == -1 ? "LH" : (bf) == 0 ? "EH" : (bf) == 1 ? "RH" : "(unknown)" )
+
 /* thread bits */
 #define	AVL_THREAD	0
 #define	AVL_CHILD	1
@@ -131,6 +133,9 @@ tavl_find LDAP_P((Avlnode *, const void*, AVL_CMP));
 
 LDAP_AVL_F( Avlnode* )
 tavl_find2 LDAP_P((Avlnode *, const void*, AVL_CMP));
+
+LDAP_AVL_F( Avlnode* )
+tavl_find3 LDAP_P((Avlnode *, const void*, AVL_CMP, int *ret));
 
 #define	TAVL_DIR_LEFT	0
 #define	TAVL_DIR_RIGHT	1

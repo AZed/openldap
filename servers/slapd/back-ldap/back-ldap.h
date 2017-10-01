@@ -24,9 +24,33 @@
 #ifndef SLAPD_LDAP_H
 #define SLAPD_LDAP_H
 
-LDAP_BEGIN_DECL
+#include "../back-monitor/back-monitor.h"
+
+enum {
+	/* even numbers are connection types */
+	LDAP_BACK_PCONN_FIRST = 0,
+	LDAP_BACK_PCONN_ROOTDN = LDAP_BACK_PCONN_FIRST,
+	LDAP_BACK_PCONN_ANON = 2,
+	LDAP_BACK_PCONN_BIND = 4,
+
+	/* add the TLS bit */
+	LDAP_BACK_PCONN_TLS = 0x1U,
 
 struct ldapinfo_t;
+
+/* stuff required for monitoring */
+typedef struct ldap_monitor_info_t {
+	monitor_subsys_t	lmi_mss;
+	struct ldapinfo_t	*lmi_li;
+
+	struct berval		lmi_rdn;
+	struct berval		lmi_nrdn;
+	monitor_callback_t	*lmi_cb;
+	struct berval		lmi_base;
+	int			lmi_scope;
+	struct berval		lmi_filter;
+	struct berval		lmi_more_filter;
+} ldap_monitor_info_t;
 
 enum {
 	/* even numbers are connection types */
@@ -231,7 +255,11 @@ typedef struct ldapinfo_t {
 	ldap_pvt_thread_mutex_t	li_uri_mutex;
 
 	LDAP_REBIND_PROC	*li_rebind_f;
+	LDAP_URLLIST_PROC	*li_urllist_f;
 	void			*li_urllist_p;
+
+	/* we only care about the TLS options here */
+	slap_bindconf		li_tls;
 
 	slap_bindconf		li_acl;
 #define	li_acl_authcID		li_acl.sb_authcId
@@ -290,6 +318,13 @@ typedef struct ldapinfo_t {
 
 #define	LDAP_BACK_F_QUARANTINE		(0x00010000U)
 
+#ifdef SLAP_CONTROL_X_SESSION_TRACKING
+#define	LDAP_BACK_F_ST_REQUEST		(0x00020000U)
+#define	LDAP_BACK_F_ST_RESPONSE		(0x00040000U)
+#endif /* SLAP_CONTROL_X_SESSION_TRACKING */
+
+#define LDAP_BACK_F_NOREFS		(0x00080000U)
+
 #define	LDAP_BACK_ISSET_F(ff,f)		( ( (ff) & (f) ) == (f) )
 #define	LDAP_BACK_ISMASK_F(ff,m,f)	( ( (ff) & (m) ) == (f) )
 
@@ -323,6 +358,13 @@ typedef struct ldapinfo_t {
 
 #define	LDAP_BACK_QUARANTINE(li)	LDAP_BACK_ISSET( (li), LDAP_BACK_F_QUARANTINE )
 
+#ifdef SLAP_CONTROL_X_SESSION_TRACKING
+#define	LDAP_BACK_ST_REQUEST(li)	LDAP_BACK_ISSET( (li), LDAP_BACK_F_ST_REQUEST)
+#define	LDAP_BACK_ST_RESPONSE(li)	LDAP_BACK_ISSET( (li), LDAP_BACK_F_ST_RESPONSE)
+#endif /* SLAP_CONTROL_X_SESSION_TRACKING */
+
+#define	LDAP_BACK_NOREFS(li)		LDAP_BACK_ISSET( (li), LDAP_BACK_F_NOREFS)
+
 	int			li_version;
 
 	/* cached connections; 
@@ -338,6 +380,8 @@ typedef struct ldapinfo_t {
 	/* must be between LDAP_BACK_CONN_PRIV_MIN
 	 * and LDAP_BACK_CONN_PRIV_MAX ! */
 #define	LDAP_BACK_CONN_PRIV_DEFAULT	(16)
+
+	ldap_monitor_info_t	li_monitor_info;
 
 	sig_atomic_t		li_isquarantined;
 #define	LDAP_BACK_FQ_NO		(0)
@@ -391,6 +435,17 @@ typedef enum ldap_back_send_t {
 #ifndef LDAP_BACK_PRINT_CONNTREE
 #define LDAP_BACK_PRINT_CONNTREE 0
 #endif /* !LDAP_BACK_PRINT_CONNTREE */
+
+typedef struct ldap_extra_t {
+	int (*proxy_authz_ctrl)( Operation *op, SlapReply *rs, struct berval *bound_ndn,
+		int version, slap_idassert_t *si, LDAPControl	*ctrl );
+	int (*controls_free)( Operation *op, SlapReply *rs, LDAPControl ***pctrls );
+	int (*idassert_authzfrom_parse_cf)( const char *fname, int lineno, const char *arg, slap_idassert_t *si );
+	int (*idassert_parse_cf)( const char *fname, int lineno, int argc, char *argv[], slap_idassert_t *si );
+	void (*retry_info_destroy)( slap_retry_info_t *ri );
+	int (*retry_info_parse)( char *in, slap_retry_info_t *ri, char *buf, ber_len_t buflen );
+	int (*retry_info_unparse)( slap_retry_info_t *ri, struct berval *bvout );
+} ldap_extra_t;
 
 LDAP_END_DECL
 

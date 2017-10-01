@@ -29,7 +29,18 @@
 #include <ac/socket.h>
 
 #include "slap.h"
+#include "config.h"
 #include "back-ldap.h"
+
+static const ldap_extra_t ldap_extra = {
+	ldap_back_proxy_authz_ctrl,
+	ldap_back_controls_free,
+	slap_idassert_authzfrom_parse_cf,
+	slap_idassert_parse_cf,
+	slap_retry_info_destroy,
+	slap_retry_info_parse,
+	slap_retry_info_unparse
+};
 
 int
 ldap_back_open( BackendInfo	*bi )
@@ -41,6 +52,18 @@ ldap_back_open( BackendInfo	*bi )
 int
 ldap_back_initialize( BackendInfo *bi )
 {
+	int		rc;
+
+	bi->bi_flags =
+#ifdef LDAP_DYNAMIC_OBJECTS
+		/* this is set because all the support a proxy has to provide
+		 * is the capability to forward the refresh exop, and to
+		 * pass thru entries that contain the dynamicObject class
+		 * and the entryTtl attribute */
+		SLAP_BFLAG_DYNAMIC |
+#endif /* LDAP_DYNAMIC_OBJECTS */
+		0;
+
 	bi->bi_open = ldap_back_open;
 	bi->bi_config = 0;
 	bi->bi_close = 0;
@@ -49,7 +72,7 @@ ldap_back_initialize( BackendInfo *bi )
 	bi->bi_db_init = ldap_back_db_init;
 	bi->bi_db_config = config_generic_wrapper;
 	bi->bi_db_open = ldap_back_db_open;
-	bi->bi_db_close = 0;
+	bi->bi_db_close = ldap_back_db_close;
 	bi->bi_db_destroy = ldap_back_db_destroy;
 
 	bi->bi_op_bind = ldap_back_bind;
@@ -70,17 +93,28 @@ ldap_back_initialize( BackendInfo *bi )
 	bi->bi_connection_init = 0;
 	bi->bi_connection_destroy = ldap_back_conn_destroy;
 
-	if ( chain_init() ) {
-		return -1;
+	bi->bi_extra = (void *)&ldap_extra;
+
+	rc = chain_initialize();
+	if ( rc ) {
+		return rc;
 	}
+
+#ifdef SLAP_DISTPROC
+	rc = distproc_initialize();
+	if ( rc ) {
+		return rc;
+	}
+#endif
 
 	return ldap_back_init_cf( bi );
 }
 
 int
-ldap_back_db_init( Backend *be )
+ldap_back_db_init( Backend *be, ConfigReply *cr )
 {
 	ldapinfo_t	*li;
+	int		rc;
 	unsigned	i;
 
 	li = (ldapinfo_t *)ch_calloc( 1, sizeof( ldapinfo_t ) );
@@ -89,6 +123,8 @@ ldap_back_db_init( Backend *be )
  	}
 
 	li->li_rebind_f = ldap_back_default_rebind;
+	li->li_urllist_f = ldap_back_default_urllist;
+	li->li_urllist_p = li;
 	ldap_pvt_thread_mutex_init( &li->li_uri_mutex );
 
 	BER_BVZERO( &li->li_acl_authcID );
@@ -135,13 +171,22 @@ ldap_back_db_init( Backend *be )
 
 	be->be_cf_ocs = be->bd_info->bi_cf_ocs;
 
-	return 0;
+	rc = ldap_back_monitor_db_init( be );
+	if ( rc != 0 ) {
+		/* ignore, by now */
+		rc = 0;
+	}
+
+	return rc;
 }
 
 int
-ldap_back_db_open( BackendDB *be )
+ldap_back_db_open( BackendDB *be, ConfigReply *cr )
 {
 	ldapinfo_t	*li = (ldapinfo_t *)be->be_private;
+
+	slap_bindconf	sb = { BER_BVNULL };
+	int		rc = 0;
 
 	Debug( LDAP_DEBUG_TRACE,
 		"ldap_back_db_open: URI=%s\n",
@@ -160,10 +205,13 @@ ldap_back_db_open( BackendDB *be )
 		break;
 	}
 
-	if ( LDAP_BACK_T_F_DISCOVER( li ) && !LDAP_BACK_T_F( li ) ) {
-		int		rc;
+	ber_str2bv( li->li_uri, 0, 0, &sb.sb_uri );
+	sb.sb_version = li->li_version;
+	sb.sb_method = LDAP_AUTH_SIMPLE;
+	BER_BVSTR( &sb.sb_binddn, "" );
 
-		rc = slap_discover_feature( li->li_uri, li->li_version,
+	if ( LDAP_BACK_T_F_DISCOVER( li ) && !LDAP_BACK_T_F( li ) ) {
+		rc = slap_discover_feature( &sb,
 				slap_schema.si_ad_supportedFeatures->ad_cname.bv_val,
 				LDAP_FEATURE_ABSOLUTE_FILTERS );
 		if ( rc == LDAP_COMPARE_TRUE ) {
@@ -172,9 +220,7 @@ ldap_back_db_open( BackendDB *be )
 	}
 
 	if ( LDAP_BACK_CANCEL_DISCOVER( li ) && !LDAP_BACK_CANCEL( li ) ) {
-		int		rc;
-
-		rc = slap_discover_feature( li->li_uri, li->li_version,
+		rc = slap_discover_feature( &sb,
 				slap_schema.si_ad_supportedExtension->ad_cname.bv_val,
 				LDAP_EXOP_CANCEL );
 		if ( rc == LDAP_COMPARE_TRUE ) {
@@ -182,9 +228,20 @@ ldap_back_db_open( BackendDB *be )
 		}
 	}
 
+	/* monitor setup */
+	rc = ldap_back_monitor_db_open( be );
+	if ( rc != 0 ) {
+		/* ignore by now */
+		rc = 0;
+#if 0
+		goto fail;
+#endif
+	}
+
 	li->li_flags |= LDAP_BACK_F_ISOPEN;
 
-	return 0;
+fail:;
+	return rc;
 }
 
 void
@@ -211,11 +268,25 @@ ldap_back_conn_free( void *v_lc )
 }
 
 int
-ldap_back_db_destroy( Backend *be )
+ldap_back_db_close( Backend *be, ConfigReply *cr )
+{
+	int		rc = 0;
+
+	if ( be->be_private ) {
+		rc = ldap_back_monitor_db_close( be );
+	}
+
+	return rc;
+}
+
+int
+ldap_back_db_destroy( Backend *be, ConfigReply *cr )
 {
 	if ( be->be_private ) {
 		ldapinfo_t	*li = ( ldapinfo_t * )be->be_private;
 		unsigned	i;
+
+		(void)ldap_back_monitor_db_destroy( be );
 
 		ldap_pvt_thread_mutex_lock( &li->li_conninfo.lai_mutex );
 

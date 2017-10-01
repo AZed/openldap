@@ -11,8 +11,12 @@ Current contributions:
 		LDAP C++ API
 		Contributed by SuSE Gmbh.
 
+	ldaptcl
+		LDAP TCL API
+		Contributed by NeoSoft
+
 	slapd-modules
-		Native modules
+		Native-API modules
 
 	slapd-tools
 		Tools to use with slapd

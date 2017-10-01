@@ -94,7 +94,7 @@ bdb_attr_index_config(
 	int			argc,
 	char		**argv )
 {
-	int rc;
+	int rc = 0;
 	int	i;
 	slap_mask_t mask;
 	char **attrs;
@@ -116,7 +116,8 @@ bdb_attr_index_config(
 			fprintf( stderr, "%s: line %d: "
 				"no indexes specified: %s\n",
 				fname, lineno, argv[1] );
-			return LDAP_PARAM_ERROR;
+			rc = LDAP_PARAM_ERROR;
+			goto done;
 		}
 	}
 
@@ -134,7 +135,8 @@ bdb_attr_index_config(
 				fprintf( stderr, "%s: line %d: "
 					"index type \"%s\" undefined\n",
 					fname, lineno, indexes[i] );
-				return LDAP_PARAM_ERROR;
+				rc = LDAP_PARAM_ERROR;
+				goto done;
 			}
 
 			mask |= index;
@@ -145,7 +147,8 @@ bdb_attr_index_config(
 		fprintf( stderr, "%s: line %d: "
 			"no indexes selected\n",
 			fname, lineno );
-		return LDAP_PARAM_ERROR;
+		rc = LDAP_PARAM_ERROR;
+		goto done;
 	}
 
 	for ( i = 0; attrs[i] != NULL; i++ ) {
@@ -169,7 +172,7 @@ bdb_attr_index_config(
 				fprintf( stderr, "%s: line %d: "
 					"index component reference\"%s\" undefined\n",
 					fname, lineno, attrs[i] );
-				return rc;
+				goto done;
 			}
 			cr->cr_indexmask = mask;
 			/*
@@ -180,11 +183,6 @@ bdb_attr_index_config(
 			cr = NULL;
 		}
 #endif
-		a = (AttrInfo *) ch_malloc( sizeof(AttrInfo) );
-
-#ifdef LDAP_COMP_MATCH
-		a->ai_cr = NULL;
-#endif
 		ad = NULL;
 		rc = slap_str2ad( attrs[i], &ad, &text );
 
@@ -192,14 +190,15 @@ bdb_attr_index_config(
 			fprintf( stderr, "%s: line %d: "
 				"index attribute \"%s\" undefined\n",
 				fname, lineno, attrs[i] );
-			return rc;
+			goto done;
 		}
 
 		if( slap_ad_is_binary( ad ) ) {
 			fprintf( stderr, "%s: line %d: "
 				"index of attribute \"%s\" disallowed\n",
 				fname, lineno, attrs[i] );
-			return LDAP_UNWILLING_TO_PERFORM;
+			rc = LDAP_UNWILLING_TO_PERFORM;
+			goto done;
 		}
 
 		if( IS_SLAP_INDEX( mask, SLAP_INDEX_APPROX ) && !(
@@ -210,7 +209,8 @@ bdb_attr_index_config(
 			fprintf( stderr, "%s: line %d: "
 				"approx index of attribute \"%s\" disallowed\n",
 				fname, lineno, attrs[i] );
-			return LDAP_INAPPROPRIATE_MATCHING;
+			rc = LDAP_INAPPROPRIATE_MATCHING;
+			goto done;
 		}
 
 		if( IS_SLAP_INDEX( mask, SLAP_INDEX_EQUALITY ) && !(
@@ -221,7 +221,8 @@ bdb_attr_index_config(
 			fprintf( stderr, "%s: line %d: "
 				"equality index of attribute \"%s\" disallowed\n",
 				fname, lineno, attrs[i] );
-			return LDAP_INAPPROPRIATE_MATCHING;
+			rc = LDAP_INAPPROPRIATE_MATCHING;
+			goto done;
 		}
 
 		if( IS_SLAP_INDEX( mask, SLAP_INDEX_SUBSTR ) && !(
@@ -232,12 +233,18 @@ bdb_attr_index_config(
 			fprintf( stderr, "%s: line %d: "
 				"substr index of attribute \"%s\" disallowed\n",
 				fname, lineno, attrs[i] );
-			return LDAP_INAPPROPRIATE_MATCHING;
+			rc = LDAP_INAPPROPRIATE_MATCHING;
+			goto done;
 		}
 
 		Debug( LDAP_DEBUG_CONFIG, "index %s 0x%04lx\n",
 			ad->ad_cname.bv_val, mask, 0 ); 
 
+		a = (AttrInfo *) ch_malloc( sizeof(AttrInfo) );
+
+#ifdef LDAP_COMP_MATCH
+		a->ai_cr = NULL;
+#endif
 		a->ai_desc = ad;
 
 		if ( bdb->bi_flags & BDB_IS_OPEN ) {
@@ -260,14 +267,16 @@ bdb_attr_index_config(
 				rc = insert_component_reference( cr, &a_cr->ai_cr );
 				if ( rc != LDAP_SUCCESS) {
 					fprintf( stderr, " error during inserting component reference in %s ", attrs[i]);
-					return LDAP_PARAM_ERROR;
+					rc = LDAP_PARAM_ERROR;
+					goto done;
 				}
 				continue;
 			} else {
 				rc = insert_component_reference( cr, &a->ai_cr );
 				if ( rc != LDAP_SUCCESS) {
 					fprintf( stderr, " error during inserting component reference in %s ", attrs[i]);
-					return LDAP_PARAM_ERROR;
+					rc = LDAP_PARAM_ERROR;
+					goto done;
 				}
 			}
 		}
@@ -283,20 +292,23 @@ bdb_attr_index_config(
 					b->ai_indexmask = b->ai_newmask;
 				b->ai_newmask = a->ai_newmask;
 				ch_free( a );
+				rc = 0;
 				continue;
 			}
-			fprintf( stderr, "%s: line %d: duplicate index definition "
-				"for attr \"%s\"" SLAPD_CONF_UNKNOWN_IGNORED ".\n",
+			fprintf( stderr,
+				"%s: line %d: duplicate index definition for attr \"%s\".\n",
 				fname, lineno, attrs[i] );
 
-			return LDAP_PARAM_ERROR;
+			rc = LDAP_PARAM_ERROR;
+			goto done;
 		}
 	}
 
+done:
 	ldap_charray_free( attrs );
 	if ( indexes != NULL ) ldap_charray_free( indexes );
 
-	return LDAP_SUCCESS;
+	return rc;
 }
 
 static int
@@ -334,6 +346,52 @@ bdb_attr_index_unparse( struct bdb_info *bdb, BerVarray *bva )
 	}
 	for ( i=0; i<bdb->bi_nattrs; i++ )
 		bdb_attr_index_unparser( bdb->bi_attrs[i], bva );
+}
+
+static int
+bdb_attr_index_unparser( void *v1, void *v2 )
+{
+	AttrInfo *ai = v1;
+	BerVarray *bva = v2;
+	struct berval bv;
+	char *ptr;
+
+	slap_index2bvlen( ai->ai_indexmask, &bv );
+	if ( bv.bv_len ) {
+		bv.bv_len += ai->ai_desc->ad_cname.bv_len + 1;
+		ptr = ch_malloc( bv.bv_len+1 );
+		bv.bv_val = lutil_strcopy( ptr, ai->ai_desc->ad_cname.bv_val );
+		*bv.bv_val++ = ' ';
+		slap_index2bv( ai->ai_indexmask, &bv );
+		bv.bv_val = ptr;
+		ber_bvarray_add( bva, &bv );
+	}
+	return 0;
+}
+
+static AttributeDescription addef = { NULL, NULL, BER_BVC("default") };
+static AttrInfo aidef = { &addef };
+
+void
+bdb_attr_index_unparse( struct bdb_info *bdb, BerVarray *bva )
+{
+	int i;
+
+	if ( bdb->bi_defaultmask ) {
+		aidef.ai_indexmask = bdb->bi_defaultmask;
+		bdb_attr_index_unparser( &aidef, bva );
+	}
+	for ( i=0; i<bdb->bi_nattrs; i++ )
+		bdb_attr_index_unparser( bdb->bi_attrs[i], bva );
+}
+
+void
+bdb_attr_info_free( AttrInfo *ai )
+{
+#ifdef LDAP_COMP_MATCH
+	free( ai->ai_cr );
+#endif
+	free( ai );
 }
 
 void

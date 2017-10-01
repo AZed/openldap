@@ -111,7 +111,7 @@ monitor_subsys_log_modify(
 	int		rc = LDAP_OTHER;
 	int		newlevel = ldap_syslog;
 	Attribute	*save_attrs;
-	Modifications	*modlist = op->oq_modify.rs_modlist;
+	Modifications	*modlist = op->orm_modlist;
 	Modifications	*ml;
 
 	ldap_pvt_thread_mutex_lock( &monitor_log_mutex );
@@ -181,7 +181,7 @@ monitor_subsys_log_modify(
 		}
 
 		/* check that the entry still obeys the schema */
-		rc = entry_schema_check( op, e, save_attrs, 0,
+		rc = entry_schema_check( op, e, save_attrs, 0, 0,
 			&text, textbuf, sizeof( textbuf ) );
 		if ( rc != LDAP_SUCCESS ) {
 			rs->sr_err = rc;
@@ -395,6 +395,7 @@ delete_values( Operation *op, Entry *e, Modification *mod, int *newlevel )
 				a->a_vals[ k - 1 ] = a->a_vals[ k ];
 			}
 			BER_BVZERO( &a->a_vals[ k - 1 ] );
+			a->a_numvals--;
 
 			break;
 		}
@@ -409,6 +410,8 @@ delete_values( Operation *op, Entry *e, Modification *mod, int *newlevel )
 
 	/* if no values remain, delete the entire attribute */
 	if ( BER_BVISNULL( &a->a_vals[ 0 ] ) ) {
+		assert( a->a_numvals == 0 );
+
 		/* should already be zero */
 		*newlevel = 0;
 		

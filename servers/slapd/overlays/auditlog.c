@@ -1,5 +1,5 @@
 /* auditlog.c - log modifications for audit/history purposes */
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/auditlog.c,v 1.1.2.9 2008/02/11 23:24:24 kurt Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2005-2008 The OpenLDAP Foundation.
@@ -74,7 +74,7 @@ static int auditlog_response(Operation *op, SlapReply *rs) {
 	Modifications *m;
 	struct berval *b, *who = NULL;
 	char *what, *suffix;
-	long stamp = slap_get_time();
+	time_t stamp;
 	int i;
 
 	if ( rs->sr_err != LDAP_SUCCESS ) return SLAP_CB_CONTINUE;
@@ -125,8 +125,9 @@ static int auditlog_response(Operation *op, SlapReply *rs) {
 		return SLAP_CB_CONTINUE;
 	}
 
+	stamp = slap_get_time();
 	fprintf(f, "# %s %ld %s%s%s\n",
-		what, stamp, suffix, who ? " " : "", who ? who->bv_val : "");
+		what, (long)stamp, suffix, who ? " " : "", who ? who->bv_val : "");
 
 	if ( !BER_BVISEMPTY( &op->o_conn->c_dn ) &&
 		(!who || !dn_match( who, &op->o_conn->c_dn )))
@@ -173,7 +174,7 @@ static int auditlog_response(Operation *op, SlapReply *rs) {
 		break;
 	}
 
-	fprintf(f, "# end %s %ld\n\n", what, stamp);
+	fprintf(f, "# end %s %ld\n\n", what, (long)stamp);
 
 	fclose(f);
 	ldap_pvt_thread_mutex_unlock(&ad->ad_mutex);
@@ -184,7 +185,8 @@ static slap_overinst auditlog;
 
 static int
 auditlog_db_init(
-	BackendDB *be
+	BackendDB *be,
+	ConfigReply *cr
 )
 {
 	slap_overinst *on = (slap_overinst *)be->bd_info;
@@ -197,7 +199,8 @@ auditlog_db_init(
 
 static int
 auditlog_db_close(
-	BackendDB *be
+	BackendDB *be,
+	ConfigReply *cr
 )
 {
 	slap_overinst *on = (slap_overinst *)be->bd_info;
@@ -210,7 +213,8 @@ auditlog_db_close(
 
 static int
 auditlog_db_destroy(
-	BackendDB *be
+	BackendDB *be,
+	ConfigReply *cr
 )
 {
 	slap_overinst *on = (slap_overinst *)be->bd_info;
@@ -219,32 +223,6 @@ auditlog_db_destroy(
 	ldap_pvt_thread_mutex_destroy( &ad->ad_mutex );
 	free( ad );
 	return 0;
-}
-
-static int
-auditlog_config(
-	BackendDB	*be,
-	const char	*fname,
-	int		lineno,
-	int		argc,
-	char	**argv
-)
-{
-	slap_overinst *on = (slap_overinst *) be->bd_info;
-	auditlog_data *ad = on->on_bi.bi_private;
-
-	/* history log file */
-	if ( strcasecmp( argv[0], "auditlog" ) == 0 ) {
-		if ( argc < 2 ) {
-			Debug( LDAP_DEBUG_ANY,
-	    "%s: line %d: missing filename in \"auditlog <filename>\" line\n",
-			    fname, lineno, 0 );
-				return( 1 );
-		}
-		ad->ad_logfile = ch_strdup( argv[1] );
-		return 0;
-	}
-	return SLAP_CONF_UNKNOWN;
 }
 
 int auditlog_initialize() {

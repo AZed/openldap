@@ -19,6 +19,7 @@
 #include <stdio.h>
 #include <ac/ctype.h>
 #include <ac/string.h>
+#include <ac/errno.h>
 
 #include "back-bdb.h"
 
@@ -31,7 +32,7 @@
 #	define	SLAP_BDB_ALLOW_DIRTY_READ
 #endif
 
-#define bdb_cf_gen			BDB_SYMBOL(cf_gen)
+#define bdb_cf_gen		BDB_SYMBOL(cf_gen)
 #define	bdb_cf_cleanup		BDB_SYMBOL(cf_cleanup)
 #define bdb_checkpoint		BDB_SYMBOL(checkpoint)
 #define bdb_online_index	BDB_SYMBOL(online_index)
@@ -41,6 +42,8 @@ static ConfigDriver bdb_cf_gen;
 enum {
 	BDB_CHKPT = 1,
 	BDB_CONFIG,
+	BDB_CRYPTFILE,
+	BDB_CRYPTKEY,
 	BDB_DIRECTORY,
 	BDB_NOSYNC,
 	BDB_DIRTYR,
@@ -55,12 +58,12 @@ static ConfigTable bdbcfg[] = {
 			"DESC 'Directory for database content' "
 			"EQUALITY caseIgnoreMatch "
 			"SYNTAX OMsDirectoryString SINGLE-VALUE )", NULL, NULL },
-	{ "cachefree", "size", 2, 2, 0, ARG_INT|ARG_OFFSET,
+	{ "cachefree", "size", 2, 2, 0, ARG_UINT|ARG_OFFSET,
 		(void *)offsetof(struct bdb_info, bi_cache.c_minfree),
 		"( OLcfgDbAt:1.11 NAME 'olcDbCacheFree' "
 			"DESC 'Number of extra entries to free when max is reached' "
 			"SYNTAX OMsInteger SINGLE-VALUE )", NULL, NULL },
-	{ "cachesize", "size", 2, 2, 0, ARG_INT|ARG_OFFSET,
+	{ "cachesize", "size", 2, 2, 0, ARG_UINT|ARG_OFFSET,
 		(void *)offsetof(struct bdb_info, bi_cache.c_maxsize),
 		"( OLcfgDbAt:1.1 NAME 'olcDbCacheSize' "
 			"DESC 'Entry cache size in entries' "
@@ -69,10 +72,18 @@ static ConfigTable bdbcfg[] = {
 		bdb_cf_gen, "( OLcfgDbAt:1.2 NAME 'olcDbCheckpoint' "
 			"DESC 'Database checkpoint interval in kbytes and minutes' "
 			"SYNTAX OMsDirectoryString SINGLE-VALUE )",NULL, NULL },
+	{ "cryptfile", "file", 2, 2, 0, ARG_STRING|ARG_MAGIC|BDB_CRYPTFILE,
+		bdb_cf_gen, "( OLcfgDbAt:1.13 NAME 'olcDbCryptFile' "
+			"DESC 'Pathname of file containing the DB encryption key' "
+			"SYNTAX OMsDirectoryString SINGLE-VALUE )",NULL, NULL },
+	{ "cryptkey", "key", 2, 2, 0, ARG_BERVAL|ARG_MAGIC|BDB_CRYPTKEY,
+		bdb_cf_gen, "( OLcfgDbAt:1.14 NAME 'olcDbCryptKey' "
+			"DESC 'DB encryption key' "
+			"SYNTAX OMsOctetString SINGLE-VALUE )",NULL, NULL },
 	{ "dbconfig", "DB_CONFIG setting", 1, 0, 0, ARG_MAGIC|BDB_CONFIG,
 		bdb_cf_gen, "( OLcfgDbAt:1.3 NAME 'olcDbConfig' "
 			"DESC 'BerkeleyDB DB_CONFIG configuration directives' "
-			"SYNTAX OMsDirectoryString X-ORDERED 'VALUES' )", NULL, NULL },
+			"SYNTAX OMsIA5String X-ORDERED 'VALUES' )", NULL, NULL },
 	{ "dbnosync", NULL, 1, 2, 0, ARG_ON_OFF|ARG_MAGIC|BDB_NOSYNC,
 		bdb_cf_gen, "( OLcfgDbAt:1.4 NAME 'olcDbNoSync' "
 			"DESC 'Disable synchronous database writes' "
@@ -86,8 +97,13 @@ static ConfigTable bdbcfg[] = {
 		"( OLcfgDbAt:1.5 NAME 'olcDbDirtyRead' "
 		"DESC 'Allow reads of uncommitted data' "
 		"SYNTAX OMsBoolean SINGLE-VALUE )", NULL, NULL },
-	{ "idlcachesize", "size", 2, 2, 0, ARG_INT|ARG_OFFSET,
-		(void *)offsetof(struct bdb_info,bi_idl_cache_max_size),
+	{ "dncachesize", "size", 2, 2, 0, ARG_UINT|ARG_OFFSET,
+		(void *)offsetof(struct bdb_info, bi_cache.c_eimax),
+		"( OLcfgDbAt:1.12 NAME 'olcDbDNcacheSize' "
+			"DESC 'DN cache size' "
+			"SYNTAX OMsInteger SINGLE-VALUE )", NULL, NULL },
+	{ "idlcachesize", "size", 2, 2, 0, ARG_UINT|ARG_OFFSET,
+		(void *)offsetof(struct bdb_info, bi_idl_cache_max_size),
 		"( OLcfgDbAt:1.6 NAME 'olcDbIDLcacheSize' "
 		"DESC 'IDL cache size in IDLs' "
 		"SYNTAX OMsInteger SINGLE-VALUE )", NULL, NULL },
@@ -114,7 +130,7 @@ static ConfigTable bdbcfg[] = {
 		bdb_cf_gen, "( OLcfgDbAt:1.9 NAME 'olcDbSearchStack' "
 		"DESC 'Depth of search stack in IDLs' "
 		"SYNTAX OMsInteger SINGLE-VALUE )", NULL, NULL },
-	{ "shm_key", "key", 2, 2, 0, ARG_INT|ARG_OFFSET,
+	{ "shm_key", "key", 2, 2, 0, ARG_LONG|ARG_OFFSET,
 		(void *)offsetof(struct bdb_info, bi_shm_key), 
 		"( OLcfgDbAt:1.10 NAME 'olcDbShmKey' "
 		"DESC 'Key for shared memory region' "
@@ -137,10 +153,11 @@ static ConfigOCs bdbocs[] = {
 		"SUP olcDatabaseConfig "
 		"MUST olcDbDirectory "
 		"MAY ( olcDbCacheSize $ olcDbCheckpoint $ olcDbConfig $ "
+		"olcDbCryptFile $ olcDbCryptKey $ "
 		"olcDbNoSync $ olcDbDirtyRead $ olcDbIDLcacheSize $ "
 		"olcDbIndex $ olcDbLinearIndex $ olcDbLockDetect $ "
 		"olcDbMode $ olcDbSearchStack $ olcDbShmKey $ "
-		" olcDbCacheFree ) )",
+		"olcDbCacheFree $ olcDbDNcacheSize ) )",
 		 	Cft_Database, bdbcfg },
 	{ NULL, 0, NULL }
 };
@@ -179,19 +196,20 @@ bdb_online_index( void *ctx, void *arg )
 
 	Connection conn = {0};
 	OperationBuffer opbuf;
-	Operation *op = (Operation *) &opbuf;
+	Operation *op;
 
 	DBC *curs;
 	DBT key, data;
 	DB_TXN *txn;
 	DB_LOCK lock;
-	u_int32_t locker;
+	BDB_LOCKER locker;
 	ID id, nid;
 	EntryInfo *ei;
 	int rc, getnext = 1;
 	int i;
 
-	connection_fake_init( &conn, op, ctx );
+	connection_fake_init( &conn, &opbuf, ctx );
+	op = &opbuf.ob_op;
 
 	op->o_bd = be;
 
@@ -319,21 +337,24 @@ bdb_cf_cleanup( ConfigArgs *c )
 	
 	if ( bdb->bi_flags & BDB_RE_OPEN ) {
 		bdb->bi_flags ^= BDB_RE_OPEN;
-		rc = c->be->bd_info->bi_db_close( c->be );
+		rc = c->be->bd_info->bi_db_close( c->be, &c->reply );
 		if ( rc == 0 )
-			rc = c->be->bd_info->bi_db_open( c->be );
+			rc = c->be->bd_info->bi_db_open( c->be, &c->reply );
 		/* If this fails, we need to restart */
 		if ( rc ) {
 			slapd_shutdown = 2;
+			snprintf( c->cr_msg, sizeof( c->cr_msg ),
+				"failed to reopen database, rc=%d", rc );
 			Debug( LDAP_DEBUG_ANY, LDAP_XSTRING(bdb_cf_cleanup)
-				": failed to reopen database, rc=%d", rc, 0, 0 );
+				": %s\n", c->cr_msg, 0, 0 );
+			rc = LDAP_OTHER;
 		}
 	}
 	return rc;
 }
 
 static int
-bdb_cf_gen(ConfigArgs *c)
+bdb_cf_gen( ConfigArgs *c )
 {
 	struct bdb_info *bdb = c->be->be_private;
 	int rc;
@@ -342,7 +363,7 @@ bdb_cf_gen(ConfigArgs *c)
 		rc = 0;
 		switch( c->type ) {
 		case BDB_CHKPT:
-			if (bdb->bi_txn_cp ) {
+			if ( bdb->bi_txn_cp ) {
 				char buf[64];
 				struct berval bv;
 				bv.bv_len = sprintf( buf, "%d %d", bdb->bi_txn_cp_kbyte,
@@ -350,6 +371,25 @@ bdb_cf_gen(ConfigArgs *c)
 				bv.bv_val = buf;
 				value_add_one( &c->rvalue_vals, &bv );
 			} else{
+				rc = 1;
+			}
+			break;
+
+		case BDB_CRYPTFILE:
+			if ( bdb->bi_db_crypt_file ) {
+				c->value_string = ch_strdup( bdb->bi_db_crypt_file );
+			} else {
+				rc = 1;
+			}
+			break;
+
+		/* If a crypt file has been set, its contents are copied here.
+		 * But we don't want the key to be incorporated here.
+		 */
+		case BDB_CRYPTKEY:
+			if ( !bdb->bi_db_crypt_file && !BER_BVISNULL( &bdb->bi_db_crypt_key )) {
+				value_add_one( &c->rvalue_vals, &bdb->bi_db_crypt_key );
+			} else {
 				rc = 1;
 			}
 			break;
@@ -364,7 +404,8 @@ bdb_cf_gen(ConfigArgs *c)
 
 		case BDB_CONFIG:
 			if ( !( bdb->bi_flags & BDB_IS_OPEN )
-				&& !bdb->bi_db_config ) {
+				&& !bdb->bi_db_config )
+			{
 				char	buf[SLAP_TEXT_BUFLEN];
 				FILE *f = fopen( bdb->bi_db_config_path, "r" );
 				struct berval bv;
@@ -442,9 +483,11 @@ bdb_cf_gen(ConfigArgs *c)
 			if ( bdb->bi_txn_cp_task ) {
 				struct re_s *re = bdb->bi_txn_cp_task;
 				bdb->bi_txn_cp_task = NULL;
-				if ( ldap_pvt_runqueue_isrunning( &slapd_rq, re ))
+				ldap_pvt_thread_mutex_lock( &slapd_rq.rq_mutex );
+				if ( ldap_pvt_runqueue_isrunning( &slapd_rq, re ) )
 					ldap_pvt_runqueue_stoptask( &slapd_rq, re );
 				ldap_pvt_runqueue_remove( &slapd_rq, re );
+				ldap_pvt_thread_mutex_unlock( &slapd_rq.rq_mutex );
 			}
 			bdb->bi_txn_cp = 0;
 			break;
@@ -460,6 +503,21 @@ bdb_cf_gen(ConfigArgs *c)
 			}
 			bdb->bi_flags |= BDB_UPD_CONFIG;
 			c->cleanup = bdb_cf_cleanup;
+			break;
+		/* Doesn't really make sense to change these on the fly;
+		 * the entire DB must be dumped and reloaded
+		 */
+		case BDB_CRYPTFILE:
+			if ( bdb->bi_db_crypt_file ) {
+				ch_free( bdb->bi_db_crypt_file );
+				bdb->bi_db_crypt_file = NULL;
+			}
+			/* FALLTHRU */
+		case BDB_CRYPTKEY:
+			if ( !BER_BVISNULL( &bdb->bi_db_crypt_key )) {
+				ch_free( bdb->bi_db_crypt_key.bv_val );
+				BER_BVZERO( &bdb->bi_db_crypt_key );
+			}
 			break;
 		case BDB_DIRECTORY:
 			bdb->bi_flags |= BDB_RE_OPEN;
@@ -489,7 +547,7 @@ bdb_cf_gen(ConfigArgs *c)
 				struct berval bv, def = BER_BVC("default");
 				char *ptr;
 
-				for (ptr = c->line; !isspace( *ptr ); ptr++);
+				for (ptr = c->line; !isspace( (unsigned char) *ptr ); ptr++);
 
 				bv.bv_val = c->line;
 				bv.bv_len = ptr - bv.bv_val;
@@ -564,9 +622,11 @@ bdb_cf_gen(ConfigArgs *c)
 						c->log );
 					return 1;
 				}
+				ldap_pvt_thread_mutex_lock( &slapd_rq.rq_mutex );
 				bdb->bi_txn_cp_task = ldap_pvt_runqueue_insert( &slapd_rq,
 					bdb->bi_txn_cp_min * 60, bdb_checkpoint, bdb,
 					LDAP_XSTRING(bdb_checkpoint), c->be->be_suffix[0].bv_val );
+				ldap_pvt_thread_mutex_unlock( &slapd_rq.rq_mutex );
 			}
 		}
 		} break;
@@ -577,8 +637,8 @@ bdb_cf_gen(ConfigArgs *c)
 
 		if ( c->op == SLAP_CONFIG_ADD ) {
 			ptr += STRLENOF("dbconfig");
-			while (!isspace(*ptr)) ptr++;
-			while (isspace(*ptr)) ptr++;
+			while (!isspace((unsigned char)*ptr)) ptr++;
+			while (isspace((unsigned char)*ptr)) ptr++;
 		}
 
 		if ( bdb->bi_flags & BDB_IS_OPEN ) {
@@ -605,9 +665,44 @@ bdb_cf_gen(ConfigArgs *c)
 		}
 		break;
 
+	case BDB_CRYPTFILE:
+		rc = lutil_get_filed_password( c->value_string, &bdb->bi_db_crypt_key );
+		if ( rc == 0 ) {
+			bdb->bi_db_crypt_file = c->value_string;
+		}
+		break;
+
+	/* Cannot set key if file was already set */
+	case BDB_CRYPTKEY:
+		if ( bdb->bi_db_crypt_file ) {
+			rc = 1;
+		} else {
+			bdb->bi_db_crypt_key = c->value_bv;
+		}
+		break;
+
 	case BDB_DIRECTORY: {
 		FILE *f;
-		char *ptr;
+		char *ptr, *testpath;
+		int len;
+
+		len = strlen( c->value_string );
+		testpath = ch_malloc( len + STRLENOF(LDAP_DIRSEP) + STRLENOF("DUMMY") + 1 );
+		ptr = lutil_strcopy( testpath, c->value_string );
+		*ptr++ = LDAP_DIRSEP[0];
+		strcpy( ptr, "DUMMY" );
+		f = fopen( testpath, "w" );
+		if ( f ) {
+			fclose( f );
+			unlink( testpath );
+		}
+		ch_free( testpath );
+		if ( !f ) {
+			snprintf( c->cr_msg, sizeof( c->cr_msg ), "%s: invalid path: %s",
+				c->log, strerror( errno ));
+			Debug( LDAP_DEBUG_ANY, "%s\n", c->cr_msg, 0, 0 );
+			return -1;
+		}
 
 		if ( bdb->bi_dbenv_home )
 			ch_free( bdb->bi_dbenv_home );
@@ -616,7 +711,7 @@ bdb_cf_gen(ConfigArgs *c)
 		/* See if a DB_CONFIG file already exists here */
 		if ( bdb->bi_db_config_path )
 			ch_free( bdb->bi_db_config_path );
-		bdb->bi_db_config_path = ch_malloc( strlen( bdb->bi_dbenv_home ) +
+		bdb->bi_db_config_path = ch_malloc( len +
 			STRLENOF(LDAP_DIRSEP) + STRLENOF("DB_CONFIG") + 1 );
 		ptr = lutil_strcopy( bdb->bi_db_config_path, bdb->bi_dbenv_home );
 		*ptr++ = LDAP_DIRSEP[0];
@@ -656,9 +751,11 @@ bdb_cf_gen(ConfigArgs *c)
 					c->log );
 				return 1;
 			}
+			ldap_pvt_thread_mutex_lock( &slapd_rq.rq_mutex );
 			bdb->bi_index_task = ldap_pvt_runqueue_insert( &slapd_rq, 36000,
 				bdb_online_index, c->be,
 				LDAP_XSTRING(bdb_online_index), c->be->be_suffix[0].bv_val );
+			ldap_pvt_thread_mutex_unlock( &slapd_rq.rq_mutex );
 		}
 		break;
 

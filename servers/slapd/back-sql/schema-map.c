@@ -74,6 +74,14 @@ backsql_cmp_attr( const void *v_m1, const void *v_m2 )
 	const backsql_at_map_rec	*m1 = v_m1,
 					*m2 = v_m2;
 
+	if ( slap_ad_is_binary( m1->bam_ad ) || slap_ad_is_binary( m2->bam_ad ) ) {
+#ifdef BACKSQL_USE_PTR_CMP
+		return SLAP_PTRCMP( m1->bam_ad->ad_type, m2->bam_ad->ad_type );
+#else /* ! BACKSQL_USE_PTR_CMP */
+		return ber_bvcmp( &m1->bam_ad->ad_type->sat_cname, &m2->bam_ad->ad_type->sat_cname );
+#endif /* ! BACKSQL_USE_PTR_CMP */
+	}
+
 #ifdef BACKSQL_USE_PTR_CMP
 	return SLAP_PTRCMP( m1->bam_ad, m2->bam_ad );
 #else /* ! BACKSQL_USE_PTR_CMP */
@@ -87,12 +95,26 @@ backsql_dup_attr( void *v_m1, void *v_m2 )
 	backsql_at_map_rec		*m1 = v_m1,
 					*m2 = v_m2;
 
-	assert( m1->bam_ad == m2->bam_ad );
+	if ( slap_ad_is_binary( m1->bam_ad ) || slap_ad_is_binary( m2->bam_ad ) ) {
+#ifdef BACKSQL_USE_PTR_CMP
+		assert( m1->bam_ad->ad_type == m2->bam_ad->ad_type );
+#else /* ! BACKSQL_USE_PTR_CMP */
+		assert( ber_bvcmp( &m1->bam_ad->ad_type->sat_cname, &m2->bam_ad->ad_type->sat_cname ) == 0 );
+#endif /* ! BACKSQL_USE_PTR_CMP */
+
+	} else {
+#ifdef BACKSQL_USE_PTR_CMP
+		assert( m1->bam_ad == m2->bam_ad );
+#else /* ! BACKSQL_USE_PTR_CMP */
+		assert( ber_bvcmp( &m1->bam_ad->ad_cname, &m2->bam_ad->ad_cname ) == 0 );
+#endif /* ! BACKSQL_USE_PTR_CMP */
+	}
 
 	/* duplicate definitions of attributeTypes are appended;
 	 * this allows to define multiple rules for the same 
 	 * attributeType.  Use with care! */
 	for ( ; m1->bam_next ; m1 = m1->bam_next );
+
 	m1->bam_next = m2;
 	m2->bam_next = NULL;
 
@@ -167,7 +189,7 @@ static int
 backsql_add_sysmaps( backsql_info *bi, backsql_oc_map_rec *oc_map )
 {
 	backsql_at_map_rec	*at_map;
-	char			s[] = "+9223372036854775807L";
+	char			s[LDAP_PVT_INTTYPE_CHARS(long)];
 	struct berval		sbv;
 	struct berbuf		bb;
 	
@@ -178,6 +200,7 @@ backsql_add_sysmaps( backsql_info *bi, backsql_oc_map_rec *oc_map )
 	at_map = (backsql_at_map_rec *)ch_calloc(1, 
 			sizeof( backsql_at_map_rec ) );
 	at_map->bam_ad = slap_schema.si_ad_objectClass;
+	at_map->bam_true_ad = slap_schema.si_ad_objectClass;
 	ber_str2bv( "ldap_entry_objclasses.oc_name", 0, 1,
 			&at_map->bam_sel_expr );
 	ber_str2bv( "ldap_entry_objclasses,ldap_entries", 0, 1, 
@@ -205,13 +228,11 @@ backsql_add_sysmaps( backsql_info *bi, backsql_oc_map_rec *oc_map )
 
 	at_map->bam_add_proc = NULL;
 	{
-		char	tmp[] =
-			"INSERT INTO ldap_entry_objclasses "
+		char	tmp[STRLENOF("INSERT INTO ldap_entry_objclasses "
 			"(entry_id,oc_name) VALUES "
 			"((SELECT id FROM ldap_entries "
-			"WHERE oc_map_id="
-			"18446744073709551615UL "	/* 64 bit ULONG */
-			"AND keyval=?),?)";
+			"WHERE oc_map_id= "
+			"AND keyval=?),?)") + LDAP_PVT_INTTYPE_CHARS(unsigned long)];
 		snprintf( tmp, sizeof(tmp), 
 			"INSERT INTO ldap_entry_objclasses "
 			"(entry_id,oc_name) VALUES "
@@ -223,12 +244,10 @@ backsql_add_sysmaps( backsql_info *bi, backsql_oc_map_rec *oc_map )
 
 	at_map->bam_delete_proc = NULL;
 	{
-		char	tmp[] =
-			"DELETE FROM ldap_entry_objclasses "
+		char	tmp[STRLENOF("DELETE FROM ldap_entry_objclasses "
 			"WHERE entry_id=(SELECT id FROM ldap_entries "
-			"WHERE oc_map_id="
-			"18446744073709551615UL "	/* 64 bit ULONG */
-			"AND keyval=?) AND oc_name=?";
+			"WHERE oc_map_id= "
+			"AND keyval=?) AND oc_name=?") + LDAP_PVT_INTTYPE_CHARS(unsigned long)];
 		snprintf( tmp, sizeof(tmp), 
 			"DELETE FROM ldap_entry_objclasses "
 			"WHERE entry_id=(SELECT id FROM ldap_entries "
@@ -350,6 +369,26 @@ backsql_oc_get_attr_mapping( void *v_oc, void *v_bas )
 		at_map = (backsql_at_map_rec *)ch_calloc( 1,
 				sizeof( backsql_at_map_rec ) );
 		at_map->bam_ad = ad;
+		at_map->bam_true_ad = ad;
+		if ( slap_syntax_is_binary( ad->ad_type->sat_syntax )
+			&& !slap_ad_is_binary( ad ) )
+		{
+			char		buf[ BUFSIZ ];
+			struct berval	bv;
+			const char	*text = NULL;
+
+			bv.bv_val = buf;
+			bv.bv_len = snprintf( buf, sizeof( buf ), "%s;binary",
+				ad->ad_cname.bv_val );
+			at_map->bam_true_ad = NULL;
+			bas->bas_rc = slap_bv2ad( &bv, &at_map->bam_true_ad, &text );
+			if ( bas->bas_rc != LDAP_SUCCESS ) {
+				Debug( LDAP_DEBUG_TRACE, "backsql_oc_get_attr_mapping(): "
+					"unable to fetch attribute \"%s\": %s (%d)\n",
+					buf, text, rc );
+				return BACKSQL_AVL_STOP;
+			}
+		}
 
 		ber_str2bv( at_row.cols[ 1 ], 0, 1, &at_map->bam_sel_expr );
 		if ( at_row.value_len[ 8 ] <= 0 ) {
@@ -717,7 +756,7 @@ backsql_id2oc( backsql_info *bi, unsigned long id )
 backsql_at_map_rec *
 backsql_ad2at( backsql_oc_map_rec* objclass, AttributeDescription *ad )
 {
-	backsql_at_map_rec	tmp, *res;
+	backsql_at_map_rec	tmp = { 0 }, *res;
  
 #ifdef BACKSQL_TRACE
 	Debug( LDAP_DEBUG_TRACE, "==>backsql_ad2at(): "

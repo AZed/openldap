@@ -276,7 +276,7 @@ int ldap_domain2hostlist(
 		port = (p[4] << 8) | p[5];
 
 		if ( port == 0 || host[ 0 ] == '\0' ) {
-			goto add_size;
+		    goto add_size;
 		}
 
 		buflen = strlen(host) + STRLENOF(":65355 ");

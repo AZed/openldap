@@ -149,13 +149,6 @@ rwm_map_config(
 					fname, lineno, dst );
 				goto error_return;
 			}
-
-#if 0
-			mapping[0].m_dst_oc = ch_malloc( sizeof( ObjectClass ) );
-			memset( mapping[0].m_dst_oc, 0, sizeof( ObjectClass ) );
-			mapping[0].m_dst_oc->soc_cname = mapping[0].m_dst;
-			mapping[0].m_flags |= RWMMAP_F_FREE_DST;
-#endif
 		}
 		mapping[1].m_src_oc = mapping[0].m_dst_oc;
 
@@ -218,7 +211,7 @@ rwm_map_config(
 			|| avl_find( map->remap, (caddr_t)&mapping[1], rwm_mapping_cmp ) != NULL)
 	{
 		fprintf( stderr,
-			"%s: line %d: duplicate mapping found" SLAPD_CONF_UNKNOWN_IGNORED ".\n",
+			"%s: line %d: duplicate mapping found.\n",
 			fname, lineno );
 		/* FIXME: free stuff */
 		goto error_return;
@@ -247,7 +240,6 @@ error_return:;
 	return 1;
 }
 
-#ifdef ENABLE_REWRITE
 static char *
 rwm_suffix_massage_regexize( const char *s )
 {
@@ -413,6 +405,5 @@ rwm_suffix_massage_config(
 
 	return 0;
 }
-#endif /* ENABLE_REWRITE */
 
 #endif /* SLAPD_OVER_RWM */

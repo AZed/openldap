@@ -52,6 +52,7 @@
 #include <ac/ctype.h>
 #include <ac/string.h>
 #include <ac/unistd.h>
+#include <ac/socket.h>
 #include <ac/time.h>
 
 #include <ldap.h>
@@ -90,7 +91,7 @@ usage( void )
 
 
 const char options[] = "rs:"
-	"cd:D:e:f:h:H:IkKMnO:p:P:QR:U:vVw:WxX:y:Y:Z";
+	"cd:D:e:f:h:H:IMnO:o:p:P:QR:U:vVw:WxX:y:Y:Z";
 
 int
 handle_private_option( int i )
@@ -154,7 +155,7 @@ main(int argc, char **argv)
     LDAP		*ld;
 	int		rc, retval, havedn;
 
-    tool_init();
+    tool_init( TOOL_MODRDN );
     prog = lutil_progname( "ldapmodrdn", argc, argv );
 
 	tool_args( argc, argv );
@@ -198,9 +199,7 @@ main(int argc, char **argv)
 
 	tool_bind( ld );
 
-	if ( assertion || authzid || manageDSAit || noop ) {
-		tool_server_controls( ld, NULL, 0 );
-	}
+	tool_server_controls( ld, NULL, 0 );
 
     retval = rc = 0;
     if (havedn)
@@ -254,7 +253,7 @@ static int domodrdn(
 		}
 	}
 
-	if( not ) return LDAP_SUCCESS;
+	if( dont ) return LDAP_SUCCESS;
 
 	rc = ldap_rename( ld, dn, rdn, newSuperior, remove,
 		NULL, NULL, &id );
@@ -277,7 +276,7 @@ static int domodrdn(
 
 		rc = ldap_result( ld, LDAP_RES_ANY, LDAP_MSG_ALL, &tv, &res );
 		if ( rc < 0 ) {
-			ldap_perror( ld, "ldapmodrdn: ldap_result" );
+			tool_perror( "ldap_result", rc, NULL, NULL, NULL, NULL );
 			return rc;
 		}
 

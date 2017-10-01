@@ -15,9 +15,8 @@
 # top-level directory of the distribution or, alternatively, at
 # <http://www.OpenLDAP.org/license.html>.
 
-topbuilddir = ../../../../build
 topsrcdir = ../../..
-snaccdir = /usr/local/snacc
+snaccdir = ../$(topsrcdir)/snacc
 openssldir = /usr/local/include/openssl
 
 LIBTOOL=$(topbuilddir)/libtool

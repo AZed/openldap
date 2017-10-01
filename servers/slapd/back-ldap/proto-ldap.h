@@ -24,13 +24,11 @@
 LDAP_BEGIN_DECL
 
 extern BI_init			ldap_back_initialize;
-
 extern BI_open			ldap_back_open;
-extern BI_close			ldap_back_close;
-extern BI_destroy		ldap_back_destroy;
 
 extern BI_db_init		ldap_back_db_init;
 extern BI_db_open		ldap_back_db_open;
+extern BI_db_close		ldap_back_db_close;
 extern BI_db_destroy		ldap_back_db_destroy;
 
 extern BI_op_bind		ldap_back_bind;
@@ -67,17 +65,22 @@ extern ldapconn_t * ldap_back_conn_delete( ldapinfo_t *li, ldapconn_t *lc );
 
 extern int
 ldap_back_proxy_authz_ctrl(
+		Operation	*op,
+		SlapReply	*rs,
 		struct berval	*bound_ndn,
 		int		version,
 		slap_idassert_t	*si,
+		LDAPControl	*ctrl );
+
+extern int
+ldap_back_controls_add(
 		Operation	*op,
 		SlapReply	*rs,
+		ldapconn_t	*lc,
 		LDAPControl	***pctrls );
 
 extern int
-ldap_back_proxy_authz_ctrl_free(
-		Operation	*op,
-		LDAPControl	***pctrls );
+ldap_back_controls_free( Operation *op, SlapReply *rs, LDAPControl ***pctrls );
 
 extern void
 ldap_back_quarantine(
@@ -97,9 +100,18 @@ extern int slap_retry_info_unparse( slap_retry_info_t *ri, struct berval *bvout 
 extern int slap_idassert_authzfrom_parse_cf( const char *fname, int lineno, const char *arg, slap_idassert_t *si );
 extern int slap_idassert_parse_cf( const char *fname, int lineno, int argc, char *argv[], slap_idassert_t *si );
 
-extern int chain_init( void );
+extern int chain_initialize( void );
+#ifdef SLAP_DISTPROC
+extern int distproc_initialize( void );
+#endif
+
+extern int ldap_back_monitor_db_init( BackendDB *be );
+extern int ldap_back_monitor_db_open( BackendDB *be );
+extern int ldap_back_monitor_db_close( BackendDB *be );
+extern int ldap_back_monitor_db_destroy( BackendDB *be );
 
 extern LDAP_REBIND_PROC		ldap_back_default_rebind;
+extern LDAP_URLLIST_PROC	ldap_back_default_urllist;
 
 LDAP_END_DECL
 

@@ -44,6 +44,7 @@ meta_back_modrdn( Operation *op, SlapReply *rs )
 	int		msgid;
 	int		do_retry = 1;
 	LDAPControl	**ctrls = NULL;
+	struct berval	newrdn = BER_BVNULL;
 
 	mc = meta_back_getconn( op, rs, &candidate, LDAP_BACK_SENDERR );
 	if ( !mc || !meta_back_dobind( op, rs, mc, LDAP_BACK_SENDERR ) ) {
@@ -118,17 +119,23 @@ meta_back_modrdn( Operation *op, SlapReply *rs )
 		goto cleanup;
 	}
 
+	/* NOTE: we need to copy the newRDN in case it was formed
+	 * from a DN by simply changing the length (ITS#5397) */
+	newrdn = op->orr_newrdn;
+	if ( newrdn.bv_val[ newrdn.bv_len ] != '\0' ) {
+		ber_dupbv_x( &newrdn, &op->orr_newrdn, op->o_tmpmemctx );
+	}
+
 retry:;
 	ctrls = op->o_ctrls;
-	if ( ldap_back_proxy_authz_ctrl( &mc->mc_conns[ candidate ].msc_bound_ndn,
-		mt->mt_version, &mt->mt_idassert, op, rs, &ctrls ) != LDAP_SUCCESS )
+	if ( meta_back_controls_add( op, rs, mc, candidate, &ctrls ) != LDAP_SUCCESS )
 	{
 		send_ldap_result( op, rs );
 		goto cleanup;
 	}
 
 	rs->sr_err = ldap_rename( mc->mc_conns[ candidate ].msc_ld,
-			mdn.bv_val, op->orr_newrdn.bv_val,
+			mdn.bv_val, newrdn.bv_val,
 			mnewSuperior.bv_val, op->orr_deleteoldrdn,
 			ctrls, NULL, &msgid );
 	rs->sr_err = meta_back_op_result( mc, op, rs, candidate, msgid,
@@ -137,13 +144,13 @@ retry:;
 		do_retry = 0;
 		if ( meta_back_retry( op, rs, &mc, candidate, LDAP_BACK_SENDERR ) ) {
 			/* if the identity changed, there might be need to re-authz */
-			(void)ldap_back_proxy_authz_ctrl_free( op, &ctrls );
+			(void)mi->mi_ldap_extra->controls_free( op, rs, &ctrls );
 			goto retry;
 		}
 	}
 
 cleanup:;
-	(void)ldap_back_proxy_authz_ctrl_free( op, &ctrls );
+	(void)mi->mi_ldap_extra->controls_free( op, rs, &ctrls );
 
 	if ( mdn.bv_val != op->o_req_dn.bv_val ) {
 		free( mdn.bv_val );
@@ -155,6 +162,10 @@ cleanup:;
 	{
 		free( mnewSuperior.bv_val );
 		BER_BVZERO( &mnewSuperior );
+	}
+
+	if ( newrdn.bv_val != op->orr_newrdn.bv_val ) {
+		op->o_tmpfree( newrdn.bv_val, op->o_tmpmemctx );
 	}
 
 	if ( mc ) {

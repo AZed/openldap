@@ -158,6 +158,8 @@ meta_back_db_config(
 		mt = mi->mi_targets[ i ];
 
 		mt->mt_rebind_f = mi->mi_rebind_f;
+		mt->mt_urllist_f = mi->mi_urllist_f;
+		mt->mt_urllist_p = mt;
 
 		mt->mt_nretries = mi->mi_nretries;
 		mt->mt_quarantine = mi->mi_quarantine;
@@ -198,7 +200,8 @@ meta_back_db_config(
 			/*
 			 * uri MUST be legal!
 			 */
-			if ( ldap_url_parselist_ext( &ludp, uris[ c ], "\t" ) != LDAP_SUCCESS
+			if ( ldap_url_parselist_ext( &ludp, uris[ c ], "\t",
+					LDAP_PVT_URL_PARSE_NONE ) != LDAP_SUCCESS
 				|| ludp->lud_next != NULL )
 			{
 				Debug( LDAP_DEBUG_ANY,
@@ -521,6 +524,7 @@ meta_back_db_config(
 	"%s: line %d: extra cruft after ttl value in \"conn-ttl <seconds>\" line\n",
 				fname, lineno, 0 );
 			return 1;
+
 		}
 
 		if ( lutil_parse_time( argv[ 1 ], &t ) ) {
@@ -799,7 +803,7 @@ meta_back_db_config(
 	{
 		if ( argc != 2 ) {
 			Debug( LDAP_DEBUG_ANY,
-	"%s: line %d: \"[pseudo]root-bind-defer {FALSE|true}\" takes 1 argument\n",
+	"%s: line %d: \"[pseudo]root-bind-defer {TRUE|false}\" takes 1 argument\n",
 				fname, lineno, 0 );
 			return( 1 );
 		}
@@ -815,7 +819,7 @@ meta_back_db_config(
 
 		default:
 			Debug( LDAP_DEBUG_ANY,
-	"%s: line %d: \"[pseudo]root-bind-defer {FALSE|true}\": invalid arg \"%s\".\n",
+	"%s: line %d: \"[pseudo]root-bind-defer {TRUE|false}\": invalid arg \"%s\".\n",
 				fname, lineno, argv[ 1 ] );
 			return 1;
 		}
@@ -926,10 +930,8 @@ meta_back_db_config(
 		if ( strcasecmp( argv[ 1 ], "abandon" ) == 0 ) {
 			flag = LDAP_BACK_F_CANCEL_ABANDON;
 
-#if 0	/* needs ldap_int_discard(), 2.4 */
 		} else if ( strcasecmp( argv[ 1 ], "ignore" ) == 0 ) {
 			flag = LDAP_BACK_F_CANCEL_IGNORE;
-#endif
 
 		} else if ( strcasecmp( argv[ 1 ], "exop" ) == 0 ) {
 			flag = LDAP_BACK_F_CANCEL_EXOP;
@@ -1088,7 +1090,7 @@ idassert-authzFrom	"dn:<rootdn>"
 			}
 			cargv[ 2 ] = binddn;
 
-			rc = slap_idassert_parse_cf( fname, lineno, cargc, cargv, &mi->mi_targets[ mi->mi_ntargets - 1 ]->mt_idassert );
+			rc = mi->mi_ldap_extra->idassert_parse_cf( fname, lineno, cargc, cargv, &mi->mi_targets[ mi->mi_ntargets - 1 ]->mt_idassert );
 			if ( rc == 0 ) {
 				struct berval	bv;
 
@@ -1158,7 +1160,7 @@ idassert-authzFrom	"dn:<rootdn>"
 			return 1;
 		}
 
-		return slap_idassert_parse_cf( fname, lineno, argc, argv, &mi->mi_targets[ mi->mi_ntargets - 1 ]->mt_idassert );
+		return mi->mi_ldap_extra->idassert_parse_cf( fname, lineno, argc, argv, &mi->mi_targets[ mi->mi_ntargets - 1 ]->mt_idassert );
 
 	/* idassert-authzFrom */
 	} else if ( strcasecmp( argv[ 0 ], "idassert-authzFrom" ) == 0 ) {
@@ -1187,7 +1189,7 @@ idassert-authzFrom	"dn:<rootdn>"
 			return 1;
 		}
 
-		return slap_idassert_authzfrom_parse_cf( fname, lineno, argv[ 1 ], &mi->mi_targets[ mi->mi_ntargets - 1 ]->mt_idassert );
+		return mi->mi_ldap_extra->idassert_authzfrom_parse_cf( fname, lineno, argv[ 1 ], &mi->mi_targets[ mi->mi_ntargets - 1 ]->mt_idassert );
 
 	/* quarantine */
 	} else if ( strcasecmp( argv[ 0 ], "quarantine" ) == 0 ) {
@@ -1231,7 +1233,7 @@ idassert-authzFrom	"dn:<rootdn>"
 			ldap_pvt_thread_mutex_init( &mi->mi_targets[ mi->mi_ntargets - 1 ]->mt_quarantine_mutex );
 		}
 
-		if ( slap_retry_info_parse( argv[ 1 ], ri, buf, sizeof( buf ) ) ) {
+		if ( mi->mi_ldap_extra->retry_info_parse( argv[ 1 ], ri, buf, sizeof( buf ) ) ) {
 			Debug( LDAP_DEBUG_ANY,
 				"%s line %d: %s.\n",
 				fname, lineno, buf );
@@ -1244,6 +1246,38 @@ idassert-authzFrom	"dn:<rootdn>"
 		} else {
 			mi->mi_targets[ mi->mi_ntargets - 1 ]->mt_flags |= LDAP_BACK_F_QUARANTINE;
 		}
+
+#ifdef SLAP_CONTROL_X_SESSION_TRACKING
+	/* session tracking request */
+	} else if ( strcasecmp( argv[ 0 ], "session-tracking-request" ) == 0 ) {
+		unsigned	*flagsp = mi->mi_ntargets ?
+				&mi->mi_targets[ mi->mi_ntargets - 1 ]->mt_flags
+				: &mi->mi_flags;
+
+		if ( argc != 2 ) {
+			Debug( LDAP_DEBUG_ANY,
+	"%s: line %d: \"session-tracking-request {TRUE|false}\" needs 1 argument.\n",
+				fname, lineno, 0 );
+			return( 1 );
+		}
+
+		/* this is the default; we add it because the default might change... */
+		switch ( check_true_false( argv[ 1 ] ) ) {
+		case 1:
+			*flagsp |= LDAP_BACK_F_ST_REQUEST;
+			break;
+
+		case 0:
+			*flagsp &= ~LDAP_BACK_F_ST_REQUEST;
+			break;
+
+		default:
+			Debug( LDAP_DEBUG_ANY,
+		"%s: line %d: \"session-tracking-request {TRUE|false}\": unknown argument \"%s\".\n",
+				fname, lineno, argv[ 1 ] );
+			return( 1 );
+		}
+#endif /* SLAP_CONTROL_X_SESSION_TRACKING */
 	
 	/* dn massaging */
 	} else if ( strcasecmp( argv[ 0 ], "suffixmassage" ) == 0 ) {
@@ -1292,7 +1326,7 @@ idassert-authzFrom	"dn:<rootdn>"
 
 		if ( BER_BVISNULL( &be->be_nsuffix[ c ] ) ) {
 			Debug( LDAP_DEBUG_ANY, "%s: line %d: "
-	"%s: line %d: <suffix> \"%s\" must be within the database naming context, in "
+	"<suffix> \"%s\" must be within the database naming context, in "
 	"\"suffixMassage <suffix> <massaged suffix>\"\n",
 				fname, lineno, pvnc.bv_val );
 			free( pvnc.bv_val );
@@ -1310,7 +1344,7 @@ idassert-authzFrom	"dn:<rootdn>"
 			return 1;
 		}
 	
-		tmp_bd = select_backend( &nrnc, 0, 0 );
+		tmp_bd = select_backend( &nrnc, 0 );
 		if ( tmp_bd != NULL && tmp_bd->be_private == be->be_private ) {
 			Debug( LDAP_DEBUG_ANY, 
 	"%s: line %d: warning: <massaged suffix> \"%s\" resolves to this database, in "
@@ -1418,6 +1452,36 @@ idassert-authzFrom	"dn:<rootdn>"
 	"%s: line %d: unsupported version \"%s\" in \"protocol-version <version>\"\n",
 				fname, lineno, argv[ 1 ] );
 			return 1;
+		}
+
+	/* do not return search references */
+	} else if ( strcasecmp( argv[ 0 ], "norefs" ) == 0 ) {
+		unsigned	*flagsp = mi->mi_ntargets ?
+				&mi->mi_targets[ mi->mi_ntargets - 1 ]->mt_flags
+				: &mi->mi_flags;
+
+		if ( argc != 2 ) {
+			Debug( LDAP_DEBUG_ANY,
+	"%s: line %d: \"norefs {TRUE|false}\" needs 1 argument.\n",
+				fname, lineno, 0 );
+			return( 1 );
+		}
+
+		/* this is the default; we add it because the default might change... */
+		switch ( check_true_false( argv[ 1 ] ) ) {
+		case 1:
+			*flagsp |= LDAP_BACK_F_NOREFS;
+			break;
+
+		case 0:
+			*flagsp &= ~LDAP_BACK_F_NOREFS;
+			break;
+
+		default:
+			Debug( LDAP_DEBUG_ANY,
+		"%s: line %d: \"norefs {TRUE|false}\": unknown argument \"%s\".\n",
+				fname, lineno, argv[ 1 ] );
+			return( 1 );
 		}
 
 	/* anything else */

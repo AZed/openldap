@@ -205,8 +205,7 @@ ldap_back_search(
 	}
 
 	ctrls = op->o_ctrls;
-	rc = ldap_back_proxy_authz_ctrl( &lc->lc_bound_ndn,
-		li->li_version, &li->li_idassert, op, rs, &ctrls );
+	rc = ldap_back_controls_add( op, rs, lc, &ctrls );
 	if ( rc != LDAP_SUCCESS ) {
 		goto finish;
 	}
@@ -364,6 +363,11 @@ retry:
 			}
 
 		} else if ( rc == LDAP_RES_SEARCH_REFERENCE ) {
+			if ( LDAP_BACK_NOREFS( li ) ) {
+				ldap_msgfree( res );
+				continue;
+			}
+
 			do_retry = 0;
 			rc = ldap_parse_reference( lc->lc_ld, res,
 					&references, &rs->sr_ctrls, 1 );
@@ -469,22 +473,8 @@ retry:
 			}
 
 			if ( match.bv_val != NULL ) {
-#ifndef LDAP_NULL_IS_NULL
-				if ( match.bv_val[ 0 ] == '\0' ) {
-					LDAP_FREE( match.bv_val );
-					BER_BVZERO( &match );
-				} else
-#endif /* LDAP_NULL_IS_NULL */
-				{
-					match.bv_len = strlen( match.bv_val );
-				}
+				match.bv_len = strlen( match.bv_val );
 			}
-#ifndef LDAP_NULL_IS_NULL
-			if ( rs->sr_text != NULL && rs->sr_text[ 0 ] == '\0' ) {
-				LDAP_FREE( (char *)rs->sr_text );
-				rs->sr_text = NULL;
-			}
-#endif /* LDAP_NULL_IS_NULL */
 
 			rc = 0;
 			break;
@@ -543,7 +533,7 @@ finish:;
 		send_ldap_result( op, rs );
 	}
 
-	(void)ldap_back_proxy_authz_ctrl_free( op, &ctrls );
+	(void)ldap_back_controls_free( op, rs, &ctrls );
 
 	if ( rs->sr_ctrls ) {
 		ldap_controls_free( rs->sr_ctrls );
@@ -642,13 +632,10 @@ ldap_build_entry(
 		slap_syntax_validate_func	*validate;
 		slap_syntax_transform_func	*pretty;
 
-		attr = (Attribute *)ch_malloc( sizeof( Attribute ) );
+		attr = attr_alloc( NULL );
 		if ( attr == NULL ) {
 			continue;
 		}
-		attr->a_flags = 0;
-		attr->a_next = 0;
-		attr->a_desc = NULL;
 		if ( slap_bv2ad( &a, &attr->a_desc, &text ) 
 				!= LDAP_SUCCESS )
 		{
@@ -659,7 +646,7 @@ ldap_build_entry(
 					"%s ldap_build_entry: "
 					"slap_bv2undef_ad(%s): %s\n",
 					op->o_log_prefix, a.bv_val, text );
-				ch_free( attr );
+				attr_free( attr );
 				continue;
 			}
 		}
@@ -682,7 +669,7 @@ ldap_build_entry(
 			 */
 			( void )ber_scanf( &ber, "x" /* [W] */ );
 
-			ch_free( attr );
+			attr_free( attr );
 			continue;
 		}
 		
@@ -694,11 +681,6 @@ ldap_build_entry(
 			 * values result filter
 			 */
 			attr->a_vals = (struct berval *)&slap_dummy_bv;
-			last = 0;
-
-		} else {
-			for ( last = 0; !BER_BVISNULL( &attr->a_vals[ last ] ); last++ )
-				/* just count vals */ ;
 		}
 
 		validate = attr->a_desc->ad_type->sat_syntax->ssyn_validate;
@@ -710,7 +692,7 @@ ldap_build_entry(
 			goto next_attr;
 		}
 
-		for ( i = 0; i < last; i++ ) {
+		for ( i = 0; !BER_BVISNULL( &attr->a_vals[i] ); i++ ) {
 			struct berval	pval;
 			int		rc;
 
@@ -742,6 +724,7 @@ ldap_build_entry(
 				attr->a_vals[i] = pval;
 			}
 		}
+		attr->a_numvals = last = i;
 
 		if ( last && attr->a_desc->ad_type->sat_equality &&
 				attr->a_desc->ad_type->sat_equality->smr_normalize )
@@ -763,7 +746,7 @@ ldap_build_entry(
 
 				if ( rc != LDAP_SUCCESS ) {
 					BER_BVZERO( &attr->a_nvals[i] );
-					ch_free( attr );
+					attr_free( attr );
 					goto next_attr;
 				}
 			}
@@ -850,8 +833,7 @@ ldap_back_entry_get(
 
 retry:
 	ctrls = op->o_ctrls;
-	rc = ldap_back_proxy_authz_ctrl( &lc->lc_bound_ndn,
-		li->li_version, &li->li_idassert, op, &rs, &ctrls );
+	rc = ldap_back_controls_add( op, &rs, lc, &ctrls );
 	if ( rc != LDAP_SUCCESS ) {
 		goto cleanup;
 	}
@@ -865,7 +847,7 @@ retry:
 			do_retry = 0;
 			if ( ldap_back_retry( &lc, op, &rs, LDAP_BACK_DONTSEND ) ) {
 				/* if the identity changed, there might be need to re-authz */
-				(void)ldap_back_proxy_authz_ctrl_free( op, &ctrls );
+				(void)ldap_back_controls_free( op, &rs, &ctrls );
 				goto retry;
 			}
 		}
@@ -878,7 +860,7 @@ retry:
 		goto cleanup;
 	}
 
-	*ent = ch_calloc( 1, sizeof( Entry ) );
+	*ent = entry_alloc();
 	if ( *ent == NULL ) {
 		rc = LDAP_NO_MEMORY;
 		goto cleanup;
@@ -892,7 +874,7 @@ retry:
 	}
 
 cleanup:
-	(void)ldap_back_proxy_authz_ctrl_free( op, &ctrls );
+	(void)ldap_back_controls_free( op, &rs, &ctrls );
 
 	if ( result ) {
 		ldap_msgfree( result );

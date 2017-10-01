@@ -1,8 +1,10 @@
+# $OpenLDAP$
+
 ##
-# Copyright 2000-2003, OpenLDAP Foundation, All Rights Reserved.
+# Copyright 2000-2008, OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT file
 ##
 
-EXTRA_DIST = BUGS
+EXTRA_DIST=COPYRIGHT doxygen.rc LICENSE version.var version.sh
 SUBDIRS = src examples
 
