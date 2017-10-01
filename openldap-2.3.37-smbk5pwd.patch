@@ -1,3 +1,7 @@
+329441: Please package the smbk5pwd overlay
+
+Author: Jan Safranek <jsafrane@redhat.com>
+
 Compile smbk5pwd together with other overlays.
 
 --- openldap-2.3.34/contrib/slapd-modules/smbk5pwd/README.smbk5pwd	2005-11-14 19:06:04.000000000 +0100
@@ -45,7 +49,7 @@ Compile smbk5pwd together with other overlays.
  	$(LTLINK_MOD) -module -o $@ valsort.lo version.lo $(LINK_LIBS)
  
 +smbk5pwd.la : smbk5pwd.lo
-+	$(LTLINK_MOD) -module -o $@ smbk5pwd.lo version.lo $(LINK_LIBS)
++	$(LTLINK_MOD) -module -o $@ smbk5pwd.lo version.lo $(LINK_LIBS) -L$(LDAP_LIBDIR)/liblber -L$(LDAP_LIBDIR)/libldap_r -lldap_r -llber
 +
  install-local:	$(PROGRAMS)
  	@if test -n "$?" ; then \

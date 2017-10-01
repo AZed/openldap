@@ -1,13 +1,25 @@
---- openldap-2.3.34/servers/slapd/slapd.conf.orig	2007-06-29 09:01:50.000000000 +0200
-+++ openldap-2.3.34/servers/slapd/slapd.conf	2007-06-29 09:03:50.000000000 +0200
-@@ -3,23 +3,48 @@
+diff -up openldap-2.3.42/doc/man/man8/slurpd.8.config openldap-2.3.42/doc/man/man8/slurpd.8
+--- openldap-2.3.42/doc/man/man8/slurpd.8.config	2008-02-12 00:24:10.000000000 +0100
++++ openldap-2.3.42/doc/man/man8/slurpd.8	2008-08-11 14:23:13.000000000 +0200
+@@ -120,7 +120,7 @@ The directory permissions should limit r
+ temporary files may contain sensitive information.
+ This option allows you to specify the location of these temporary files. 
+ The default is
+-.BR LOCALSTATEDIR/openldap-slurp .
++.BR /var/lib/ldap .
+ .SH EXAMPLES
+ To start 
+ .I slurpd
+diff -up openldap-2.3.42/servers/slapd/slapd.conf.config openldap-2.3.42/servers/slapd/slapd.conf
+--- openldap-2.3.42/servers/slapd/slapd.conf.config	2004-06-18 04:49:08.000000000 +0200
++++ openldap-2.3.42/servers/slapd/slapd.conf	2008-08-11 14:50:32.000000000 +0200
+@@ -3,23 +3,52 @@
  # This file should NOT be world readable.
  #
  include		%SYSCONFDIR%/schema/core.schema
 +include		%SYSCONFDIR%/schema/cosine.schema
 +include		%SYSCONFDIR%/schema/inetorgperson.schema
 +include		%SYSCONFDIR%/schema/nis.schema
-+include		%SYSCONFDIR%/schema/misc.schema
  
 -# Define global ACLs to disable default read access.
 +# Allow LDAPv2 client connections.  This is NOT the default.
@@ -29,9 +41,10 @@
 -# moduleload	back_ldbm.la
 -# moduleload	back_passwd.la
 -# moduleload	back_shell.la
++
++# modules available in openldap-servers-overlays RPM package:
 +# moduleload accesslog.la
 +# moduleload auditlog.la
-+# moduleload back_sql.la
 +# moduleload denyop.la
 +# moduleload dyngroup.la
 +# moduleload dynlist.la
@@ -41,10 +54,14 @@
 +# moduleload refint.la
 +# moduleload retcode.la
 +# moduleload rwm.la
++# moduleload smbk5pwd.la
 +# moduleload syncprov.la
 +# moduleload translucent.la
 +# moduleload unique.la
 +# moduleload valsort.la
++
++# modules available in openldap-servers-sql RPM package:
++# moduleload back_sql.la
 +
 +# The next three lines allow use of TLS for encrypting connections using a
 +# dummy test certificate which you can generate by changing to
@@ -57,7 +74,7 @@
  
  # Sample security restrictions
  #	Require integrity protection (prevent hijacking)
-@@ -49,19 +74,32 @@
+@@ -49,19 +78,32 @@ argsfile	%LOCALSTATEDIR%/run/slapd.args
  # rootdn can always read and write EVERYTHING!
  
  #######################################################################
@@ -96,3 +113,24 @@
 +#replica host=ldap-1.example.com:389 starttls=critical
 +#     bindmethod=sasl saslmech=GSSAPI
 +#     authcId=host/ldap-master.example.com@EXAMPLE.COM
+diff -up openldap-2.3.42/servers/slurpd/slurp.h.config openldap-2.3.42/servers/slurpd/slurp.h
+--- openldap-2.3.42/servers/slurpd/slurp.h.config	2008-02-12 00:24:26.000000000 +0100
++++ openldap-2.3.42/servers/slurpd/slurp.h	2008-08-11 14:23:13.000000000 +0200
+@@ -67,7 +67,7 @@
+ #define SERVICE_NAME	OPENLDAP_PACKAGE "-slurpd"
+ 
+ /* Default directory for slurpd's private copy of replication logs */
+-#define	DEFAULT_SLURPD_REPLICA_DIR	LDAP_RUNDIR LDAP_DIRSEP "openldap-slurp"
++#define	DEFAULT_SLURPD_REPLICA_DIR	"/var/lib/ldap"
+ 
+ /* Default name for slurpd's private copy of the replication log */
+ #define	DEFAULT_SLURPD_REPLOGFILE	"slurpd.replog"
+@@ -76,7 +76,7 @@
+ #define	DEFAULT_SLURPD_STATUS_FILE	"slurpd.status"
+ 
+ /* slurpd dump file - contents of rq struct are written here (debugging) */
+-#define	SLURPD_DUMPFILE			LDAP_TMPDIR LDAP_DIRSEP "slurpd.dump"
++#define	SLURPD_DUMPFILE			DEFAULT_SLURPD_REPLICA_DIR "/slurpd.dump"
+ 
+ /* Amount of time to sleep if no more work to do */
+ #define	DEFAULT_NO_WORK_INTERVAL	3

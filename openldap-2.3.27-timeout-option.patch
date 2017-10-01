@@ -1,0 +1,180 @@
+diff -up openldap-2.3.27/clients/tools/ldappasswd.c.timeout openldap-2.3.27/clients/tools/ldappasswd.c
+--- openldap-2.3.27/clients/tools/ldappasswd.c.timeout	2006-02-16 21:06:03.000000000 +0100
++++ openldap-2.3.27/clients/tools/ldappasswd.c	2007-11-06 07:26:17.000000000 +0100
+@@ -81,7 +81,7 @@ usage( void )
+ 
+ 
+ const char options[] = "a:As:St:T:"
+-	"d:D:e:h:H:InO:p:QR:U:vVw:WxX:y:Y:Z";
++	"d:D:e:h:H:InO:o:p:QR:U:vVw:WxX:y:Y:Z";
+ 
+ int
+ handle_private_option( int i )
+diff -up openldap-2.3.27/clients/tools/ldapmodrdn.c.timeout openldap-2.3.27/clients/tools/ldapmodrdn.c
+--- openldap-2.3.27/clients/tools/ldapmodrdn.c.timeout	2006-01-03 23:16:01.000000000 +0100
++++ openldap-2.3.27/clients/tools/ldapmodrdn.c	2007-11-06 07:26:17.000000000 +0100
+@@ -90,7 +90,7 @@ usage( void )
+ 
+ 
+ const char options[] = "rs:"
+-	"cd:D:e:f:h:H:IkKMnO:p:P:QR:U:vVw:WxX:y:Y:Z";
++	"cd:D:e:f:h:H:IkKMnO:o:p:P:QR:U:vVw:WxX:y:Y:Z";
+ 
+ int
+ handle_private_option( int i )
+diff -up openldap-2.3.27/clients/tools/ldapcompare.c.timeout openldap-2.3.27/clients/tools/ldapcompare.c
+--- openldap-2.3.27/clients/tools/ldapcompare.c.timeout	2006-01-03 23:16:01.000000000 +0100
++++ openldap-2.3.27/clients/tools/ldapcompare.c	2007-11-06 07:26:17.000000000 +0100
+@@ -99,7 +99,7 @@ static int docompare LDAP_P((
+ 
+ 
+ const char options[] = "z"
+-	"Cd:D:e:h:H:IkKMnO:p:P:QR:U:vVw:WxX:y:Y:Z";
++	"Cd:D:e:h:H:IkKMnO:o:p:P:QR:U:vVw:WxX:y:Y:Z";
+ 
+ int
+ handle_private_option( int i )
+diff -up openldap-2.3.27/clients/tools/common.c.timeout openldap-2.3.27/clients/tools/common.c
+--- openldap-2.3.27/clients/tools/common.c.timeout	2006-01-03 23:16:01.000000000 +0100
++++ openldap-2.3.27/clients/tools/common.c	2007-11-06 07:26:17.000000000 +0100
+@@ -95,6 +95,8 @@ static int chainingResolve = -1;
+ static int chainingContinuation = -1;
+ #endif /* LDAP_CONTROL_X_CHAINING_BEHAVIOR */
+ 
++struct timeval	nettimeout = { -1 , 0 };
++
+ static int gotintr;
+ static int abcan;
+ 
+@@ -162,6 +164,8 @@ N_("  -K         like -k, but do only st
+ N_("  -M         enable Manage DSA IT control (-MM to make critical)\n"),
+ N_("  -n         show what would be done but don't actually do it\n"),
+ N_("  -O props   SASL security properties\n"),
++N_("  -o <opt>[=<optparam>] general options\n"),
++N_("             nettimeout=<timeout> (in seconds, or \"none\" or \"max\")\n"),
+ N_("  -p port    port on LDAP server\n"),
+ N_("  -P version procotol version (default: 3)\n"),
+ N_("  -Q         use SASL Quiet mode\n"),
+@@ -501,6 +505,45 @@ tool_args( int argc, char **argv )
+ 		case 'n':	/* print operations, don't actually do them */
+ 			not++;
+ 			break;
++		case 'o':
++			control = ber_strdup( optarg );
++			if ( (cvalue = strchr( control, '=' )) != NULL ) {
++				*cvalue++ = '\0';
++			}
++
++			if ( strcasecmp( control, "nettimeout" ) == 0 ) {
++				if( nettimeout.tv_sec != -1 ) {
++					fprintf( stderr, "nettimeout option previously specified\n");
++					exit( EXIT_FAILURE );
++				}
++				if( cvalue == NULL || cvalue[0] == '\0' ) {
++					fprintf( stderr, "nettimeout: option value expected\n" );
++					usage();
++				}
++		 		if ( strcasecmp( cvalue, "none" ) == 0 ) {
++		 			nettimeout.tv_sec = 0;
++		 		} else if ( strcasecmp( cvalue, "max" ) == 0 ) {
++		 			nettimeout.tv_sec = LDAP_MAXINT;
++		 		} else {
++		 			ival = strtol( cvalue, &next, 10 );
++		 			if ( next == NULL || next[0] != '\0' ) {
++		 				fprintf( stderr,
++		 					_("Unable to parse network timeout \"%s\"\n"), cvalue );
++		 				exit( EXIT_FAILURE );
++		 			}
++		 			nettimeout.tv_sec = ival;
++		 		}
++		 		if( nettimeout.tv_sec < 0 || nettimeout.tv_sec > LDAP_MAXINT ) {
++		 			fprintf( stderr, _("%s: invalid network timeout (%ld) specified\n"),
++		 				prog, (long)nettimeout.tv_sec );
++	 				exit( EXIT_FAILURE );
++ 				}
++			} else {
++				fprintf( stderr, "Invalid general option name: %s\n",
++					control );
++				usage();
++			}
++			break;
+ 		case 'O':
+ #ifdef HAVE_CYRUS_SASL
+ 			if( sasl_secprops != NULL ) {
+@@ -894,6 +937,16 @@ tool_conn_setup( int not, void (*private
+ 				exit( EXIT_FAILURE );
+ 			}
+ 		}
++
++		if ( nettimeout.tv_sec > 0 ) {
++	 		if ( ldap_set_option( ld, LDAP_OPT_NETWORK_TIMEOUT, (void *) &nettimeout )
++				!= LDAP_OPT_SUCCESS )
++			{
++		 		fprintf( stderr, "Could not set LDAP_OPT_NETWORK_TIMEOUT %ld\n",
++					(long)nettimeout.tv_sec );
++	 			exit( EXIT_FAILURE );
++			}
++		}
+ 	}
+ 
+ 	return ld;
+diff -up openldap-2.3.27/clients/tools/ldapdelete.c.timeout openldap-2.3.27/clients/tools/ldapdelete.c
+--- openldap-2.3.27/clients/tools/ldapdelete.c.timeout	2006-05-13 05:55:00.000000000 +0200
++++ openldap-2.3.27/clients/tools/ldapdelete.c	2007-11-06 07:26:17.000000000 +0100
+@@ -75,7 +75,7 @@ usage( void )
+ 
+ 
+ const char options[] = "r"
+-	"cd:D:e:f:h:H:IkKMnO:p:P:QR:U:vVw:WxX:y:Y:Z";
++	"cd:D:e:f:h:H:IkKMnO:o:p:P:QR:U:vVw:WxX:y:Y:Z";
+ 
+ int
+ handle_private_option( int i )
+diff -up openldap-2.3.27/clients/tools/ldapwhoami.c.timeout openldap-2.3.27/clients/tools/ldapwhoami.c
+--- openldap-2.3.27/clients/tools/ldapwhoami.c.timeout	2006-04-04 05:23:28.000000000 +0200
++++ openldap-2.3.27/clients/tools/ldapwhoami.c	2007-11-06 07:26:17.000000000 +0100
+@@ -62,7 +62,7 @@ usage( void )
+ 
+ 
+ const char options[] = ""
+-	"d:D:e:h:H:InO:p:QR:U:vVw:WxX:y:Y:Z";
++	"d:D:e:h:H:InO:o:p:QR:U:vVw:WxX:y:Y:Z";
+ 
+ int
+ handle_private_option( int i )
+diff -up openldap-2.3.27/clients/tools/ldapmodify.c.timeout openldap-2.3.27/clients/tools/ldapmodify.c
+--- openldap-2.3.27/clients/tools/ldapmodify.c.timeout	2006-04-04 05:23:28.000000000 +0200
++++ openldap-2.3.27/clients/tools/ldapmodify.c	2007-11-06 07:26:17.000000000 +0100
+@@ -153,7 +153,7 @@ usage( void )
+ 
+ 
+ const char options[] = "aE:FrS:"
+-	"cd:D:e:f:h:H:IkKMnO:p:P:QR:U:vVw:WxX:y:Y:Z";
++	"cd:D:e:f:h:H:IkKMnO:o:p:P:QR:U:vVw:WxX:y:Y:Z";
+ 
+ int
+ handle_private_option( int i )
+diff -up openldap-2.3.27/clients/tools/ldapsearch.c.timeout openldap-2.3.27/clients/tools/ldapsearch.c
+--- openldap-2.3.27/clients/tools/ldapsearch.c.timeout	2006-01-07 19:59:16.000000000 +0100
++++ openldap-2.3.27/clients/tools/ldapsearch.c	2007-11-06 07:27:28.000000000 +0100
+@@ -233,7 +233,7 @@ urlize(char *url)
+ 
+ 
+ const char options[] = "a:Ab:cE:F:l:Ls:S:tT:uz:"
+-	"Cd:D:e:f:h:H:IkKMnO:p:P:QR:U:vVw:WxX:y:Y:Z";
++	"Cd:D:e:f:h:H:IkKMnO:o:p:P:QR:U:vVw:WxX:y:Y:Z";
+ 
+ int
+ handle_private_option( int i )
+diff -up openldap-2.3.27/clients/tools/common.h.timeout openldap-2.3.27/clients/tools/common.h
+--- openldap-2.3.27/clients/tools/common.h.timeout	2006-01-03 23:16:01.000000000 +0100
++++ openldap-2.3.27/clients/tools/common.h	2007-11-06 07:26:17.000000000 +0100
+@@ -63,6 +63,8 @@ extern int   protocol;
+ extern int   verbose;
+ extern int   version;
+ 
++extern struct timeval  nettimeout;
++
+ /* Defined in common.c, set in main() */
+ extern char *prog;
+ extern const char __Version[];
