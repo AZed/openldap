@@ -16,7 +16,6 @@ Source2: slapd.sysconfig
 Source3: slapd.tmpfiles
 Source4: slapd.ldif
 Source5: ldap.conf
-Source10: ltb-project-openldap-ppolicy-check-password-%{check_password_version}.tar.gz
 Source50: libexec-functions
 Source51: libexec-convert-config.sh
 Source52: libexec-check-config.sh
@@ -71,6 +70,7 @@ Patch37: openldap-ITS8655-fix-double-free-on-paged-search-with-pagesize-0.patch
 Patch60: openldap-nss-reregister-nss-shutdown-callback.patch
 
 # check-password module specific patches
+Patch89: ltb-project-openldap-ppolicy-check-password-1.1.patch
 Patch90: check-password-makefile.patch
 Patch91: check-password.patch
 Patch92: check-password-loglevels.patch
@@ -160,7 +160,7 @@ over the Internet. The openldap-clients package contains the client
 programs needed for accessing and modifying OpenLDAP directories.
 
 %prep
-%setup -q -c -a 0 -a 10
+%setup -q -c -a 0
 
 pushd openldap-%{version}
 
@@ -232,11 +232,11 @@ done
 
 popd
 
-pushd ltb-project-openldap-ppolicy-check-password-%{check_password_version}
+# ltb-project-openldap-ppolicy-check-password patches
+%patch89 -p1
 %patch90 -p1
 %patch91 -p1
 %patch92 -p1
-popd
 
 %build
 
