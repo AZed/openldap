@@ -1,10 +1,9 @@
 Get rid of this patch as soon as possible.
 More details are provided in README.evolution
 
-diff -uNPrp openldap-2.4.23.old/include/ldap.h openldap-2.4.23.new/include/ldap.h
---- openldap-2.4.23.old/include/ldap.h	2010-06-10 20:48:36.000000000 +0200
-+++ openldap-2.4.23.new/include/ldap.h	2010-08-24 18:17:46.306679878 +0200
-@@ -2487,5 +2487,26 @@ ldap_parse_deref_control LDAP_P((
+--- openldap-2.4.24.orig/include/ldap.h
++++ openldap-2.4.24/include/ldap.h
+@@ -2518,5 +2518,26 @@ ldap_parse_deref_control LDAP_P((
  	LDAPControl	**ctrls,
  	LDAPDerefRes	**drp ));
  
@@ -31,9 +30,8 @@ diff -uNPrp openldap-2.4.23.old/include/ldap.h openldap-2.4.23.new/include/ldap.
 +
  LDAP_END_DECL
  #endif /* _LDAP_H */
-diff -uNPrp openldap-2.4.23.old/libraries/libldap/Makefile.in openldap-2.4.23.new/libraries/libldap/Makefile.in
---- openldap-2.4.23.old/libraries/libldap/Makefile.in	2010-04-13 22:22:55.000000000 +0200
-+++ openldap-2.4.23.new/libraries/libldap/Makefile.in	2010-08-24 18:17:46.306679878 +0200
+--- openldap-2.4.24.orig/libraries/libldap/Makefile.in
++++ openldap-2.4.24/libraries/libldap/Makefile.in
 @@ -20,7 +20,7 @@ PROGRAMS = apitest dntest ftest ltest ur
  SRCS	= bind.c open.c result.c error.c compare.c search.c \
  	controls.c messages.c references.c extended.c cyrus.c \
@@ -52,9 +50,8 @@ diff -uNPrp openldap-2.4.23.old/libraries/libldap/Makefile.in openldap-2.4.23.ne
  	filter.lo free.lo sort.lo passwd.lo whoami.lo \
  	getdn.lo getentry.lo getattr.lo getvalues.lo addentry.lo \
  	request.lo os-ip.lo url.lo pagectrl.lo sortctrl.lo vlvctrl.lo \
-diff -uNPrp openldap-2.4.23.old/libraries/libldap/ntlm.c openldap-2.4.23.new/libraries/libldap/ntlm.c
---- openldap-2.4.23.old/libraries/libldap/ntlm.c	1970-01-01 01:00:00.000000000 +0100
-+++ openldap-2.4.23.new/libraries/libldap/ntlm.c	2010-08-24 18:17:46.330680333 +0200
+--- /dev/null
++++ openldap-2.4.24/libraries/libldap/ntlm.c
 @@ -0,0 +1,137 @@
 +/* $OpenLDAP: pkg/ldap/libraries/libldap/ntlm.c,v 1.1.4.10 2002/01/04 20:38:21 kurt Exp $ */
 +/*

@@ -5,15 +5,15 @@
 #
 # Run slapd with -h "... ldap:/// ..."
 #   yes/no, default: yes
-SLAPD_LDAP=yes
+#SLAPD_LDAP=yes
 
 # Run slapd with -h "... ldapi:/// ..."
-#   yes/no, default: yes
-SLAPD_LDAPI=yes
+#   yes/no, default: no
+#SLAPD_LDAPI=no
 
 # Run slapd with -h "... ldaps:/// ..."
 #   yes/no, default: no
-SLAPD_LDAPS=no
+#SLAPD_LDAPS=no
 
 # Run slapd with -h "... $SLAPD_URLS ..."
 # This option could be used instead of previous three ones, but:

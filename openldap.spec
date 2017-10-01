@@ -1,11 +1,13 @@
+# TODO: add make test after build
+
 %define ldbm_backend berkeley
 %define evolution_connector_prefix %{_libdir}/evolution-openldap
 %define evolution_connector_includedir %{evolution_connector_prefix}/include
 %define evolution_connector_libdir %{evolution_connector_prefix}/%{_lib}
 
 Name: openldap
-Version: 2.4.23
-Release: 34%{?dist}.1
+Version: 2.4.24
+Release: 2%{?dist}
 Summary: LDAP support libraries
 Group: System Environment/Daemons
 License: OpenLDAP
@@ -14,93 +16,24 @@ Source0: ftp://ftp.OpenLDAP.org/pub/OpenLDAP/openldap-release/openldap-%{version
 Source1: ldap.init
 Source2: ldap.sysconfig
 Source3: README.evolution
-Source4: slapd.conf
-Source5: slapd.portreserve
-Source6: ldap.conf
-Source54: libexec-create-certdb.sh
-Source55: libexec-generate-server-cert.sh
+Source4: ldap.tmpfiles
 
 # patches for 2.4
-Patch0: openldap-manpages.patch
-Patch1: openldap-security-pie.patch
-Patch2: openldap-sql-linking.patch
-Patch3: openldap-reentrant-gethostby.patch
-Patch4: openldap-export-ldif.patch
-Patch5: openldap-smbk5pwd-overlay.patch
-Patch6: openldap-ldaprc-currentdir.patch
-Patch7: openldap-userconfig-setgid.patch
-Patch8: openldap-constraint-count.patch
-Patch9: openldap-man-sasl-nocanon.patch
-Patch10: openldap-memberof-disallow-global.patch
-Patch11: openldap-rwm-reference-counting.patch
-
-# already merged upstream
-Patch100: openldap-nss-ca-selfsigned.patch
-Patch101: openldap-nss-delay-token-auth.patch
-Patch102: openldap-nss-db-prefix.patch
-Patch103: openldap-reject-non-file-keyfiles.patch
-Patch104: openldap-use-cacert-dir-and-file.patch
-Patch105: openldap-cacertdir-hash-only.patch
-Patch106: openldap-improve-trace-messages.patch
-Patch107: openldap-nss-non-blocking.patch
-Patch108: openldap-verify-self-issued-certs.patch
-Patch109: openldap-nss-cipher-suites.patch
-Patch110: openldap-nss-restart-modules-fork.patch
-Patch111: openldap-nss-disable-nofork.patch
-Patch112: openldap-cve-ppolicy-forward-updates.patch
-Patch113: openldap-cve-ndb-bind-rootdn.patch
-Patch114: openldap-security-dos-empty-modrdn.patch
-Patch115: openldap-slapadd-hang.patch
-Patch116: openldap-nss-free-peer-cert.patch
-Patch117: openldap-segfault-ldif-nl-end.patch
-Patch118: openldap-segfault-ldif-indent.patch
-Patch119: openldap-nss-reqcert.patch
-Patch120: openldap-nss-verifycert.patch
-Patch121: openldap-nss-reqcert-hostname.patch
-Patch122: openldap-nss-memleak-free-certs.patch
-Patch123: openldap-nss-can-ignore-expired-issuer.patch
-Patch124: openldap-nss-wildcards.patch
-Patch125: openldap-sql-datatypes.patch
-Patch126: openldap-constraint-overlay-config.patch
-Patch127: openldap-dds-overlay-tolerance.patch
-Patch128: openldap-refint-overlay-nothing.patch
-Patch129: openldap-man-nss-tls-options.patch
-Patch130: openldap-nss-init-threadsafe.patch
-Patch131: openldap-man-slapo-unique.patch
-Patch132: openldap-dns-priority.patch
-Patch133: openldap-nss-handshake-threadsafe.patch
-Patch134: openldap-clients-crash-password-args.patch
-Patch135: openldap-nss-deferred-init-copy-params.patch
-Patch136: openldap-bypass-checks-on-ops-with-managedsait.patch
-Patch137: openldap-invalid-sockets.patch
-Patch138: openldap-nss-no-certkey-segfault.patch
-Patch139: openldap-man-clients-missing-options.patch
-Patch140: openldap-memleak-referrals.patch
-Patch141: openldap-cve-relay-rwm-translucent.patch
-Patch142: openldap-nss-allow-ca-dbdir-pemfile.patch
-Patch143: openldap-memleak-def_urlpre.patch
-Patch144: openldap-cve-nss-cipher-suite-ignored.patch
-Patch145: openldap-cve-nss-default-cipher-suite-always-selected.patch
-Patch146: openldap-tls-unbind-shutdown-order.patch
-Patch147: openldap-nss-dont-overwrite-verify-cert-error.patch
-Patch148: openldap-nss-clean-memory-for-token-pin.patch
-Patch149: openldap-nss-multiple-tls-contexts.patch
-Patch150: openldap-nss-update-cipher-list.patch
-Patch151: openldap-nss-tls_session-reuse-hostname-check.patch
-Patch152: openldap-nss-hashed-cacertdir-filename-matching.patch
-Patch153: openldap-nss-ignore-certdb-type-prefix.patch
-Patch154: openldap-nss-certs-from-certdb-fallback-pem.patch
-Patch155: openldap-dns-ipv6-queries.patch
-Patch156: openldap-slapd-preserve-mirrormode-when-deleting-syncrepl.patch
-Patch157: openldap-rwm-slapd-segfault-modrdn.patch
-Patch158: openldap-syncprov-segfault.patch
-Patch159: openldap-nss-pk11-freeslot.patch
+Patch0: openldap-slapd-conf.patch
+Patch1: openldap-manpages.patch
+Patch2: openldap-security-pie.patch
+Patch3: openldap-sql-linking.patch
+Patch4: openldap-reentrant-gethostby.patch
+Patch5: openldap-export-ldif.patch
+Patch6: openldap-smbk5pwd-overlay.patch
+Patch7: openldap-ldaprc-currentdir.patch
+Patch8: openldap-userconfig-setgid.patch
+Patch9: openldap-nss-nofork.patch
+Patch10: openldap-nss-null-pointer.patch
+Patch11: openldap-slapadd-hang.patch
 
 # patches for the evolution library (see README.evolution)
 Patch200: openldap-evolution-ntlm.patch
-
-# ssl deadlock "patch"
-Patch300: openldap-ssl-deadlock-revert.patch
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
@@ -108,7 +41,6 @@ BuildRequires: cyrus-sasl-devel >= 2.1, nss-devel, krb5-devel, tcp_wrappers-deve
 BuildRequires: glibc-devel, libtool, libtool-ltdl-devel, groff, perl
 # smbk5pwd overlay:
 BuildRequires: openssl-devel
-Requires: nss-tools
 
 Obsoletes: compat-openldap < 2.4
 # used by migrationtools:
@@ -140,10 +72,10 @@ customized LDAP clients.
 %package servers
 Summary: LDAP server
 License: OpenLDAP
-Requires: openldap = %{version}-%{release}, openssl, portreserve
-Requires(pre): shadow-utils, initscripts
-Requires(post): chkconfig, /sbin/runuser, make, initscripts
-Requires(preun): chkconfig, initscripts
+Requires: openldap = %{version}-%{release}, openssl
+Requires(pre): shadow-utils
+Requires(post): chkconfig, /sbin/runuser, make
+Requires(preun): chkconfig
 BuildRequires: db4-devel >= 4.4, db4-devel < 4.9
 Group: System Environment/Daemons
 
@@ -190,83 +122,18 @@ programs needed for accessing and modifying OpenLDAP directories.
 
 pushd openldap-%{version}
 
-%patch0 -p1 -b .manpages
-%patch1 -p1 -b .security-pie
-%patch2 -p1 -b .sql-linking
-%patch3 -p1 -b .reentrant-gethostby
-%patch4 -p1 -b .export-ldif
-%patch5 -p1 -b .smbk5pwd-overlay
-%patch6 -p1 -b .ldaprc-currentdir
-%patch7 -p1 -b .userconfig-setgid
-%patch8 -p1 -b .constraint-count
-%patch9 -p1 -b .man-sasl-nocanon
-%patch10 -p1 -b .memberof-disallow-global
-%patch11 -p1 -b .rwm-reference-counting
-
-%patch100 -p1 -b .nss-ca-selfsigned
-%patch101 -p1 -b .nss-delay-token-auth
-%patch102 -p1 -b .nss-db-prefix
-%patch103 -p1 -b .reject-non-file-keyfiles
-%patch104 -p1 -b .use-cacert-dir-and-file-dir
-%patch105 -p1 -b .cacertdir-hash-only
-%patch106 -p1 -b .improve-trace-messages
-%patch107 -p1 -b .nss-non-blocking
-%patch108 -p1 -b .verify-self-issued-certs
-%patch109 -p1 -b .nss-cipher-suites
-%patch110 -p1 -b .nss-restart-modules-fork
-%patch111 -p1 -b .nss-disable-nofork
-%patch112 -p1 -b .cve-ppolicy-forward-updates
-%patch113 -p1 -b .cve-ndb-bind-rootdn
-%patch114 -p1 -b .security-dos-empty-modrdn
-%patch115 -p1 -b .slapadd-hang
-%patch116 -p1 -b .nss-free-peer-cert
-%patch117 -p1 -b .segfault-ldif-nl-end
-%patch118 -p1 -b .segfault-ldif-indent
-%patch119 -p1 -b .nss-reqcert
-%patch120 -p1 -b .nss-verifycert
-%patch121 -p1 -b .nss-reqcert-hostname
-%patch122 -p1 -b .nss-memleak-free-certs
-%patch123 -p1 -b .nss-can-ignore-expired-issuer
-%patch124 -p1 -b .nss-wildcards
-%patch125 -p1 -b .sql-datatypes
-%patch126 -p1 -b .constraint-overlay-config
-%patch127 -p1 -b .dds-overlay-tolerance
-%patch128 -p1 -b .refint-overlay-nothing
-%patch129 -p1 -b .man-nss-tls-options
-%patch130 -p1 -b .nss-init-threadsafe
-%patch131 -p1 -b .man-slapo-unique
-%patch132 -p1 -b .dns-priority
-%patch133 -p1 -b .nss-handshake-threadsafe
-%patch134 -p1 -b .clients-crash-password-args
-%patch135 -p1 -b .nss-deferred-init-copy-params
-%patch136 -p1 -b .bypass-checks-on-ops-with-managedsait
-%patch137 -p1 -b .invalid-sockets
-%patch138 -p1 -b .nss-no-certkey-segfault
-%patch139 -p1 -b .man-clients-missing-options
-%patch140 -p1 -b .memleak-referrals
-%patch141 -p1 -b .cve-relay-rwm-translucent
-%patch142 -p1 -b .nss-allow-ca-dbdir-pemfile
-%patch143 -p1 -b .memleak-def_urlpre
-%patch144 -p1 -b .cve-nss-cipher-suite-ignored
-%patch145 -p1 -b .cve-nss-default-cipher-suite-always-selected
-%patch146 -p1 -b .tls-unbind-shutdown-order
-%patch147 -p1 -b .nss-dont-overwrite-verify-cert-error
-%patch148 -p1 -b .nss-clean-memory-for-token-pin
-%patch149 -p1 -b .nss-multiple-tls-contexts
-%patch150 -p1 -b .nss-update-cipher-list
-%patch151 -p1 -b .nss-tls_session-reuse-hostname-check
-%patch152 -p1 -b .nss-hashed-cacertdir-filename-matching
-%patch153 -p1 -b .nss-ignore-certdb-type-prefix
-%patch154 -p1 -b .nss-certs-from-certdb-fallback-pem
-%patch155 -p1 -b .dns-ipv6-queries
-%patch156 -p1 -b .slapd-preserve-mirrormode-when-deleting-syncrepl
-%patch157 -p1 -b .rwm-slapd-segfault-modrdn
-%patch158 -p1 -b .syncprov-segfault
-%patch159 -p1 -b .nss-leak
-
-# revert patch 133
-# it can't simply be removed as other patches wouldn't apply...
-%patch300 -p1 -b .ssl-deadlock-revert
+%patch0 -p1 -b .config
+%patch1 -p1 -b .manpages
+%patch2 -p1 -b .security-pie
+%patch3 -p1 -b .sql-linking
+%patch4 -p1 -b .reentrant-gethostby
+%patch5 -p1 -b .export-ldif
+%patch6 -p1 -b .smbk5pwd-overlay
+%patch7 -p1 -b .ldaprc-currentdir
+%patch8 -p1 -b .userconfig-setgid
+%patch9 -p1 -b .nss-nofork
+%patch10 -p1 -b .nss-null-pointer
+%patch11 -p1 -b .slapadd-hang
 
 cp %{_datadir}/libtool/config/config.{sub,guess} build/
 
@@ -301,10 +168,9 @@ RPM_OPT_FLAGS="$RPM_OPT_FLAGS -O0"
 %endif
 
 export CPPFLAGS="-I%_includedir/nss3 -I%_includedir/nspr4"
-export CFLAGS="$RPM_OPT_FLAGS $CPPFLAGS -fno-strict-aliasing -fPIC -D_REENTRANT -DLDAP_CONNECTIONLESS -D_GNU_SOURCE -DHAVE_TLS -DHAVE_MOZNSS -DSLAPD_LMHASH"
+export CFLAGS="$RPM_OPT_FLAGS $CPPFLAGS -fPIC -D_REENTRANT -DLDAP_CONNECTIONLESS -D_GNU_SOURCE -DHAVE_TLS -DHAVE_MOZNSS -DSLAPD_LMHASH"
 export NSS_LIBS="-lssl3 -lsmime3 -lnss3 -lnssutil3 -lplds4 -lplc4 -lnspr4"
 export LIBS=""
-export LDFLAGS="$LDFLAGS -Wl,-z,relro"
 
 build() {
 
@@ -317,7 +183,7 @@ build() {
     --with-tls=no \
     --with-cyrus-sasl \
     \
-    --enable-wrappers \
+    --with-wrappers \
     \
     --enable-passwd \
     \
@@ -437,11 +303,16 @@ make install DESTDIR=%{buildroot} \
 popd
 
 # setup directories for TLS certificates
-mkdir -p %{buildroot}%{_sysconfdir}/openldap/certs
+mkdir -p %{buildroot}%{_sysconfdir}/openldap/cacerts
+mkdir -p %{buildroot}%{_sysconfdir}/pki/tls/certs
 
 # setup data and runtime directories
 mkdir -p %{buildroot}/var/lib/ldap
 mkdir -p %{buildroot}/var/run/openldap
+
+# setup autocreation of runtime directories on tmpfs
+mkdir -p %{buildroot}%{_sysconfdir}/tmpfiles.d
+install -m 644 %SOURCE4 %{buildroot}%{_sysconfdir}/tmpfiles.d/openldap.conf
 
 # remove build root from config files and manual pages
 perl -pi -e "s|%{buildroot}||g" %{buildroot}/%{_sysconfdir}/openldap/*.conf
@@ -459,20 +330,6 @@ install -m 755 %SOURCE1 %{buildroot}%{_sysconfdir}/rc.d/init.d/slapd
 mkdir -p %{buildroot}%{_sysconfdir}/sysconfig
 install -m 644 %SOURCE2 %{buildroot}%{_sysconfdir}/sysconfig/ldap
 
-# install portreserve config
-mkdir -p %{buildroot}%{_sysconfdir}/portreserve
-install -m 644 %SOURCE5 %{buildroot}%{_sysconfdir}/portreserve/slapd
-
-# install default ldap.conf (customized)
-rm -f %{buildroot}%{_sysconfdir}/openldap/ldap.conf
-install -m 0644 %SOURCE6 %{buildroot}%{_sysconfdir}/openldap/ldap.conf
-
-# setup maintainance scripts
-mkdir -p %{buildroot}%{_libexecdir}
-install -m 0755 -d %{buildroot}%{_libexecdir}/openldap
-install -m 0755 %SOURCE54 %{buildroot}%{_libexecdir}/openldap/create-certdb.sh
-install -m 0755 %SOURCE55 %{buildroot}%{_libexecdir}/openldap/generate-server-cert.sh
-
 # move slapd out of _libdir
 mv %{buildroot}/%{_libdir}/slapd %{buildroot}/%{_sbindir}/
 
@@ -489,27 +346,14 @@ chmod 644 %{buildroot}/%{_libdir}/lib*.*a
 # new configuration will be generated in %post
 mkdir -p %{buildroot}/%{_datadir}/openldap-servers
 mkdir %{buildroot}/%{_sysconfdir}/openldap/slapd.d
-rm -f %{buildroot}/%{_sysconfdir}/openldap/slapd.conf
-install -m 644 %SOURCE4 %{buildroot}/%{_datadir}/openldap-servers/slapd.conf.obsolete
+mv %{buildroot}/%{_sysconfdir}/openldap/slapd.conf %{buildroot}/%{_datadir}/openldap-servers/slapd.conf.obsolete
+chmod 0644 %{buildroot}/%{_datadir}/openldap-servers/slapd.conf.obsolete
 
 # move doc files out of _sysconfdir
 mv %{buildroot}%{_sysconfdir}/openldap/schema/README README.schema
 mv %{buildroot}%{_sysconfdir}/openldap/DB_CONFIG.example %{buildroot}/%{_datadir}/openldap-servers/DB_CONFIG.example
 chmod 0644 openldap-%{version}/servers/slapd/back-sql/rdbms_depend/timesten/*.sh
 chmod 0644 %{buildroot}/%{_datadir}/openldap-servers/DB_CONFIG.example
-
-# move all libraries from /usr/lib to /lib for disk-less booting
-# devel symlinks will be left in the original location
-mkdir -p %{buildroot}/%{_lib}
-pushd %{buildroot}/%{_libdir}
-# versioned libraries
-mv {libldap,libldap_r,liblber,libldif}-*.so* %{buildroot}/%{_lib}
-# update devel symlinks
-for library in {libldap,libldap_r,liblber,libldif}.so; do
-	[ -h $library ] || exit 1
-	ln -sf /%{_lib}/$(readlink $library) $library
-done
-popd
 
 # remove files which we don't want packaged
 rm -f %{buildroot}/%{_libdir}/*.la
@@ -525,10 +369,7 @@ rmdir %{buildroot}%{_localstatedir}/openldap-data
 %clean 
 rm -rf %{buildroot}
 
-%post
-/sbin/ldconfig
-# create certificate database
-%{_libexecdir}/openldap/create-certdb.sh >&/dev/null || :
+%post -p /sbin/ldconfig
 
 %postun -p /sbin/ldconfig
 
@@ -560,9 +401,9 @@ if [ $1 -eq 2 ]; then
 		pushd %{_sharedstatedir}/ldap &>/dev/null
 
 		# stop the service
-		if /sbin/service slapd status &>/dev/null; then
+		if service slapd status &>/dev/null; then
 			touch need_start
-			/sbin/service slapd stop
+			service slapd stop
 		else
 			rm -f need_start
 		fi
@@ -625,8 +466,23 @@ exit 0
 /sbin/ldconfig
 /sbin/chkconfig --add slapd
 
-# generate sample TLS certificates for server (will not replace)
-%{_libexecdir}/openldap/generate-server-cert.sh -o &>/dev/null || :
+# generate sample TLS certificates
+if [ ! -f %{_sysconfdir}/pki/tls/certs/slapd.pem ] ; then
+pushd %{_sysconfdir}/pki/tls/certs > /dev/null 2>&1
+umask 077
+cat << EOF | make slapd.pem > /dev/null 2>&1
+--
+SomeState
+SomeCity
+SomeOrganization
+SomeOrganizationalUnit
+localhost.localdomain
+root@localhost.localdomain
+EOF
+chown root:ldap slapd.pem
+chmod 640 slapd.pem
+popd
+fi
 
 # generate configuration in slapd.d
 if ! ls -d %{_sysconfdir}/openldap/slapd.d/* &>/dev/null; then
@@ -641,7 +497,18 @@ if ! ls -d %{_sysconfdir}/openldap/slapd.d/* &>/dev/null; then
 	# convert from old style config slapd.conf
 	mv %{_sysconfdir}/openldap/slapd.conf %{_sysconfdir}/openldap/slapd.conf.bak
 	mkdir -p %{_sysconfdir}/openldap/slapd.d/
-	slaptest -f %{_sysconfdir}/openldap/slapd.conf.bak -F %{_sysconfdir}/openldap/slapd.d &>/dev/null
+	lines=$(egrep -n '^(database|backend)' %{_sysconfdir}/openldap/slapd.conf.bak | cut -d: -f1 | head -n 1)
+	lines=$(($lines-1))
+	head -n $lines %{_sysconfdir}/openldap/slapd.conf.bak > %{_sysconfdir}/openldap/slapd.conf
+	cat >> %{_sysconfdir}/openldap/slapd.conf << EOF
+database config
+rootdn   "cn=admin,cn=config"
+#rootpw   secret
+EOF
+	lines_r=$(wc --lines %{_sysconfdir}/openldap/slapd.conf.bak | cut -f1 -d" ")
+	lines_r=$(($lines_r-$lines))
+	tail -n $lines_r %{_sysconfdir}/openldap/slapd.conf.bak >> %{_sysconfdir}/openldap/slapd.conf
+	slaptest -f %{_sysconfdir}/openldap/slapd.conf -F %{_sysconfdir}/openldap/slapd.d > /dev/null 2> /dev/null
 	chown -R ldap:ldap %{_sysconfdir}/openldap/slapd.d
 	chmod -R 000 %{_sysconfdir}/openldap/slapd.d
 	chmod -R u+rwX %{_sysconfdir}/openldap/slapd.d
@@ -660,7 +527,7 @@ fi
 # restart after upgrade
 if [ $1 -ge 1 ]; then
 	if [ -f %{_sharedstatedir}/ldap/need_start ]; then
-		/sbin/service slapd start
+		service slapd start
 		rm -f %{_sharedstatedir}/ldap/need_start
 	else
 		/sbin/service slapd condrestart
@@ -694,9 +561,9 @@ if [ $2 -eq 2 ]; then
 	# we are interested in minor version changes (both versions of db4 are installed at this moment)
 	if [ "$(rpm -q --qf="%%{version}\n" db4 | sed 's/\.[0-9]*$//' | sort -u | wc -l)" != "1" ]; then
 		# stop the service
-		if /sbin/service slapd status &>/dev/null; then
+		if service slapd status &>/dev/null; then
 			touch need_start
-			/sbin/service slapd stop
+			service slapd stop
 		fi
 
 		# ensure the database is consistent
@@ -727,7 +594,7 @@ if [ -f %{_sharedstatedir}/ldap/upgrade_db4 ]; then
 
 	# start the service
 	if [ -f need_start ]; then
-		/sbin/service slapd start
+		service slapd start
 		rm -f need_start
 	fi
 
@@ -745,12 +612,14 @@ exit 0
 %doc openldap-%{version}/LICENSE
 %doc openldap-%{version}/README
 %attr(0755,root,root) %dir %{_sysconfdir}/openldap
-%attr(0755,root,root) %dir %{_sysconfdir}/openldap/certs
+%attr(0755,root,root) %dir %{_sysconfdir}/openldap/cacerts
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/openldap/ldap*.conf
-%attr(0755,root,root) /%{_lib}/libl*-2.4*.so.*
+%attr(0755,root,root) %{_libdir}/libldif-2.4*.so.*
+%attr(0755,root,root) %{_libdir}/liblber-2.4*.so.*
+%attr(0755,root,root) %{_libdir}/libldap-2.4*.so.*
+%attr(0755,root,root) %{_libdir}/libldap_r-2.4*.so.*
 %attr(0644,root,root) %{_mandir}/man5/ldif.5*
 %attr(0644,root,root) %{_mandir}/man5/ldap.conf.5*
-%{_libexecdir}/openldap/create-certdb.sh
 
 %files servers
 %defattr(-,root,root)
@@ -758,19 +627,20 @@ exit 0
 %doc openldap-%{version}/doc/guide/admin/*.html
 %doc openldap-%{version}/doc/guide/admin/*.png
 %doc README.schema
+%attr(0640,root,ldap) %ghost %config(noreplace) %{_sysconfdir}/pki/tls/certs/slapd.pem
 %attr(0755,root,root) %{_sysconfdir}/rc.d/init.d/slapd
 %attr(0750,ldap,ldap) %dir %config(noreplace) %{_sysconfdir}/openldap/slapd.d
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/sysconfig/ldap
 %attr(0755,root,root) %dir %config(noreplace) %{_sysconfdir}/openldap/schema
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/openldap/schema/*.schema*
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/openldap/schema/*.ldif
-%attr(0644,root,root) %{_sysconfdir}/portreserve/slapd
 %attr(0755,root,root) %{_sbindir}/sl*
 %attr(0644,root,root) %{_mandir}/man8/*
 %attr(0644,root,root) %{_mandir}/man5/slapd*.5*
 %attr(0644,root,root) %{_mandir}/man5/slapo-*.5*
 %attr(0700,ldap,ldap) %dir /var/lib/ldap
 %attr(0755,ldap,ldap) %dir /var/run/openldap
+%{_sysconfdir}/tmpfiles.d
 %attr(0755,root,root) %dir %{_libdir}/openldap
 %attr(0755,root,root) %{_libdir}/openldap/[^b]*
 %attr(0755,root,root) %dir %{_datadir}/openldap-servers
@@ -778,7 +648,6 @@ exit 0
 # obsolete configuration
 %attr(0640,ldap,ldap) %ghost %config(noreplace,missingok) %{_sysconfdir}/openldap/slapd.conf
 %attr(0640,ldap,ldap) %ghost %config(noreplace,missingok) %{_sysconfdir}/openldap/slapd.conf.bak
-%{_libexecdir}/openldap/generate-server-cert.sh
 
 %files servers-sql
 %defattr(-,root,root)
@@ -806,239 +675,125 @@ exit 0
 %attr(0644,root,root)      %{evolution_connector_libdir}/*.a
 
 %changelog
-* Tue Jan 28 2014 Jan Synáček <jsynacek@redhat.com> - 2.4.23-34.1
-- fix: segfault on certain queries with rwm overlay (#1058250)
+* Fri Mar 18 2011 Jan Vcelak <jvcelak@redhat.com> 2.4.24-2
+- new: system resource limiting for slapd using ulimit
+- fix update: openldap can't use TLS after a fork() (#636956)
+- fix: possible null pointer dereference in NSS implementation
+- fix: openldap-servers upgrade hangs or do not upgrade the database (#664433)
 
-* Tue Jan 21 2014 Jan Synáček <jsynacek@redhat.com> - 2.4.23-34
-- fix: deadlock during SSL_ForceHandshake (#996373)
-  + revert nss-handshake-threadsafe.patch
+* Mon Feb 14 2011 Jan Vcelak <jvcelak@redhat.com> 2.4.24-1
+- rebase to 2.4.24
 
-* Tue Feb 26 2013 Jan Synáček <jsynacek@redhat.com> 2.4.23-32
-- fix: segfault in syncprov overlay (#910241)
-- fix: NSS related resource leak (#929358)
+* Tue Feb 08 2011 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 2.4.23-9
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_15_Mass_Rebuild
 
-* Wed Oct 31 2012 Jan Vcelak <jvcelak@redhat.com> 2.4.23-31
-- fix update: libldap does not load PEM certificate if certdb is used as TLS_CACERTDIR (#859858)
+* Wed Feb 02 2011 Jan Vcelak <jvcelak@redhat.com> 2.4.23-8
+- fix update: openldap can't use TLS after a fork() (#636956)
 
-* Fri Oct 12 2012 Jan Vcelak <jvcelak@redhat.com> 2.4.23-30
-- fix: slapd with rwm overlay segfault following ldapmodify (#864913)
+* Tue Jan 25 2011 Jan Vcelak <jvcelak@redhat.com> 2.4.23-7
+- fix: openldap can't use TLS after a fork() (#636956)
+- fix: openldap-server upgrade gets stuck when the database is damaged (#664433)
 
-* Tue Sep 25 2012 Jan Vcelak <jvcelak@redhat.com> 2.4.23-29
-- fix: invalid order of TLS shutdown operations (#818572)
-- fix: TLS error messages overwriting in tlsm_verify_cert() (#828787)
-- fix: reading pin from file can make all TLS connections hang (#829319)
-- fix: replication with TLS does not work (#707599)
-- fix: some TLS ciphers cannot be enabled (#852339)
-- fix: connection hangs after fallback to second server when certificate hostname verification fails (#843056)
-- fix: not all certificates in OpenSSL compatible CA certificate directory format are loaded (#811468)
-- fix: MozNSS certificate database in SQL format cannot be used (#857390)
-- fix: libldap does not load PEM certificate if certdb is used as TLS_CACERTDIR (#859858)
-- fix: do not send IPv6 DNS queries when IPv6 is disabled on the host (#835012)
-- fix: modification of olcSyncrepl attribute takes server out of MirrorMode (#821848)
+* Thu Jan 20 2011 Jan Vcelak <jvcelak@redhat.com> 2.4.23-6
+- fix: some server certificates refused with inadequate type error (#668899)
+- fix: default encryption strength dropped in switch to using NSS (#669446)
+- systemd compatibility: add configuration file (#656647, #668223)
 
-* Tue Jul 31 2012 Jan Vcelak <jvcelak@redhat.com> 2.4.23-28
-- CVE-2012-2668 (#825875)
-  + cipher suite selection by name can be ignored
-  + default cipher suite is always selected
-
-* Mon Jul 30 2012 Jan Vcelak <jvcelak@redhat.com> 2.4.23-27
-- fix: smbk5pwd module computes invalid LM hashes (#820278)
-
-* Mon May 07 2012 Jan Vcelak <jvcelak@redhat.com> 2.4.23-26
-- fix: MozNSS CA cert dir does not work together with PEM CA cert file (#818844)
-- fix: memory leak: def_urlpre is not freed (#816168)
-- fix update: Default SSL certificate bundle is not found by openldap library (#742023)
-
-* Wed May 02 2012 Jan Vcelak <jvcelak@redhat.com> 2.4.23-25
-- fix update: Default SSL certificate bundle is not found by openldap library (#742023)
-
-* Mon Apr 30 2012 Jan Vcelak <jvcelak@redhat.com> 2.4.23-24
-- fix update: Default SSL certificate bundle is not found by openldap library (#742023)
-- fix: memberof overlay on the frontend database causes server segfault (#730745)
-
-* Fri Apr 20 2012 Jan Vcelak <jvcelak@redhat.com> 2.4.23-23
-- security fix: CVE-2012-1164: assertion failure by processing search queries
-  requesting only attributes for particular entry (#813162)
-
-* Tue Apr 10 2012 Jan Vcelak <jvcelak@redhat.com> 2.4.23-22
-- fix: libraries leak memory when following referrals (#807363)
-
-* Thu Mar 01 2012 Jan Vcelak <jvcelak@redhat.com> 2.4.23-21
-- fix: ldapsearch crashes with invalid parameters (#743781)
-- fix: replication (syncrepl) with TLS causes segfault (#783445)
-- fix: openldap server in MirrorMode sometimes fails to resync via syncrepl (#784211)
-- use portreserve to reserve LDAPS port (636/tcp+udp) (#790687)
-- fix: missing options in manual pages of client tools (#745470)
-- fix: SASL_NOCANON option missing in ldap.conf manual page (#732916)
-- fix: slapd segfaults when certificate key cannot be loaded (#796808)
-- Jan Synáček <jsynacek@redhat.com>
-  + fix: overlay constraint with count option work bad with modify operation (#742163)
-  + fix: Default SSL certificate bundle is not found by openldap library (#742023)
-  + fix: Duplicate close() calls in OpenLDAP (#784203)
-
-* Tue Oct 04 2011 Jan Vcelak <jvcelak@redhat.com> 2.4.23-20
-- new feature update: honor priority/weight with ldap_domain2hostlist (#730311)
-- fix regression: openldap built without tcp_wrappers (#742592)
-
-* Tue Sep 13 2011 Jan Vcelak <jvcelak@redhat.com> 2.4.23-19
-- fix: SSL_ForceHandshake function is not thread safe (#709407)
-
-* Fri Aug 26 2011 Jan Vcelak <jvcelak@redhat.com> 2.4.23-18
-- fix: overlay refint option refint_nothing doesn't function correctly (#725479)
-- fix: Unwanted slash printed when installing openldap-servers (#732001)
-- manpage fix: TLS options in documentation are not valid for MozNSS (#684810)
-- fix: NSS_Init* functions are not thread safe (#731168)
-- manpage fix: errors in manual page slapo-unique (#723521) 
-- new feature: honor priority/weight with ldap_domain2hostlist (#730311)
-
-* Mon Aug 15 2011 Jan Vcelak <jvcelak@redhat.com> 2.4.23-17
-- fix: strict aliasing warnings during package build (#723487)
-- add partial RELRO support for libraries (#723999)
-- fix: incorrect behavior of allow/try options of VerifyCert and TLS_REQCERT (#729095)
-- fix: memleak - free the return of tlsm_find_and_verify_cert_key (#729087)
-- fix: TLS_REQCERT=never ignored when the certificate is expired (#722959)
-- fix: matching wildcard hostnames in certificate Subject field does not work (#726984)
-- fix: OpenLDAP server segfaults when using back-sql (#727533)
-- fix: conversion of constraint overlay settings to cn=config is incorrect (#722923)
-- fix: DDS overlay tolerance parametr doesn't function and breakes default TTL (#723514)
-
-* Mon Jul 18 2011 Jan Vcelak <jvcelak@redhat.com> 2.4.23-16
-- fix: memleak in tlsm_auth_cert_handler (#717738)
-- fix: segmentation fault of client tool when LDIF input file is not terminated
-  by a new line character (#698921)
-- fix: segmentation fault of client tool when input line in LDIF file
-  is splitted but indented incorrectly (#701227)
-- fix: server scriptlets require initscripts package (#712358)
-- enable ldapi:/// interface by default
-- set cn=config management ACLs for root user, SASL external schema (#712494)
-- fix: ldapsearch fails if no CA certificate is available (#713525)
-
-* Wed Apr 13 2011 Jan Vcelak <jvcelak@redhat.com> 2.4.23-15
-- fix: rpm -V fail when upgrading with openldap-devel installed (#693716)
-  (remove devel *.so symlinks from /lib and leave them in /usr/lib)
-
-* Fri Mar 18 2011 Jan Vcelak <jvcelak@redhat.com> 2.4.23-14
-- fix update: openldap startup script ignores ulimit settings (#679356)
-- fix update: openldap-servers upgrade hangs or do not upgrade the database (#685119)
-
-* Mon Mar 14 2011 Jan Vcelak <jvcelak@redhat.com> 2.4.23-13
-- fix update: openldap can't use TLS after a fork() (#671553)
-- fix: possible NULL pointer dereferences in NSS non-blocking patch (#684035)
-- fix: move libldif to /lib for consistency (#548475)
-- fix: openldap-servers upgrade hangs or do not upgrade the database (#685119)
-
-* Tue Mar 01 2011 Jan Vcelak <jvcelak@redhat.com> 2.4.23-12
-- fix: security - DoS when submitting special MODRDN request (#680975)
-
-* Mon Feb 28 2011 Jan Vcelak <jvcelak@redhat.com> 2.4.23-11
-- fix: CVE-2011-1024 ppolicy forwarded bind failure messages cause success
-- fix: CVE-2011-1025 rootpw is not verified for ndb backend
-- fix: openldap startup script ignores ulimit settings (#679356)
-- fix: add symlinks into /usr/lib*/ (#680139)
-
-* Mon Feb 21 2011 Jan Vcelak <jvcelak@redhat.com> 2.4.23-10
-- fix: add symlinks for libraries moved in 2.4.23-5 to allow building
-  packages which require these libraries in the old location (#678105)
-
-* Wed Feb 02 2011 Jan Vcelak <jvcelak@redhat.com> 2.4.23-9
-- fix update: openldap can't use TLS after a fork() (#671553)
-
-* Tue Jan 25 2011 Jan Vcelak <jvcelak@redhat.com> 2.4.23-8
-- fix: openldap can't use TLS after a fork() (#671553)
-
-* Thu Jan 20 2011 Jan Vcelak <jvcelak@redhat.com> 2.4.23-7
-- fix: some server certificates refused with inadequate type error (#669846)
-- fix: default encryption strength dropped in switch to using NSS (#669845)
-
-* Thu Jan 13 2011 Jan Vcelak <jvcelak@redhat.com> 2.4.23-6
-- fix update: openldap-devel symlinks to libraries were not moved correctly (#548475)
-
-* Thu Jan 13 2011 Jan Vcelak <jvcelak@redhat.com> 2.4.23-5
-- initscript: slaptest with '-u' to skip database opening (#613966)
+* Thu Jan 06 2011 Jan Vcelak <jvcelak@redhat.com> 2.4.23-5
+- initscript: slaptest with '-u' to skip database opening (#667768)
 - removed slurpd options from sysconfig/ldap
-- fix: verification of self issued certificates (#667795)
-- fix: move libraries from /usr/lib to /lib (#548475)
+- fix: verification of self issued certificates (#657984)
 
-* Sat Dec 04 2010 Jan Vcelak <jvcelak@redhat.com> 2.4.23-4
-- rebase to 2.4.23 (Fedora 14) (#644077)
-- uses Mozilla NSS instead of OpenSSL for TLS/SSL
-- added LDIF (ldif.h) to the public API
-- removed embeded Berkeley DB
-- removed autofs schema (use up-to-date version from autofs package instead)
-- removed compat-openldap subpackage (use separate package instead)
-- fixes: ldapsearch -Z hangs server if starttls fails (#652823)
-- fixes: improve SSL/TLS log messages (#652819)
-- fixes: crash when TLS_CACERTDIR contains a subdirectory (#652817)
-- fixes: TLS_CACERTDIR takes precedence over TLS_CACERT (#652816)
-- fixes: openldap should ignore files not in the openssl c_hash format in cacertdir (#652814)
-- fixes: slapd init script gets stuck in an infinite loop (#644399)
-- fixes: Remove lastmod.la from default slapd.conf.bak (#630637)
-- fixes: Mozilla NSS - delay token auth until needed (#616558)
-- fixes: Mozilla NSS - support use of self signed CA certs as server certs (#616554)
+* Mon Nov 22 2010 Jan Vcelak <jvcelak@redhat.com> 2.4.23-4
+- Mozilla NSS - implement full non-blocking semantics
+  ldapsearch -Z hangs server if starttls fails (#652822)
+- updated list of all overlays in slapd.conf (#655899)
+- fix database upgrade process (#656257)
 
-* Fri Jun 25 2010 Jan Zeleny <jzeleny@redhat.com> - 2.4.19-15
-- fixed regression caused by tls accept patch (#608112)
+* Thu Nov 18 2010 Jan Vcelak <jvcelak@redhat.com> 2.4.23-3
+- add support for multiple prefixed Mozilla NSS database files in TLS_CACERTDIR
+- reject non-file keyfiles in TLS_CACERTDIR (#652315)
+- TLS_CACERTDIR precedence over TLS_CACERT (#652304)
+- accept only files in hash.0 format in TLS_CACERTDIR (#650288)
+- improve SSL/TLS trace messages (#652818)
 
-* Tue Jun 22 2010 Jan Zeleny <jzeleny@redhat.com> - 2.4.19-14
-- fixed segfault issue in modrdn (#606369)
+* Mon Nov 01 2010 Jan Vcelak <jvcelak@redhat.com> 2.4.23-2
+- fix possible infinite loop when checking permissions of TLS files (#641946)
+- removed outdated autofs.schema (#643045)
+- removed outdated README.upgrade
+- removed relics of migrationtools
 
-* Fri Jun 18 2010 Jan Vcelak <jvcelak@redhat.com> 2.4.19-13
-- implementation of ulimit settings for slapd (#602458)
+* Fri Aug 27 2010 Jan Vcelak <jvcelak@redhat.com> 2.4.23-1
+- rebase to 2.4.23
+- embeded db4 library removed
+- removed bogus links in "SEE ALSO" in several man-pages (#624616)
 
-* Wed May 26 2010 Jan Zeleny <jzeleny@redhat.com> - 2.4.19-12
-- updated man pages - only slaptest can convert configuration schema
-  (#584787)
-- openldap compiled with -fno-strict-aliasing (#596193)
+* Thu Jul 22 2010 Jan Vcelak <jvcelak@redhat.com> 2.4.22-7
+- Mozilla NSS - delay token auth until needed (#616552)
+- Mozilla NSS - support use of self signed CA certs as server certs (#614545)
 
-* Thu May 06 2010 Jan Zeleny <jzeleny@redhat.com> - 2.4.19-11
-- added compat package
+* Tue Jul 20 2010 Jan Vcelak <jvcelak@redhat.com> - 2.4.22-6
+- CVE-2010-0211 openldap: modrdn processing uninitialized pointer free (#605448)
+- CVE-2010-0212 openldap: modrdn processing IA5StringNormalize NULL pointer dereference (#605452)
+- obsolete configuration file moved to /usr/share/openldap-servers (#612602)
 
-* Tue Apr 27 2010 Jan Zeleny <jzeleny@redhat.com> - 2.4.19-10
-- updated overlay list in config file (#586143)
-- config dir slapd.d added to package payload (#585276)
-- init script now creates only symlink, not harldink, in /var/run (#584870)
+* Thu Jul 01 2010 Jan Zeleny <jzeleny@redhat.com> - 2.4.22-5
+- another shot at previous fix
 
-* Mon Apr 19 2010 Jan Zeleny <jzeleny@redhat.com> - 2.4.19-9
-- fixed broken link /usr/sbin/slapschema (#583568)
-- removed some static libraries from openldap-devel (#583575)
+* Thu Jul 01 2010 Jan Zeleny <jzeleny@redhat.com> - 2.4.22-4
+- fixed issue with owner of /usr/lib/ldap/__db.* (#609523)
 
-* Fri Apr 16 2010 Jan Zeleny <jzeleny@redhat.com> - 2.4.19-8
-- updated spec file - clean files generated by configuration conversion
-  (#582327)
+* Thu Jun  3 2010 Rich Megginson <rmeggins@redhat.com> - 2.4.22-3
+- added ldif.h to the public api in the devel package
+- added -lldif to the public api
+- added HAVE_MOZNSS and other flags to use Mozilla NSS for crypto
 
-* Mon Mar 22 2010 Jan Zeleny <jzeleny@redhat.com> - 2.4.19-7
-- updated usage line in init script
-- changed return code when calling init script with bad arguments
+* Tue May 18 2010 Jan Zeleny <jzeleny@redhat.com> - 2.4.22-2
+- rebuild with connectionless support (#587722)
+- updated autofs schema (#584808)
 
-* Mon Mar 22 2010 Jan Zeleny <jzeleny@redhat.com> - 2.4.19-6
-- fixed segfault when using hdb backend (#575403)
+* Tue May 04 2010 Jan Zeleny <jzeleny@redhat.com> - 2.4.22-1
+- rebased to 2.4.22 (mostly bugfixes, added back-ldif, back-null testing support)
+- due to some possible issues pointed out in last update testing phase, I'm
+  pulling back the last change (slapd can't be moved since it depends on /usr
+  possibly mounted from network)
 
-* Fri Mar 19 2010 Jan Zeleny <jzeleny@redhat.com> - 2.4.19-5
-- minor corrections of init script (fedora bugs #571235, #570057, #573804)
+* Fri Mar 19 2010 Jan Zeleny <jzeleny@redhat.com> - 2.4.21-6
+- moved slapd to start earlier during boot sequence
 
-* Wed Feb 10 2010 Jan Zeleny <jzeleny@redhat.com> - 2.4.19-4
-- removed syncprov.la from config file (#563472)
+* Tue Mar 16 2010 Jan Zeleny <jzeleny@redhat.com> - 2.4.21-5
+- minor corrections of init script (#571235, #570057, #573804)
 
-* Wed Feb 03 2010 Jan Zeleny <jzeleny@redhat.com> - 2.4.19-3
-- updated post scriptlet (#561352)
+* Wed Feb 24 2010 Jan Zeleny <jzeleny@redhat.com> - 2.4.21-4
+- fixed SIGSEGV when deleting data using hdb (#562227)
 
-* Mon Nov 23 2009 Jan Zeleny <jzeleny@redhat.com> - 2.4.19-2
-- minor changes in init script
+* Mon Feb 01 2010 Jan Zeleny <jzeleny@redhat.com> - 2.4.21-3
+- fixed broken link /usr/sbin/slapschema (#559873)
 
-* Wed Nov 18 2009 Jan Zeleny <jzeleny@redhat.com> - 2.4.19-1
+* Tue Jan 19 2010 Jan Zeleny <jzeleny@redhat.com> - 2.4.21-2
+- removed some static libraries from openldap-devel (#556090)
+
+* Mon Jan 11 2010 Jan Zeleny <jzeleny@redhat.com> - 2.4.21-1
+- rebased openldap to 2.4.21
+- rebased bdb to 4.8.26
+
+* Mon Nov 23 2009 Jan Zeleny <jzeleny@redhat.com> - 2.4.19-3
+- minor corrections in init script
+
+* Mon Nov 16 2009 Jan Zeleny <jzeleny@redhat.com> - 2.4.19-2
 - fixed tls connection accepting when TLSVerifyClient = allow
 - /etc/openldap/ldap.conf removed from files owned by openldap-servers
 - minor changes in spec file to supress warnings
 - some changes in init script, so it would be possible to use it when
   using old configuration style
+
+* Fri Nov 06 2009 Jan Zeleny <jzeleny@redhat.com> - 2.4.19-1
 - rebased openldap to 2.4.19
 - rebased bdb to 4.8.24
 
-* Wed Oct 07 2009 Jan Zeleny <jzeleny@redhat.com> 2.4.18-5
+* Wed Oct 07 2009 Jan Zeleny <jzeleny@redhat.com> 2.4.18-4
 - updated smbk5pwd patch to be linked with libldap (#526500)
-
-* Wed Sep 30 2009 Jan Zeleny <jzeleny@redhat.com> 2.4.18-4
-- buffer overflow patch from upstream
+- the last buffer overflow patch replaced with the one from upstream
 - added /etc/openldap/slapd.d and /etc/openldap/slapd.conf.bak
   to files owned by openldap-servers
 
