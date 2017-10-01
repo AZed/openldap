@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/libraries/librewrite/map.c,v 1.12.2.5 2005/01/20 17:01:04 kurt Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2005 The OpenLDAP Foundation.
+ * Copyright 2000-2006 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -438,7 +438,7 @@ rewrite_builtin_map_free(
 {
 	struct rewrite_builtin_map *map = ( struct rewrite_builtin_map * )tmp;
 
-	assert( map );
+	assert( map != NULL );
 
 	switch ( map->lb_type ) {
 	case REWRITE_BUILTIN_MAP_LDAP:
@@ -461,8 +461,8 @@ rewrite_map_destroy(
 {
 	struct rewrite_map *map;
 	
-	assert( pmap );
-	assert( *pmap );
+	assert( pmap != NULL );
+	assert( *pmap != NULL );
 
 	map = *pmap;
 

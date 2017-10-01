@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/include/ldap_pvt.h,v 1.73.2.7 2005/01/20 17:00:59 kurt Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  * 
- * Copyright 1998-2005 The OpenLDAP Foundation.
+ * Copyright 1998-2006 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -172,6 +172,9 @@ struct sasl_security_properties; /* avoid pulling in <sasl.h> */
 LDAP_F (int) ldap_pvt_sasl_secprops LDAP_P((
 	const char *in,
 	struct sasl_security_properties *secprops ));
+LDAP_F (void) ldap_pvt_sasl_secprops_unparse LDAP_P((
+	struct sasl_security_properties *secprops,
+	struct berval *out ));
 
 LDAP_F (void *) ldap_pvt_sasl_mutex_new LDAP_P((void));
 LDAP_F (int) ldap_pvt_sasl_mutex_lock LDAP_P((void *mutex));
@@ -209,6 +212,13 @@ ldap_pvt_find_wildcard LDAP_P((	const char *s ));
 LDAP_F( ber_slen_t )
 ldap_pvt_filter_value_unescape LDAP_P(( char *filter ));
 
+LDAP_F( ber_len_t )
+ldap_bv2escaped_filter_value_len LDAP_P(( struct berval *in ));
+
+LDAP_F( int )
+ldap_bv2escaped_filter_value_x LDAP_P(( struct berval *in, struct berval *out,
+	int inplace, void *ctx ));
+
 /* string.c */
 LDAP_F( char * )
 ldap_pvt_str2upper LDAP_P(( char *str ));
@@ -232,7 +242,7 @@ LDAP_F (int) ldap_pvt_tls_set_option LDAP_P(( struct ldap *ld,
 
 LDAP_F (void) ldap_pvt_tls_destroy LDAP_P(( void ));
 LDAP_F (int) ldap_pvt_tls_init LDAP_P(( void ));
-LDAP_F (int) ldap_pvt_tls_init_def_ctx LDAP_P(( void ));
+LDAP_F (int) ldap_pvt_tls_init_def_ctx LDAP_P(( int is_server ));
 LDAP_F (int) ldap_pvt_tls_accept LDAP_P(( Sockbuf *sb, void *ctx_arg ));
 LDAP_F (int) ldap_pvt_tls_inplace LDAP_P(( Sockbuf *sb ));
 LDAP_F (void *) ldap_pvt_tls_sb_ctx LDAP_P(( Sockbuf *sb ));
@@ -240,6 +250,9 @@ LDAP_F (void *) ldap_pvt_tls_sb_ctx LDAP_P(( Sockbuf *sb ));
 LDAP_F (int) ldap_pvt_tls_init_default_ctx LDAP_P(( void ));
 
 typedef int LDAPDN_rewrite_dummy LDAP_P (( void *dn, unsigned flags ));
+
+typedef int (LDAP_TLS_CONNECT_CB) LDAP_P (( struct ldap *ld, void *ssl,
+	void *ctx, void *arg ));
 
 LDAP_F (int) ldap_pvt_tls_get_my_dn LDAP_P(( void *ctx, struct berval *dn,
 	LDAPDN_rewrite_dummy *func, unsigned flags ));
@@ -249,7 +262,104 @@ LDAP_F (int) ldap_pvt_tls_get_strength LDAP_P(( void *ctx ));
 
 LDAP_END_DECL
 
+/*
+ * Multiple precision stuff
+ * 
+ * May use OpenSSL's BIGNUM if built with TLS,
+ * or GNU's multiple precision library.
+ *
+ * If none is available, unsigned long data is used.
+ */
+#ifdef HAVE_BIGNUM
+/*
+ * Use OpenSSL's BIGNUM
+ */
+#if defined(HAVE_OPENSSL_CRYPTO_H)
+#include <openssl/crypto.h>
+#elif HAVE_CRYPTO_H
+#include <crypto.h>
+#endif /* HAVE_OPENSSL_CRYPTO_H || HAVE_CRYPTO_H */
+#ifdef HAVE_OPENSSL_BN_H
+#include <openssl/bn.h>
+#elif HAVE_BN_H
+#include <bn.h>
+#endif /* HAVE_OPENSSL_BN_H || HAVE_BN_H */
+
+typedef	BIGNUM*		ldap_pvt_mp_t;
+#define	LDAP_PVT_MP_INIT	(NULL)
+
+#define	ldap_pvt_mp_init(mp) \
+	(mp) = BN_new()
+
+/* FIXME: we rely on mpr being initialized */
+#define	ldap_pvt_mp_init_set(mpr,mpv) \
+	do { ldap_pvt_mp_init((mpr)); BN_add((mpr), (mpr), (mpv)); } while (0)
+
+#define	ldap_pvt_mp_add(mpr,mpv) \
+	BN_add((mpr), (mpr), (mpv))
+
+#define	ldap_pvt_mp_add_ulong(mp,v) \
+	BN_add_word((mp), (v))
+
+#define ldap_pvt_mp_clear(mp) \
+	do { BN_free((mp)); (mp) = 0; } while (0)
+
+#elif defined(HAVE_GMP)
+/*
+ * Use GNU's multiple precision library
+ */
+#ifdef HAVE_GMP_H
+#include <gmp.h>
+#endif
+
+typedef mpz_t		ldap_pvt_mp_t;
+#define	LDAP_PVT_MP_INIT	{ 0 }
+
+#define ldap_pvt_mp_init(mp) \
+	mpz_init((mp))
+
+#define	ldap_pvt_mp_init_set(mpr,mpv) \
+	mpz_init_set((mpr), (mpv))
+
+#define	ldap_pvt_mp_add(mpr,mpv) \
+	mpz_add((mpr), (mpr), (mpv))
+
+#define	ldap_pvt_mp_add_ulong(mp,v)	\
+	mpz_add_ui((mp), (mp), (v))
+
+#define ldap_pvt_mp_clear(mp) \
+	mpz_clear((mp))
+
+#else /* ! HAVE_BIGNUM && ! HAVE_GMP */
+/*
+ * Use unsigned long
+ */
+
+#ifdef HAVE_LONG_LONG
+typedef	unsigned long long	ldap_pvt_mp_t;
+#define	LDAP_PVT_MP_INIT	(0LL)
+#else /* !HAVE_LONG_LONG */
+typedef	unsigned long		ldap_pvt_mp_t;
+#define	LDAP_PVT_MP_INIT	(0L)
+#endif /* !HAVE_LONG_LONG */
+
+#define ldap_pvt_mp_init(mp) \
+	(mp) = 0
+
+#define	ldap_pvt_mp_init_set(mpr,mpv) \
+	(mpr) = (mpv)
+
+#define	ldap_pvt_mp_add(mpr,mpv) \
+	(mpr) += (mpv)
+
+#define	ldap_pvt_mp_add_ulong(mp,v) \
+	(mp) += (v)
+
+#define ldap_pvt_mp_clear(mp) \
+	(mp) = 0
+
+#endif /* ! HAVE_BIGNUM && ! HAVE_GMP */
+
 #include "ldap_pvt_uc.h"
 
 #endif
-

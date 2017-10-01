@@ -1,8 +1,8 @@
 /* thr_pth.c - wrappers around GNU Pth */
-/* $OpenLDAP: pkg/ldap/libraries/libldap_r/thr_pth.c,v 1.10.2.3 2005/01/20 17:01:03 kurt Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2005 The OpenLDAP Foundation.
+ * Copyright 1998-2006 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -18,7 +18,11 @@
 
 #if defined( HAVE_GNU_PTH )
 
-#include "ldap_pvt_thread.h"
+#include "ldap_pvt_thread.h" /* Get the thread interface */
+#define LDAP_THREAD_IMPLEMENTATION
+#define LDAP_THREAD_RDWR_IMPLEMENTATION
+#include "ldap_thr_debug.h"	 /* May rename the symbols defined below */
+
 #include <errno.h>
 
 /*******************
@@ -38,7 +42,7 @@ ldap_int_thread_initialize( void )
 	}
 	detach_attr = pth_attr_new();
 	joined_attr = pth_attr_new();
-#if LDAP_PVT_THREAD_STACK_SIZE
+#ifdef LDAP_PVT_THREAD_SET_STACK_SIZE
 	pth_attr_set( joined_attr, PTH_ATTR_STACK_SIZE, LDAP_PVT_THREAD_STACK_SIZE );
 	pth_attr_set( detach_attr, PTH_ATTR_STACK_SIZE, LDAP_PVT_THREAD_STACK_SIZE );
 #endif

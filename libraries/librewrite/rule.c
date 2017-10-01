@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/libraries/librewrite/rule.c,v 1.5.4.8 2005/01/20 17:01:05 kurt Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2005 The OpenLDAP Foundation.
+ * Copyright 2000-2006 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -72,8 +72,8 @@ destroy_action(
 {
 	struct rewrite_action	*action;
 
-	assert( paction );
-	assert( *paction );
+	assert( paction != NULL );
+	assert( *paction != NULL );
 
 	action = *paction;
 
@@ -233,7 +233,7 @@ rewrite_rule_compile(
 			}
 
 			d[ 0 ] = strtol( &p[ 2 ], &next, 0 );
-			if ( next == NULL || next == &p[ 2 ] || next[0] != '}' ) {
+			if ( next == &p[ 2 ] || next[0] != '}' ) {
 				/* XXX Need to free stuff */
 				return REWRITE_ERR;
 			}
@@ -275,7 +275,7 @@ rewrite_rule_compile(
 			}
 
 			max_passes = strtol( &p[ 2 ], &next, 0 );
-			if ( next == NULL || next == &p[ 2 ] || next[0] != '}' ) {
+			if ( next == &p[ 2 ] || next[0] != '}' ) {
 				/* XXX Need to free stuff */
 				return REWRITE_ERR;
 			}
@@ -418,8 +418,10 @@ recurse:;
 			rule->lr_pattern, string, strcnt + 1 );
 	
 	op->lo_num_passes++;
-	if ( regexec( &rule->lr_regex, string, nmatch, match, 0 ) != 0 ) {
-		if ( *result == NULL && strcnt > 0 ) {
+
+	rc = regexec( &rule->lr_regex, string, nmatch, match, 0 );
+	if ( rc != 0 ) {
+		if ( *result == NULL && string != arg ) {
 			free( string );
 			string = NULL;
 		}
@@ -435,7 +437,7 @@ recurse:;
 
 	*result = val.bv_val;
 	val.bv_val = NULL;
-	if ( strcnt > 0 ) {
+	if ( string != arg ) {
 		free( string );
 		string = NULL;
 	}
@@ -463,8 +465,8 @@ rewrite_rule_destroy(
 	struct rewrite_rule *rule;
 	struct rewrite_action *action;
 
-	assert( prule );
-	assert( *prule );
+	assert( prule != NULL );
+	assert( *prule != NULL );
 
 	rule = *prule;
 

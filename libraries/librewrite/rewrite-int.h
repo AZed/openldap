@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/libraries/librewrite/rewrite-int.h,v 1.7.2.6 2005/01/20 17:01:05 kurt Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2005 The OpenLDAP Foundation.
+ * Copyright 2000-2006 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -34,7 +34,7 @@
 #include <lber.h>
 #include <ldap.h>
 #include "../libldap/ldap-int.h"
-
+#include <lutil.h>
 #include <avl.h>
 
 #include <rewrite.h>
@@ -206,7 +206,7 @@ struct rewrite_rule {
 	char                           *lr_pattern;
 	char                           *lr_subststring;
 	char                           *lr_flagstring;
-	regex_t                         lr_regex;
+	regex_t				lr_regex;
 
 	/*
 	 * I was thinking about some kind of per-rule mutex, but there's

@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-perl/close.c,v 1.9.2.6 2005/01/20 17:01:16 kurt Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2005 The OpenLDAP Foundation.
+ * Copyright 1999-2006 The OpenLDAP Foundation.
  * Portions Copyright 1999 John C. Quillan.
  * Portions Copyright 2002 myinternet Limited.
  * All rights reserved.
@@ -28,20 +28,7 @@ perl_back_close(
 	BackendInfo *bd
 )
 {
-	ldap_pvt_thread_mutex_lock( &perl_interpreter_mutex );	
-
 	perl_destruct(PERL_INTERPRETER);
-
-	ldap_pvt_thread_mutex_unlock( &perl_interpreter_mutex );	
-
-	return 0;
-}
-
-int
-perl_back_destroy(
-	BackendInfo *bd
-)
-{
 	perl_free(PERL_INTERPRETER);
 	PERL_INTERPRETER = NULL;
 

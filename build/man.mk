@@ -1,5 +1,7 @@
-# $OpenLDAP: pkg/ldap/build/man.mk,v 1.25.2.3 2005/01/20 17:00:55 kurt Exp $
-## Copyright 1998-2005 The OpenLDAP Foundation.
+# $OpenLDAP$
+## This work is part of OpenLDAP Software <http://www.openldap.org/>.
+##
+## Copyright 1998-2006 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -37,14 +39,14 @@ install-common:
 	-$(MKDIR) $(DESTDIR)$(MANDIR)
 	PAGES=`cd $(srcdir); echo *.$(MANSECT)`; \
 	for page in $$PAGES; do \
-		echo "installing $(MANDIR)/$$page"; \
+		echo "installing $$page in $(DESTDIR)$(MANDIR)"; \
 		$(RM) $(DESTDIR)$(MANDIR)/$$page; \
 		$(INSTALL) $(INSTALLFLAGS) -m 644 $$page.$(TMP_SUFFIX) $(DESTDIR)$(MANDIR)/$$page; \
 		if test -f "$(srcdir)/$$page.links" ; then \
 			for link in `$(CAT) $(srcdir)/$$page.links`; do \
-				echo "installing $(MANDIR)/$$link as link to $$page"; \
+				echo "installing $$link in $(DESTDIR)$(MANDIR) as link to $$page"; \
 				$(RM) $(DESTDIR)$(MANDIR)/$$link ; \
-				$(LN_S) $$page $(DESTDIR)$(MANDIR)/$$link; \
+				$(LN_S) $(DESTDIR)$(MANDIR)/$$page $(DESTDIR)$(MANDIR)/$$link; \
 			done; \
 		fi; \
 	done

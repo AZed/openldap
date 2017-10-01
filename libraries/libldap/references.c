@@ -1,8 +1,8 @@
 /* references.c */
-/* $OpenLDAP: pkg/ldap/libraries/libldap/references.c,v 1.19.2.4 2005/01/20 17:01:01 kurt Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2005 The OpenLDAP Foundation.
+ * Copyright 1998-2006 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

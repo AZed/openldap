@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/open.c,v 1.102.2.4 2005/01/21 00:50:07 hyc Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2005 The OpenLDAP Foundation.
+ * Copyright 1998-2006 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -19,7 +19,9 @@
 #include "portable.h"
 
 #include <stdio.h>
+#ifdef HAVE_LIMITS_H
 #include <limits.h>
+#endif
 
 #include <ac/stdlib.h>
 
@@ -63,12 +65,8 @@ ldap_open( LDAP_CONST char *host, int port )
 	int rc;
 	LDAP		*ld;
 
-#ifdef NEW_LOGGING
-	LDAP_LOG ( CONNECTION, ARGS, "ldap_open(%s, %d)\n", host, port, 0 );
-#else
 	Debug( LDAP_DEBUG_TRACE, "ldap_open(%s, %d)\n",
 		host, port, 0 );
-#endif
 
 	ld = ldap_init( host, port );
 	if ( ld == NULL ) {
@@ -82,13 +80,8 @@ ldap_open( LDAP_CONST char *host, int port )
 		ld = NULL;
 	}
 
-#ifdef NEW_LOGGING
-	LDAP_LOG ( CONNECTION, RESULTS, "ldap_open: %s\n",
-		ld == NULL ? "succeeded" : "failed", 0, 0 );
-#else
 	Debug( LDAP_DEBUG_TRACE, "ldap_open: %s\n",
 		ld == NULL ? "succeeded" : "failed", 0, 0 );
-#endif
 
 	return ld;
 }
@@ -114,11 +107,7 @@ ldap_create( LDAP **ldp )
 			return LDAP_LOCAL_ERROR;
 	}
 
-#ifdef NEW_LOGGING
-	LDAP_LOG ( CONNECTION, ENTRY, "ldap_create\n", 0, 0, 0 );
-#else
 	Debug( LDAP_DEBUG_TRACE, "ldap_create\n", 0, 0, 0 );
-#endif
 
 	if ( (ld = (LDAP *) LDAP_CALLOC( 1, sizeof(LDAP) )) == NULL ) {
 		return( LDAP_NO_MEMORY );
@@ -171,6 +160,7 @@ ldap_create( LDAP **ldp )
 #ifdef LDAP_R_COMPILE
 	ldap_pvt_thread_mutex_init( &ld->ld_req_mutex );
 	ldap_pvt_thread_mutex_init( &ld->ld_res_mutex );
+	ldap_pvt_thread_mutex_init( &ld->ld_conn_mutex );
 #endif
 	*ldp = ld;
 	return LDAP_SUCCESS;
@@ -262,11 +252,7 @@ ldap_int_open_connection(
 	char *host;
 	int port, proto;
 
-#ifdef NEW_LOGGING
-	LDAP_LOG ( CONNECTION, ENTRY, "ldap_int_open_connection\n", 0, 0, 0 );
-#else
 	Debug( LDAP_DEBUG_TRACE, "ldap_int_open_connection\n", 0, 0, 0 );
-#endif
 
 	switch ( proto = ldap_pvt_url_scheme2proto( srv->lud_scheme ) ) {
 		case LDAP_PROTO_TCP:

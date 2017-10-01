@@ -1,8 +1,8 @@
 /* getopt.c -- replacement getopt(3) routines */
-/* $OpenLDAP: pkg/ldap/libraries/liblutil/getopt.c,v 1.11.2.5 2005/01/20 17:01:04 kurt Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2005 The OpenLDAP Foundation.
+ * Copyright 1998-2006 The OpenLDAP Foundation.
  * Portions Copyright 1998-2003 Kurt D. Zeilenga.
  * All rights reserved.
  *
