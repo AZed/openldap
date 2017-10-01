@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/request.c,v 1.103.2.15 2007/01/02 21:43:49 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/request.c,v 1.103.2.19 2007/07/01 12:17:28 hallvard Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2007 The OpenLDAP Foundation.

@@ -1,5 +1,5 @@
 /* valsort.c - sort attribute values */
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/valsort.c,v 1.9.2.6 2007/01/02 21:44:09 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/valsort.c,v 1.9.2.7 2007/06/08 08:13:18 hyc Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2005-2007 The OpenLDAP Foundation.

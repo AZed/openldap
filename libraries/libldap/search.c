@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/search.c,v 1.64.2.8 2007/01/02 21:43:50 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/search.c,v 1.64.2.9 2007/06/08 07:43:26 hyc Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2007 The OpenLDAP Foundation.

@@ -23,7 +23,7 @@
 <DIV CLASS="title">
 <H1 CLASS="doc-title">OpenLDAP Software 2.3 Administrator's Guide</H1>
 <ADDRESS CLASS="doc-author">The OpenLDAP Project &lt;<A HREF="http://www.openldap.org/">http://www.openldap.org/</A>&gt;</ADDRESS>
-<ADDRESS CLASS="doc-modified">16 February 2007</ADDRESS>
+<ADDRESS CLASS="doc-modified">20 August 2007</ADDRESS>
 <BR CLEAR="All">
 </DIV>
 <DIV CLASS="contents">
@@ -1691,7 +1691,7 @@ needed to modify/rename
 <P>Also note that if no <TT>olcAccess: to</TT> directive matches or no <TT>by &lt;who&gt;</TT> clause, <B>access is denied</B>.  That is, every <TT>olcAccess: to</TT> directive ends with an implicit <TT>by * none</TT> clause and every access list ends with an implicit <TT>olcAccess: to * by * none</TT> directive.</P>
 <P>The next example again shows the importance of ordering, both of the access directives and the <TT>by &lt;who&gt;</TT> clauses.  It also shows the use of an attribute selector to grant access to a specific attribute and various <TT>&lt;who&gt;</TT> selectors.</P>
 <PRE>
-        olcAccess: to dn.subtree=&quot;dc=example,dc=com&quot; attr=homePhone
+        olcAccess: to dn.subtree=&quot;dc=example,dc=com&quot; attrs=homePhone
                 by self write
                 by dn.children=dc=example,dc=com&quot; search
                 by peername.regex=IP:10\..+ read
@@ -1703,14 +1703,14 @@ needed to modify/rename
 <P>This example applies to entries in the &quot;<TT>dc=example,dc=com</TT>&quot; subtree. To all attributes except <TT>homePhone</TT>, an entry can write to itself, entries under <TT>example.com</TT> entries can search by them, anybody else has no access (implicit <TT>by * none</TT>) excepting for authentication/authorization (which is always done anonymously).  The <TT>homePhone</TT> attribute is writable by the entry, searchable by entries under <TT>example.com</TT>, readable by clients connecting from network 10, and otherwise not readable (implicit <TT>by * none</TT>).  All other access is denied by the implicit <TT>access to * by * none</TT>.</P>
 <P>Sometimes it is useful to permit a particular DN to add or remove itself from an attribute. For example, if you would like to create a group and allow people to add and remove only their own DN from the member attribute, you could accomplish it with an access directive like this:</P>
 <PRE>
-        olcAccess: to attr=member,entry
+        olcAccess: to attrs=member,entry
                 by dnattr=member selfwrite
 </PRE>
 <P>The dnattr <TT>&lt;who&gt;</TT> selector says that the access applies to entries listed in the <TT>member</TT> attribute. The <TT>selfwrite</TT> access selector says that such members can only add or delete their own DN from the attribute, not other values. The addition of the entry attribute is required because access to the entry is required to access any of the entry's attributes.</P>
 <H3><A NAME="Access Control Ordering">5.3.6. Access Control Ordering</A></H3>
 <P>Since the ordering of <TT>olcAccess</TT> directives is essential to their proper evaluation, but LDAP attributes normally do not preserve the ordering of their values, OpenLDAP uses a custom schema extension to maintain a fixed ordering of these values. This ordering is maintained by prepending a <TT>&quot;{X}&quot;</TT> numeric index to each value, similarly to the approach used for ordering the configuration entries. These index tags are maintained automatically by slapd and do not need to be specified when originally defining the values. For example, when you create the settings</P>
 <PRE>
-        olcAccess: to attr=member,entry
+        olcAccess: to attrs=member,entry
                 by dnattr=member selfwrite
         olcAccess: to dn.children=&quot;dc=example,dc=com&quot;
                 by * search
@@ -1719,7 +1719,7 @@ needed to modify/rename
 </PRE>
 <P>when you read them back using slapcat or ldapsearch they will contain</P>
 <PRE>
-        olcAccess: {0}to attr=member,entry
+        olcAccess: {0}to attrs=member,entry
                 by dnattr=member selfwrite
         olcAccess: {1}to dn.children=&quot;dc=example,dc=com&quot;
                 by * search
@@ -1749,7 +1749,7 @@ needed to modify/rename
 </PRE>
 <P>This example deletes whatever rule is in value #1 of the <TT>olcAccess</TT> attribute (regardless of its value) and adds a new value that is explicitly inserted as value #1. The result will be</P>
 <PRE>
-        olcAccess: {0}to attr=member,entry
+        olcAccess: {0}to attrs=member,entry
                 by dnattr=member selfwrite
         olcAccess: {1}to dn.children=&quot;dc=example,dc=com&quot;
                 by * write
@@ -1806,7 +1806,7 @@ needed to modify/rename
  30.    olcDbIndex: uid pres,eq
  31.    olcDbIndex: cn,sn,uid pres,eq,approx,sub
  32.    olcDbIndex: objectClass eq
- 33.    olcAccess: to attr=userPassword
+ 33.    olcAccess: to attrs=userPassword
  34.      by self write
  35.      by anonymous auth
  36.      by dn.base=&quot;cn=Admin,dc=example,dc=com&quot; write
@@ -2596,7 +2596,7 @@ needed to modify/rename
 <P>Also note that if no <TT>access to</TT> directive matches or no <TT>by &lt;who&gt;</TT> clause, <B>access is denied</B>.  That is, every <TT>access to</TT> directive ends with an implicit <TT>by * none</TT> clause and every access list ends with an implicit <TT>access to * by * none</TT> directive.</P>
 <P>The next example again shows the importance of ordering, both of the access directives and the <TT>by &lt;who&gt;</TT> clauses.  It also shows the use of an attribute selector to grant access to a specific attribute and various <TT>&lt;who&gt;</TT> selectors.</P>
 <PRE>
-        access to dn.subtree=&quot;dc=example,dc=com&quot; attr=homePhone
+        access to dn.subtree=&quot;dc=example,dc=com&quot; attrs=homePhone
                 by self write
                 by dn.children=&quot;dc=example,dc=com&quot; search
                 by peername.regex=IP:10\..+ read
@@ -2608,7 +2608,7 @@ needed to modify/rename
 <P>This example applies to entries in the &quot;<TT>dc=example,dc=com</TT>&quot; subtree. To all attributes except <TT>homePhone</TT>, an entry can write to itself, entries under <TT>example.com</TT> entries can search by them, anybody else has no access (implicit <TT>by * none</TT>) excepting for authentication/authorization (which is always done anonymously).  The <TT>homePhone</TT> attribute is writable by the entry, searchable by entries under <TT>example.com</TT>, readable by clients connecting from network 10, and otherwise not readable (implicit <TT>by * none</TT>).  All other access is denied by the implicit <TT>access to * by * none</TT>.</P>
 <P>Sometimes it is useful to permit a particular DN to add or remove itself from an attribute. For example, if you would like to create a group and allow people to add and remove only their own DN from the member attribute, you could accomplish it with an access directive like this:</P>
 <PRE>
-        access to attr=member,entry
+        access to attrs=member,entry
                 by dnattr=member selfwrite
 </PRE>
 <P>The dnattr <TT>&lt;who&gt;</TT> selector says that the access applies to entries listed in the <TT>member</TT> attribute. The <TT>selfwrite</TT> access selector says that such members can only add or delete their own DN from the attribute, not other values. The addition of the entry attribute is required because access to the entry is required to access any of the entry's attributes.</P>
@@ -2643,7 +2643,7 @@ needed to modify/rename
  21.    index cn,sn,uid pres,eq,approx,sub
  22.    index objectClass eq
  23.    # database access control definitions
- 24.    access to attr=userPassword
+ 24.    access to attrs=userPassword
  25.            by self write
  26.            by anonymous auth
  27.            by dn.base=&quot;cn=Admin,dc=example,dc=com&quot; write
@@ -3955,7 +3955,7 @@ object identifier
 <P>Also note that the values in an authorization rule must be one of the two forms: an LDAP URL or a DN (with or without regular expression characters). Anything that does not begin with &quot;<TT>ldap://</TT>&quot; is taken as a DN. It is not permissable to enter another authorization identity of the form &quot;<TT>u:&lt;username&gt;</TT>&quot; as an authorization rule.</P>
 <H4><A NAME="Policy Configuration">11.3.3.2. Policy Configuration</A></H4>
 <P>The decision of which type of rules to use, <TT>authzFrom</TT> or <TT>authzTo</TT>, will depend on the site's situation. For example, if the set of people who may become a given identity can easily be written as a search filter, then a single destination rule could be written. If the set of people is not easily defined by a search filter, and the set of people is small, it may be better to write a source rule in the entries of each of those people who should be allowed to perform the proxy authorization.</P>
-<P>By default, processing of proxy authorization rules is disabled. The <TT>authz-policy</TT> directive must be set in the <EM>slapd.conf</EM>(5) file to enable authorization. This directive can be set to <TT>none</TT> for no rules (the default), <TT>from</TT> for source rules, <TT>to</TT> for destination rules, or <TT>both</TT> for both source and destination rules.</P>
+<P>By default, processing of proxy authorization rules is disabled. The <TT>authz-policy</TT> directive must be set in the <EM>slapd.conf</EM>(5) file to enable authorization. This directive can be set to <TT>none</TT> for no rules (the default), <TT>to</TT> for source rules, <TT>from</TT> for destination rules, or <TT>both</TT> for both source and destination rules.</P>
 <P>Destination rules are extremely powerful. If ordinary users have access to write the <TT>authzTo</TT> attribute in their own entries, then they can write rules that would allow them to authorize as anyone else.  As such, when using destination rules, the <TT>authzTo</TT> attribute should be protected with an ACL that only allows privileged users to set its values.</P>
 <P></P>
 <HR>

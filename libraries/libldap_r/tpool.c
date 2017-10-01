@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap_r/tpool.c,v 1.30.2.17 2007/01/25 13:06:48 hyc Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap_r/tpool.c,v 1.30.2.19 2007/04/01 09:53:06 hyc Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2007 The OpenLDAP Foundation.

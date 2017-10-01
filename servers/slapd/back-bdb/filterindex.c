@@ -1,5 +1,5 @@
 /* filterindex.c - generate the list of candidate entries from a filter */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/filterindex.c,v 1.51.2.10 2007/01/02 21:44:00 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/filterindex.c,v 1.51.2.11 2007/07/22 15:20:16 hyc Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2007 The OpenLDAP Foundation.

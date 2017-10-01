@@ -1,5 +1,5 @@
 /* rwmmap.c - rewrite/mapping routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/rwmmap.c,v 1.14.2.13 2007/01/05 09:47:11 ando Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/rwmmap.c,v 1.14.2.15 2007/07/12 20:23:48 ando Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2007 The OpenLDAP Foundation.

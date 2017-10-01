@@ -1,5 +1,5 @@
 /* sockbuf.c - i/o routines with support for adding i/o layers. */
-/* $OpenLDAP: pkg/ldap/libraries/liblber/sockbuf.c,v 1.60.2.7 2007/01/02 21:43:48 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/liblber/sockbuf.c,v 1.60.2.8 2007/06/10 18:43:56 hallvard Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2007 The OpenLDAP Foundation.

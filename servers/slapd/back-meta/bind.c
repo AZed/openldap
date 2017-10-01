@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/bind.c,v 1.40.2.29 2007/01/27 23:56:43 ando Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/bind.c,v 1.40.2.31 2007/03/09 16:23:16 ando Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2007 The OpenLDAP Foundation.

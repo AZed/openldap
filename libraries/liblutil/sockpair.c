@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/liblutil/sockpair.c,v 1.15.2.3 2007/01/02 21:43:52 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/liblutil/sockpair.c,v 1.15.2.4 2007/06/10 18:39:53 hallvard Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2007 The OpenLDAP Foundation.

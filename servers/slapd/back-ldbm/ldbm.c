@@ -1,5 +1,5 @@
 /* ldbm.c - ldap dbm compatibility routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/ldbm.c,v 1.4.2.4 2007/01/02 21:44:03 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/ldbm.c,v 1.4.2.6 2007/08/06 12:32:51 ando Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2007 The OpenLDAP Foundation.
