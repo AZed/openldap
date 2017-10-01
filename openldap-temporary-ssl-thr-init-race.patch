@@ -1,5 +1,5 @@
-Temporary patch that fixes a thread initialization race condition when
-using secure connection.
+Subject: [PATCH] Temporary patch that fixes a thread initialization race
+ condition when using secure connection.
 
 This patch is *not* correct, as the problem only happens when using
 NSS. Either the code in tls_m.c is broken, or the nspr library call
@@ -7,9 +7,14 @@ NSS. Either the code in tls_m.c is broken, or the nspr library call
 
 Resolves: #1294385
 Backported-From: #1144294
+---
+ libraries/libldap/tls2.c | 10 +++++++---
+ 1 file changed, 7 insertions(+), 3 deletions(-)
 
---- a/libraries/libldap/tls2.c    2014-09-19 03:48:49.000000000 +0200
-+++ b/libraries/libldap/tls2.c    2015-05-21 09:32:21.034395985 +0200
+diff --git a/libraries/libldap/tls2.c b/libraries/libldap/tls2.c
+index a3713ec54..7676f48f4 100644
+--- a/libraries/libldap/tls2.c
++++ b/libraries/libldap/tls2.c
 @@ -149,6 +149,9 @@ ldap_pvt_tls_destroy( void )
  	tls_imp->ti_tls_destroy();
  }
@@ -40,3 +45,6 @@ Backported-From: #1144294
 -#endif
  	return impl->ti_tls_init();
  }
+ 
+-- 
+2.11.0
