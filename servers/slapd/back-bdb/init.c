@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/init.c,v 1.247.2.12 2008/09/03 21:37:31 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2008 The OpenLDAP Foundation.
+ * Copyright 2000-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -111,6 +111,7 @@ bdb_db_open( BackendDB *be, ConfigReply *cr )
 	Entry *e = NULL;
 	int do_recover = 0, do_alock_recover = 0;
 	int alockt, quick = 0;
+	int do_retry = 1;
 
 	if ( be->be_suffix == NULL ) {
 		Debug( LDAP_DEBUG_ANY,
@@ -168,6 +169,8 @@ bdb_db_open( BackendDB *be, ConfigReply *cr )
 			be->be_suffix[0].bv_val, 0, 0 );
 		return -1;
 	}
+	if ( rc == ALOCK_CLEAN )
+		be->be_flags |= SLAP_DBFLAG_CLEAN;
 
 	/*
 	 * The DB_CONFIG file may have changed. If so, recover the
@@ -330,7 +333,7 @@ shm_retry:
 		/* Regular open failed, probably a missing shm environment.
 		 * Start over, do a recovery.
 		 */
-		if ( !do_recover && bdb->bi_shm_key ) {
+		if ( !do_recover && bdb->bi_shm_key && do_retry ) {
 			bdb->bi_dbenv->close( bdb->bi_dbenv, 0 );
 			rc = db_env_create( &bdb->bi_dbenv, 0 );
 			if( rc == 0 ) {
@@ -338,6 +341,7 @@ shm_retry:
 					": database \"%s\": "
 					"shared memory env open failed, assuming stale env.\n",
 					be->be_suffix[0].bv_val, 0, 0 );
+				do_retry = 0;
 				goto shm_retry;
 			}
 		}
@@ -416,19 +420,40 @@ shm_retry:
 			}
 		}
 
+		if( bdb->bi_flags & BDB_CHKSUM ) {
+			rc = db->bdi_db->set_flags( db->bdi_db, DB_CHKSUM );
+			if ( rc ) {
+				snprintf(cr->msg, sizeof(cr->msg),
+					"database \"%s\": db set_flags(DB_CHKSUM)(%s) failed: %s (%d).",
+					be->be_suffix[0].bv_val, 
+					bdb->bi_dbenv_home, db_strerror(rc), rc );
+				Debug( LDAP_DEBUG_ANY,
+					LDAP_XSTRING(bdb_db_open) ": %s\n",
+					cr->msg, 0, 0 );
+				goto fail;
+			}
+		}
+
+		rc = bdb_db_findsize( bdb, (struct berval *)&bdbi_databases[i].name );
+
 		if( i == BDB_ID2ENTRY ) {
+			if ( !rc ) rc = BDB_ID2ENTRY_PAGESIZE;
+			rc = db->bdi_db->set_pagesize( db->bdi_db, rc );
+
 			if ( slapMode & SLAP_TOOL_MODE )
 				db->bdi_db->mpf->set_priority( db->bdi_db->mpf,
 					DB_PRIORITY_VERY_LOW );
 
-			rc = db->bdi_db->set_pagesize( db->bdi_db,
-				BDB_ID2ENTRY_PAGESIZE );
 			if ( slapMode & SLAP_TOOL_READMAIN ) {
 				flags |= DB_RDONLY;
 			} else {
 				flags |= DB_CREATE;
 			}
 		} else {
+			/* Use FS default size if not configured */
+			if ( rc )
+				rc = db->bdi_db->set_pagesize( db->bdi_db, rc );
+
 			rc = db->bdi_db->set_flags( db->bdi_db, 
 				DB_DUP | DB_DUPSORT );
 #ifndef BDB_HIER
@@ -446,8 +471,6 @@ shm_retry:
 				flags |= DB_CREATE;
 			}
 #endif
-			rc = db->bdi_db->set_pagesize( db->bdi_db,
-				BDB_PAGESIZE );
 		}
 
 #ifdef HAVE_EBCDIC
@@ -563,6 +586,17 @@ bdb_db_close( BackendDB *be, ConfigReply *cr )
 	ber_bvarray_free( bdb->bi_db_config );
 	bdb->bi_db_config = NULL;
 
+	if( bdb->bi_dbenv ) {
+		/* Free cache locker if we enabled locking.
+		 * TXNs must all be closed before DBs...
+		 */
+		if ( !( slapMode & SLAP_TOOL_QUICK ) && bdb->bi_cache.c_txn ) {
+			TXN_ABORT( bdb->bi_cache.c_txn );
+			bdb->bi_cache.c_txn = NULL;
+		}
+		bdb_reader_flush( bdb->bi_dbenv );
+	}
+
 	while( bdb->bi_databases && bdb->bi_ndatabases-- ) {
 		db = bdb->bi_databases[bdb->bi_ndatabases];
 		rc = db->bdi_db->close( db->bdi_db, 0 );
@@ -593,13 +627,6 @@ bdb_db_close( BackendDB *be, ConfigReply *cr )
 
 	/* close db environment */
 	if( bdb->bi_dbenv ) {
-		/* Free cache locker if we enabled locking */
-		if ( !( slapMode & SLAP_TOOL_QUICK ) && bdb->bi_cache.c_txn ) {
-			TXN_ABORT( bdb->bi_cache.c_txn );
-			bdb->bi_cache.c_txn = NULL;
-		}
-		bdb_reader_flush( bdb->bi_dbenv );
-
 		/* force a checkpoint, but not if we were ReadOnly,
 		 * and not in Quick mode since there are no transactions there.
 		 */
@@ -639,6 +666,17 @@ static int
 bdb_db_destroy( BackendDB *be, ConfigReply *cr )
 {
 	struct bdb_info *bdb = (struct bdb_info *) be->be_private;
+
+	/* stop and remove checkpoint task */
+	if ( bdb->bi_txn_cp_task ) {
+		struct re_s *re = bdb->bi_txn_cp_task;
+		bdb->bi_txn_cp_task = NULL;
+		ldap_pvt_thread_mutex_lock( &slapd_rq.rq_mutex );
+		if ( ldap_pvt_runqueue_isrunning( &slapd_rq, re ) )
+			ldap_pvt_runqueue_stoptask( &slapd_rq, re );
+		ldap_pvt_runqueue_remove( &slapd_rq, re );
+		ldap_pvt_thread_mutex_unlock( &slapd_rq.rq_mutex );
+	}
 
 	/* monitor handling */
 	(void)bdb_monitor_db_destroy( be );

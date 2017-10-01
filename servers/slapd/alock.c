@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/alock.c,v 1.5.2.8 2008/09/10 16:32:11 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2005-2008 The OpenLDAP Foundation.
+ * Copyright 2005-2009 The OpenLDAP Foundation.
  * Portions Copyright 2004-2005 Symas Corporation.
  * All rights reserved.
  *
@@ -178,7 +178,7 @@ alock_read_iattr ( unsigned char * bufptr )
 	assert (bufptr != NULL);
 
 	bufptr += sizeof (unsigned long int);
-	for (count=0; count <= sizeof (unsigned long int); ++count) {
+	for (count=0; count <= (int) sizeof (unsigned long int); ++count) {
 		val <<= 8;
 		val += (unsigned long int) *bufptr--;
 	}

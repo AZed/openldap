@@ -1,5 +1,5 @@
-# $OpenLDAP: pkg/openldap-guide/admin/appendix-ldap-result-codes.sdf,v 1.1.2.5 2008/09/26 22:31:01 quanah Exp $
-# Copyright 2007-2008 The OpenLDAP Foundation, All Rights Reserved.
+# $OpenLDAP$
+# Copyright 2007-2009 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 
 H1:  LDAP Result Codes

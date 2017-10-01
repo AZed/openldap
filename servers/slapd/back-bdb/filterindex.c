@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/filterindex.c,v 1.64.2.7 2008/10/02 20:10:48 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2008 The OpenLDAP Foundation.
+ * Copyright 2000-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -716,6 +716,20 @@ equality_candidates(
 
 	Debug( LDAP_DEBUG_TRACE, "=> bdb_equality_candidates (%s)\n",
 			ava->aa_desc->ad_cname.bv_val, 0, 0 );
+
+	if ( ava->aa_desc == slap_schema.si_ad_entryDN ) {
+		EntryInfo *ei = NULL;
+		rc = bdb_cache_find_ndn( op, rtxn, &ava->aa_value, &ei );
+		if ( rc == LDAP_SUCCESS ) {
+			/* exactly one ID can match */
+			ids[0] = 1;
+			ids[1] = ei->bei_id;
+		}
+		if ( ei ) {
+			bdb_cache_entryinfo_unlock( ei );
+		}
+		return rc;
+	}
 
 	BDB_IDL_ALL( bdb, ids );
 

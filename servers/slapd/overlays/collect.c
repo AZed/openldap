@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/overlays/collect.c,v 1.5.2.5 2008/09/17 22:42:51 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2008 The OpenLDAP Foundation.
+ * Copyright 2003-2009 The OpenLDAP Foundation.
  * Portions Copyright 2003 Howard Chu.
  * All rights reserved.
  *
@@ -31,6 +31,8 @@
 #include "slap.h"
 #include "config.h"
 
+#include "lutil.h"
+
 /* This is a cheap hack to implement a collective attribute.
  *
  * This demonstration overlay looks for a specified attribute in an
@@ -44,7 +46,7 @@ typedef struct collect_info {
 	struct collect_info *ci_next;
 	struct berval ci_dn;
 	int ci_ad_num;
-	AttributeDescription *ci_ad[];
+	AttributeDescription *ci_ad[1];
 } collect_info;
 
 /*
@@ -174,7 +176,7 @@ collect_cf( ConfigArgs *c )
 
 		/* allocate config info with room for attribute array */
 		ci = ch_malloc( sizeof( collect_info ) +
-			( sizeof (AttributeDescription *) * (count + 1)));
+			sizeof( AttributeDescription * ) * count );
 
 		/* validate and normalize dn */
 		ber_str2bv( c->argv[1], 0, 0, &bv );
@@ -266,7 +268,7 @@ collect_modify( Operation *op, SlapReply *rs)
 	collect_info *ci = on->on_bi.bi_private;
 	Modifications *ml;
 	char errMsg[100];
-	int rc, idx;
+	int idx;
 
 	for ( ml = op->orm_modlist; ml != NULL; ml = ml->sml_next) {
 		for (; ci; ci=ci->ci_next ) {

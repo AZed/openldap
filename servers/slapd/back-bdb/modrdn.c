@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/modrdn.c,v 1.185.2.12 2008/09/03 21:37:31 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2008 The OpenLDAP Foundation.
+ * Copyright 2000-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -36,7 +36,7 @@ bdb_modrdn( Operation	*op, SlapReply *rs )
 	char textbuf[SLAP_TEXT_BUFLEN];
 	size_t textlen = sizeof textbuf;
 	DB_TXN		*ltid = NULL, *lt2;
-	struct bdb_op_info opinfo = {0};
+	struct bdb_op_info opinfo = {{{ 0 }}};
 	Entry dummy = {0};
 
 	Entry		*np = NULL;			/* newSuperior Entry */

@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/id2entry.c,v 1.72.2.10 2008/10/06 22:44:14 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2008 The OpenLDAP Foundation.
+ * Copyright 2000-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -422,6 +422,7 @@ return_results:
 						op->o_tmpmemctx );
 					bli->bli_next = boi->boi_locks;
 					bli->bli_id = e->e_id;
+					bli->bli_flag = 0;
 					bli->bli_lock = lock;
 					boi->boi_locks = bli;
 				}

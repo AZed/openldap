@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/libraries/libldap/os-ip.c,v 1.118.2.9 2008/09/03 21:11:06 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2008 The OpenLDAP Foundation.
+ * Copyright 1998-2009 The OpenLDAP Foundation.
  * Portions Copyright 1999 Lars Uffmann.
  * All rights reserved.
  *
@@ -207,7 +207,7 @@ ldap_pvt_is_socket_ready(LDAP *ld, int s)
 		== AC_SOCKET_ERROR )
 	{
 		/* XXX: needs to be replace with ber_stream_read() */
-		read(s, &ch, 1);
+		(void)read(s, &ch, 1);
 		TRACE;
 		return -1;
 	}
@@ -533,9 +533,9 @@ ldap_connect_to_host(LDAP *ld, Sockbuf *sb,
 
 #if defined( HAVE_GETADDRINFO ) && defined( HAVE_INET_NTOP )
 	memset( &hints, '\0', sizeof(hints) );
-#ifdef USE_AI_ATTRCONFIG /* FIXME: configure test needed */
-	/* Use AI_ATTRCONFIG only on systems where its known to be needed. */
-	hints.ai_flags = AI_ATTRCONFIG;
+#ifdef USE_AI_ADDRCONFIG /* FIXME: configure test needed */
+	/* Use AI_ADDRCONFIG only on systems where its known to be needed. */
+	hints.ai_flags = AI_ADDRCONFIG;
 #endif
 	hints.ai_family = ldap_int_inet4or6;
 	hints.ai_socktype = socktype;
@@ -769,7 +769,7 @@ ldap_host_connected_to( Sockbuf *sb, const char *host )
 		char *herr;
 #ifdef NI_MAXHOST
 		char hbuf[NI_MAXHOST];
-#elif defined( MAXHOSTNAMELEN
+#elif defined( MAXHOSTNAMELEN )
 		char hbuf[MAXHOSTNAMELEN];
 #else
 		char hbuf[256];
@@ -956,6 +956,9 @@ ldap_is_read_ready( LDAP *ld, Sockbuf *sb )
 	ber_socket_t		sd;
 
 	sip = (struct selectinfo *)ld->ld_selectinfo;
+
+	if (ber_sockbuf_ctrl( sb, LBER_SB_OPT_DATA_READY, NULL ))
+		return 1;
 
 	ber_sockbuf_ctrl( sb, LBER_SB_OPT_GET_FD, &sd );
 

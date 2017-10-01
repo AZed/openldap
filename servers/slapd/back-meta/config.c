@@ -1,7 +1,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/config.c,v 1.74.2.15 2008/09/03 00:11:49 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2008 The OpenLDAP Foundation.
+ * Copyright 1999-2009 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * Portions Copyright 1999-2003 Howard Chu.
  * All rights reserved.
@@ -1082,7 +1082,9 @@ idassert-authzFrom	"dn:<rootdn>"
 				return 1;
 			}
 
-			if ( snprintf( binddn, sizeof( binddn ), "binddn=%s", argv[ 1 ] ) >= sizeof( binddn ) ) {
+			if ( sizeof( binddn ) <= (unsigned) snprintf( binddn,
+					sizeof( binddn ), "binddn=%s", argv[ 1 ] ))
+			{
 				Debug( LDAP_DEBUG_ANY, "%s: line %d: \"pseudorootdn\" too long.\n",
 					fname, lineno, 0 );
 				return 1;

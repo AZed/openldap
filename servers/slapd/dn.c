@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/dn.c,v 1.182.2.8 2008/02/11 23:26:44 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2008 The OpenLDAP Foundation.
+ * Copyright 1998-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -250,21 +250,8 @@ AVA_Sort( LDAPRDN rdn, int nAVAs )
 			ava_j = rdn[ j ];
 			a = strcmp( ava_i->la_attr.bv_val, ava_j->la_attr.bv_val );
 
-			if ( a == 0 ) {
-				int		d;
-
-				d = ava_i->la_value.bv_len - ava_j->la_value.bv_len;
-
-				a = memcmp( ava_i->la_value.bv_val, 
-						ava_j->la_value.bv_val,
-						d <= 0 ? ava_i->la_value.bv_len 
-							: ava_j->la_value.bv_len );
-
-				if ( a == 0 ) {
-					a = d;
-				}
-			}
-			/* Duplicates are not allowed */
+			/* RFC4512 does not allow multiple AVAs
+			 * with the same attribute type in RDN (ITS#5968) */
 			if ( a == 0 )
 				return LDAP_INVALID_DN_SYNTAX;
 
@@ -1077,7 +1064,7 @@ dn_rdnlen(
 
 	p = ber_bvchr( dn_in, ',' );
 
-	return p ? p - dn_in->bv_val : dn_in->bv_len;
+	return p ? (ber_len_t) (p - dn_in->bv_val) : dn_in->bv_len;
 }
 
 

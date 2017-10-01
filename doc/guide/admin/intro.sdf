@@ -1,5 +1,5 @@
-# $OpenLDAP: pkg/openldap-guide/admin/intro.sdf,v 1.45.2.7 2008/09/26 22:32:17 quanah Exp $
-# Copyright 1999-2008 The OpenLDAP Foundation, All Rights Reserved.
+# $OpenLDAP$
+# Copyright 1999-2009 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 H1: Introduction to OpenLDAP Directory Services
 

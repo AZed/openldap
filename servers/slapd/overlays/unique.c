@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/overlays/unique.c,v 1.20.2.12 2008/09/08 18:59:02 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2004-2008 The OpenLDAP Foundation.
+ * Copyright 2004-2009 The OpenLDAP Foundation.
  * Portions Copyright 2004,2006-2007 Symas Corporation.
  * All rights reserved.
  *
@@ -1013,7 +1013,7 @@ unique_search(
 
 	nop->o_bd = on->on_info->oi_origdb;
 	rc = nop->o_bd->be_search(nop, &nrs);
-	filter_free_x(nop, nop->ors_filter);
+	filter_free_x(nop, nop->ors_filter, 1);
 	op->o_tmpfree( key->bv_val, op->o_tmpmemctx );
 
 	if(rc != LDAP_SUCCESS && rc != LDAP_NO_SUCH_OBJECT) {

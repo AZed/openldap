@@ -1,7 +1,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/schema-map.c,v 1.59.2.7 2008/09/03 17:45:45 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2008 The OpenLDAP Foundation.
+ * Copyright 1999-2009 The OpenLDAP Foundation.
  * Portions Copyright 1999 Dmitry Kovalev.
  * Portions Copyright 2002 Pierangelo Masarati.
  * Portions Copyright 2004 Mark Adamson.
@@ -570,7 +570,7 @@ backsql_load_schema_map( backsql_info *bi, SQLHDBC dbh )
 			int i;
 
 			for ( i = 0; required[ i ].name != NULL; i++ ) {
-				if ( oc_row.value_len[ i ] <= 0 ) {
+				if ( oc_row.value_len[ required[ i ].idx ] <= 0 ) {
 					Debug( LDAP_DEBUG_ANY,
 						"backsql_load_schema_map(): "
 						"required column #%d \"%s\" is empty\n",

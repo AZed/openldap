@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/add.c,v 1.152.2.11 2008/09/03 21:37:31 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2008 The OpenLDAP Foundation.
+ * Copyright 2000-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -34,7 +34,7 @@ bdb_add(Operation *op, SlapReply *rs )
 	AttributeDescription *entry = slap_schema.si_ad_entry;
 	DB_TXN		*ltid = NULL, *lt2, *rtxn;
 	ID eid = NOID;
-	struct bdb_op_info opinfo = {0};
+	struct bdb_op_info opinfo = {{{ 0 }}};
 	int subentry;
 	DB_LOCK		lock;
 
@@ -94,7 +94,7 @@ txnReturn:
 
 	/* check entry's schema */
 	rs->sr_err = entry_schema_check( op, op->oq_add.rs_e, NULL,
-		get_relax(op), 1, &rs->sr_text, textbuf, textlen );
+		get_relax(op), 1, NULL, &rs->sr_text, textbuf, textlen );
 	if ( rs->sr_err != LDAP_SUCCESS ) {
 		Debug( LDAP_DEBUG_TRACE,
 			LDAP_XSTRING(bdb_add) ": entry failed schema check: "
@@ -109,6 +109,13 @@ txnReturn:
 		Debug( LDAP_DEBUG_TRACE,
 			LDAP_XSTRING(bdb_add) ": entry failed op attrs add: "
 			"%s (%d)\n", rs->sr_text, rs->sr_err, 0 );
+		goto return_results;
+	}
+
+	if ( get_assert( op ) &&
+		( test_filter( op, op->ora_e, get_assertion( op )) != LDAP_COMPARE_TRUE ))
+	{
+		rs->sr_err = LDAP_ASSERTION_FAILED;
 		goto return_results;
 	}
 
@@ -296,6 +303,24 @@ retry:	/* transaction retry */
 			0, 0, 0 );
 		rs->sr_err = LDAP_INSUFFICIENT_ACCESS;
 		rs->sr_text = "no write access to entry";
+		goto return_results;;
+	}
+
+	/* 
+	 * Check ACL for attribute write access
+	 */
+	if (!acl_check_modlist(op, oe, op->ora_modlist)) {
+		switch( opinfo.boi_err ) {
+		case DB_LOCK_DEADLOCK:
+		case DB_LOCK_NOTGRANTED:
+			goto retry;
+		}
+
+		Debug( LDAP_DEBUG_TRACE,
+			LDAP_XSTRING(bdb_add) ": no write access to attribute\n",
+			0, 0, 0 );
+		rs->sr_err = LDAP_INSUFFICIENT_ACCESS;
+		rs->sr_text = "no write access to attribute";
 		goto return_results;;
 	}
 

@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/init.c,v 1.97.2.9 2008/02/12 00:46:46 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2008 The OpenLDAP Foundation.
+ * Copyright 1998-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -54,10 +54,6 @@ int		ldap_syslog_level = LOG_DEBUG;
 #endif
 
 BerVarray default_referral = NULL;
-
-struct berval AllUser = BER_BVC( LDAP_ALL_USER_ATTRIBUTES );
-struct berval AllOper = BER_BVC( LDAP_ALL_OPERATIONAL_ATTRIBUTES );
-struct berval NoAttrs = BER_BVC( LDAP_NO_ATTRS );
 
 /*
  * global variables that need mutex protection

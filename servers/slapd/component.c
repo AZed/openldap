@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/component.c,v 1.31.2.4 2008/09/10 16:32:11 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2008 The OpenLDAP Foundation.
+ * Copyright 2003-2009 The OpenLDAP Foundation.
  * Portions Copyright 2004 by IBM Corporation.
  * All rights reserved.
  *
@@ -212,7 +212,7 @@ dup_comp_filter_list (
 int
 get_len_of_next_assert_value ( struct berval* bv, char separator )
 {
-	int i = 0;
+	ber_len_t i = 0;
 	while (1) {
 		if ( (bv->bv_val[ i ] == separator) || ( i >= bv->bv_len) )
 			break;

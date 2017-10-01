@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/syntax.c,v 1.43.2.4 2008/09/29 20:58:51 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2008 The OpenLDAP Foundation.
+ * Copyright 1998-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -208,6 +208,47 @@ syn_add(
 	ssyn->ssyn_ber2str = def->sd_ber2str;
 	ssyn->ssyn_str2ber = def->sd_str2ber;
 #endif
+
+	if ( def->sd_validate == NULL && def->sd_pretty == NULL && syn->syn_extensions != NULL ) {
+		LDAPSchemaExtensionItem **lsei;
+		Syntax *subst = NULL;
+
+		for ( lsei = syn->syn_extensions; *lsei != NULL; lsei++) {
+			if ( strcmp( (*lsei)->lsei_name, "X-SUBST" ) != 0 ) {
+				continue;
+			}
+
+			assert( (*lsei)->lsei_values != NULL );
+			if ( (*lsei)->lsei_values[0] == '\0'
+				|| (*lsei)->lsei_values[1] != '\0' )
+			{
+				Debug( LDAP_DEBUG_ANY, "syn_add(%s): exactly one substitute syntax must be present\n",
+					ssyn->ssyn_syn.syn_oid, 0, 0 );
+				return SLAP_SCHERR_SYN_SUBST_NOT_SPECIFIED;
+			}
+
+			subst = syn_find( (*lsei)->lsei_values[0] );
+			if ( subst == NULL ) {
+				Debug( LDAP_DEBUG_ANY, "syn_add(%s): substitute syntax %s not found\n",
+					ssyn->ssyn_syn.syn_oid, (*lsei)->lsei_values[0], 0 );
+				return SLAP_SCHERR_SYN_SUBST_NOT_FOUND;
+			}
+			break;
+		}
+
+		if ( subst != NULL ) {
+			ssyn->ssyn_flags = subst->ssyn_flags;
+			ssyn->ssyn_validate = subst->ssyn_validate;
+			ssyn->ssyn_pretty = subst->ssyn_pretty;
+
+			ssyn->ssyn_sups = NULL;
+
+#ifdef SLAPD_BINARY_CONVERSION
+			ssyn->ssyn_ber2str = subst->ssyn_ber2str;
+			ssyn->ssyn_str2ber = subst->ssyn_str2ber;
+#endif
+		}
+	}
 
 	if ( def->sd_sups != NULL ) {
 		int	cnt;

@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/zn_malloc.c,v 1.11.2.3 2008/02/11 23:26:45 kurt Exp $*/
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2008 The OpenLDAP Foundation.
+ * Copyright 2003-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

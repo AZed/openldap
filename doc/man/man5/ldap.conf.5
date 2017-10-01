@@ -1,6 +1,6 @@
 .TH LDAP.CONF 5 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" $OpenLDAP: pkg/ldap/doc/man/man5/ldap.conf.5,v 1.33.2.7 2008/09/03 17:39:45 quanah Exp $
-.\" Copyright 1998-2008 The OpenLDAP Foundation All Rights Reserved.
+.\" $OpenLDAP$
+.\" Copyright 1998-2009 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .SH NAME
 ldap.conf, .ldaprc \- LDAP configuration file/environment variables
@@ -272,6 +272,22 @@ description).  The default is
 specifies the maximum security layer receive buffer
 size allowed.  0 disables security layers.  The default is 65536.
 .RE
+.SH GSSAPI OPTIONS
+If OpenLDAP is built with Generic Security Services Application Programming Interface support,
+there are more options you can specify.
+.TP
+.B GSSAPI_SIGN <on/true/yes/off/false/no>
+Specifies if GSSAPI signing (GSS_C_INTEG_FLAG) should be used.
+The default is off.
+.TP
+.B GSSAPI_ENCRYPT <on/true/yes/off/false/no>
+Specifies if GSSAPI encryption (GSS_C_INTEG_FLAG and GSS_C_CONF_FLAG)
+should be used. The default is off.
+.TP
+.B GSSAPI_ALLOW_REMOTE_PRINCIPAL <on/true/yes/off/false/no>
+Specifies if GSSAPI based authentification should try to form the
+target principal name out of the ldapServiceName or dnsHostName
+attribute of the targets RootDSE entry. The default is off.
 .SH TLS OPTIONS
 If OpenLDAP is built with Transport Layer Security support, there
 are more options you can specify.  These options are used when an
@@ -307,6 +323,18 @@ it is of critical importance that the key file is protected carefully.
 Specifies acceptable cipher suite and preference order.
 <cipher-suite-spec> should be a cipher specification for OpenSSL,
 e.g., HIGH:MEDIUM:+SSLv2.
+
+To check what ciphers a given spec selects, use:
+
+.nf
+	openssl ciphers -v <cipher-suite-spec>
+.fi
+
+To obtain the list of ciphers in GNUtls use:
+
+.nf
+	gnutls-cli -l
+.fi
 .TP
 .B TLS_RANDFILE <filename>
 Specifies the file to obtain random bits from when /dev/[u]random is

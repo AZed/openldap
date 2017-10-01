@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/schema_prep.c,v 1.169.2.10 2008/09/03 21:46:56 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2008 The OpenLDAP Foundation.
+ * Copyright 1998-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -449,7 +449,7 @@ static struct slap_schema_ad_map {
 			"EQUALITY objectIdentifierMatch "
 			"SYNTAX 1.3.6.1.4.1.1466.115.121.1.38 "
 			"SINGLE-VALUE NO-USER-MODIFICATION USAGE directoryOperation )",
-		NULL, SLAP_AT_MANAGEABLE,
+		NULL, 0,
 		oidValidate, objectClassPretty,
 		NULL, NULL, objectSubClassMatch,
 			objectSubClassIndexer, objectSubClassFilter,

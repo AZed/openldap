@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/ad.c,v 1.95.2.4 2008/02/11 23:26:43 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2008 The OpenLDAP Foundation.
+ * Copyright 1998-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,6 +26,10 @@
 
 #include "slap.h"
 #include "lutil.h"
+
+static struct berval bv_no_attrs = BER_BVC( LDAP_NO_ATTRS );
+static struct berval bv_all_user_attrs = BER_BVC( "*" );
+static struct berval bv_all_operational_attrs = BER_BVC( "+" );
 
 static AttributeName anlist_no_attrs[] = {
 	{ BER_BVC( LDAP_NO_ATTRS ), NULL, 0, NULL },
@@ -53,6 +57,10 @@ AttributeName *slap_anlist_all_user_attributes = anlist_all_user_attributes;
 AttributeName *slap_anlist_all_operational_attributes = anlist_all_operational_attributes;
 AttributeName *slap_anlist_all_attributes = anlist_all_attributes;
 
+struct berval * slap_bv_no_attrs = &bv_no_attrs;
+struct berval * slap_bv_all_user_attrs = &bv_all_user_attrs;
+struct berval * slap_bv_all_operational_attrs = &bv_all_operational_attrs;
+
 typedef struct Attr_option {
 	struct berval name;	/* option name or prefix */
 	int           prefix;	/* NAME is a tag and range prefix */
@@ -63,6 +71,8 @@ static Attr_option lang_option = { BER_BVC("lang-"), 1 };
 /* Options sorted by name, and number of options */
 static Attr_option *options = &lang_option;
 static int option_count = 1;
+
+static int msad_range_hack = 0;
 
 static Attr_option *ad_find_option_definition( const char *opt, int optlen );
 
@@ -76,7 +86,9 @@ static int ad_keystring(
 	}
 
 	for( i=1; i<bv->bv_len; i++ ) {
-		if( !AD_CHAR( bv->bv_val[i] ) ) {
+		if( !AD_CHAR( bv->bv_val[i] )) {
+			if ( msad_range_hack && bv->bv_val[i] == '=' )
+				continue;
 			return 1;
 		}
 	}
@@ -234,7 +246,8 @@ int slap_bv2ad(
 		} else if ( ad_find_option_definition( opt, optlen ) ) {
 			int i;
 
-			if( opt[optlen-1] == '-' ) {
+			if( opt[optlen-1] == '-' ||
+				( opt[optlen-1] == '=' && msad_range_hack )) {
 				desc.ad_flags |= SLAP_DESC_TAG_RANGE;
 			}
 
@@ -817,7 +830,10 @@ undef_promote(
 
 			*u_ad = (*u_ad)->ad_next;
 
+			tmp->ad_type = nat;
 			tmp->ad_next = NULL;
+			/* ad_cname was contiguous, no leak here */
+			tmp->ad_cname = nat->sat_cname;
 			*n_ad = tmp;
 			n_ad = &tmp->ad_next;
 		} else {
@@ -1175,6 +1191,11 @@ ad_define_option( const char *name, const char *fname, int lineno )
 	optlen = 0;
 	do {
 		if ( !DESC_CHAR( name[optlen] ) ) {
+			/* allow trailing '=', same as '-' */
+			if ( name[optlen] == '=' && !name[optlen+1] ) {
+				msad_range_hack = 1;
+				continue;
+			}
 			Debug( LDAP_DEBUG_ANY,
 			       "%s: line %d: illegal option name \"%s\"\n",
 				    fname, lineno, name );
@@ -1201,7 +1222,8 @@ ad_define_option( const char *name, const char *fname, int lineno )
 
 	options[i].name.bv_val = ch_strdup( name );
 	options[i].name.bv_len = optlen;
-	options[i].prefix = (name[optlen-1] == '-');
+	options[i].prefix = (name[optlen-1] == '-') ||
+ 		(name[optlen-1] == '=');
 
 	if ( i != option_count &&
 	     options[i].prefix &&

@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/dn2id.c,v 1.137.2.12 2008/10/07 21:13:41 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2008 The OpenLDAP Foundation.
+ * Copyright 2000-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -89,8 +89,11 @@ bdb_dn2id_add(
 	/* store it -- don't override */
 	rc = db->put( db, txn, &key, &data, DB_NOOVERWRITE );
 	if( rc != 0 ) {
-		Debug( LDAP_DEBUG_ANY, "=> bdb_dn2id_add 0x%lx: put failed: %s %d\n",
-			e->e_id, db_strerror(rc), rc );
+		char buf[ SLAP_TEXT_BUFLEN ];
+		snprintf( buf, sizeof( buf ), "%s => bdb_dn2id_add dn=\"%s\" ID=0x%lx",
+			op->o_log_prefix, e->e_name.bv_val, e->e_id );
+		Debug( LDAP_DEBUG_ANY, "%s: put failed: %s %d\n",
+			buf, db_strerror(rc), rc );
 		goto done;
 	}
 
@@ -620,10 +623,14 @@ hdb_dn2id_add(
 				tmp[1] = eip->bei_id;
 				bdb_idl_cache_add_id( bdb, db, &key, e->e_id );
 			}
+			/* Handle DB with empty suffix */
+			if ( !op->o_bd->be_suffix[0].bv_len && eip ) {
+				tmp[1] = eip->bei_id;
+				bdb_idl_cache_add_id( bdb, db, &key, e->e_id );
+			}
 		}
 	}
 
-func_leave:
 	op->o_tmpfree( d, op->o_tmpmemctx );
 	Debug( LDAP_DEBUG_TRACE, "<= hdb_dn2id_add 0x%lx: %d\n", e->e_id, rc, 0 );
 
@@ -717,6 +724,11 @@ func_leave:
 		if ( eip ->bei_parent ) {
 			*ptr = DN_SUBTREE_PREFIX;
 			for (; eip && eip->bei_parent->bei_id; eip = eip->bei_parent) {
+				tmp[1] = eip->bei_id;
+				bdb_idl_cache_del_id( bdb, db, &key, e->e_id );
+			}
+			/* Handle DB with empty suffix */
+			if ( !op->o_bd->be_suffix[0].bv_len && eip ) {
 				tmp[1] = eip->bei_id;
 				bdb_idl_cache_del_id( bdb, db, &key, e->e_id );
 			}

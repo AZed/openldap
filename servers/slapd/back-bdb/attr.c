@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/attr.c,v 1.36.2.5 2008/09/26 22:37:12 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2008 The OpenLDAP Foundation.
+ * Copyright 2000-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,14 +30,14 @@
  * set point for insertion if ins is non-NULL
  */
 int
-bdb_attr_slot( struct bdb_info *bdb, AttributeDescription *ad, unsigned *ins )
+bdb_attr_slot( struct bdb_info *bdb, AttributeDescription *ad, int *ins )
 {
 	unsigned base = 0, cursor = 0;
 	unsigned n = bdb->bi_nattrs;
 	int val = 0;
 	
 	while ( 0 < n ) {
-		int pivot = n >> 1;
+		unsigned pivot = n >> 1;
 		cursor = base + pivot;
 
 		val = SLAP_PTRCMP( ad, bdb->bi_attrs[cursor]->ai_desc );
@@ -61,7 +61,7 @@ bdb_attr_slot( struct bdb_info *bdb, AttributeDescription *ad, unsigned *ins )
 static int
 ainfo_insert( struct bdb_info *bdb, AttrInfo *a )
 {
-	unsigned x;
+	int x;
 	int i = bdb_attr_slot( bdb, a->ai_desc, &x );
 
 	/* Is it a dup? */
@@ -215,7 +215,7 @@ bdb_attr_index_config(
 			goto done;
 		}
 
-		if( slap_ad_is_binary( ad ) ) {
+		if( ad == slap_schema.si_ad_entryDN || slap_ad_is_binary( ad ) ) {
 			if (c_reply) {
 				snprintf(c_reply->msg, sizeof(c_reply->msg),
 					"index of attribute \"%s\" disallowed", attrs[i] );

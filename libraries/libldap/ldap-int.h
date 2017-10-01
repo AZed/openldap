@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/libraries/libldap/ldap-int.h,v 1.168.2.8 2008/09/03 21:11:06 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2008 The OpenLDAP Foundation.
+ * Copyright 1998-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -121,6 +121,7 @@ LDAP_BEGIN_DECL
 #define LDAP_BOOL_RESTART		1
 #define LDAP_BOOL_TLS			3
 #define	LDAP_BOOL_CONNECT_ASYNC		4
+#define	LDAP_BOOL_SASL_NOCANON		5
 
 #define LDAP_BOOLEANS	unsigned long
 #define LDAP_BOOL(n)	((LDAP_BOOLEANS)1 << (n))
@@ -154,9 +155,9 @@ struct ldaptls {
 	char		*lt_cacertfile;
 	char		*lt_cacertdir;
 	char		*lt_ciphersuite;
-#ifdef HAVE_GNUTLS
 	char		*lt_crlfile;
-#endif
+	char		*lt_randfile;	/* OpenSSL only */
+	int		lt_protocol_min;
 };
 #endif
 
@@ -204,9 +205,12 @@ struct ldapoptions {
 #define ldo_tls_cacertfile	ldo_tls_info.lt_cacertfile
 #define ldo_tls_cacertdir	ldo_tls_info.lt_cacertdir
 #define ldo_tls_ciphersuite	ldo_tls_info.lt_ciphersuite
+#define ldo_tls_protocol_min	ldo_tls_info.lt_protocol_min
 #define ldo_tls_crlfile	ldo_tls_info.lt_crlfile
+#define ldo_tls_randfile	ldo_tls_info.lt_randfile
    	int			ldo_tls_mode;
    	int			ldo_tls_require_cert;
+	int			ldo_tls_impl;
 #ifdef HAVE_OPENSSL_CRL
    	int			ldo_tls_crlcheck;
 #endif
@@ -225,6 +229,15 @@ struct ldapoptions {
 
 	/* SASL Security Properties */
 	struct sasl_security_properties	ldo_sasl_secprops;
+#endif
+
+#ifdef HAVE_GSSAPI
+	unsigned gssapi_flags;
+
+	unsigned ldo_gssapi_flags;
+#define LDAP_GSSAPI_OPT_DO_NOT_FREE_GSS_CONTEXT	0x0001
+#define LDAP_GSSAPI_OPT_ALLOW_REMOTE_PRINCIPAL	0x0002
+	unsigned ldo_gssapi_options;
 #endif
 
 	int		ldo_refhoplimit;	/* limit on referral nesting */
@@ -256,6 +269,9 @@ typedef struct ldap_conn {
 #ifdef HAVE_CYRUS_SASL
 	void		*lconn_sasl_authctx;	/* context for bind */
 	void		*lconn_sasl_sockctx;	/* for security layer */
+#endif
+#ifdef HAVE_GSSAPI
+	void		*lconn_gss_ctx;		/* gss_ctx_id_t */
 #endif
 	int			lconn_refcnt;
 	time_t		lconn_created;	/* time */
@@ -400,6 +416,9 @@ LDAP_V ( ldap_pvt_thread_mutex_t ) ldap_int_resolv_mutex;
 
 #ifdef HAVE_CYRUS_SASL
 LDAP_V( ldap_pvt_thread_mutex_t ) ldap_int_sasl_mutex;
+#endif
+#ifdef HAVE_GSSAPI
+LDAP_V( ldap_pvt_thread_mutex_t ) ldap_int_gssapi_mutex;
 #endif
 #endif
 
@@ -583,6 +602,7 @@ LDAP_F (BerElement *) ldap_build_search_req LDAP_P((
 	LDAPControl **cctrls,
 	ber_int_t timelimit,
 	ber_int_t sizelimit,
+	ber_int_t deref,
 	ber_int_t *msgidp));
 
 
@@ -673,6 +693,16 @@ LDAP_F (void) ldap_int_tls_destroy LDAP_P(( struct ldapoptions *lo ));
  */
 LDAP_F (char **) ldap_value_dup LDAP_P((
 	char *const *vals ));
+
+/*
+ *	in gssapi.c
+ */
+#ifdef HAVE_GSSAPI
+LDAP_F(int) ldap_int_gssapi_get_option LDAP_P(( LDAP *ld, int option, void *arg ));
+LDAP_F(int) ldap_int_gssapi_set_option LDAP_P(( LDAP *ld, int option, void *arg ));
+LDAP_F(int) ldap_int_gssapi_config LDAP_P(( struct ldapoptions *lo, int option, const char *arg ));
+LDAP_F(void) ldap_int_gssapi_close LDAP_P(( LDAP *ld, LDAPConn *lc ));
+#endif 
 
 LDAP_END_DECL
 

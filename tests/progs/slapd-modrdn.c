@@ -1,7 +1,7 @@
 /* $OpenLDAP: pkg/ldap/tests/progs/slapd-modrdn.c,v 1.22.2.6 2008/09/02 23:13:17 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2008 The OpenLDAP Foundation.
+ * Copyright 1999-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

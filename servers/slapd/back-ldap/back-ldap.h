@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/back-ldap.h,v 1.88.2.11 2008/09/02 22:53:41 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2008 The OpenLDAP Foundation.
+ * Copyright 1999-2009 The OpenLDAP Foundation.
  * Portions Copyright 2000-2003 Pierangelo Masarati.
  * Portions Copyright 1999-2003 Howard Chu.
  * All rights reserved.
@@ -392,6 +392,8 @@ typedef struct ldapinfo_t {
 	time_t			li_idle_timeout;
 	time_t			li_timeout[ SLAP_OP_LAST ];
 } ldapinfo_t;
+
+#define	LDAP_ERR_OK(err) ((err) == LDAP_SUCCESS || (err) == LDAP_COMPARE_FALSE || (err) == LDAP_COMPARE_TRUE)
 
 typedef enum ldap_back_send_t {
 	LDAP_BACK_DONTSEND		= 0x00,

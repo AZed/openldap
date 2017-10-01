@@ -1,7 +1,7 @@
 /* $OpenLDAP: pkg/ldap/libraries/libldap/options.c,v 1.75.2.7 2008/09/03 21:11:06 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2008 The OpenLDAP Foundation.
+ * Copyright 1998-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -354,6 +354,11 @@ ldap_get_option(
 			return LDAP_OPT_SUCCESS;
 		}
 #endif
+#ifdef HAVE_GSSAPI
+		if ( ldap_int_gssapi_get_option( ld, option, outvalue ) == 0 ) {
+			return LDAP_OPT_SUCCESS;
+		}
+#endif
 		/* bad param */
 		break;
 	}
@@ -675,6 +680,7 @@ ldap_set_option(
 	case LDAP_OPT_DEBUG_LEVEL:
 	case LDAP_OPT_TIMEOUT:
 	case LDAP_OPT_NETWORK_TIMEOUT:
+	case LDAP_OPT_CONNECT_CB:
 		if(invalue == NULL) {
 			/* no place to set from */
 			return LDAP_OPT_ERROR;
@@ -688,6 +694,10 @@ ldap_set_option(
 #endif
 #ifdef HAVE_CYRUS_SASL
 		if ( ldap_int_sasl_set_option( ld, option, (void *)invalue ) == 0 )
+			return LDAP_OPT_SUCCESS;
+#endif
+#ifdef HAVE_GSSAPI
+		if ( ldap_int_gssapi_set_option( ld, option, (void *)invalue ) == 0 )
 			return LDAP_OPT_SUCCESS;
 #endif
 		/* bad param */

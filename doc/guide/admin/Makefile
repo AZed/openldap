@@ -2,7 +2,7 @@
 # $OpenLDAP: pkg/openldap-guide/admin/Makefile,v 1.5.2.10 2008/07/10 00:58:19 quanah Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 2005-2008 The OpenLDAP Foundation.
+## Copyright 2005-2009 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without

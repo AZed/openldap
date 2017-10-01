@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/mr.c,v 1.64.2.3 2008/02/11 23:26:44 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2008 The OpenLDAP Foundation.
+ * Copyright 1998-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -377,7 +377,7 @@ matching_rule_use_init( void )
 
 	LDAP_SLIST_FOREACH( mr, &mr_list, smr_next ) {
 		AttributeType	*at;
-		MatchingRuleUse	mru_storage = { 0 },
+		MatchingRuleUse	mru_storage = {{ 0 }},
 				*mru = &mru_storage;
 
 		char		**applies_oids = NULL;

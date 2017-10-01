@@ -1,7 +1,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/daemon.c,v 1.380.2.15 2008/09/26 19:42:21 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2008 The OpenLDAP Foundation.
+ * Copyright 1998-2009 The OpenLDAP Foundation.
  * Portions Copyright 2007 by Howard Chu, Symas Corporation.
  * All rights reserved.
  *
@@ -1646,7 +1646,7 @@ slapd_daemon_destroy( void )
 {
 	connections_destroy();
 #ifdef HAVE_WINSOCK
-	if ( wake_sds[1] != INVALID_SOCKET )
+	if ( wake_sds[1] != INVALID_SOCKET && wake_sds[1] != wake_sds[0] )
 #endif /* HAVE_WINSOCK */
 		tcp_close( SLAP_FD2SOCK(wake_sds[1]) );
 #ifdef HAVE_WINSOCK
@@ -2495,7 +2495,7 @@ slapd_daemon_task(
 #endif /* LDAP_DEBUG */
 
 		for ( i = 0; i < ns; i++ ) {
-			int rc = 1, fd;
+			int rc = 1, fd, w = 0;
 
 			if ( SLAP_EVENT_IS_LISTENER( i ) ) {
 				rc = slap_listener_activate( SLAP_EVENT_LISTENER( i ) );
@@ -2513,7 +2513,7 @@ slapd_daemon_task(
 					char c[BUFSIZ];
 					waking = 0;
 					tcp_read( SLAP_FD2SOCK(wake_sds[0]), c, sizeof(c) );
-					break;
+					continue;
 				}
 
 				if ( SLAP_EVENT_IS_WRITE( i ) ) {
@@ -2522,6 +2522,7 @@ slapd_daemon_task(
 						fd, 0, 0 );
 
 					SLAP_EVENT_CLR_WRITE( i );
+					w = 1;
 
 					/*
 					 * NOTE: it is possible that the connection was closed
@@ -2541,9 +2542,17 @@ slapd_daemon_task(
 
 					SLAP_EVENT_CLR_READ( i );
 					connection_read_activate( fd );
-				} else {
+				} else if ( !w ) {
 					Debug( LDAP_DEBUG_CONNS,
 						"daemon: hangup on %d\n", fd, 0, 0 );
+					if ( SLAP_SOCK_IS_ACTIVE( fd )) {
+#ifdef HAVE_EPOLL
+						/* Don't keep reporting the hangup
+						 */
+						SLAP_EPOLL_SOCK_SET( fd, EPOLLET );
+#endif
+						connection_hangup( fd );
+					}
 				}
 			}
 		}

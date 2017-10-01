@@ -2,7 +2,7 @@
 # $OpenLDAP: pkg/ldap/tests/scripts/defines.sh,v 1.141.2.13 2008/09/02 23:13:18 quanah Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2008 The OpenLDAP Foundation.
+## Copyright 1998-2009 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -131,6 +131,7 @@ DDSCONF=$DATADIR/slapd-dds.conf
 PASSWDCONF=$DATADIR/slapd-passwd.conf
 UNDOCONF=$DATADIR/slapd-config-undo.conf
 NAKEDCONF=$DATADIR/slapd-config-naked.conf
+VALREGEXCONF=$DATADIR/slapd-valregex.conf
 
 DYNAMICCONF=$DATADIR/slapd-dynamic.ldif
 

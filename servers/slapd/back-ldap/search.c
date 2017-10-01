@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/search.c,v 1.201.2.13 2008/09/04 20:11:37 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2008 The OpenLDAP Foundation.
+ * Copyright 1999-2009 The OpenLDAP Foundation.
  * Portions Copyright 1999-2003 Howard Chu.
  * Portions Copyright 2000-2003 Pierangelo Masarati.
  * All rights reserved.
@@ -180,12 +180,6 @@ ldap_back_search(
 	 * to map attrs and maybe rewrite value
 	 */
 
-	/* should we check return values? */
-	if ( op->ors_deref != -1 ) {
-		ldap_set_option( lc->lc_ld, LDAP_OPT_DEREF,
-				(void *)&op->ors_deref );
-	}
-
 	if ( op->ors_tlimit != SLAP_NO_LIMIT ) {
 		tv.tv_sec = op->ors_tlimit;
 		tv.tv_usec = 0;
@@ -221,11 +215,11 @@ ldap_back_search(
 	/* deal with <draft-zeilenga-ldap-t-f> filters */
 	filter = op->ors_filterstr;
 retry:
-	rs->sr_err = ldap_search_ext( lc->lc_ld, op->o_req_dn.bv_val,
+	rs->sr_err = ldap_pvt_search( lc->lc_ld, op->o_req_dn.bv_val,
 			op->ors_scope, filter.bv_val,
 			attrs, op->ors_attrsonly, ctrls, NULL,
 			tv.tv_sec ? &tv : NULL,
-			op->ors_slimit, &msgid );
+			op->ors_slimit, op->ors_deref, &msgid );
 
 	if ( rs->sr_err != LDAP_SUCCESS ) {
 		switch ( rs->sr_err ) {
@@ -360,7 +354,12 @@ retry:
 				entry_clean( &ent );
 			}
 			ldap_msgfree( res );
-			if ( rc != LDAP_SUCCESS ) {
+			switch ( rc ) {
+			case LDAP_SUCCESS:
+			case LDAP_INSUFFICIENT_ACCESS:
+				break;
+
+			default:
 				if ( rc == LDAP_UNAVAILABLE ) {
 					rc = rs->sr_err = LDAP_OTHER;
 				} else {
@@ -420,6 +419,36 @@ retry:
 			}
 
 			if ( rs->sr_ctrls ) {
+				ldap_controls_free( rs->sr_ctrls );
+				rs->sr_ctrls = NULL;
+			}
+
+		} else if ( rc == LDAP_RES_INTERMEDIATE ) {
+			/* FIXME: response controls
+			 * are passed without checks */
+			rc = ldap_parse_intermediate( lc->lc_ld,
+				res,
+				(char **)&rs->sr_rspoid,
+				&rs->sr_rspdata,
+				&rs->sr_ctrls,
+				0 );
+			if ( rc != LDAP_SUCCESS ) {
+				continue;
+			}
+
+			slap_send_ldap_intermediate( op, rs );
+
+			if ( rs->sr_rspoid != NULL ) {
+				ber_memfree( (char *)rs->sr_rspoid );
+				rs->sr_rspoid = NULL;
+			}
+
+			if ( rs->sr_rspdata != NULL ) {
+				ber_bvfree( rs->sr_rspdata );
+				rs->sr_rspdata = NULL;
+			}
+
+			if ( rs->sr_ctrls != NULL ) {
 				ldap_controls_free( rs->sr_ctrls );
 				rs->sr_ctrls = NULL;
 			}
@@ -641,7 +670,7 @@ ldap_build_entry(
 
 		attr = attr_alloc( NULL );
 		if ( attr == NULL ) {
-			continue;
+			return LDAP_OTHER;
 		}
 		if ( slap_bv2ad( &a, &attr->a_desc, &text ) 
 				!= LDAP_SUCCESS )
@@ -653,6 +682,8 @@ ldap_build_entry(
 					"%s ldap_build_entry: "
 					"slap_bv2undef_ad(%s): %s\n",
 					op->o_log_prefix, a.bv_val, text );
+
+				( void )ber_scanf( &ber, "x" /* [W] */ );
 				attr_free( attr );
 				continue;
 			}
@@ -675,7 +706,6 @@ ldap_build_entry(
 			 * present...
 			 */
 			( void )ber_scanf( &ber, "x" /* [W] */ );
-
 			attr_free( attr );
 			continue;
 		}
@@ -699,7 +729,10 @@ ldap_build_entry(
 			goto next_attr;
 		}
 
-		for ( i = 0; !BER_BVISNULL( &attr->a_vals[i] ); i++ ) {
+		for ( i = 0; !BER_BVISNULL( &attr->a_vals[i] ); i++ ) ;
+		last = i;
+
+		for ( i = 0; i<last; i++ ) {
 			struct berval	pval;
 			int		rc;
 
@@ -722,18 +755,25 @@ ldap_build_entry(
 					ber_dupbv( &pval, &oc->soc_cname );
 
 				} else {
-					attr->a_nvals = NULL;
-					attr_free( attr );
-					goto next_attr;
+					LBER_FREE( attr->a_vals[i].bv_val );
+					if ( --last == i ) {
+						BER_BVZERO( &attr->a_vals[i] );
+						break;
+					}
+					attr->a_vals[i] = attr->a_vals[last];
+					BER_BVZERO( &attr->a_vals[last] );
 				}
-			}
-
-			if ( pretty ) {
+			} else if ( pretty ) {
 				LBER_FREE( attr->a_vals[i].bv_val );
 				attr->a_vals[i] = pval;
 			}
 		}
 		attr->a_numvals = last = i;
+		if ( last == 0 && attr->a_vals != &slap_dummy_bv ) {
+			attr->a_nvals = NULL;
+			attr_free( attr );
+			goto next_attr;
+		}
 
 		if ( last && attr->a_desc->ad_type->sat_equality &&
 				attr->a_desc->ad_type->sat_equality->smr_normalize )
@@ -754,16 +794,26 @@ ldap_build_entry(
 					NULL );
 
 				if ( rc != LDAP_SUCCESS ) {
-					BER_BVZERO( &attr->a_nvals[i] );
-					attr_free( attr );
-					goto next_attr;
+					LBER_FREE( attr->a_vals[i].bv_val );
+					if ( --last == i ) {
+						BER_BVZERO( &attr->a_vals[i] );
+						break;
+					}
+					attr->a_vals[i] = attr->a_vals[last];
+					BER_BVZERO( &attr->a_vals[last] );
 				}
 			}
 			BER_BVZERO( &attr->a_nvals[i] );
+			if ( last == 0 ) {
+				attr_free( attr );
+				goto next_attr;
+			}
 
 		} else {
 			attr->a_nvals = attr->a_vals;
 		}
+
+		attr->a_numvals = last;
 		*attrp = attr;
 		attrp = &attr->a_next;
 
@@ -848,9 +898,9 @@ retry:
 	}
 
 	/* TODO: timeout? */
-	rc = ldap_search_ext_s( lc->lc_ld, ndn->bv_val, LDAP_SCOPE_BASE, filter,
+	rc = ldap_pvt_search_s( lc->lc_ld, ndn->bv_val, LDAP_SCOPE_BASE, filter,
 				attrp, 0, ctrls, NULL,
-				NULL, LDAP_NO_LIMIT, &result );
+				NULL, LDAP_NO_LIMIT, op->ors_deref, &result );
 	if ( rc != LDAP_SUCCESS ) {
 		if ( rc == LDAP_SERVER_DOWN && do_retry ) {
 			do_retry = 0;

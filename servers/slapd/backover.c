@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/backover.c,v 1.71.2.13 2008/09/08 18:52:20 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2008 The OpenLDAP Foundation.
+ * Copyright 2003-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -103,6 +103,8 @@ over_db_config(
 	ca.be = be;
 	snprintf( ca.log, sizeof( ca.log ), "%s: line %d",
 			ca.fname, ca.lineno );
+	ca.op = SLAP_CONFIG_ADD;
+	ca.valx = -1;
 
 	for (; on; on=on->on_next) {
 		rc = SLAP_CONF_UNKNOWN;
@@ -1107,14 +1109,15 @@ void
 overlay_remove( BackendDB *be, slap_overinst *on )
 {
 	slap_overinfo *oi = on->on_info;
-	slap_overinst **oidx, *on2;
+	slap_overinst **oidx;
+	BackendInfo *bi_orig;
 
 	/* remove overlay from oi_list an call db_close and db_destroy
 	 * handlers */
 	for ( oidx = &oi->oi_list; *oidx; oidx = &(*oidx)->on_next ) {
 		if ( *oidx == on ) {
 			*oidx = on->on_next;
-			BackendInfo *bi_orig = be->bd_info;
+			bi_orig = be->bd_info;
 			be->bd_info = (BackendInfo *)on;
 			if ( on->on_bi.bi_db_close ) {
 				on->on_bi.bi_db_close( be, NULL );

@@ -1,4 +1,4 @@
-Copyright 2008 The OpenLDAP Foundation. All rights reserved.
+Copyright 2008-2009 The OpenLDAP Foundation. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted only as authorized by the OpenLDAP
@@ -19,6 +19,9 @@ allop (overlay)
 
 autogroup (overlay)
 	Automated updates of group memberships.
+
+cloak (overlay)
+	Hide specific attributes unless explicitely requested
 
 comp_match (plugin)
 	Component Matching rules (RFC 3687).

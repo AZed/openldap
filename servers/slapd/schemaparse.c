@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/schemaparse.c,v 1.80.2.5 2008/09/29 20:58:51 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2008 The OpenLDAP Foundation.
+ * Copyright 1998-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -50,6 +50,8 @@ static char *const err2text[] = {
 	"Syntax not found",
 	"Duplicate ldapSyntax",
 	"Superior syntax not found",
+	"Substitute syntax not specified",
+	"Substitute syntax not found",
 	"OID or name required",
 	"Qualifier not supported",
 	"Invalid NAME",

@@ -1,7 +1,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/overlays/ppolicy.c,v 1.75.2.15 2008/09/29 19:59:47 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2004-2008 The OpenLDAP Foundation.
+ * Copyright 2004-2009 The OpenLDAP Foundation.
  * Portions Copyright 2004-2005 Howard Chu, Symas Corporation.
  * Portions Copyright 2004 Hewlett-Packard Company.
  * All rights reserved.
@@ -364,8 +364,8 @@ static const char ppolicy_ctrl_oid[] = LDAP_CONTROL_PASSWORDPOLICYRESPONSE;
 static LDAPControl *
 create_passcontrol( Operation *op, int exptime, int grace, LDAPPasswordPolicyError err )
 {
-	char berbuf[LBER_ELEMENT_SIZEOF], bb2[LBER_ELEMENT_SIZEOF];
-	BerElement *ber = (BerElement *)berbuf, *b2 = (BerElement *)bb2;
+	BerElementBuffer berbuf, bb2;
+	BerElement *ber = (BerElement *) &berbuf, *b2 = (BerElement *) &bb2;
 	LDAPControl c = { 0 }, *cp;
 	struct berval bv;
 
@@ -395,17 +395,16 @@ create_passcontrol( Operation *op, int exptime, int grace, LDAPPasswordPolicyErr
 	}
 	ber_printf( ber, /*{*/ "N}" );
 
-	if (ber_flatten2( ber, &(c.ldctl_value), 1 ) == LBER_DEFAULT) {
+	if (ber_flatten2( ber, &c.ldctl_value, 0 ) == -1) {
 		return NULL;
 	}
-	(void)ber_free_buf(ber);
 	cp = op->o_tmpalloc( sizeof( LDAPControl ) + c.ldctl_value.bv_len, op->o_tmpmemctx );
 	cp->ldctl_oid = (char *)ppolicy_ctrl_oid;
 	cp->ldctl_iscritical = 0;
 	cp->ldctl_value.bv_val = (char *)&cp[1];
 	cp->ldctl_value.bv_len = c.ldctl_value.bv_len;
 	AC_MEMCPY( cp->ldctl_value.bv_val, c.ldctl_value.bv_val, c.ldctl_value.bv_len );
-	ber_memfree( c.ldctl_value.bv_val );
+	(void)ber_free_buf(ber);
 	
 	return cp;
 }
@@ -679,7 +678,7 @@ parse_pwdhistory( struct berval *bv, char **oid, time_t *oldtime, struct berval 
 {
 	char *ptr;
 	struct berval nv, npw;
-	int i, j;
+	ber_len_t i, j;
 	
 	assert (bv && (bv->bv_len > 0) && (bv->bv_val) && oldtime && oldpw );
 
@@ -2094,6 +2093,16 @@ ppolicy_db_init(
 )
 {
 	slap_overinst *on = (slap_overinst *) be->bd_info;
+
+	if ( SLAP_ISGLOBALOVERLAY( be ) ) {
+		/* do not allow slapo-ppolicy to be global by now (ITS#5858) */
+		if ( cr ){
+			snprintf( cr->msg, sizeof(cr->msg), 
+				"slapo-ppolicy cannot be global" );
+			fprintf( stderr, "%s\n", cr->msg );
+		}
+		return 1;
+	}
 
 	/* Has User Schema been initialized yet? */
 	if ( !pwd_UsSchema[0].ad[0] ) {

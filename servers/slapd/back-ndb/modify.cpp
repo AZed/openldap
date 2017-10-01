@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/back-ndb/modify.cpp,v 1.3.2.1 2008/09/03 20:58:06 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2008 The OpenLDAP Foundation.
+ * Copyright 2008-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -322,7 +322,7 @@ int ndb_modify_internal(
 	}
 
 	/* check that the entry still obeys the schema */
-	rc = entry_schema_check( op, NA->e, NULL, get_relax(op), 0,
+	rc = entry_schema_check( op, NA->e, NULL, get_relax(op), 0, NULL,
 		text, textbuf, textlen );
 	if ( rc != LDAP_SUCCESS || op->o_noop ) {
 		if ( rc != LDAP_SUCCESS ) {

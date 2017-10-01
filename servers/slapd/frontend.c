@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/frontend.c,v 1.19.2.7 2008/09/26 22:26:16 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2008 The OpenLDAP Foundation.
+ * Copyright 1998-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -108,11 +108,7 @@ frontend_init( void )
 	frontendDB->be_def_limit.lms_s_pr_hide = 0;			/* don't hide number of entries left */
 	frontendDB->be_def_limit.lms_s_pr_total = 0;			/* number of total entries returned by pagedResults equal to hard limit */
 
-#if 0
-	/* FIXME: do we need this? */
-	frontendDB->be_pcl_mutexp = &frontendDB->be_pcl_mutex;
-	ldap_pvt_thread_mutex_init( frontendDB->be_pcl_mutexp );
-#endif
+	ldap_pvt_thread_mutex_init( &frontendDB->be_pcl_mutex );
 
 	/* suffix */
 	frontendDB->be_suffix = ch_calloc( 2, sizeof( struct berval ) );

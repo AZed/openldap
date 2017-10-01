@@ -1,7 +1,7 @@
 /* $OpenLDAP: pkg/ldap/tests/progs/slapd-bind.c,v 1.18.2.8 2008/09/02 23:13:17 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2008 The OpenLDAP Foundation.
+ * Copyright 1999-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -249,13 +249,17 @@ main( int argc, char **argv )
 	uri = tester_uri( uri, host, port );
 
 	for ( i = 0; i < outerloops; i++ ) {
+		int rc;
+
 		if ( base != NULL ) {
-			do_base( uri, dn, &pass, base, filter, pwattr, loops,
+			rc = do_base( uri, dn, &pass, base, filter, pwattr, loops,
 				force, chaserefs, noinit, delay, -1, NULL );
 		} else {
-			do_bind( uri, dn, &pass, loops,
+			rc = do_bind( uri, dn, &pass, loops,
 				force, chaserefs, noinit, NULL, -1, NULL );
 		}
+		if ( rc == LDAP_SERVER_DOWN )
+			break;
 	}
 
 	exit( EXIT_SUCCESS );
@@ -339,12 +343,12 @@ do_bind( char *uri, char *dn, struct berval *pass, int maxloop,
 
 		rc = ldap_sasl_bind_s( ld, dn, LDAP_SASL_SIMPLE, pass, NULL, NULL, NULL );
 		if ( rc ) {
-			unsigned first = tester_ignore_err( rc );
+			int first = tester_ignore_err( rc );
 
 			/* if ignore.. */
 			if ( first ) {
 				/* only log if first occurrence */
-				if ( force < 2 || first == 1 ) {
+				if ( ( force < 2 && first > 0 ) || abs(first) == 1 ) {
 					tester_ldap_error( ld, "ldap_sasl_bind_s", NULL );
 				}
 				rc = LDAP_SUCCESS;

@@ -1,7 +1,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/proto-bdb.h,v 1.137.2.11 2008/09/26 22:37:12 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2008 The OpenLDAP Foundation.
+ * Copyright 2000-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -45,7 +45,7 @@ AttrInfo *bdb_attr_mask( struct bdb_info *bdb,
 void bdb_attr_flush( struct bdb_info *bdb );
 
 int bdb_attr_slot( struct bdb_info *bdb,
-	AttributeDescription *desc, unsigned *insert );
+	AttributeDescription *desc, int *insert );
 
 int bdb_attr_index_config LDAP_P(( struct bdb_info *bdb,
 	const char *fname, int lineno,
@@ -70,12 +70,18 @@ int bdb_back_init_cf( BackendInfo *bi );
  * dbcache.c
  */
 #define bdb_db_cache				BDB_SYMBOL(db_cache)
+#define bdb_db_findsize				BDB_SYMBOL(db_findsize)
 
 int
 bdb_db_cache(
     Backend	*be,
     struct berval *name,
 	DB **db );
+
+int
+bdb_db_findsize(
+	struct bdb_info *bdb,
+	struct berval *name );
 
 /*
  * dn2entry.c

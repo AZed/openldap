@@ -1,7 +1,7 @@
 /* $OpenLDAP: pkg/ldap/tests/progs/slapd-read.c,v 1.37.2.7 2008/09/02 23:13:17 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2008 The OpenLDAP Foundation.
+ * Copyright 1999-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -389,7 +389,7 @@ retry:;
 		}
 
 		if ( rc ) {
-			unsigned	first = tester_ignore_err( rc );
+			int		first = tester_ignore_err( rc );
 			char		buf[ BUFSIZ ];
 
 			snprintf( buf, sizeof( buf ), "ldap_search_ext_s(%s)", entry );
@@ -397,7 +397,7 @@ retry:;
 			/* if ignore.. */
 			if ( first ) {
 				/* only log if first occurrence */
-				if ( force < 2 || first == 1 ) {
+				if ( ( force < 2 && first > 0 ) || abs(first) == 1 ) {
 					tester_ldap_error( ld, buf, NULL );
 				}
 				continue;

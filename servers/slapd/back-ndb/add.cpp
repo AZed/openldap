@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/back-ndb/add.cpp,v 1.3.2.1 2008/09/03 20:58:06 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2008 The OpenLDAP Foundation.
+ * Copyright 2008-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -54,7 +54,7 @@ ndb_back_add(Operation *op, SlapReply *rs )
 
 	/* check entry's schema */
 	rs->sr_err = entry_schema_check( op, op->oq_add.rs_e, NULL,
-		get_relax(op), 1, &rs->sr_text, textbuf, textlen );
+		get_relax(op), 1, NULL, &rs->sr_text, textbuf, textlen );
 	if ( rs->sr_err != LDAP_SUCCESS ) {
 		Debug( LDAP_DEBUG_TRACE,
 			LDAP_XSTRING(ndb_back_add) ": entry failed schema check: "
@@ -222,6 +222,19 @@ is_ref:			p.e_attrs = NULL;
 		rs->sr_text = "no write access to entry";
 		goto return_results;;
 	}
+
+	/* 
+	 * Check ACL for attribute write access
+	 */
+	if (!acl_check_modlist(op, op->ora_e, op->ora_modlist)) {
+		Debug( LDAP_DEBUG_TRACE,
+			LDAP_XSTRING(bdb_add) ": no write access to attribute\n",
+			0, 0, 0 );
+		rs->sr_err = LDAP_INSUFFICIENT_ACCESS;
+		rs->sr_text = "no write access to attribute";
+		goto return_results;;
+	}
+
 
 	/* acquire entry ID */
 	if ( op->ora_e->e_id == NOID ) {

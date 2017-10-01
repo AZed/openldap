@@ -1,7 +1,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/entry-id.c,v 1.67.2.6 2008/02/11 23:26:48 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2008 The OpenLDAP Foundation.
+ * Copyright 1999-2009 The OpenLDAP Foundation.
  * Portions Copyright 1999 Dmitry Kovalev.
  * Portions Copyright 2002 Pierangelo Masarati.
  * Portions Copyright 2004 Mark Adamson.
@@ -1042,7 +1042,7 @@ next:;
 	}
 
 	if ( ( bsi->bsi_flags & BSQL_SF_ALL_OPER )
-			|| an_find( bsi->bsi_attrs, &AllOper )
+			|| an_find( bsi->bsi_attrs, slap_bv_all_operational_attrs )
 			|| an_find( bsi->bsi_attrs, &slap_schema.si_ad_structuralObjectClass->ad_cname ) )
 	{
 		ObjectClass	*soc = NULL;

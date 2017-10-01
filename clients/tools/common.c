@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/clients/tools/common.c,v 1.78.2.10 2008/09/29 21:30:49 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2008 The OpenLDAP Foundation.
+ * Copyright 1998-2009 The OpenLDAP Foundation.
  * Portions Copyright 2003 Kurt D. Zeilenga.
  * Portions Copyright 2003 IBM Corporation.
  * All rights reserved.
@@ -62,6 +62,7 @@ int		contoper = 0;
 int		debug = 0;
 char		*infile = NULL;
 int		dont = 0;
+int		nocanon = 0;
 int		referrals = 0;
 int		verbose = 0;
 int		ldif = 0;
@@ -135,6 +136,12 @@ static int print_paged_results( LDAP *ld, LDAPControl *ctrl );
 static int print_ppolicy( LDAP *ld, LDAPControl *ctrl );
 #endif
 static int print_sss( LDAP *ld, LDAPControl *ctrl );
+#ifdef LDAP_CONTROL_X_DEREF
+static int print_deref( LDAP *ld, LDAPControl *ctrl );
+#endif
+#ifdef LDAP_CONTROL_X_WHATFAILED
+static int print_whatfailed( LDAP *ld, LDAPControl *ctrl );
+#endif
 
 static struct tool_ctrls_t {
 	const char	*oid;
@@ -148,6 +155,12 @@ static struct tool_ctrls_t {
 	{ LDAP_CONTROL_PASSWORDPOLICYRESPONSE,		TOOL_ALL,	print_ppolicy },
 #endif
 	{ LDAP_CONTROL_SORTRESPONSE,	TOOL_SEARCH,	print_sss },
+#ifdef LDAP_CONTROL_X_DEREF
+	{ LDAP_CONTROL_X_DEREF,				TOOL_SEARCH,	print_deref },
+#endif
+#ifdef LDAP_CONTROL_X_WHATFAILED
+	{ LDAP_CONTROL_X_WHATFAILED,			TOOL_ALL,	print_whatfailed },
+#endif
 	{ NULL,						0,		NULL }
 };
 
@@ -237,6 +250,14 @@ tool_destroy( void )
 		pr_cookie.bv_val = NULL;
 		pr_cookie.bv_len = 0;
 	}
+
+	if ( binddn != NULL ) {
+		ber_memfree( binddn );
+	}
+
+	if ( passwd.bv_val != NULL ) {
+		ber_memfree( passwd.bv_val );
+	}
 }
 
 void
@@ -280,6 +301,7 @@ N_("  -H URI     LDAP Uniform Resource Identifier(s)\n"),
 N_("  -I         use SASL Interactive mode\n"),
 N_("  -M         enable Manage DSA IT control (-MM to make critical)\n"),
 N_("  -n         show what would be done but don't actually do it\n"),
+N_("  -N         do not use reverse DNS to canonicalize SASL host name\n"),
 N_("  -O props   SASL security properties\n"),
 N_("  -o <opt>[=<optparam] general options\n"),
 N_("             nettimeout=<timeout> (in seconds, or \"none\" or \"max\")\n"),
@@ -625,7 +647,7 @@ tool_args( int argc, char **argv )
 						(unsigned char *)bv.bv_val,
 						bv.bv_len );
 
-					if ( retcode == -1 || retcode > bv.bv_len ) {
+					if ( retcode == -1 || (unsigned) retcode > bv.bv_len ) {
 						fprintf( stderr, "Unable to parse value of general control %s\n",
 							control );
 						usage();
@@ -687,6 +709,9 @@ tool_args( int argc, char **argv )
 			break;
 		case 'n':	/* print operations, don't actually do them */
 			dont++;
+			break;
+		case 'N':
+			nocanon++;
 			break;
 		case 'o':
 			control = ber_strdup( optarg );
@@ -981,7 +1006,11 @@ tool_args( int argc, char **argv )
 
 	if (authmethod == -1 && protocol > LDAP_VERSION2) {
 #ifdef HAVE_CYRUS_SASL
-		authmethod = LDAP_AUTH_SASL;
+		if ( binddn != NULL ) {
+			authmethod = LDAP_AUTH_SIMPLE;
+		} else {
+			authmethod = LDAP_AUTH_SASL;
+		}
 #else
 		authmethod = LDAP_AUTH_SIMPLE;
 #endif
@@ -1234,6 +1263,16 @@ dnssrv_free:;
 			exit( EXIT_FAILURE );
 		}
 
+#ifdef HAVE_CYRUS_SASL
+		/* canon */
+		if( ldap_set_option( ld, LDAP_OPT_X_SASL_NOCANON,
+			nocanon ? LDAP_OPT_ON : LDAP_OPT_OFF ) != LDAP_OPT_SUCCESS )
+		{
+			fprintf( stderr, "Could not set LDAP_OPT_X_SASL_NOCANON %s\n",
+				nocanon ? "on" : "off" );
+			exit( EXIT_FAILURE );
+		}
+#endif
 		if( ldap_set_option( ld, LDAP_OPT_PROTOCOL_VERSION, &protocol )
 			!= LDAP_OPT_SUCCESS )
 		{
@@ -1310,7 +1349,7 @@ tool_bind( LDAP *ld )
 		sctrlsp = sctrls;
 	}
 
-	assert( nsctrls < sizeof(sctrls)/sizeof(sctrls[0]) );
+	assert( nsctrls < (int) (sizeof(sctrls)/sizeof(sctrls[0])) );
 
 	if ( authmethod == LDAP_AUTH_SASL ) {
 #ifdef HAVE_CYRUS_SASL
@@ -1523,7 +1562,7 @@ tool_server_controls( LDAP *ld, LDAPControl *extra_c, int count )
 		
 		ber_init2( ber, NULL, LBER_USE_DER );
 
-		if ( ber_printf( ber, "s", proxydn ) == LBER_ERROR ) {
+		if ( ber_printf( ber, "s", proxydn ) == -1 ) {
 			exit( EXIT_FAILURE );
 		}
 
@@ -1573,8 +1612,8 @@ tool_server_controls( LDAP *ld, LDAPControl *extra_c, int count )
 #endif
 
 	if ( preread ) {
-		char berbuf[LBER_ELEMENT_SIZEOF];
-		BerElement *ber = (BerElement *)berbuf;
+		BerElementBuffer berbuf;
+		BerElement *ber = (BerElement *)&berbuf;
 		char **attrs = NULL;
 
 		if( preread_attrs ) {
@@ -1603,8 +1642,8 @@ tool_server_controls( LDAP *ld, LDAPControl *extra_c, int count )
 	}
 
 	if ( postread ) {
-		char berbuf[LBER_ELEMENT_SIZEOF];
-		BerElement *ber = (BerElement *)berbuf;
+		BerElementBuffer berbuf;
+		BerElement *ber = (BerElement *)&berbuf;
 		char **attrs = NULL;
 
 		if( postread_attrs ) {
@@ -1885,6 +1924,134 @@ print_sss( LDAP *ld, LDAPControl *ctrl )
 
 	return rc;
 }
+
+#ifdef LDAP_CONTROL_X_DEREF
+static int
+print_deref( LDAP *ld, LDAPControl *ctrl )
+{
+	LDAPDerefRes    *drhead = NULL, *dr;
+	int		rc;
+
+	rc = ldap_parse_derefresponse_control( ld, ctrl, &drhead );
+	if ( rc != LDAP_SUCCESS ) {
+		return rc;
+	}
+
+	for ( dr = drhead; dr != NULL; dr = dr->next ) {
+		LDAPDerefVal	*dv;
+		ber_len_t	len;
+		char		*buf, *ptr;
+
+		len = strlen( dr->derefAttr ) + STRLENOF(": ");
+
+		for ( dv = dr->attrVals; dv != NULL; dv = dv->next ) {
+			if ( dv->vals != NULL ) {
+				int j;
+				ber_len_t tlen = strlen(dv->type);
+
+				for ( j = 0; dv->vals[ j ].bv_val != NULL; j++ ) {
+					len += STRLENOF("<:=>;") + tlen + 4*((dv->vals[ j ].bv_len - 1)/3 + 1);
+				}
+			}
+		}
+		len += dr->derefVal.bv_len + STRLENOF("\n");
+		buf = ldap_memalloc( len + 1 );
+		if ( buf == NULL ) {
+			rc = LDAP_NO_MEMORY;
+			goto done;
+		}
+
+		ptr = buf;
+		ptr = lutil_strcopy( ptr, dr->derefAttr );
+		*ptr++ = ':';
+		*ptr++ = ' ';
+		for ( dv = dr->attrVals; dv != NULL; dv = dv->next ) {
+			if ( dv->vals != NULL ) {
+				int j;
+				for ( j = 0; dv->vals[ j ].bv_val != NULL; j++ ) {
+					int k;
+
+					for ( k = 0; k < dv->vals[ j ].bv_len; k++ ) {
+						if ( !isprint( dv->vals[ j ].bv_val[k] ) ) {
+							k = -1;
+							break;
+						}
+					}
+
+					*ptr++ = '<';
+					ptr = lutil_strcopy( ptr, dv->type );
+					if ( k == -1 ) {
+						*ptr++ = ':';
+					}
+					*ptr++ = '=';
+					if ( k == -1 ) {
+						k = lutil_b64_ntop( dv->vals[ j ].bv_val, dv->vals[ j ].bv_len, ptr, buf + len - ptr );
+						assert( k >= 0 );
+						ptr += k;
+						
+					} else {
+						ptr = lutil_memcopy( ptr, dv->vals[ j ].bv_val, dv->vals[ j ].bv_len );
+					}
+					*ptr++ = '>';
+					*ptr++ = ';';
+				}
+			}
+		}
+		ptr = lutil_strncopy( ptr, dr->derefVal.bv_val, dr->derefVal.bv_len );
+		*ptr++ = '\n';
+		*ptr++ = '\0';
+		assert( ptr <= buf + len );
+
+		tool_write_ldif( LDIF_PUT_COMMENT, NULL, buf, ptr - buf);
+
+		ldap_memfree( buf );
+	}
+
+	rc = LDAP_SUCCESS;
+
+done:;
+	ldap_derefresponse_free( drhead );
+
+	return rc;
+}
+#endif
+
+#ifdef LDAP_CONTROL_X_WHATFAILED
+static int
+print_whatfailed( LDAP *ld, LDAPControl *ctrl )
+{
+	BerElement *ber;
+	ber_tag_t tag;
+	ber_len_t siz;
+	BerVarray bva = NULL;
+
+	/* Create a BerElement from the berval returned in the control. */
+	ber = ber_init( &ctrl->ldctl_value );
+
+	if ( ber == NULL ) {
+		return LDAP_NO_MEMORY;
+	}
+
+	siz = sizeof(struct berval);
+	tag = ber_scanf( ber, "[M]", &bva, &siz, 0 );
+	if ( tag != LBER_ERROR ) {
+		int i;
+
+		tool_write_ldif( LDIF_PUT_COMMENT, " what failed:", NULL, 0 );
+
+		for ( i = 0; bva[i].bv_val != NULL; i++ ) {
+			tool_write_ldif( LDIF_PUT_COMMENT, NULL, bva[i].bv_val, bva[i].bv_len );
+		}
+
+		ldap_memfree( bva );
+	}
+
+        ber_free( ber, 1 );
+
+
+	return 0;
+}
+#endif
 
 #ifdef LDAP_CONTROL_PASSWORDPOLICYREQUEST
 static int

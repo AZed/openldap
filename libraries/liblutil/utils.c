@@ -1,7 +1,7 @@
 /* $OpenLDAP: pkg/ldap/libraries/liblutil/utils.c,v 1.33.2.19 2008/09/17 22:50:28 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2008 The OpenLDAP Foundation.
+ * Copyright 1998-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -439,6 +439,21 @@ lutil_strncopy(
 	return a-1;
 }
 
+/* memcopy is like memcpy except it returns a pointer to the byte past
+ * the end of the result buffer, set to NULL. This allows fast construction
+ * of catenated buffers.  Provided for API consistency with lutil_str*copy().
+ */
+char *
+lutil_memcopy(
+	char *a,
+	const char *b,
+	size_t n
+)
+{
+	AC_MEMCPY(a, b, n);
+	return a + n;
+}
+
 #ifndef HAVE_MKSTEMP
 int mkstemp( char * template )
 {
@@ -695,7 +710,6 @@ lutil_str2bin( struct berval *in, struct berval *out, void *ctx )
 {
 	char *pin, *pout, ctmp;
 	char *end;
-	long l;
 	int i, chunk, len, rc = 0, hex = 0;
 	if ( !out || !out->bv_val || out->bv_len < in->bv_len )
 		return -1;
@@ -718,38 +732,40 @@ lutil_str2bin( struct berval *in, struct berval *out, void *ctx )
 	}
 	if ( hex ) {
 #define HEXMAX	(2 * sizeof(long))
+		unsigned long l;
 		/* Convert a longword at a time, but handle leading
 		 * odd bytes first
 		 */
-		chunk = len & (HEXMAX-1);
+		chunk = len % HEXMAX;
 		if ( !chunk )
 			chunk = HEXMAX;
 
 		while ( len ) {
+			int ochunk;
 			ctmp = pin[chunk];
 			pin[chunk] = '\0';
 			errno = 0;
-			l = strtol( pin, &end, 16 );
+			l = strtoul( pin, &end, 16 );
 			pin[chunk] = ctmp;
 			if ( errno )
 				return -1;
-			chunk++;
-			chunk >>= 1;
-			for ( i = chunk; i>=0; i-- ) {
+			ochunk = (chunk + 1)/2;
+			for ( i = ochunk - 1; i >= 0; i-- ) {
 				pout[i] = l & 0xff;
 				l >>= 8;
 			}
 			pin += chunk;
-			pout += sizeof(long);
+			pout += ochunk;
 			len -= chunk;
 			chunk = HEXMAX;
 		}
-		out->bv_len = pout + len - out->bv_val;
+		out->bv_len = pout - out->bv_val;
 	} else {
 	/* Decimal */
 		char tmpbuf[64], *tmp;
 		lutil_int_decnum num;
 		int neg = 0;
+		long l;
 
 		len = in->bv_len;
 		pin = in->bv_val;
@@ -939,7 +955,7 @@ lutil_snprintf( char *buf, ber_len_t bufsize, char **next, ber_len_t *len, LDAP_
 		*len = ret;
 	}
 
-	if ( ret >= bufsize ) {
+	if ( (unsigned) ret >= bufsize ) {
 		if ( next ) {
 			*next = &buf[ bufsize - 1 ];
 		}

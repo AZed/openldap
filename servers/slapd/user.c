@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/user.c,v 1.25.2.3 2008/02/11 23:26:45 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2008 The OpenLDAP Foundation.
+ * Copyright 1998-2009 The OpenLDAP Foundation.
  * Portions Copyright 1999 PM Lashley.
  * All rights reserved.
  *

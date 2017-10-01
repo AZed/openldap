@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/aci.c,v 1.14.2.8 2008/09/03 00:48:03 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2008 The OpenLDAP Foundation.
+ * Copyright 1998-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -400,11 +400,15 @@ aci_group_member (
 	if ( grp_oc != NULL && grp_ad != NULL ) {
 		char		buf[ ACI_BUF_SIZE ];
 		struct berval	bv, ndn;
+		AclRegexMatches amatches = { 0 };
+
+		amatches.dn_count = nmatch;
+		AC_MEMCPY( amatches.dn_data, matches, sizeof( amatches.dn_data ) );
 
 		bv.bv_len = sizeof( buf ) - 1;
 		bv.bv_val = (char *)&buf;
 		if ( acl_string_expand( &bv, &subjdn,
-				e->e_ndn, nmatch, matches ) )
+				&e->e_nname, NULL, &amatches ) )
 		{
 			rc = LDAP_OTHER;
 			goto done;
@@ -1043,7 +1047,7 @@ static int
 OpenLDAPaciValidatePerms(
 	struct berval *perms ) 
 {
-	int		i;
+	ber_len_t	i;
 
 	for ( i = 0; i < perms->bv_len; ) {
 		switch ( perms->bv_val[ i ] ) {

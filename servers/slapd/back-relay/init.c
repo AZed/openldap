@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/back-relay/init.c,v 1.19.2.5 2008/09/02 23:35:56 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2004-2008 The OpenLDAP Foundation.
+ * Copyright 2004-2009 The OpenLDAP Foundation.
  * Portions Copyright 2004 Pierangelo Masarati.
  * All rights reserved.
  *
@@ -224,11 +224,11 @@ relay_back_db_open( Backend *be, ConfigReply *cr )
 		}
 
 		/* inherit controls */
-		AC_MEMCPY( be->be_ctrls, ri->ri_bd->be_ctrls, sizeof( be->be_ctrls ) );
+		AC_MEMCPY( be->bd_self->be_ctrls, ri->ri_bd->be_ctrls, sizeof( be->be_ctrls ) );
 
 	} else {
 		/* inherit all? */
-		AC_MEMCPY( be->be_ctrls, frontendDB->be_ctrls, sizeof( be->be_ctrls ) );
+		AC_MEMCPY( be->bd_self->be_ctrls, frontendDB->be_ctrls, sizeof( be->be_ctrls ) );
 	}
 
 	return 0;

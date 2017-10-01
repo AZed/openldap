@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/init.c,v 1.125.2.6 2008/04/24 08:13:39 hyc Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2001-2008 The OpenLDAP Foundation.
+ * Copyright 2001-2009 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * All rights reserved.
  *
@@ -868,7 +868,7 @@ monitor_search2ndn(
 
 cleanup:;
 	if ( op->ors_filter != NULL ) {
-		filter_free_x( op, op->ors_filter );
+		filter_free_x( op, op->ors_filter, 1 );
 	}
 	if ( !BER_BVISNULL( &op->ors_filterstr ) ) {
 		op->o_tmpfree( op->ors_filterstr.bv_val, op->o_tmpmemctx );
