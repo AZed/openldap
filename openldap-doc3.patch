@@ -1,0 +1,39 @@
+From 128a8c486e86b8e8c8d34f0eb9fdc0b580212e5b Mon Sep 17 00:00:00 2001
+From: Jan Synacek <jsynacek@redhat.com>
+Date: Tue, 3 Sep 2013 14:09:37 +0200
+Subject: [PATCH] Fix typos in manpages.
+
+---
+ doc/man/man1/ldapsearch.1   | 2 +-
+ doc/man/man5/slapd-passwd.5 | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/doc/man/man1/ldapsearch.1 b/doc/man/man1/ldapsearch.1
+index 82ddddb..150f064 100644
+--- a/doc/man/man1/ldapsearch.1
++++ b/doc/man/man1/ldapsearch.1
+@@ -456,7 +456,7 @@ This command:
+ .fi
+ .LP
+ will perform a one-level search at the c=US level for all entries
+-whose organization name (o) begins begins with \fBUniversity\fP.
++whose organization name (o) begins with \fBUniversity\fP.
+ The organization name and description attribute values will be retrieved
+ and printed to standard output, resulting in output similar to this:
+ .LP
+diff --git a/doc/man/man5/slapd-passwd.5 b/doc/man/man5/slapd-passwd.5
+index fbd30f2..2dc5c5d 100644
+--- a/doc/man/man5/slapd-passwd.5
++++ b/doc/man/man5/slapd-passwd.5
+@@ -13,7 +13,7 @@ serves up the user account information listed in the system
+ .BR passwd (5)
+ file.  This backend is provided for demonstration purposes only.
+ The DN of each entry is "uid=<username>,<suffix>".
+-Note that non-base searches scan the the entire passwd file, and
++Note that non-base searches scan the entire passwd file, and
+ are best suited for hosts with small passwd files.
+ .SH CONFIGURATION
+ This
+-- 
+1.8.3.1
+

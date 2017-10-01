@@ -6,13 +6,12 @@ diff --git a/doc/man/man1/ldapmodify.1 b/doc/man/man1/ldapmodify.1
 index 3def6da..466c772 100644
 --- a/doc/man/man1/ldapmodify.1
 +++ b/doc/man/man1/ldapmodify.1
-@@ -397,9 +397,7 @@ exit status and a diagnostic message being written to standard error.
+@@ -397,8 +397,7 @@ exit status and a diagnostic message being written to standard error.
  .BR ldap_add_ext (3),
  .BR ldap_delete_ext (3),
  .BR ldap_modify_ext (3),
 -.BR ldap_modrdn_ext (3),
--.BR ldif (5),
--.BR slapd.replog (5)
+-.BR ldif (5).
 +.BR ldif (5)
  .SH AUTHOR
  The OpenLDAP Project <http://www.openldap.org/>
@@ -29,44 +28,6 @@ index cfde143..63592cb 100644
  This parameter is ignored with GnuTLS.
  
  When using Mozilla NSS, <path> may contain a Mozilla NSS cert/key
-diff --git a/doc/man/man5/ldif.5 b/doc/man/man5/ldif.5
-index 79615b6..2c06246 100644
---- a/doc/man/man5/ldif.5
-+++ b/doc/man/man5/ldif.5
-@@ -270,8 +270,7 @@ commands.
- .BR ldapmodify (1),
- .BR slapadd (8),
- .BR slapcat (8),
--.BR slapd\-ldif (5),
--.BR slapd.replog (5).
-+.BR slapd\-ldif (5).
- .LP
- "LDAP Data Interchange Format," Good, G., RFC 2849.
- .SH ACKNOWLEDGEMENTS
-diff --git a/doc/man/man5/slapd-config.5 b/doc/man/man5/slapd-config.5
-index 742876a..31643c7 100644
---- a/doc/man/man5/slapd-config.5
-+++ b/doc/man/man5/slapd-config.5
-@@ -2086,7 +2086,6 @@ default slapd configuration directory
- .BR slapd.conf (5),
- .BR slapd.overlays (5),
- .BR slapd.plugin (5),
--.BR slapd.replog (5),
- .BR slapd (8),
- .BR slapacl (8),
- .BR slapadd (8),
-diff --git a/doc/man/man5/slapd.conf.5 b/doc/man/man5/slapd.conf.5
-index 0a3a955..352cc7e 100644
---- a/doc/man/man5/slapd.conf.5
-+++ b/doc/man/man5/slapd.conf.5
-@@ -2016,7 +2016,6 @@ default slapd configuration file
- .BR slapd.backends (5),
- .BR slapd.overlays (5),
- .BR slapd.plugin (5),
--.BR slapd.replog (5),
- .BR slapd (8),
- .BR slapacl (8),
- .BR slapadd (8),
 diff --git a/doc/man/man8/slapd.8 b/doc/man/man8/slapd.8
 index b739f4d..e2a1a00 100644
 --- a/doc/man/man8/slapd.8

@@ -1,0 +1,257 @@
+This is a 3-part patch that fixes connectionless ldap when used with IPv6.
+================================================================================
+Don't try to parse the result of a CLDAP bind request. Since these are
+faked, no message is actually returned.
+
+Author: Stef Walter <stefw@redhat.com>
+Upstream commit: 5c919894779d67280fa26afdd94d99248fc38099
+ITS: #7695
+Backported-By: Jan Synacek <jsynacek@redhat.com>
+
+--- a/clients/tools/common.c	2013-08-16 20:12:59.000000000 +0200
++++ b/clients/tools/common.c	2013-10-14 09:35:50.817033451 +0200
+@@ -1521,11 +1521,13 @@ tool_bind( LDAP *ld )
+ 			tool_exit( ld, LDAP_LOCAL_ERROR );
+ 		}
+ 
+-		rc = ldap_parse_result( ld, result, &err, &matched, &info, &refs,
+-			&ctrls, 1 );
+-		if ( rc != LDAP_SUCCESS ) {
+-			tool_perror( "ldap_bind parse result", rc, NULL, matched, info, refs );
+-			tool_exit( ld, LDAP_LOCAL_ERROR );
++		if ( result ) {
++			rc = ldap_parse_result( ld, result, &err, &matched, &info, &refs,
++									&ctrls, 1 );
++			if ( rc != LDAP_SUCCESS ) {
++				tool_perror( "ldap_bind parse result", rc, NULL, matched, info, refs );
++				tool_exit( ld, LDAP_LOCAL_ERROR );
++			}
+ 		}
+ 
+ #ifdef LDAP_CONTROL_PASSWORDPOLICYREQUEST
+================================================================================
+commit d51ee964fc5e1f02b035811de0f95eee81c2789f
+Author: Howard Chu <hyc@openldap.org>
+Date:   Thu Oct 10 10:48:08 2013 -0700
+
+    ITS#7694 more for IPv6 CLDAP, slapd fix
+
+diff --git a/servers/slapd/connection.c b/servers/slapd/connection.c
+index e169494..7ed3f63 100644
+--- a/servers/slapd/connection.c
++++ b/servers/slapd/connection.c
+@@ -1499,22 +1499,53 @@ connection_input( Connection *conn , conn_readinfo *cri )
+ 
+ #ifdef LDAP_CONNECTIONLESS
+ 	if ( conn->c_is_udp ) {
++#if defined(LDAP_PF_INET6)
++		char peername[sizeof("IP=[ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff]:65535")];
++		char addr[INET6_ADDRSTRLEN];
++#else
+ 		char peername[sizeof("IP=255.255.255.255:65336")];
++		char addr[INET_ADDRSTRLEN];
++#endif
+ 		const char *peeraddr_string = NULL;
+ 
+-		len = ber_int_sb_read(conn->c_sb, &peeraddr, sizeof(struct sockaddr));
+-		if (len != sizeof(struct sockaddr)) return 1;
++		len = ber_int_sb_read(conn->c_sb, &peeraddr, sizeof(Sockaddr));
++		if (len != sizeof(Sockaddr)) return 1;
+ 
++#if defined(LDAP_PF_INET6)
++		if (peeraddr.sa_addr.sa_family == AF_INET6) {
++			if ( IN6_IS_ADDR_V4MAPPED(&peeraddr.sa_in6_addr.sin6_addr) ) {
+ #if defined( HAVE_GETADDRINFO ) && defined( HAVE_INET_NTOP )
+-		char addr[INET_ADDRSTRLEN];
+-		peeraddr_string = inet_ntop( AF_INET, &peeraddr.sa_in_addr.sin_addr,
++				peeraddr_string = inet_ntop( AF_INET,
++				   ((struct in_addr *)&peeraddr.sa_in6_addr.sin6_addr.s6_addr[12]),
++				   addr, sizeof(addr) );
++#else /* ! HAVE_GETADDRINFO || ! HAVE_INET_NTOP */
++				peeraddr_string = inet_ntoa( *((struct in_addr *)
++					&peeraddr.sa_in6_addr.sin6_addr.s6_addr[12]) );
++#endif /* ! HAVE_GETADDRINFO || ! HAVE_INET_NTOP */
++				if ( !peeraddr_string ) peeraddr_string = SLAP_STRING_UNKNOWN;
++				sprintf( peername, "IP=%s:%d", peeraddr_string,
++					(unsigned) ntohs( peeraddr.sa_in6_addr.sin6_port ) );
++			} else {
++				peeraddr_string = inet_ntop( AF_INET6,
++				      &peeraddr.sa_in6_addr.sin6_addr,
++				      addr, sizeof addr );
++				if ( !peeraddr_string ) peeraddr_string = SLAP_STRING_UNKNOWN;
++				sprintf( peername, "IP=[%s]:%d", peeraddr_string,
++					 (unsigned) ntohs( peeraddr.sa_in6_addr.sin6_port ) );
++			}
++		} else
++#endif
++#if defined( HAVE_GETADDRINFO ) && defined( HAVE_INET_NTOP )
++		{
++			peeraddr_string = inet_ntop( AF_INET, &peeraddr.sa_in_addr.sin_addr,
+ 			   addr, sizeof(addr) );
+ #else /* ! HAVE_GETADDRINFO || ! HAVE_INET_NTOP */
+-		peeraddr_string = inet_ntoa( peeraddr.sa_in_addr.sin_addr );
++			peeraddr_string = inet_ntoa( peeraddr.sa_in_addr.sin_addr );
+ #endif /* ! HAVE_GETADDRINFO || ! HAVE_INET_NTOP */
+-		sprintf( peername, "IP=%s:%d",
+-			 peeraddr_string,
+-			(unsigned) ntohs( peeraddr.sa_in_addr.sin_port ) );
++			sprintf( peername, "IP=%s:%d",
++				 peeraddr_string,
++				(unsigned) ntohs( peeraddr.sa_in_addr.sin_port ) );
++		}
+ 		Statslog( LDAP_DEBUG_STATS,
+ 			"conn=%lu UDP request from %s (%s) accepted.\n",
+ 			conn->c_connid, peername, conn->c_sock_name.bv_val, 0, 0 );
+================================================================================
+commit 743a9783d57ea6b693e56f6545ac5d68dc9242c7
+Author: Stef Walter <stefw@redhat.com>
+Date:   Thu Sep 12 15:49:36 2013 +0200
+
+    ITS#7694 Fix use of IPv6 with LDAP_CONNECTIONLESS
+    
+    LDAP_CONNECTIONLESS code assumed that the size of an peer address
+    is equal to or smaller than sizeof (struct sockaddr).
+    
+    Fix to use struct sockaddr_storage instead which is intended for
+    this purpose. Use getnameinfo() where appropriate so we don't
+    assume anything about the contents of struct sockaddr
+
+diff --git a/libraries/liblber/sockbuf.c b/libraries/liblber/sockbuf.c
+index d997e92..858c942 100644
+--- a/libraries/liblber/sockbuf.c
++++ b/libraries/liblber/sockbuf.c
+@@ -888,8 +888,8 @@ Sockbuf_IO ber_sockbuf_io_debug = {
+  *
+  * All I/O at this level must be atomic. For ease of use, the sb_readahead
+  * must be used above this module. All data reads and writes are prefixed
+- * with a sockaddr containing the address of the remote entity. Upper levels
+- * must read and write this sockaddr before doing the usual ber_printf/scanf
++ * with a sockaddr_storage containing the address of the remote entity. Upper levels
++ * must read and write this sockaddr_storage before doing the usual ber_printf/scanf
+  * operations on LDAP messages.
+  */
+ 
+@@ -914,13 +914,13 @@ sb_dgram_read( Sockbuf_IO_Desc *sbiod, void *buf, ber_len_t len )
+ 	assert( SOCKBUF_VALID( sbiod->sbiod_sb ) );
+ 	assert( buf != NULL );
+ 
+-	addrlen = sizeof( struct sockaddr );
++	addrlen = sizeof( struct sockaddr_storage );
+ 	src = buf;
+ 	buf = (char *) buf + addrlen;
+ 	len -= addrlen;
+ 	rc = recvfrom( sbiod->sbiod_sb->sb_fd, buf, len, 0, src, &addrlen );
+ 
+-	return rc > 0 ? rc+sizeof(struct sockaddr) : rc;
++	return rc > 0 ? rc+sizeof(struct sockaddr_storage) : rc;
+ }
+ 
+ static ber_slen_t 
+@@ -934,11 +934,11 @@ sb_dgram_write( Sockbuf_IO_Desc *sbiod, void *buf, ber_len_t len )
+ 	assert( buf != NULL );
+ 
+ 	dst = buf;
+-	buf = (char *) buf + sizeof( struct sockaddr );
+-	len -= sizeof( struct sockaddr );
++	buf = (char *) buf + sizeof( struct sockaddr_storage );
++	len -= sizeof( struct sockaddr_storage );
+    
+ 	rc = sendto( sbiod->sbiod_sb->sb_fd, buf, len, 0, dst,
+-		sizeof( struct sockaddr ) );
++		sizeof( struct sockaddr_storage ) );
+ 
+ 	if ( rc < 0 ) return -1;
+    
+@@ -949,7 +949,7 @@ sb_dgram_write( Sockbuf_IO_Desc *sbiod, void *buf, ber_len_t len )
+ # endif
+ 		return -1;
+ 	}
+-	rc = len + sizeof(struct sockaddr);
++	rc = len + sizeof(struct sockaddr_storage);
+ 	return rc;
+ }
+ 
+diff --git a/libraries/libldap/abandon.c b/libraries/libldap/abandon.c
+index d999b07..8fd9bc2 100644
+--- a/libraries/libldap/abandon.c
++++ b/libraries/libldap/abandon.c
+@@ -209,7 +209,7 @@ start_again:;
+ 			LDAP_NEXT_MSGID(ld, i);
+ #ifdef LDAP_CONNECTIONLESS
+ 			if ( LDAP_IS_UDP(ld) ) {
+-				struct sockaddr sa = {0};
++				struct sockaddr_storage sa = {0};
+ 				/* dummy, filled with ldo_peer in request.c */
+ 				err = ber_write( ber, (char *) &sa, sizeof(sa), 0 );
+ 			}
+diff --git a/libraries/libldap/open.c b/libraries/libldap/open.c
+index ba10939..ac35e99 100644
+--- a/libraries/libldap/open.c
++++ b/libraries/libldap/open.c
+@@ -314,8 +314,8 @@ ldap_init_fd(
+ 		LDAP_IS_UDP(ld) = 1;
+ 		if( ld->ld_options.ldo_peer )
+ 			ldap_memfree( ld->ld_options.ldo_peer );
+-		ld->ld_options.ldo_peer = ldap_memalloc( sizeof( struct sockaddr ) );
+-		len = sizeof( struct sockaddr );
++		ld->ld_options.ldo_peer = ldap_memcalloc( 1, sizeof( struct sockaddr_storage ) );
++		len = sizeof( struct sockaddr_storage );
+ 		if( getpeername ( fd, ld->ld_options.ldo_peer, &len ) < 0) {
+ 			ldap_unbind_ext( ld, NULL, NULL );
+ 			return( AC_SOCKET_ERROR );
+diff --git a/libraries/libldap/os-ip.c b/libraries/libldap/os-ip.c
+index b31e05d..90b92df 100644
+--- a/libraries/libldap/os-ip.c
++++ b/libraries/libldap/os-ip.c
+@@ -422,8 +422,8 @@ ldap_pvt_connect(LDAP *ld, ber_socket_t s,
+ 	if (LDAP_IS_UDP(ld)) {
+ 		if (ld->ld_options.ldo_peer)
+ 			ldap_memfree(ld->ld_options.ldo_peer);
+-		ld->ld_options.ldo_peer=ldap_memalloc(sizeof(struct sockaddr));
+-		AC_MEMCPY(ld->ld_options.ldo_peer,sin,sizeof(struct sockaddr));
++		ld->ld_options.ldo_peer=ldap_memcalloc(1, sizeof(struct sockaddr_storage));
++		AC_MEMCPY(ld->ld_options.ldo_peer,sin,addrlen);
+ 		return ( 0 );
+ 	}
+ #endif
+diff --git a/libraries/libldap/request.c b/libraries/libldap/request.c
+index fc2f4d0..4822a63 100644
+--- a/libraries/libldap/request.c
++++ b/libraries/libldap/request.c
+@@ -308,7 +308,7 @@ ldap_send_server_request(
+ 		ber_rewind( &tmpber );
+ 		LDAP_MUTEX_LOCK( &ld->ld_options.ldo_mutex );
+ 		rc = ber_write( &tmpber, ld->ld_options.ldo_peer,
+-			sizeof( struct sockaddr ), 0 );
++			sizeof( struct sockaddr_storage ), 0 );
+ 		LDAP_MUTEX_UNLOCK( &ld->ld_options.ldo_mutex );
+ 		if ( rc == -1 ) {
+ 			ld->ld_errno = LDAP_ENCODING_ERROR;
+diff --git a/libraries/libldap/result.c b/libraries/libldap/result.c
+index f2a6c7b..d293299 100644
+--- a/libraries/libldap/result.c
++++ b/libraries/libldap/result.c
+@@ -482,8 +482,8 @@ retry:
+ 	sock_errset(0);
+ #ifdef LDAP_CONNECTIONLESS
+ 	if ( LDAP_IS_UDP(ld) ) {
+-		struct sockaddr from;
+-		ber_int_sb_read( lc->lconn_sb, &from, sizeof(struct sockaddr) );
++		struct sockaddr_storage from;
++		ber_int_sb_read( lc->lconn_sb, &from, sizeof(struct sockaddr_storage) );
+ 		if ( ld->ld_options.ldo_version == LDAP_VERSION2 ) isv2 = 1;
+ 	}
+ nextresp3:
+diff --git a/libraries/libldap/search.c b/libraries/libldap/search.c
+index 3867b5b..b966d1a 100644
+--- a/libraries/libldap/search.c
++++ b/libraries/libldap/search.c
+@@ -305,7 +305,7 @@ ldap_build_search_req(
+ 	LDAP_NEXT_MSGID( ld, *idp );
+ #ifdef LDAP_CONNECTIONLESS
+ 	if ( LDAP_IS_UDP(ld) ) {
+-		struct sockaddr sa = {0};
++		struct sockaddr_storage sa = {0};
+ 		/* dummy, filled with ldo_peer in request.c */
+ 	    err = ber_write( ber, (char *) &sa, sizeof( sa ), 0 );
+ 	}

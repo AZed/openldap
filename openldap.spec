@@ -4,7 +4,7 @@
 %global check_password_version 1.1
 
 Name: openldap
-Version: 2.4.35
+Version: 2.4.36
 Release: 4%{?dist}
 Summary: LDAP support libraries
 Group: System Environment/Daemons
@@ -26,7 +26,6 @@ Source55: libexec-generate-server-cert.sh
 
 # patches for 2.4
 Patch0: openldap-manpages.patch
-Patch1: openldap-security-pie.patch
 Patch2: openldap-sql-linking.patch
 Patch3: openldap-reentrant-gethostby.patch
 Patch4: openldap-smbk5pwd-overlay.patch
@@ -42,9 +41,6 @@ Patch13: openldap-nss-regex-search-hashed-cacert-dir.patch
 Patch14: openldap-nss-ignore-certdb-type-prefix.patch
 Patch15: openldap-nss-certs-from-certdb-fallback-pem.patch
 Patch16: openldap-nss-pk11-freeslot.patch
-# documentation patches, already included upstream
-Patch17: openldap-doc1.patch
-Patch18: openldap-doc2.patch
 # fix back_perl problems with lt_dlopen()
 # might cause crashes because of symbol collisions
 # the proper fix is to link all perl modules against libperl
@@ -52,6 +48,10 @@ Patch18: openldap-doc2.patch
 Patch19: openldap-switch-to-lt_dlopenadvise-to-get-RTLD_GLOBAL-set.patch
 # ldapi sasl fix pending upstream inclusion
 Patch20: openldap-ldapi-sasl.patch
+# more documentation fixes, upstreamed
+Patch21: openldap-doc3.patch
+# cldap fixes, upstreamed
+Patch22: openldap-cldap.patch
 
 # Fedora specific patches
 Patch100: openldap-autoconf-pkgconfig-nss.patch
@@ -151,7 +151,6 @@ ln -s %{_includedir}/nspr4 include/nspr
 AUTOMAKE=%{_bindir}/true autoreconf -fi
 
 %patch0 -p1
-%patch1 -p1
 %patch2 -p1
 %patch3 -p1
 %patch4 -p1
@@ -167,10 +166,10 @@ AUTOMAKE=%{_bindir}/true autoreconf -fi
 %patch14 -p1
 %patch15 -p1
 %patch16 -p1
-%patch17 -p1
-%patch18 -p1
 %patch19 -p1
 %patch20 -p1
+%patch21 -p1
+%patch22 -p1
 
 %patch102 -p1
 
@@ -190,9 +189,15 @@ popd
 
 %build
 
+%ifarch s390 s390x
+  export CFLAGS="-fPIE"
+%else
+  export CFLAGS="-fpie"
+%endif
+export LDFLAGS="-pie"
 # avoid stray dependencies (linker flag --as-needed)
 # enable experimental support for LDAP over UDP (LDAP_CONNECTIONLESS)
-export CFLAGS="%{optflags} -Wl,--as-needed -DLDAP_CONNECTIONLESS"
+export CFLAGS="${CFLAGS} %{optflags} -Wl,--as-needed -DLDAP_CONNECTIONLESS"
 
 pushd openldap-%{version}
 %configure \
@@ -220,6 +225,7 @@ pushd openldap-%{version}
 	--enable-backends=mod \
 	--enable-bdb=yes \
 	--enable-hdb=yes \
+	--enable-mdb=yes \
 	--enable-monitor=yes \
 	--disable-ndb \
 	\
@@ -285,8 +291,8 @@ install -m 0700 -d %{buildroot}%{_sharedstatedir}/ldap
 install -m 0755 -d %{buildroot}%{_localstatedir}/run/openldap
 
 # setup autocreation of runtime directories on tmpfs
-mkdir -p %{buildroot}%{_sysconfdir}/tmpfiles.d
-install -m 0644 %SOURCE3 %{buildroot}%{_sysconfdir}/tmpfiles.d/slapd.conf
+mkdir -p %{buildroot}%{_tmpfilesdir}
+install -m 0644 %SOURCE3 %{buildroot}%{_tmpfilesdir}/slapd.conf
 
 # install default ldap.conf (customized)
 rm -f %{buildroot}%{_sysconfdir}/openldap/ldap.conf
@@ -533,8 +539,8 @@ exit 0
 %config(noreplace) %dir %attr(0750,ldap,ldap) %{_sysconfdir}/openldap/slapd.d
 %config(noreplace) %{_sysconfdir}/openldap/schema
 %config(noreplace) %{_sysconfdir}/sysconfig/slapd
-%config(noreplace) %{_sysconfdir}/tmpfiles.d/slapd.conf
 %config(noreplace) %{_sysconfdir}/openldap/check_password.conf
+%{_tmpfilesdir}/slapd.conf
 %dir %attr(0700,ldap,ldap) %{_sharedstatedir}/ldap
 %dir %attr(-,ldap,ldap) %{_localstatedir}/run/openldap
 %{_unitdir}/slapd.service
@@ -543,7 +549,6 @@ exit 0
 %{_libdir}/openldap/auditlog*
 %{_libdir}/openldap/back_dnssrv*
 %{_libdir}/openldap/back_ldap*
-%{_libdir}/openldap/back_mdb*
 %{_libdir}/openldap/back_meta*
 %{_libdir}/openldap/back_null*
 %{_libdir}/openldap/back_passwd*
@@ -600,6 +605,31 @@ exit 0
 %{_mandir}/man3/*
 
 %changelog
+* Mon Oct 21 2013 Jan Synáček <jsynacek@redhat.com> - 2.4.36-4
+- fix: slapd daemon fails to start with segmentation fault on s390x (#1020661)
+
+* Tue Oct 15 2013 Jan Synáček <jsynacek@redhat.com> - 2.4.36-3
+- rebuilt for libdb-5.3.28
+
+* Mon Oct 14 2013 Jan Synáček <jsynacek@redhat.com> - 2.4.36-2
+- fix: CLDAP is broken for IPv6 (#1018688)
+
+* Wed Sep  4 2013 Jan Synáček <jsynacek@redhat.com> - 2.4.36-2
+- fix: typos in manpages
+
+* Tue Aug 20 2013 Jan Synáček <jsynacek@redhat.com> - 2.4.36-1
+- new upstream release
+  + compile-in mdb backend
+
+* Sat Aug 03 2013 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 2.4.35-7
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_20_Mass_Rebuild
+
+* Wed Jul 17 2013 Petr Pisar <ppisar@redhat.com> - 2.4.35-6
+- Perl 5.18 rebuild
+
+* Fri Jun 14 2013 Jan Synáček <jsynacek@redhat.com> - 2.4.35-5
+- fix: using slaptest to convert slapd.conf to LDIF format ignores "loglevel 0"
+
 * Thu May 09 2013 Jan Synáček <jsynacek@redhat.com> 2.4.35-4
 - do not needlessly run ldconfig after installing openldap-devel
 - fix: LDAPI with GSSAPI does not work if SASL_NOCANON=on (#960222)
