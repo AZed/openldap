@@ -3,7 +3,7 @@ Do not send IPv6 queries when contacting the DNS when IPv6 is completely disable
 Removes USE_AI_ATTRCONFIG ifdef condition, configure does not support it yet.
 
 Upstream commit: df2c36a
-Resolves: #812772, #835444 (Z-stream)
+Resolves: #812772
 
 --- a/libraries/libldap/os-ip.c
 +++ b/libraries/libldap/os-ip.c
