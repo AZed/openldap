@@ -16,7 +16,7 @@
 Summary: The configuration files, libraries, and documentation for OpenLDAP.
 Name: openldap
 Version: %{version_23}
-Release: 12%{?dist}.2
+Release: 12%{?dist}.3
 License: OpenLDAP
 Group: System Environment/Daemons
 Source0: ftp://ftp.OpenLDAP.org/pub/OpenLDAP/openldap-release/openldap-%{version_23}.tgz
@@ -889,6 +889,9 @@ exec > /dev/null 2> /dev/null
 %attr(0644,root,root)      %{evolution_connector_libdir}/*.a
 
 %changelog
+* Tue Nov 16 2010 Jan Vcelak <jvcelak@redhat.com> 2.3.43-12.3
+- fix: connection freeze when using TLS (#653910)
+
 * Fri Aug 06 2010 Adam Tkac <atkac redhat com> - 2.3.43-12.2
 - don't remove task twice during replication
 
