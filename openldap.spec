@@ -15,7 +15,7 @@
 Summary: The configuration files, libraries, and documentation for OpenLDAP.
 Name: openldap
 Version: %{version_22}
-Release: 4
+Release: 6.4E
 License: OpenLDAP
 Group: System Environment/Daemons
 Source0: ftp://ftp.OpenLDAP.org/pub/OpenLDAP/openldap-release/openldap-%{version_22}.tgz
@@ -58,6 +58,10 @@ Patch41: openldap-2.2.13-tls-fix-connection-test.patch
 Patch42: openldap-2.2.13-hop.patch
 Patch43: openldap-2.0.27-hop.patch
 Patch44: openldap-2.1.30-hop.patch
+Patch45: openldap-2.2.13-nostrip.patch
+Patch46: openldap-2.2.13-wait4msg-select-fix.patch
+Patch47: openldap-2.2.13-gethostbyname_r.patch
+
 URL: http://www.openldap.org/
 BuildRoot: %{_tmppath}/%{name}-%{version_22}-root
 BuildPreReq: cyrus-sasl-devel >= 2.1, gdbm-devel, libtool >= 1.5.6-2, krb5-devel
@@ -160,6 +164,8 @@ pushd openldap-%{version_22}
 %patch11 -p0 -b .dryrun
 %patch41 -p1 -b .CAN-2005-2069
 %patch42 -p1 -b .hop
+%patch46 -p1 -b .wait4msg-select-fix
+%patch47 -p1 -b .gethostbyname_r
 
 cp %{_datadir}/libtool/config.{sub,guess} build/
 popd
@@ -228,6 +234,8 @@ pushd automake-1.4a
 make all install
 popd
 
+%patch45 -p1 -b .nostrip
+
 %build
 autodir=`pwd`/auto-instroot
 dbdir=`pwd`/db-instroot
@@ -238,7 +246,7 @@ tagname=CC; export tagname
 PATH=${autodir}/bin:${PATH}
 
 %ifarch ia64
-RPM_OPT_FLAGS="$RPM_OPT_FLAGS -O0"
+RPM_OPT_FLAGS="$RPM_OPT_FLAGS -O0 -DLDAP_PVT_THREAD_STACK_SIZE=8*1024*1024"
 %endif
 
 # Set CFLAGS to incorporate RPM_OPT_FLAGS.
@@ -385,7 +393,7 @@ pushd openldap-%{compat_version}/build-compat
 	--with-threads=posix --disable-static --enable-shared --enable-dynamic \
 	--enable-local --enable-rlookups --with-tls --with-cyrus-sasl \
 	--without-kerberos
-make %{_smp_mflags}
+make %{_smp_mflags} LIBTOOL="$libtool"
 popd
 
 # Build 2.2.
@@ -751,6 +759,31 @@ fi
 %attr(0644,root,root)      %{evolution_connector_libdir}/*.a
 
 %changelog
+* Mon Apr 24 2006 Jay Fenlason <fenlason@redhat.com> 2.2.13-6.4E
+- Change autofs.schema to use the correct OID for the automount objectlass.
+  This closes bz#150340 OID conflict in LDAP schemas shipped
+- Double the thread stack size on ia64 to close
+  bz#176602 ? [RHEL4] slapd on ia64 seg faults and dies whenever ldapsearch is run against it.
+- Include the gethostbyname_r patch to close
+  bz#186095 use gethostbyname_r() instead of gethostbyname() in ldap_init()
+
+* Thu Apr 13 2006 Jay Fenlason <fenlason@redhat.com> 2.2.13-5.4E
+- Include the wait4msg-select-fix patch from Jeffery Layton
+  <jlayton@redhat.com> (backported from 2.2.29) to close
+  bz#186447 ldapsearch hangs when using SSL with Active Directory as LDAP Server
+
+* Tue Mar 21 2006 Nalin Dahyabhai <nalin@redhat.com> 2.2.13-4.2
+- rebuild, using the system copy of libtool for the compat libraries (#183331)
+
+* Tue Mar 21 2006 Nalin Dahyabhai <nalin@redhat.com> 2.2.13-4.1
+- rebuild
+
+* Sat Jan 28 2006 Vince Worthington <vincew@redhat.com>
+- Patch all Makefile.in's that still had "-s" as an install argument in
+  make install targets for binaries like slapd and client tools, so
+  find-debuginfo.sh gets a chance to extract the debug symbols for 
+  -debuginfo RPM (BZ#163070).
+
 * Thu Aug 11 2005 Jay Fenlason <fenlason@redhat.com> 2.2.13-3.4E
 - Backport the -hop patches to prevent infinite looping when chasing referrals.
   OpenLDAP ITS #3578 as described in

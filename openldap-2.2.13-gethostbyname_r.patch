@@ -1,0 +1,11 @@
+--- openldap-2.2.13/libraries/libldap/#util-int.c~	2006-04-24 16:58:45.000000000 -0400
++++ openldap-2.2.13/libraries/libldap/util-int.c	2006-04-24 16:58:45.000000000 -0400
+@@ -46,7 +46,7 @@
+ #ifndef LDAP_R_COMPILE
+ # undef HAVE_REENTRANT_FUNCTIONS
+ # undef HAVE_CTIME_R
+-# undef HAVE_GETHOSTBYNAME_R
++/* # undef HAVE_GETHOSTBYNAME_R */
+ # undef HAVE_GETHOSTBYADDR_R
+ 
+ #else
