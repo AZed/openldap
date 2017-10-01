@@ -166,7 +166,7 @@ mdb_db_open( BackendDB *be, ConfigReply *cr )
 	flags = mdb->mi_dbenv_flags;
 
 	if ( slapMode & SLAP_TOOL_QUICK )
-		flags |= MDB_NOSYNC;
+		flags |= MDB_NOSYNC|MDB_WRITEMAP;
 
 	if ( slapMode & SLAP_TOOL_READONLY)
 		flags |= MDB_RDONLY;
@@ -182,7 +182,7 @@ mdb_db_open( BackendDB *be, ConfigReply *cr )
 		goto fail;
 	}
 
-	rc = mdb_txn_begin( mdb->mi_dbenv, NULL, 0, &txn );
+	rc = mdb_txn_begin( mdb->mi_dbenv, NULL, flags & MDB_RDONLY, &txn );
 	if ( rc ) {
 		Debug( LDAP_DEBUG_ANY,
 			LDAP_XSTRING(mdb_db_open) ": database \"%s\" cannot be opened, err %d. "

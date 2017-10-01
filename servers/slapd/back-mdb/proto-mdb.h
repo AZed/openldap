@@ -175,6 +175,12 @@ int mdb_id2entry(
 	ID id,
 	Entry **e);
 
+int mdb_id2edata(
+	Operation *op,
+	MDB_cursor *mc,
+	ID id,
+	MDB_val *data);
+
 int mdb_entry_return( Operation *op, Entry *e );
 BI_entry_release_rw mdb_entry_release;
 BI_entry_get_rw mdb_entry_get;
@@ -202,6 +208,7 @@ int mdb_idl_fetch_key(
 int mdb_idl_insert( ID *ids, ID id );
 
 typedef int (mdb_idl_keyfunc)(
+	BackendDB *be,
 	MDB_cursor *mc,
 	struct berval *key,
 	ID id );
@@ -363,10 +370,7 @@ extern BI_tool_entry_reindex		mdb_tool_entry_reindex;
 extern BI_tool_dn2id_get		mdb_tool_dn2id_get;
 extern BI_tool_entry_modify		mdb_tool_entry_modify;
 
-int mdb_tool_idl_add(
-	MDB_cursor *mc,
-	struct berval *keys,
-	ID id );
+extern mdb_idl_keyfunc mdb_tool_idl_add;
 
 LDAP_END_DECL
 

@@ -619,6 +619,10 @@ ID mdb_tool_entry_put(
 				 text->bv_val, 0, 0 );
 			return NOID;
 		}
+		if ( !mdb->mi_nextid ) {
+			ID dummy;
+			mdb_next_id( be, idcursor, &dummy );
+		}
 		rc = mdb_cursor_open( txn, mdb->mi_dn2id, &mcp );
 		if( rc != 0 ) {
 			snprintf( text->bv_val, text->bv_len,
@@ -840,6 +844,7 @@ done:
 	if( rc == 0 ) {
 		mdb_writes++;
 		if ( mdb_writes >= mdb_writes_per_commit ) {
+			MDB_val key;
 			unsigned i;
 			MDB_TOOL_IDL_FLUSH( be, txi );
 			rc = mdb_txn_commit( txi );
@@ -854,6 +859,14 @@ done:
 				e->e_id = NOID;
 			}
 			txi = NULL;
+			/* Must close the read txn to allow old pages to be reclaimed. */
+			mdb_txn_abort( txn );
+			/* and then reopen it so that tool_entry_next still works. */
+			mdb_txn_begin( mi->mi_dbenv, NULL, MDB_RDONLY, &txn );
+			mdb_cursor_open( txn, mi->mi_id2entry, &cursor );
+			key.mv_data = &id;
+			key.mv_size = sizeof(ID);
+			mdb_cursor_get( cursor, &key, NULL, MDB_SET );
 		}
 
 	} else {
@@ -881,7 +894,6 @@ ID mdb_tool_entry_modify(
 {
 	int rc;
 	struct mdb_info *mdb;
-	MDB_txn *tid;
 	Operation op = {0};
 	Opheader ohdr = {0};
 
@@ -904,15 +916,17 @@ ID mdb_tool_entry_modify(
 		mdb_cursor_close( cursor );
 		cursor = NULL;
 	}
-	rc = mdb_txn_begin( mdb->mi_dbenv, NULL, 0, &tid );
-	if( rc != 0 ) {
-		snprintf( text->bv_val, text->bv_len,
-			"txn_begin failed: %s (%d)",
-			mdb_strerror(rc), rc );
-		Debug( LDAP_DEBUG_ANY,
-			"=> " LDAP_XSTRING(mdb_tool_entry_modify) ": %s\n",
-			 text->bv_val, 0, 0 );
-		return NOID;
+	if ( !txn ) {
+		rc = mdb_txn_begin( mdb->mi_dbenv, NULL, 0, &txn );
+		if( rc != 0 ) {
+			snprintf( text->bv_val, text->bv_len,
+				"txn_begin failed: %s (%d)",
+				mdb_strerror(rc), rc );
+			Debug( LDAP_DEBUG_ANY,
+				"=> " LDAP_XSTRING(mdb_tool_entry_modify) ": %s\n",
+				 text->bv_val, 0, 0 );
+			return NOID;
+		}
 	}
 
 	op.o_hdr = &ohdr;
@@ -921,7 +935,7 @@ ID mdb_tool_entry_modify(
 	op.o_tmpmfuncs = &ch_mfuncs;
 
 	/* id2entry index */
-	rc = mdb_id2entry_update( &op, tid, NULL, e );
+	rc = mdb_id2entry_update( &op, txn, NULL, e );
 	if( rc != 0 ) {
 		snprintf( text->bv_val, text->bv_len,
 				"id2entry_update failed: err=%d", rc );
@@ -933,7 +947,7 @@ ID mdb_tool_entry_modify(
 
 done:
 	if( rc == 0 ) {
-		rc = mdb_txn_commit( tid );
+		rc = mdb_txn_commit( txn );
 		if( rc != 0 ) {
 			snprintf( text->bv_val, text->bv_len,
 					"txn_commit failed: %s (%d)",
@@ -945,7 +959,7 @@ done:
 		}
 
 	} else {
-		mdb_txn_abort( tid );
+		mdb_txn_abort( txn );
 		snprintf( text->bv_val, text->bv_len,
 			"txn_aborted! %s (%d)",
 			mdb_strerror(rc), rc );
@@ -954,6 +968,8 @@ done:
 			text->bv_val, 0, 0 );
 		e->e_id = NOID;
 	}
+	txn = NULL;
+	idcursor = NULL;
 
 	return e->e_id;
 }
@@ -1134,6 +1150,7 @@ mdb_tool_idl_flush( BackendDB *be, MDB_txn *txn )
 }
 
 int mdb_tool_idl_add(
+	BackendDB *be,
 	MDB_cursor *mc,
 	struct berval *keys,
 	ID id )

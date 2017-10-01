@@ -4,12 +4,12 @@
  *	@mainpage	MDB Memory-Mapped Database Manager
  *	MDB is a Btree-based database management library modeled loosely on the
  *	BerkeleyDB API, but much simplified. The entire database is exposed
- *	in a read-only memory map, and all data fetches return data directly
+ *	in a memory map, and all data fetches return data directly
  *	from the mapped memory, so no malloc's or memcpy's occur during
  *	data fetches. As such, the library is extremely simple because it
  *	requires no page caching layer of its own, and it is extremely high
  *	performance and memory-efficient. It is also fully transactional with
- *	full ACID semantics, and because the memory map is read-only, the
+ *	full ACID semantics, and when the memory map is read-only, the
  *	database integrity cannot be corrupted by stray pointer writes from
  *	application code.
  *
@@ -30,6 +30,13 @@
  *	files otherwise they grow without bound. MDB tracks free pages within
  *	the database and re-uses them for new write operations, so the database
  *	size does not grow without bound in normal use.
+ *
+ *	The memory map can be used as a read-only or read-write map. It is
+ *	read-only by default as this provides total immunity to corruption.
+ *	Using read-write mode offers much higher write performance, but adds
+ *	the possibility for stray application writes thru pointers to silently
+ *	corrupt the database. Of course if your application code is known to
+ *	be bug-free (...) then this is not an issue.
  *
  *	@author	Howard Chu, Symas Corporation.
  *
@@ -65,6 +72,10 @@
 
 #include <sys/types.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /** @defgroup public Public API
  *	@{
  */
@@ -76,7 +87,7 @@
 /** Library minor version */
 #define MDB_VERSION_MINOR	9
 /** Library patch version */
-#define MDB_VERSION_PATCH	0
+#define MDB_VERSION_PATCH	4
 
 /** Combine args a,b,c into a single integer for easy version comparisons */
 #define MDB_VERINT(a,b,c)	(((a) << 24) | ((b) << 16) | (c))
@@ -86,10 +97,10 @@
 	MDB_VERINT(MDB_VERSION_MAJOR,MDB_VERSION_MINOR,MDB_VERSION_PATCH)
 
 /** The release date of this library version */
-#define MDB_VERSION_DATE	"September 1, 2011"
+#define MDB_VERSION_DATE	"September 14, 2012"
 
 /** A stringifier for the version info */
-#define MDB_VERSTR(a,b,c,d)	"MDB " #a "." #b "." #c ": (" #d ")"
+#define MDB_VERSTR(a,b,c,d)	"MDB " #a "." #b "." #c ": (" d ")"
 
 /** A helper for the stringifier macro */
 #define MDB_VERFOO(a,b,c,d)	MDB_VERSTR(a,b,c,d)
@@ -155,6 +166,12 @@ typedef void (MDB_rel_func)(MDB_val *item, void *oldptr, void *newptr, void *rel
 #define MDB_NOSYNC		0x10000
 	/** read only */
 #define MDB_RDONLY		0x20000
+	/** don't fsync metapage after commit */
+#define MDB_NOMETASYNC		0x40000
+	/** use writable mmap */
+#define MDB_WRITEMAP		0x80000
+	/** use asynchronous msync */
+#define MDB_MAPASYNC		0x100000
 /** @} */
 
 /**	@defgroup	mdb_open	Database Flags
@@ -195,8 +212,10 @@ typedef void (MDB_rel_func)(MDB_val *item, void *oldptr, void *newptr, void *rel
 #define MDB_RESERVE	0x10000
 /** Data is being appended, don't split full pages. */
 #define MDB_APPEND	0x20000
+/** Duplicate data is being appended, don't split full pages. */
+#define MDB_APPENDDUP	0x40000
 /** Store multiple data items in one call. */
-#define MDB_MULTIPLE	0x40000
+#define MDB_MULTIPLE	0x80000
 /*	@} */
 
 /** @brief Cursor Get operations.
@@ -210,6 +229,7 @@ typedef enum MDB_cursor_op {
 								Only for #MDB_DUPSORT */
 	MDB_GET_BOTH,			/**< Position at key/data pair. Only for #MDB_DUPSORT */
 	MDB_GET_BOTH_RANGE,		/**< position at key, nearest data. Only for #MDB_DUPSORT */
+	MDB_GET_CURRENT,		/**< Return key/data at current cursor position */
 	MDB_GET_MULTIPLE,		/**< Return all the duplicate data items at the current
 								 cursor position. Only for #MDB_DUPFIXED */
 	MDB_LAST,				/**< Position at last key/data item */
@@ -228,6 +248,7 @@ typedef enum MDB_cursor_op {
 	MDB_PREV_NODUP,			/**< Position at last data item of previous key.
 								Only for #MDB_DUPSORT */
 	MDB_SET,				/**< Position at specified key */
+	MDB_SET_KEY,			/**< Position at specified key, return key + data */
 	MDB_SET_RANGE			/**< Position at first key greater than or equal to specified key. */
 } MDB_cursor_op;
 
@@ -250,6 +271,23 @@ typedef enum MDB_cursor_op {
 #define MDB_PANIC		(-30795)
 	/** Environment version mismatch */
 #define MDB_VERSION_MISMATCH	(-30794)
+	/** File is not a valid MDB file */
+#define MDB_INVALID	(-30793)
+	/** Environment mapsize reached */
+#define MDB_MAP_FULL	(-30792)
+	/** Environment maxdbs reached */
+#define MDB_DBS_FULL	(-30791)
+	/** Environment maxreaders reached */
+#define MDB_READERS_FULL	(-30790)
+	/** Too many TLS keys in use - Windows only */
+#define MDB_TLS_FULL	(-30789)
+	/** Nested txn has too many dirty pages */
+#define MDB_TXN_FULL	(-30788)
+	/** Cursor stack too deep - internal error */
+#define MDB_CURSOR_FULL	(-30787)
+	/** Page has not enough space - internal error */
+#define MDB_PAGE_FULL	(-30786)
+#define MDB_LAST_ERRCODE	MDB_PAGE_FULL
 /** @} */
 
 /** @brief Statistics for a database in the environment */
@@ -330,6 +368,13 @@ int  mdb_env_create(MDB_env **env);
 	 *		at risk is governed by how often the system flushes dirty buffers to disk
 	 *		and how often #mdb_env_sync() is called. This flag may be changed
 	 *		at any time using #mdb_env_set_flags().
+	 *	<li>#MDB_NOMETASYNC
+	 *		Don't perform a synchronous flush of the meta page after committing
+	 *		a transaction. This is similar to the #MDB_NOSYNC case, but safer
+	 *		because the transaction data is still flushed. The meta page for any
+	 *		transaction N will be flushed by the data flush of transaction N+1.
+	 *		In case of a system crash, the last committed transaction may be
+	 *		lost. This flag may be changed at any time using #mdb_env_set_flags().
 	 *	<li>#MDB_RDONLY
 	 *		Open the environment in read-only mode. No write operations will be allowed.
 	 * </ul>
@@ -388,8 +433,7 @@ void mdb_env_close(MDB_env *env);
 	/** @brief Set environment flags.
 	 *
 	 * This may be used to set some flags that weren't already set during
-	 * #mdb_env_open(), or to unset these flags. Currently only the
-	 * #MDB_NOSYNC flag setting may be changed with this function.
+	 * #mdb_env_open(), or to unset these flags.
 	 * @param[in] env An environment handle returned by #mdb_env_create()
 	 * @param[in] flags The flags to change, bitwise OR'ed together
 	 * @param[in] onoff A non-zero value sets the flags, zero clears them.
@@ -578,9 +622,10 @@ int  mdb_txn_renew(MDB_txn *txn);
 
 	/** @brief Open a database in the environment.
 	 *
-	 * The database handle may be discarded by calling #mdb_close(). Only
-	 * one thread at a time may call this function; it is not mutex-protected in
-	 * a read-only transaction.
+	 * The database handle may be discarded by calling #mdb_close().  The
+	 * database handle resides in the shared environment, it is not owned
+	 * by the given transaction. Only one thread should call this function;
+	 * it is not mutex-protected in a read-only transaction.
 	 * @param[in] txn A transaction handle returned by #mdb_txn_begin()
 	 * @param[in] name The name of the database to open. If only a single
 	 * 	database is needed in the environment, this value may be NULL.
@@ -793,6 +838,16 @@ int  mdb_get(MDB_txn *txn, MDB_dbi dbi, MDB_val *key, MDB_val *data);
 	 *		#MDB_KEYEXIST if the key already appears in the database, even if
 	 *		the database supports duplicates (#MDB_DUPSORT). The \b data
 	 *		parameter will be set to point to the existing item.
+	 *	<li>#MDB_RESERVE - reserve space for data of the given size, but
+	 *		don't copy the given data. Instead, return a pointer to the
+	 *		reserved space, which the caller can fill in later. This saves
+	 *		an extra memcpy if the data is being generated later.
+	 *	<li>#MDB_APPEND - append the given key/data pair to the end of the
+	 *		database. No key comparisons are performed. This option allows
+	 *		fast bulk loading when keys are already known to be in the
+	 *		correct order. Loading unsorted keys with this flag will cause
+	 *		data corruption.
+	 *	<li>#MDB_APPENDDUP - as above, but for sorted dup data.
 	 * </ul>
 	 * @return A non-zero error value on failure and 0 on success. Some possible
 	 * errors are:
@@ -851,6 +906,23 @@ int  mdb_cursor_open(MDB_txn *txn, MDB_dbi dbi, MDB_cursor **cursor);
 	 */
 void mdb_cursor_close(MDB_cursor *cursor);
 
+	/** @brief Renew a cursor handle.
+	 *
+	 * Cursors are associated with a specific transaction and database and
+	 * may not span threads. Cursors that are only used in read-only
+	 * transactions may be re-used, to avoid unnecessary malloc/free overhead.
+	 * The cursor may be associated with a new read-only transaction, and
+	 * referencing the same database handle as it was created with.
+	 * @param[in] txn A transaction handle returned by #mdb_txn_begin()
+	 * @param[in] cursor A cursor handle returned by #mdb_cursor_open()
+	 * @return A non-zero error value on failure and 0 on success. Some possible
+	 * errors are:
+	 * <ul>
+	 *	<li>EINVAL - an invalid parameter was specified.
+	 * </ul>
+	 */
+int  mdb_cursor_renew(MDB_txn *txn, MDB_cursor *cursor);
+
 	/** @brief Return the cursor's transaction handle.
 	 *
 	 * @param[in] cursor A cursor handle returned by #mdb_cursor_open()
@@ -908,6 +980,16 @@ int  mdb_cursor_get(MDB_cursor *cursor, MDB_val *key, MDB_val *data,
 	 *		does not already appear in the database. The function will return
 	 *		#MDB_KEYEXIST if the key already appears in the database, even if
 	 *		the database supports duplicates (#MDB_DUPSORT).
+	 *	<li>#MDB_RESERVE - reserve space for data of the given size, but
+	 *		don't copy the given data. Instead, return a pointer to the
+	 *		reserved space, which the caller can fill in later. This saves
+	 *		an extra memcpy if the data is being generated later.
+	 *	<li>#MDB_APPEND - append the given key/data pair to the end of the
+	 *		database. No key comparisons are performed. This option allows
+	 *		fast bulk loading when keys are already known to be in the
+	 *		correct order. Loading unsorted keys with this flag will cause
+	 *		data corruption.
+	 *	<li>#MDB_APPENDDUP - as above, but for sorted dup data.
 	 * </ul>
 	 * @return A non-zero error value on failure and 0 on success. Some possible
 	 * errors are:
@@ -976,4 +1058,8 @@ int  mdb_cmp(MDB_txn *txn, MDB_dbi dbi, const MDB_val *a, const MDB_val *b);
 	 */
 int  mdb_dcmp(MDB_txn *txn, MDB_dbi dbi, const MDB_val *a, const MDB_val *b);
 /**	@} */
+
+#ifdef __cplusplus
+}
+#endif
 #endif /* _MDB_H_ */

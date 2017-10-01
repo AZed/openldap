@@ -240,7 +240,7 @@ static OidRec OidMacros[] = {
  * OLcfg{Bk|Db}{Oc|At}:0		-> common
  * OLcfg{Bk|Db}{Oc|At}:1		-> back-bdb(/back-hdb)
  * OLcfg{Bk|Db}{Oc|At}:2		-> back-ldif
- * OLcfg{Bk|Db}{Oc|At}:3		-> back-ldap
+ * OLcfg{Bk|Db}{Oc|At}:3		-> back-ldap/meta
  * OLcfg{Bk|Db}{Oc|At}:4		-> back-monitor
  * OLcfg{Bk|Db}{Oc|At}:5		-> back-relay
  * OLcfg{Bk|Db}{Oc|At}:6		-> back-sql(/back-ndb)
@@ -4634,9 +4634,34 @@ check_name_index( CfEntryInfo *parent, ConfigType ce_type, Entry *e,
 		}
 	}
 
-	/* count related kids */
-	for (nsibs=0, ce=parent->ce_kids; ce; ce=ce->ce_sibs) {
-		if ( ce->ce_type == ce_type ) nsibs++;
+	/* count related kids.
+	 * For entries of type Cft_Misc, only count siblings with same RDN type
+	 */
+	if ( ce_type == Cft_Misc ) {
+		rdn.bv_val = e->e_nname.bv_val;
+		ptr1 = strchr( rdn.bv_val, '=' );
+		assert( ptr1 != NULL );
+
+		rdn.bv_len = ptr1 - rdn.bv_val;
+
+		for (nsibs=0, ce=parent->ce_kids; ce; ce=ce->ce_sibs) {
+			struct berval rdn2;
+			if ( ce->ce_type != ce_type )
+				continue;
+
+			dnRdn( &ce->ce_entry->e_nname, &rdn2 );
+
+			ptr1 = strchr( rdn2.bv_val, '=' );
+			assert( ptr1 != NULL );
+
+			rdn2.bv_len = ptr1 - rdn2.bv_val;
+			if ( bvmatch( &rdn, &rdn2 ))
+				nsibs++;
+		}
+	} else {
+		for (nsibs=0, ce=parent->ce_kids; ce; ce=ce->ce_sibs) {
+			if ( ce->ce_type == ce_type ) nsibs++;
+		}
 	}
 
 	/* account for -1 frontend */

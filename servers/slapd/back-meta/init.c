@@ -64,7 +64,7 @@ meta_back_initialize(
 	bi->bi_destroy = 0;
 
 	bi->bi_db_init = meta_back_db_init;
-	bi->bi_db_config = meta_back_db_config;
+	bi->bi_db_config = config_generic_wrapper;
 	bi->bi_db_open = meta_back_db_open;
 	bi->bi_db_close = 0;
 	bi->bi_db_destroy = meta_back_db_destroy;
@@ -86,7 +86,7 @@ meta_back_initialize(
 	bi->bi_connection_init = 0;
 	bi->bi_connection_destroy = meta_back_conn_destroy;
 
-	return 0;
+	return meta_back_init_cf( bi );
 }
 
 int
@@ -142,6 +142,7 @@ meta_back_db_init(
 	mi->mi_ldap_extra = (ldap_extra_t *)bi->bi_extra;
 
 	be->be_private = mi;
+	be->be_cf_ocs = be->bd_info->bi_cf_ocs;
 
 	return 0;
 }
@@ -310,6 +311,15 @@ mapping_dst_free(
 	}
 }
 
+void
+meta_back_map_free( struct ldapmap *lm )
+{
+	avl_free( lm->remap, mapping_dst_free );
+	avl_free( lm->map, mapping_free );
+	lm->remap = NULL;
+	lm->map = NULL;
+}
+
 static void
 target_free(
 	metatarget_t	*mt )
@@ -357,11 +367,12 @@ target_free(
 	}
 	if ( mt->mt_rwmap.rwm_rw ) {
 		rewrite_info_delete( &mt->mt_rwmap.rwm_rw );
+		if ( mt->mt_rwmap.rwm_bva_rewrite )
+			ber_bvarray_free( mt->mt_rwmap.rwm_bva_rewrite );
 	}
-	avl_free( mt->mt_rwmap.rwm_oc.remap, mapping_dst_free );
-	avl_free( mt->mt_rwmap.rwm_oc.map, mapping_free );
-	avl_free( mt->mt_rwmap.rwm_at.remap, mapping_dst_free );
-	avl_free( mt->mt_rwmap.rwm_at.map, mapping_free );
+	meta_back_map_free( &mt->mt_rwmap.rwm_oc );
+	meta_back_map_free( &mt->mt_rwmap.rwm_at );
+	ber_bvarray_free( mt->mt_rwmap.rwm_bva_map );
 
 	free( mt );
 }

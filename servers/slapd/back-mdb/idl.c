@@ -391,14 +391,16 @@ mdb_idl_fetch_key(
 
 int
 mdb_idl_insert_keys(
+	BackendDB	*be,
 	MDB_cursor	*cursor,
 	struct berval *keys,
 	ID			id )
 {
+	struct mdb_info *mdb = be->be_private;
 	MDB_val key, data;
 	ID lo, hi, *i;
 	char *err;
-	int	rc, k;
+	int	rc = 0, k;
 	unsigned int flag = MDB_NODUPDATA;
 #ifndef	MISALIGNED_OK
 	int kbuf[2];
@@ -490,8 +492,8 @@ mdb_idl_insert_keys(
 				}
 			} else {
 			/* There's room, just store it */
-				if ( slapMode & SLAP_TOOL_QUICK )
-					flag |= MDB_APPEND;
+				if (id == mdb->mi_nextid)
+					flag |= MDB_APPENDDUP;
 				goto put1;
 			}
 		} else {
@@ -518,7 +520,7 @@ mdb_idl_insert_keys(
 			}
 		}
 	} else if ( rc == MDB_NOTFOUND ) {
-		flag &= ~MDB_APPEND;
+		flag &= ~MDB_APPENDDUP;
 put1:	data.mv_data = &id;
 		data.mv_size = sizeof(ID);
 		rc = mdb_cursor_put( cursor, &key, &data, flag );
@@ -542,11 +544,12 @@ fail:
 
 int
 mdb_idl_delete_keys(
+	BackendDB	*be,
 	MDB_cursor	*cursor,
 	struct berval *keys,
 	ID			id )
 {
-	int	rc, k;
+	int	rc = 0, k;
 	MDB_val key, data;
 	ID lo, hi, tmp, *i;
 	char *err;
@@ -1081,7 +1084,7 @@ mdb_idl_sort( ID *ids, ID *tmp )
 /* 8 bit Radix sort + insertion sort
  * 
  * based on code from http://www.cubic.org/docs/radix.htm
- * with improvements by mbackes@symas.com and hyc@symas.com
+ * with improvements by ebackes@symas.com and hyc@symas.com
  *
  * This code is O(n) but has a relatively high constant factor. For lists
  * up to ~50 Quicksort is slightly faster; up to ~100 they are even.
