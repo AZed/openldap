@@ -1,60 +1,63 @@
-# We distribute own version of Berkeley DB to prevent 
-# problems on db4.rpm upgrade - some versions of db4 do
-# not work with some versions of OpenLDAP.
-%define db_version 4.8.26
+# TODO: add make test after build
+
 %define ldbm_backend berkeley
-%define version 2.4.22
 %define evolution_connector_prefix %{_libdir}/evolution-openldap
 %define evolution_connector_includedir %{evolution_connector_prefix}/include
 %define evolution_connector_libdir %{evolution_connector_prefix}/%{_lib}
 
-Summary: LDAP support libraries
 Name: openldap
-Version: %{version}
-Release: 7%{?dist}
-License: OpenLDAP
+Version: 2.4.23
+Release: 10%{?dist}
+Summary: LDAP support libraries
 Group: System Environment/Daemons
-Source0: ftp://ftp.OpenLDAP.org/pub/OpenLDAP/openldap-release/openldap-%{version}.tgz
-Source1: http://download.oracle.com/berkeley-db/db-%{db_version}.tar.gz
-Source3: README.migration
-Source4: ldap.init
-Source5: migration-tools.txt
-Source6: autofs.schema
-Source7: README.upgrading
-Source9: README.evolution
-Source10: ldap.sysconfig
-
-# Patches for 2.4
-Patch0: openldap-2.4.6-config.patch
-Patch1: openldap-2.0.11-ldaprc.patch
-Patch2: openldap-2.2.13-setugid.patch
-Patch3: openldap-2.4.6-pie.patch
-Patch4: openldap-2.3.11-toollinks.patch
-Patch5: openldap-2.4.6-nosql.patch
-Patch6: openldap-2.3.19-gethostbyXXXX_r.patch
-Patch9: openldap-2.3.37-smbk5pwd.patch
-Patch10: openldap-2.4.6-multilib.patch
-Patch11: openldap-2.4.16-doc-cacertdir.patch
-Patch12: openldap-2.4.21-dn2id-segfault.patch
-Patch13: openldap-2.4.22-ldif_h.patch
-Patch14: openldap-2.4.22-libldif.patch
-Patch15: openldap-2.4.22-modrdn-segfault.patch
-Patch16: openldap-2.4.23-selfsignedcacert.patch
-Patch17: openldap-2.4.22-initauthtoken.patch
-
-# Patches for the evolution library
-Patch200: openldap-2.4.6-evolution-ntlm.patch
-
+License: OpenLDAP
 URL: http://www.openldap.org/
-BuildRoot: %{_tmppath}/%{name}-%{version}-root
-BuildRequires: cyrus-sasl-devel >= 2.1, gdbm-devel, libtool >= 1.5.6-2, krb5-devel
-BuildRequires: openssl-devel, pam-devel, perl, pkgconfig, tcp_wrappers-devel,
-BuildRequires: unixODBC-devel, libtool-ltdl-devel, groff
-BuildRequires: nss-devel
-Requires: glibc >= 2.2.3-48, mktemp
-Obsoletes: compat-openldap < 2.4
+Source0: ftp://ftp.OpenLDAP.org/pub/OpenLDAP/openldap-release/openldap-%{version}.tgz
+Source1: ldap.init
+Source2: ldap.sysconfig
+Source3: README.evolution
 
-# provide ldif2ldbm functionality for migrationtools
+# patches for 2.4
+Patch0: openldap-slapd-conf.patch
+Patch1: openldap-manpages.patch
+Patch2: openldap-security-pie.patch
+Patch3: openldap-sql-linking.patch
+Patch4: openldap-reentrant-gethostby.patch
+Patch5: openldap-export-ldif.patch
+Patch6: openldap-smbk5pwd-overlay.patch
+Patch7: openldap-ldaprc-currentdir.patch
+Patch8: openldap-userconfig-setgid.patch
+
+# already merged upstream
+Patch100: openldap-nss-ca-selfsigned.patch
+Patch101: openldap-nss-delay-token-auth.patch
+Patch102: openldap-nss-db-prefix.patch
+Patch103: openldap-reject-non-file-keyfiles.patch
+Patch104: openldap-use-cacert-dir-and-file.patch
+Patch105: openldap-cacertdir-hash-only.patch
+Patch106: openldap-improve-trace-messages.patch
+Patch107: openldap-nss-non-blocking.patch
+Patch108: openldap-verify-self-issued-certs.patch
+Patch109: openldap-nss-cipher-suites.patch
+Patch110: openldap-nss-restart-modules-fork.patch
+Patch111: openldap-nss-disable-nofork.patch
+Patch112: openldap-cve-ppolicy-forward-updates.patch
+Patch113: openldap-cve-ndb-bind-rootdn.patch
+Patch114: openldap-security-dos-empty-modrdn.patch
+Patch115: openldap-slapadd-hang.patch
+
+# patches for the evolution library (see README.evolution)
+Patch200: openldap-evolution-ntlm.patch
+
+BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
+
+BuildRequires: cyrus-sasl-devel >= 2.1, nss-devel, krb5-devel, tcp_wrappers-devel, unixODBC-devel
+BuildRequires: glibc-devel, libtool, libtool-ltdl-devel, groff, perl
+# smbk5pwd overlay:
+BuildRequires: openssl-devel
+
+Obsoletes: compat-openldap < 2.4
+# used by migrationtools:
 Provides: ldif2ldbm
 
 %description
@@ -82,9 +85,12 @@ customized LDAP clients.
 
 %package servers
 Summary: LDAP server
-# OpenLDAP server includes Berkeley DB library, which is licensed under Sleepycat and BSD licenses)
-License: OpenLDAP and (Sleepycat and BSD)
-Requires: fileutils, make, openldap = %{version}-%{release}, openssl, /usr/sbin/useradd, /usr/sbin/groupadd, /sbin/chkconfig, /sbin/runuser
+License: OpenLDAP
+Requires: openldap = %{version}-%{release}, openssl
+Requires(pre): shadow-utils
+Requires(post): chkconfig, /sbin/runuser, make
+Requires(preun): chkconfig
+BuildRequires: db4-devel >= 4.4, db4-devel < 4.9
 Group: System Environment/Daemons
 
 %description servers
@@ -124,101 +130,88 @@ over the Internet. The openldap-clients package contains the client
 programs needed for accessing and modifying OpenLDAP directories.
 
 %prep
-%setup -q -c -a 1
+%setup -q -c -a 0
+
+# setup tree for openldap
 
 pushd openldap-%{version}
+
 %patch0 -p1 -b .config
-%patch1 -p1 -b .ldaprc
-%patch2 -p1 -b .setugid
-%patch3 -p1 -b .pie
-%patch4 -p1 -b .toollinks
-%patch5 -p1 -b .nosql
-%patch6 -p1 -b .gethostbyname_r
-%patch9 -p1 -b .smbk5pwd
-%patch10 -p1 -b .multilib
-%patch11 -p1 -b .cacertdir
-%patch12 -p1 -b .segfault
-%patch13 -p1 -b .ldif_h
-%patch14 -p1 -b .libldif
-%patch15 -p1 -b .modrdn-segfault
-%patch16 -p1 -b .selfsignedcacert
-%patch17 -p1 -b .initauthtoken
+%patch1 -p1 -b .manpages
+%patch2 -p1 -b .security-pie
+%patch3 -p1 -b .sql-linking
+%patch4 -p1 -b .reentrant-gethostby
+%patch5 -p1 -b .export-ldif
+%patch6 -p1 -b .smbk5pwd-overlay
+%patch7 -p1 -b .ldaprc-currentdir
+%patch8 -p1 -b .userconfig-setgid
+
+%patch100 -p1 -b .nss-ca-selfsigned
+%patch101 -p1 -b .nss-delay-token-auth
+%patch102 -p1 -b .nss-db-prefix
+%patch103 -p1 -b .reject-non-file-keyfiles
+%patch104 -p1 -b .use-cacert-dir-and-file-dir
+%patch105 -p1 -b .cacertdir-hash-only
+%patch106 -p1 -b .improve-trace-messages
+%patch107 -p1 -b .nss-non-blocking
+%patch108 -p1 -b .verify-self-issued-certs
+%patch109 -p1 -b .nss-cipher-suites
+%patch110 -p1 -b .nss-restart-modules-fork
+%patch111 -p1 -b .nss-disable-nofork
+%patch112 -p1 -b .cve-ppolicy-forward-updates
+%patch113 -p1 -b .cve-ndb-bind-rootdn
+%patch114 -p1 -b .security-dos-empty-modrdn
+%patch115 -p1 -b .slapadd-hang
 
 cp %{_datadir}/libtool/config/config.{sub,guess} build/
+
+for subdir in build-servers build-clients ; do
+	mkdir $subdir
+	ln -s ../configure $subdir
+done
+
+# build smbk5pwd with other overlays
+ln -s ../../../contrib/slapd-modules/smbk5pwd/smbk5pwd.c servers/slapd/overlays
+mv contrib/slapd-modules/smbk5pwd/README contrib/slapd-modules/smbk5pwd/README.smbk5pwd
+
 popd
 
-# Set up a build tree for a static version of libldap with the hooks for the
-# non-standard NTLM bind type which is needed to connect to Win2k GC servers
-# (Win2k3 supports SASL with DIGEST-MD5, so this shouldn't be needed for those
-# servers, though as of version 1.4 the connector doesn't try SASL first).
+# setup tree for openldap with evolution-specific patches
+
 if ! cp -al openldap-%{version} evo-openldap-%{version} ; then
-     rm -fr evo-openldap-%{version}
-     cp -a  openldap-%{version} evo-openldap-%{version}
+	rm -fr evo-openldap-%{version}
+	cp -a  openldap-%{version} evo-openldap-%{version}
 fi
 pushd evo-openldap-%{version}
 %patch200 -p1 -b .evolution-ntlm
 popd
 
-pushd openldap-%{version}
-    for subdir in build-servers build-clients ; do
-        mkdir $subdir
-        ln -s ../configure $subdir
-    done
-# build smbk5pwd with other overlays
-ln -s ../../../contrib/slapd-modules/smbk5pwd/smbk5pwd.c servers/slapd/overlays
-mv contrib/slapd-modules/smbk5pwd/README contrib/slapd-modules/smbk5pwd/README.smbk5pwd
-popd
-
 %build
-dbdir=`pwd`/db-instroot
+
 libtool='%{_bindir}/libtool'
-tagname=CC; export tagname
+export tagname=CC
 
 %ifarch ia64
 RPM_OPT_FLAGS="$RPM_OPT_FLAGS -O0"
 %endif
 
-# Set CFLAGS to incorporate RPM_OPT_FLAGS.
-CFLAGS="$RPM_OPT_FLAGS -D_REENTRANT -fPIC"; export CFLAGS
-
-# Build Berkeley DB and install it into a temporary area, isolating OpenLDAP
-# from any future changes to the system-wide Berkeley DB library.  Version 4.2
-# or later is required by the BDB backend in OpenLDAP 2.1 and later.
-install -d db-%{db_version}/build-rpm
-pushd db-%{db_version}/build-rpm
-../dist/configure -C \
-    --with-pic \
-    --disable-static \
-    --enable-shared \
-    --with-uniquename=_openldap_slapd_46 \
-    --prefix=${dbdir} \
-    --includedir=${dbdir}/include \
-    --libdir=${dbdir}/%{_lib}${subdir:+/${subdir}}
-# fix libtool: no rpath
-perl -pi -e 's|hardcode_libdir_flag_spec=.*|hardcode_libdir_flag_spec=\"-L\\\$libdir\"|g;' libtool
-
-make %{_smp_mflags} libdb_base=libslapd_db libso_base=libslapd_db
-make install libdb_base=libslapd_db libso_base=libslapd_db strip="false"
-ln -sf libslapd_db.so ${dbdir}/%{_lib}/${subdir}/libdb.so
-popd
-
-export CPPFLAGS="-I${dbdir}/include -I%_includedir/nss3 -I%_includedir/nspr4"
-export CFLAGS="$CPPFLAGS $RPM_OPT_FLAGS -D_REENTRANT -DLDAP_CONNECTIONLESS -fPIC -D_GNU_SOURCE -DHAVE_TLS -DHAVE_MOZNSS -DSLAPD_LMHASH"
-export LDFLAGS="-L${dbdir}/%{_lib}"
-export LD_LIBRARY_PATH=${dbdir}/%{_lib}${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
-MOZNSS_TLS_LIBS="-lssl3 -lsmime3 -lnss3 -lnssutil3 -lplds4 -lplc4 -lnspr4"
-export LIBS="$MOZNSS_TLS_LIBS"
+export CPPFLAGS="-I%_includedir/nss3 -I%_includedir/nspr4"
+export CFLAGS="$RPM_OPT_FLAGS $CPPFLAGS -fPIC -D_REENTRANT -DLDAP_CONNECTIONLESS -D_GNU_SOURCE -DHAVE_TLS -DHAVE_MOZNSS -DSLAPD_LMHASH"
+export NSS_LIBS="-lssl3 -lsmime3 -lnss3 -lnssutil3 -lplds4 -lplc4 -lnspr4"
+export LIBS=""
 
 build() {
+
 %configure \
     --with-threads=posix \
     \
-    --enable-local --enable-rlookups \
+    --enable-local \
+	--enable-rlookups \
     \
     --with-tls=no \
     --with-cyrus-sasl \
     \
-    --enable-wrappers \
+    --with-wrappers \
     \
     --enable-passwd \
     \
@@ -231,24 +224,27 @@ build() {
     \
     --libexecdir=%{_libdir} \
     $@
-# HACK HACK HACK
-# openldap uses #include <nss/somemoznssfile.h>
-# this doesn't work on fedora and similar which uses /usr/include/nss3
-# so we have to fake it out
+
+# allow #include <nss/file.h> and <nspr/file.h>
 pushd include
 if [ ! -d nss ] ; then
-    ln -s %_includedir/nss3 nss
+    ln -s %{_includedir}/nss3 nss
 fi
 if [ ! -d nspr ] ; then
-    ln -s %_includedir/nspr4 nspr
+    ln -s %{_includedir}/nspr4 nspr
 fi
 popd
+
 make %{_smp_mflags} LIBTOOL="$libtool"
+
 }
 
-# Build the servers with Kerberos support (for password checking, mainly).
-LIBS="$LIBS -lpthread"; export LIBS
-LD_LIBRARY_PATH=${dbdir}/%{_lib}${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}; export LD_LIBRARY_PATH
+# Kerberos support:
+# - enabled in server (mainly for password checking)
+# - disabled in clients (not needed, to avoid stray dependencies)
+
+# build servers
+export LIBS="$NSS_LIBS -lpthread"
 pushd openldap-%{version}/build-servers
 build \
     --enable-plugins \
@@ -273,12 +269,10 @@ build \
     --disable-dynamic \
     --with-kerberos=k5only \
     --enable-overlays=mod
-unset LIBS
 popd
 
-# Build clients without Kerberos password-checking support, which is only
-# useful in the server anyway, to avoid stray dependencies.
-export LIBS="$MOZNSS_TLS_LIBS"
+# build clients
+export LIBS="$NSS_LIBS"
 pushd openldap-%{version}/build-clients
 build \
     --disable-slapd \
@@ -288,8 +282,8 @@ build \
     --with-pic
 popd
 
-# Build evolution-specific clients just as we would normal clients, except with
-# a different installation directory in mind and no shared libraries.
+# build evolution-specific clients
+# (specific patch, different installation directory, no shared libraries)
 pushd evo-openldap-%{version}
 build \
     --disable-slapd \
@@ -303,224 +297,200 @@ build \
 popd
 
 %install
-[ "$RPM_BUILD_ROOT" != "/" ] && rm -rf $RPM_BUILD_ROOT
+rm -rf %{buildroot}
 libtool='%{_bindir}/libtool'
-tagname=CC; export tagname
+export tagname=CC
 
-mkdir -p $RPM_BUILD_ROOT/%{_libdir}/
+mkdir -p %{buildroot}/%{_libdir}/
 
-pushd db-instroot/%{_lib}/
-install -d $RPM_BUILD_ROOT/%{_libdir}/
-install -m755 libslapd_db-*.*.so $RPM_BUILD_ROOT/%{_libdir}/
-popd
-
-pushd db-%{db_version}
-mv LICENSE LICENSE.bdb-backend
-popd
-
+# install servers
 pushd openldap-%{version}/build-servers
-make install DESTDIR=$RPM_BUILD_ROOT libdir=%{_libdir} LIBTOOL="$libtool" STRIP=""
+make install DESTDIR=%{buildroot} \
+	libdir=%{_libdir} \
+	LIBTOOL="$libtool" \
+	STRIP=""
 popd
 
-# Install the bdb maintenance tools.
-pushd db-instroot/bin
-for binary in db_* ; do
-    install -m755 ${binary} $RPM_BUILD_ROOT/%{_sbindir}/slapd_${binary}
-done
-popd
-
-# Install clients and shared libraries.  Install the evo-specific versions
-# first so that any conflicting files are overwritten by generic versions.
+# install evolution-specific clients (conflicting files will be overwriten by generic version)
 pushd evo-openldap-%{version}
-make install DESTDIR=$RPM_BUILD_ROOT \
+make install DESTDIR=%{buildroot} \
     includedir=%{evolution_connector_includedir} \
     libdir=%{evolution_connector_libdir} \
     LIBTOOL="$libtool" \
     STRIP=""
-
-install -m644 %SOURCE9 \
-    $RPM_BUILD_ROOT/%{evolution_connector_prefix}/
+install -m 644 %SOURCE3 \
+    %{buildroot}/%{evolution_connector_prefix}/
 popd
+
+# install clients
 pushd openldap-%{version}/build-clients
-make install DESTDIR=$RPM_BUILD_ROOT libdir=%{_libdir} LIBTOOL="$libtool" STRIP=""
+make install DESTDIR=%{buildroot} \
+	libdir=%{_libdir} \
+	LIBTOOL="$libtool" \
+	STRIP=""
 popd
 
-# Create this directory so that authconfig setting TLS_CACERT to
-# /etc/openldap/cacerts doesn't cause TLS startup of any kind to fail
-# when the directory doesn't exist.
-mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/openldap/cacerts
-# make sure the certs directory exists
-mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/pki/tls/certs
-# Touch the dummy slapd.pem to make rpmbuild happy
-touch $RPM_BUILD_ROOT%{_sysconfdir}/pki/tls/certs/slapd.pem
+# setup directories for TLS certificates
+mkdir -p %{buildroot}%{_sysconfdir}/openldap/cacerts
+mkdir -p %{buildroot}%{_sysconfdir}/pki/tls/certs
 
-install -m 644 %SOURCE7 README.upgrading
-install -m 644 %SOURCE3 README.migration
+# setup data and runtime directories
+mkdir -p %{buildroot}/var/lib/ldap
+mkdir -p %{buildroot}/var/run/openldap
 
-# Create the data directory.
-mkdir -p $RPM_BUILD_ROOT/var/lib/ldap
-# Create the new run directory
-mkdir -p $RPM_BUILD_ROOT/var/run/openldap
+# remove build root from config files and manual pages
+perl -pi -e "s|%{buildroot}||g" %{buildroot}/%{_sysconfdir}/openldap/*.conf
+perl -pi -e "s|%{buildroot}||g" %{buildroot}%{_mandir}/*/*.*
 
-# Hack the build root out of the default config files.
-perl -pi -e "s|$RPM_BUILD_ROOT||g" $RPM_BUILD_ROOT/%{_sysconfdir}/openldap/*.conf
+# we don't need the default files -- RPM handles changes
+rm -f %{buildroot}/%{_sysconfdir}/openldap/*.default
+rm -f %{buildroot}/%{_sysconfdir}/openldap/schema/*.default
 
-# Get the buildroot out of the man pages.
-perl -pi -e "s|$RPM_BUILD_ROOT||g" $RPM_BUILD_ROOT%{_mandir}/*/*.*
+# install an init script for the servers
+mkdir -p %{buildroot}%{_sysconfdir}/rc.d/init.d
+install -m 755 %SOURCE1 %{buildroot}%{_sysconfdir}/rc.d/init.d/slapd
 
-# We don't need the default files -- RPM handles changes.
-rm -f $RPM_BUILD_ROOT/%{_sysconfdir}/openldap/*.default
-rm -f $RPM_BUILD_ROOT/%{_sysconfdir}/openldap/schema/*.default
+# install syconfig/ldap
+mkdir -p %{buildroot}%{_sysconfdir}/sysconfig
+install -m 644 %SOURCE2 %{buildroot}%{_sysconfdir}/sysconfig/ldap
 
-# Install an init script for the servers.
-mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d
-install -m 755 %SOURCE4 $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d/slapd
+# move slapd out of _libdir
+mv %{buildroot}/%{_libdir}/slapd %{buildroot}/%{_sbindir}/
 
-# Install syconfig/ldap
-mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig
-install -m 644 %SOURCE10 $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/ldap
+# setup tools as symlinks to slapd
+rm -f %{buildroot}/%{_sbindir}/slap{acl,add,auth,cat,dn,index,passwd,test,schema}
+rm -f %{buildroot}/%{_libdir}/slap{acl,add,auth,cat,dn,index,passwd,test,schema}
+for X in acl add auth cat dn index passwd test schema; do ln -s slapd %{buildroot}/%{_sbindir}/slap$X ; done
 
-# Add some more schema for the sake of migration scripts.
-install -d -m755 $RPM_BUILD_ROOT%{_sysconfdir}/openldap/schema/redhat
-install -m644 %SOURCE6 \
-    $RPM_BUILD_ROOT%{_sysconfdir}/openldap/schema/redhat/
-
-# Move slapd and slurpd out of _libdir
-mv $RPM_BUILD_ROOT/%{_libdir}/slapd $RPM_BUILD_ROOT/%{_sbindir}/
-rm -f $RPM_BUILD_ROOT/%{_sbindir}/slap{acl,add,auth,cat,dn,index,passwd,test,schema}
-rm -f $RPM_BUILD_ROOT/%{_libdir}/slap{acl,add,auth,cat,dn,index,passwd,test,schema}
-for X in acl add auth cat dn index passwd test schema; do ln -s slapd $RPM_BUILD_ROOT/%{_sbindir}/slap$X ; done
-
-# Tweak permissions on the libraries to make sure they're correct.
-chmod 755 $RPM_BUILD_ROOT/%{_libdir}/lib*.so*
-chmod 644 $RPM_BUILD_ROOT/%{_libdir}/lib*.*a
+# tweak permissions on the libraries to make sure they're correct
+chmod 755 %{buildroot}/%{_libdir}/lib*.so*
+chmod 644 %{buildroot}/%{_libdir}/lib*.*a
 
 # slapd.conf(5) is obsoleted since 2.3, see slapd-config(5)
 # new configuration will be generated in %post
-mkdir -p $RPM_BUILD_ROOT/%{_datadir}/openldap-servers
-mkdir $RPM_BUILD_ROOT/%{_sysconfdir}/openldap/slapd.d
-mv $RPM_BUILD_ROOT/%{_sysconfdir}/openldap/slapd.conf $RPM_BUILD_ROOT/%{_datadir}/openldap-servers/slapd.conf.obsolete
-chmod 0644 $RPM_BUILD_ROOT/%{_datadir}/openldap-servers/slapd.conf.obsolete
+mkdir -p %{buildroot}/%{_datadir}/openldap-servers
+mkdir %{buildroot}/%{_sysconfdir}/openldap/slapd.d
+mv %{buildroot}/%{_sysconfdir}/openldap/slapd.conf %{buildroot}/%{_datadir}/openldap-servers/slapd.conf.obsolete
+chmod 0644 %{buildroot}/%{_datadir}/openldap-servers/slapd.conf.obsolete
 
-# Move doc files out of _sysconfdir
-mv $RPM_BUILD_ROOT%{_sysconfdir}/openldap/schema/README README.schema
-mv $RPM_BUILD_ROOT%{_sysconfdir}/openldap/DB_CONFIG.example $RPM_BUILD_ROOT/%{_datadir}/openldap-servers/DB_CONFIG.example
+# move doc files out of _sysconfdir
+mv %{buildroot}%{_sysconfdir}/openldap/schema/README README.schema
+mv %{buildroot}%{_sysconfdir}/openldap/DB_CONFIG.example %{buildroot}/%{_datadir}/openldap-servers/DB_CONFIG.example
 chmod 0644 openldap-%{version}/servers/slapd/back-sql/rdbms_depend/timesten/*.sh
-chmod 0644 $RPM_BUILD_ROOT/%{_datadir}/openldap-servers/DB_CONFIG.example
+chmod 0644 %{buildroot}/%{_datadir}/openldap-servers/DB_CONFIG.example
 
-# Remove files which we don't want packaged.
-rm -f $RPM_BUILD_ROOT/%{_libdir}/*.la
-rm -f $RPM_BUILD_ROOT/%{_libdir}/*.a
-rm -f $RPM_BUILD_ROOT/%{evolution_connector_libdir}/*.la
-rm -f $RPM_BUILD_ROOT/%{evolution_connector_libdir}/*.so*
-rm -f $RPM_BUILD_ROOT/%{_libdir}/openldap/*.a
-rm -f $RPM_BUILD_ROOT/%{_libdir}/openldap/*.so
+# remove files which we don't want packaged
+rm -f %{buildroot}/%{_libdir}/*.la
+rm -f %{buildroot}/%{_libdir}/*.a
+rm -f %{buildroot}/%{evolution_connector_libdir}/*.la
+rm -f %{buildroot}/%{evolution_connector_libdir}/*.so*
+rm -f %{buildroot}/%{_libdir}/openldap/*.a
+rm -f %{buildroot}/%{_libdir}/openldap/*.so
 
-rm -f $RPM_BUILD_ROOT%{_localstatedir}/openldap-data/DB_CONFIG.example
-rmdir $RPM_BUILD_ROOT%{_localstatedir}/openldap-data
+rm -f %{buildroot}%{_localstatedir}/openldap-data/DB_CONFIG.example
+rmdir %{buildroot}%{_localstatedir}/openldap-data
 
 %clean 
-rm -rf $RPM_BUILD_ROOT
+rm -rf %{buildroot}
 
 %post -p /sbin/ldconfig
 
 %postun -p /sbin/ldconfig
 
 %pre servers
-# Take care to only do ownership-changing if we're adding the user.
-getent group ldap > /dev/null || \
-/usr/sbin/groupadd -r -g 55 ldap
-if /usr/sbin/useradd -c "LDAP User" -u 55 -g ldap \
-    -s /sbin/nologin -r -d /var/lib/ldap ldap 2> /dev/null ; then
-    if [ -d /var/lib/ldap ] ; then
-        for dbfile in /var/lib/ldap/* ; do
-            if [ -f $dbfile ] ; then
-                chown ldap:ldap $dbfile
-            fi
-        done
-    fi
+
+# create ldap user and group
+getent group ldap >/dev/null || groupadd -r -g 55 ldap
+if ! getent passwd ldap >/dev/null; then
+	useradd -r -g ldap -u 55 -d %{_sharedstatedir}/ldap -s /sbin/nologin -c "LDAP User" ldap
+	# setup ownership of database files
+	if [ -d /var/lib/ldap ] ; then
+		for dbfile in /var/lib/ldap/* ; do
+			if [ -f $dbfile ] ; then
+				chown ldap:ldap $dbfile
+			fi
+		done
+	fi
 fi
 
-if [ "$1" = "2" ]; then
-    # guess, if database upgrade is necessary
-    OLD_BDB_VERSION=$( slapd_db_upgrade -V | sed 's/.* \([0-9\.]*\)\.[0-9]*:.*/\1/' )
-    NEW_BDB_VERSION=$( echo %{db_version} | sed 's/.[0-9]*$//' )
+# upgrade
+if [ $1 -eq 2 ]; then
+	# safe way to migrate the database if version number changed
+	# http://www.openldap.org/doc/admin24/maintenance.html
 
-    OLD_SLAPD_VERSION=$( rpm -q --qf "%{VERSION}" openldap-servers | sed 's/\.[0-9]*$//' )
-    NEW_SLAPD_VERSION=$( echo %{version} | sed 's/\.[0-9]*$//' )
-    # we need to detect how is the init script named
-    # - in older versions ldap
-    # - in newer versions slapd
-    if [ -f %{_initrddir}/ldap ]; then
-        SERVICE_NAME=ldap
-    elif [ -f %{_initrddir}/slapd ]; then
-        SERVICE_NAME=slapd
-    fi
+	old_version=$(rpm -q --qf=%%{version} openldap-servers)
+	new_version=%{version}
 
-    if [ "$OLD_SLAPD_VERSION" != "$NEW_SLAPD_VERSION" ]; then
-        # Minor version number has changed -> slapcat/slapadd of the BDB database 
-        # is necessary. Save an ldif of the database where the "% post servers" 
-        # scriptlet can restore it.  Also save the database files to a "rpmorig" 
-        # directory - Just In Case (TM)
+	if [ "$old_version" != "$new_version" ]; then
+		pushd %{_sharedstatedir}/ldap &>/dev/null
 
-        # stop the server
-        if /sbin/service $SERVICE_NAME status &>/dev/null; then 
-            touch /var/lib/ldap/need_start
-            /sbin/service $SERVICE_NAME stop &>/dev/null
-        fi
+		# stop the service
+		if service slapd status &>/dev/null; then
+			touch need_start
+			service slapd stop
+		else
+			rm -f need_start
+		fi
 
-        files=$(echo /var/lib/ldap/{log.*,__db.*,[a]lock})
-        if [ "$files" != '/var/lib/ldap/log.* /var/lib/ldap/__db.* /var/lib/ldap/[a]lock' ] ; then
-            if /usr/sbin/slapcat -l /var/lib/ldap/upgrade.ldif > /dev/null 2>&1 ; then
-                if [ -f /var/lib/ldap/upgrade.ldif ] ; then
-                    /bin/rm -fr /var/lib/ldap/rpmorig > /dev/null 2>&1 || :
-                    mkdir /var/lib/ldap/rpmorig
-                    mv /var/lib/ldap/{alock,*.bdb,__db.*,log.*} /var/lib/ldap/rpmorig > /dev/null 2>&1 || :
-                    cp -f /var/lib/ldap/DB_CONFIG /var/lib/ldap/rpmorig > /dev/null 2>&1 || :
-                else
-                    /bin/rm -f /var/lib/ldap/upgrade.ldif
-                fi
-            fi
-        fi
-    else
-        if [ "$OLD_BDB_VERSION" != "$NEW_BDB_VERSION" ]; then
-            # Minor version number of bdb has changed -> run db_upgrade in % post script 
-    
-            # stop the server
-            if /sbin/service $SERVICE_NAME status &>/dev/null; then 
-                touch /var/lib/ldap/need_start
-                /sbin/service $SERVICE_NAME stop &>/dev/null
-            fi
+		if ls *.bdb &>/dev/null; then
+			# symlink to last backup
+			rm -f upgrade.ldif
 
-            # Ensure, that the database is correct
-            /sbin/runuser -m -s /usr/sbin/slapd_db_recover -- "ldap" -h /var/lib/ldap &>/dev/null
-            # Just create /var/lib/ldap/need_db_upgrade so % post knows
-            touch /var/lib/ldap/need_db_upgrade &>/dev/null
-        fi
-    fi
+			# backup location
+			backupdir=backup.$(date +%%s)
+			backupfile=${backupdir}/backup.ldif
+			backupcmd="cp -a"
+
+			mkdir -p ${backupdir}
+
+			# database recovery tool
+			# (this is necessary to handle upgrade from old openldap, which had embedded db4)
+			if [ -f /usr/sbin/slapd_db_recover ]; then
+				db_recover=/usr/sbin/slapd_db_recover
+			else
+				db_recover=/usr/bin/db_recover
+			fi
+
+			# make sure the database is consistent
+			runuser -m -s $db_recover -- "ldap" -h %{_sharedstatedir}/ldap &>/dev/null
+
+			# export the database if possible
+			if [ $? -eq 0 ]; then
+				if [ -f %{_sysconfdir}/openldap/slapd.conf ]; then
+					slapcat -f %{_sysconfdir}/openldap/slapd.conf -l $backupfile &>/dev/null
+				else
+					slapcat -F %{_sysconfdir}/openldap/slapd.d -l $backupfile &>/dev/null
+				fi
+
+				if [ $? -eq 0 ]; then
+					chmod 0400 $backupfile
+					ln -sf $backupfile upgrade.ldif
+					backupcmd=mv
+				fi
+			fi
+
+			# move or copy to backup directory
+			find -maxdepth 1 -type f \( -name alock -o -name "*.bdb" -o -name "__db.*" -o -name "log.*" \) \
+				| xargs -I '{}' $backupcmd '{}' $backupdir
+			cp -af DB_CONFIG $backupdir &>/dev/null
+
+			# fix permissions
+			chown -R ldap: $backupdir
+			chmod -R a-w $backupdir
+		fi
+
+		popd &>/dev/null
+	fi
 fi
+
 exit 0
 
 %post servers
+
 /sbin/ldconfig
 /sbin/chkconfig --add slapd
-# If there's a /var/lib/ldap/upgrade.ldif file, slapadd it and delete it.
-# It was created by the % pre above.
-if [ -f /var/lib/ldap/upgrade.ldif ] ; then
-    /sbin/runuser -m -s /usr/sbin/slapadd -- "ldap" -l /var/lib/ldap/upgrade.ldif > /dev/null 2>&1
-    rm -f /var/lib/ldap/upgrade.ldif
-fi
 
-# If there's a /var/lib/ldap/need_db_upgrade file, run db_upgrade and delete it.
-# It was created by the % pre above.
-if [ -f /var/lib/ldap/need_db_upgrade ]; then
-	if ls /var/lib/ldap/*.bdb > /dev/null 2>&1; then
-		/sbin/runuser -m -s /usr/sbin/slapd_db_upgrade -- "ldap"  -h /var/lib/ldap /var/lib/ldap/*.bdb
-	fi
-    /sbin/runuser -m -s /usr/sbin/slapd_db_checkpoint -- "ldap" -h /var/lib/ldap -1
-    rm -f /var/lib/ldap/need_db_upgrade
-fi
-
+# generate sample TLS certificates
 if [ ! -f %{_sysconfdir}/pki/tls/certs/slapd.pem ] ; then
 pushd %{_sysconfdir}/pki/tls/certs > /dev/null 2>&1
 umask 077
@@ -538,58 +508,65 @@ chmod 640 slapd.pem
 popd
 fi
 
-if [ `find %{_sysconfdir}/openldap/slapd.d -maxdepth 0 -empty | wc -l` = "1" ]; then
-	# configuration in slapd.d not available
+# generate configuration in slapd.d
+if ! ls -d %{_sysconfdir}/openldap/slapd.d/* &>/dev/null; then
 
+	# fresh installation
 	[ ! -f %{_sysconfdir}/openldap/slapd.conf ]
 	fresh_install=$?
 
 	[ $fresh_install -eq 0 ] && \
 		cp %{_datadir}/openldap-servers/slapd.conf.obsolete %{_sysconfdir}/openldap/slapd.conf
 
-    mv %{_sysconfdir}/openldap/slapd.conf %{_sysconfdir}/openldap/slapd.conf.bak
-    mkdir -p %{_sysconfdir}/openldap/slapd.d/
-    lines=`egrep -n '^(database|backend)' %{_sysconfdir}/openldap/slapd.conf.bak | cut -d: -f1 | head -n 1`
-    lines=$(($lines-1))
-    head -n $lines %{_sysconfdir}/openldap/slapd.conf.bak > %{_sysconfdir}/openldap/slapd.conf
-    cat >> %{_sysconfdir}/openldap/slapd.conf << EOF
+	# convert from old style config slapd.conf
+	mv %{_sysconfdir}/openldap/slapd.conf %{_sysconfdir}/openldap/slapd.conf.bak
+	mkdir -p %{_sysconfdir}/openldap/slapd.d/
+	lines=$(egrep -n '^(database|backend)' %{_sysconfdir}/openldap/slapd.conf.bak | cut -d: -f1 | head -n 1)
+	lines=$(($lines-1))
+	head -n $lines %{_sysconfdir}/openldap/slapd.conf.bak > %{_sysconfdir}/openldap/slapd.conf
+	cat >> %{_sysconfdir}/openldap/slapd.conf << EOF
 database config
 rootdn   "cn=admin,cn=config"
 #rootpw   secret
 EOF
-    lines_r=`wc --lines %{_sysconfdir}/openldap/slapd.conf.bak | cut -f1 -d" "`
-    lines_r=$(($lines_r-$lines))
-    tail -n $lines_r %{_sysconfdir}/openldap/slapd.conf.bak >> %{_sysconfdir}/openldap/slapd.conf
-    slaptest -f %{_sysconfdir}/openldap/slapd.conf -F %{_sysconfdir}/openldap/slapd.d > /dev/null 2> /dev/null
-    chown -R ldap:ldap %{_sysconfdir}/openldap/slapd.d
-    chmod -R 000 %{_sysconfdir}/openldap/slapd.d
-    chmod -R u+rwX %{_sysconfdir}/openldap/slapd.d
-    rm -f %{_sysconfdir}/openldap/slapd.conf
+	lines_r=$(wc --lines %{_sysconfdir}/openldap/slapd.conf.bak | cut -f1 -d" ")
+	lines_r=$(($lines_r-$lines))
+	tail -n $lines_r %{_sysconfdir}/openldap/slapd.conf.bak >> %{_sysconfdir}/openldap/slapd.conf
+	slaptest -f %{_sysconfdir}/openldap/slapd.conf -F %{_sysconfdir}/openldap/slapd.d > /dev/null 2> /dev/null
+	chown -R ldap:ldap %{_sysconfdir}/openldap/slapd.d
+	chmod -R 000 %{_sysconfdir}/openldap/slapd.d
+	chmod -R u+rwX %{_sysconfdir}/openldap/slapd.d
+	rm -f %{_sysconfdir}/openldap/slapd.conf
 	rm -f %{_sharedstatedir}/ldap/__db* %{_sharedstatedir}/ldap/alock
 
 	[ $fresh_install -eq 0 ] && rm -f %{_sysconfdir}/openldap/slapd.conf.bak
 fi
 
-if [ $1 -ge 1 ] ; then
-    /sbin/service slapd condrestart &>/dev/null
-    /sbin/service slapd status &>/dev/null
-    if [ "$?" != "0" -a -f /var/lib/ldap/need_start ]; then
-        /sbin/service slapd start &>/dev/null
-        rm -f /var/lib/ldap/need_start &>/dev/null 
-    fi
+# finish database migration (see %pre)
+if [ -f %{_sharedstatedir}/ldap/upgrade.ldif ]; then
+	runuser -m -s /usr/sbin/slapadd -- ldap -q -l %{_sharedstatedir}/ldap/upgrade.ldif &>/dev/null
+	rm -f %{_sharedstatedir}/ldap/upgrade.ldif
+fi
+
+# restart after upgrade
+if [ $1 -ge 1 ]; then
+	if [ -f %{_sharedstatedir}/ldap/need_start ]; then
+		service slapd start
+		rm -f %{_sharedstatedir}/ldap/need_start
+	else
+		/sbin/service slapd condrestart
+	fi
 fi
 
 exit 0
 
 %preun servers
-if [ "$1" = "0" ] ; then
-  /sbin/service slapd stop > /dev/null 2>&1 || :
-  /sbin/chkconfig --del slapd
-# Openldap-servers are being removed from system.
-# Do not touch the database! Older versions of this
-# package attempted to store database in LDIF format, so
-# it can be restored later - but it's up to the administrator 
-# to save the database, if he/she wants so.
+if [ $1 -eq 0 ] ; then
+	/sbin/service slapd stop > /dev/null 2>&1 || :
+	/sbin/chkconfig --del slapd
+
+	# openldap-servers are being removed from system
+	# do not touch the database!
 fi
 
 %postun servers
@@ -598,6 +575,58 @@ fi
 %post devel -p /sbin/ldconfig
 
 %postun devel -p /sbin/ldconfig
+
+%triggerin servers -- db4
+
+# db4 upgrade (see %triggerun)
+if [ $2 -eq 2 ]; then
+	pushd %{_sharedstatedir}/ldap &>/dev/null
+
+	# we are interested in minor version changes (both versions of db4 are installed at this moment)
+	if [ "$(rpm -q --qf="%%{version}\n" db4 | sed 's/\.[0-9]*$//' | sort -u | wc -l)" != "1" ]; then
+		# stop the service
+		if service slapd status &>/dev/null; then
+			touch need_start
+			service slapd stop
+		fi
+
+		# ensure the database is consistent
+		runuser -m -s /usr/bin/db_recover -- "ldap" -h %{_sharedstatedir}/ldap &>/dev/null
+
+		# upgrade will be performed after removing old db4
+		touch upgrade_db4
+	else
+		rm -f upgrade_db4
+	fi
+
+	popd &>/dev/null
+fi
+
+exit 0
+
+%triggerun servers -- db4
+
+# db4 upgrade (see %triggerin)
+if [ -f %{_sharedstatedir}/ldap/upgrade_db4 ]; then
+	pushd %{_sharedstatedir}/ldap &>/dev/null
+
+	# perform the upgrade
+	if ls *.bdb &>/dev/null; then
+		runuser -m -s /usr/bin/db_upgrade -- "ldap" -h %{_sharedstatedir}/ldap %{_sharedstatedir}/ldap/*.bdb
+		runuser -m -s /usr/bin/db_checkpoint -- "ldap" -h %{_sharedstatedir}/ldap -1
+	fi
+
+	# start the service
+	if [ -f need_start ]; then
+		service slapd start
+		rm -f need_start
+	fi
+
+	rm -f upgrade_db4
+	popd &>/dev/null
+fi
+
+exit 0
 
 %files
 %defattr(-,root,root)
@@ -618,29 +647,23 @@ fi
 
 %files servers
 %defattr(-,root,root)
-%doc db-%{db_version}/LICENSE.bdb-backend
-%doc README.upgrading
-%doc README.migration
 %doc openldap-%{version}/contrib/slapd-modules/smbk5pwd/README.smbk5pwd
 %doc openldap-%{version}/doc/guide/admin/*.html
 %doc openldap-%{version}/doc/guide/admin/*.png
 %doc README.schema
-%ghost %config(noreplace) %{_sysconfdir}/pki/tls/certs/slapd.pem
+%attr(0640,root,ldap) %ghost %config(noreplace) %{_sysconfdir}/pki/tls/certs/slapd.pem
 %attr(0755,root,root) %{_sysconfdir}/rc.d/init.d/slapd
 %attr(0750,ldap,ldap) %dir %config(noreplace) %{_sysconfdir}/openldap/slapd.d
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/sysconfig/ldap
 %attr(0755,root,root) %dir %config(noreplace) %{_sysconfdir}/openldap/schema
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/openldap/schema/*.schema*
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/openldap/schema/*.ldif
-%attr(0755,root,root) %dir %{_sysconfdir}/openldap/schema/redhat
-%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/openldap/schema/redhat/*.schema*
 %attr(0755,root,root) %{_sbindir}/sl*
 %attr(0644,root,root) %{_mandir}/man8/*
 %attr(0644,root,root) %{_mandir}/man5/slapd*.5*
 %attr(0644,root,root) %{_mandir}/man5/slapo-*.5*
 %attr(0700,ldap,ldap) %dir /var/lib/ldap
 %attr(0755,ldap,ldap) %dir /var/run/openldap
-%attr(0755,root,root) %{_libdir}/libslapd_db-*.*.so
 %attr(0755,root,root) %dir %{_libdir}/openldap
 %attr(0755,root,root) %{_libdir}/openldap/[^b]*
 %attr(0755,root,root) %dir %{_datadir}/openldap-servers
@@ -675,6 +698,56 @@ fi
 %attr(0644,root,root)      %{evolution_connector_libdir}/*.a
 
 %changelog
+* Sat Mar 19 2011 Jan Vcelak <jvcelak@redhat.com> 2.4.23-10
+- fix update: openldap can't use TLS after a fork() (#636956)
+- fix: possible null pointer dereference in NSS implementation
+- fix: openldap-servers upgrade hangs or do not upgrade the database (#664433)
+
+* Tue Mar 01 2011 Jan Vcelak <jvcelak@redhat.com> 2.4.23-9
+- fix: CVE-2011-1024 ppolicy forwarded bind failure messages cause success (#680466)
+- fix: CVE-2011-1025 rootpw is not verified for ndb backend (#680472)
+- fix: security - DoS when submitting special MODRDN request (#680975)
+
+* Wed Feb 02 2011 Jan Vcelak <jvcelak@redhat.com> 2.4.23-8
+- fix update: openldap can't use TLS after a fork() (#636956)
+
+* Tue Jan 25 2011 Jan Vcelak <jvcelak@redhat.com> 2.4.23-7
+- fix: openldap can't use TLS after a fork() (#636956)
+- fix: openldap-server upgrade gets stuck when the database is damaged (#664433)
+
+* Thu Jan 20 2011 Jan Vcelak <jvcelak@redhat.com> 2.4.23-6
+- fix: some server certificates refused with inadequate type error (#668899)
+- fix: default encryption strength dropped in switch to using NSS (#669446)
+
+* Thu Jan 06 2011 Jan Vcelak <jvcelak@redhat.com> 2.4.23-5
+- initscript: slaptest with '-u' to skip database opening (#667768)
+- removed slurpd options from sysconfig/ldap
+- fix: verification of self issued certificates (#657984)
+
+* Mon Nov 22 2010 Jan Vcelak <jvcelak@redhat.com> 2.4.23-4
+- Mozilla NSS - implement full non-blocking semantics
+  ldapsearch -Z hangs server if starttls fails (#652822)
+- updated list of all overlays in slapd.conf (#655899)
+- fix database upgrade process (#656257)
+
+* Thu Nov 18 2010 Jan Vcelak <jvcelak@redhat.com> 2.4.23-3
+- add support for multiple prefixed Mozilla NSS database files in TLS_CACERTDIR
+- reject non-file keyfiles in TLS_CACERTDIR (#652315)
+- TLS_CACERTDIR precedence over TLS_CACERT (#652304)
+- accept only files in hash.0 format in TLS_CACERTDIR (#650288)
+- improve SSL/TLS trace messages (#652818)
+
+* Mon Nov 01 2010 Jan Vcelak <jvcelak@redhat.com> 2.4.23-2
+- fix possible infinite loop when checking permissions of TLS files (#641946)
+- removed outdated autofs.schema (#643045)
+- removed outdated README.upgrade
+- removed relics of migrationtools
+
+* Fri Aug 27 2010 Jan Vcelak <jvcelak@redhat.com> 2.4.23-1
+- rebase to 2.4.23
+- embeded db4 library removed
+- removed bogus links in "SEE ALSO" in several man-pages (#624616)
+
 * Thu Jul 22 2010 Jan Vcelak <jvcelak@redhat.com> 2.4.22-7
 - Mozilla NSS - delay token auth until needed (#616552)
 - Mozilla NSS - support use of self signed CA certs as server certs (#614545)
