@@ -15,7 +15,7 @@
 Summary: The configuration files, libraries, and documentation for OpenLDAP.
 Name: openldap
 Version: %{version_22}
-Release: 12%{?dist}.2
+Release: 12%{?dist}.3
 License: OpenLDAP
 Group: System Environment/Daemons
 Source0: ftp://ftp.OpenLDAP.org/pub/OpenLDAP/openldap-release/openldap-%{version_22}.tgz
@@ -83,6 +83,9 @@ Patch66: openldap-2.2.13-ldapmodify-noop.patch
 Patch67: openldap-2.3.27-ber-decode.patch
 Patch68: openldap-2.2.13-chase-referral.patch
 Patch69: openldap-2.2.13-clear-assert.patch
+Patch70: openldap-2.2.13-modrdn-segfault.patch
+Patch71: openldap-2.1.30-tls-null-char.patch
+Patch72: openldap-2.2.13-tls-null-char.patch
 
 URL: http://www.openldap.org/
 BuildRoot: %{_tmppath}/%{name}-%{version_22}-root
@@ -210,6 +213,8 @@ pushd openldap-%{version_22}
 %patch67 -p1 -b .ber-decode
 %patch68 -p1 -b .chase-referral
 %patch69 -p1 -b .clear-assert
+%patch70 -p1 -b .modrdn-segfault
+%patch72 -p1 -b .tls-null-char
 
 cp %{_datadir}/libtool/config.{sub,guess} build/
 popd
@@ -255,6 +260,7 @@ popd
 pushd openldap-%{version_21}
 %patch9 -p1 -b .ldapi
 %patch44 -p1 -b .hop
+%patch71 -p1 -b .tls-null-char
 	for subdir in build-servers build-compat ; do
 		mkdir $subdir
 		ln -s ../configure $subdir
@@ -806,6 +812,11 @@ fi
 %attr(0644,root,root)      %{evolution_connector_libdir}/*.a
 
 %changelog
+* Tue Jun 22 2010 Jan Zeleny <jzeleny@redhat.com> - 2.2.13-12.3
+- fixed modrdn segfault issues (#606399)
+- fixed handling of null character when using TLS (#606399, patches for both
+  main and compat library backported by Jan Vcelak <jvcelak@redhat.com>)
+
 * Wed Jul 8 2009 Jan Zeleny <jzeleny@redhat.com> 2.2.13-12.2
 - fix unnecessary assertion in slapd_clr_write (#510233)
 
