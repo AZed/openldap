@@ -1,4 +1,4 @@
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/search.c,v 1.84.2.23 2006/01/03 22:16:20 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2006 The OpenLDAP Foundation.
@@ -1147,25 +1147,6 @@ meta_send_entry(
 			}
 			BER_BVZERO( &attr->a_nvals[i] );
 
-		} else {
-			attr->a_nvals = attr->a_vals;
-		}
-
-		if ( last && attr->a_desc->ad_type->sat_equality &&
-			attr->a_desc->ad_type->sat_equality->smr_normalize ) {
-			int i;
-
-			attr->a_nvals = ch_malloc((last + 1)*sizeof(struct berval));
-			for ( i = 0; i<last; i++ ) {
-				attr->a_desc->ad_type->sat_equality->smr_normalize(
-					SLAP_MR_VALUE_OF_ATTRIBUTE_SYNTAX,
-					attr->a_desc->ad_type->sat_syntax,
-					attr->a_desc->ad_type->sat_equality,
-					&attr->a_vals[i], &attr->a_nvals[i],
-					NULL );
-			}
-			attr->a_nvals[i].bv_val = NULL;
-			attr->a_nvals[i].bv_len = 0;
 		} else {
 			attr->a_nvals = attr->a_vals;
 		}

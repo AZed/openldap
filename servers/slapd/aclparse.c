@@ -1,5 +1,5 @@
 /* aclparse.c - routines to parse and check acl's */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/aclparse.c,v 1.145.2.18 2006/01/06 19:03:00 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2006 The OpenLDAP Foundation.
@@ -671,66 +671,6 @@ parse_acl(
 						}
 					}
 
-				} else if ( strncasecmp( left, "val", 3 ) == 0 ) {
-					if ( a->acl_attrval.bv_len ) {
-						fprintf( stderr,
-				"%s: line %d: attr val already specified in to clause.\n",
-							fname, lineno );
-						acl_usage();
-					}
-					if ( a->acl_attrs == NULL || a->acl_attrs[1].an_name.bv_val ) {
-						fprintf( stderr,
-				"%s: line %d: attr val requires a single attribute.\n",
-							fname, lineno );
-						acl_usage();
-					}
-					ber_str2bv( right, 0, 1, &a->acl_attrval );
-					if ( style && strcasecmp( style, "regex" ) == 0 ) {
-						int e = regcomp( &a->acl_attrval_re, a->acl_attrval.bv_val,
-							REG_EXTENDED | REG_ICASE | REG_NOSUB );
-						if ( e ) {
-							char buf[512];
-							regerror( e, &a->acl_attrval_re, buf, sizeof(buf) );
-							fprintf( stderr, "%s: line %d: "
-								"regular expression \"%s\" bad because of %s\n",
-								fname, lineno, right, buf );
-							acl_usage();
-						}
-						a->acl_attrval_style = ACL_STYLE_REGEX;
-					} else {
-						/* FIXME: if the attribute has DN syntax,
-						 * we might allow one, subtree and children styles as well */
-						if ( !strcasecmp( style, "exact" ) ) {
-							a->acl_attrval_style = ACL_STYLE_BASE;
-
-						} else if ( a->acl_attrs[0].an_desc->ad_type->sat_syntax == slap_schema.si_syn_distinguishedName ) {
-							if ( !strcasecmp( style, "base" ) ) {
-								a->acl_attrval_style = ACL_STYLE_BASE;
-							} else if ( !strcasecmp( style, "onelevel" ) || !strcasecmp( style, "one" ) ) {
-								a->acl_attrval_style = ACL_STYLE_ONE;
-							} else if ( !strcasecmp( style, "subtree" ) || !strcasecmp( style, "sub" ) ) {
-								a->acl_attrval_style = ACL_STYLE_SUBTREE;
-							} else if ( !strcasecmp( style, "children" ) ) {
-								a->acl_attrval_style = ACL_STYLE_CHILDREN;
-							} else {
-								fprintf( stderr, 
-									"%s: line %d: unknown val.<style> \"%s\" "
-									"for attributeType \"%s\" with DN syntax; using \"base\"\n",
-									fname, lineno, style,
-									a->acl_attrs[0].an_desc->ad_cname.bv_val );
-								a->acl_attrval_style = ACL_STYLE_BASE;
-							}
-							
-						} else {
-							fprintf( stderr, 
-								"%s: line %d: unknown val.<style> \"%s\" "
-								"for attributeType \"%s\"; using \"exact\"\n",
-								fname, lineno, style,
-								a->acl_attrs[0].an_desc->ad_cname.bv_val );
-							a->acl_attrval_style = ACL_STYLE_BASE;
-						}
-					}
-					
 				} else {
 					Debug( LDAP_DEBUG_ANY,
 						"%s: line %d: expecting <what> got \"%s\"\n",
@@ -2907,13 +2847,6 @@ acl_unparse( AccessControl *a, struct berval *bv )
 		ptr = lutil_strcopy( ptr, a->acl_attrval.bv_val );
 		*ptr++ = '"';
 		*ptr++ = '\n';
-	}
-
-	if ( a->acl_attrval.bv_len != 0 ) {
-		to++;
-		fprintf( stderr, " val.%s=\"%s\"\n",
-			style_strings[a->acl_attrval_style], a->acl_attrval.bv_val );
-
 	}
 
 	if( !to ) {

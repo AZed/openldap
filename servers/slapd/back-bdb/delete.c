@@ -1,5 +1,5 @@
 /* delete.c - bdb backend delete routine */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/delete.c,v 1.132.2.7 2006/01/16 18:59:27 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2006 The OpenLDAP Foundation.
@@ -313,22 +313,6 @@ retry:	/* transaction retry */
 		}
 	}
 
-	/* pre-read */
-	if( op->o_preread ) {
-		if( preread_ctrl == NULL ) {
-			preread_ctrl = &ctrls[num_ctrls++];
-			ctrls[num_ctrls] = NULL;
-		}
-		if( slap_read_controls( op, rs, e,
-			&slap_pre_read_bv, preread_ctrl ) )
-		{
-			Debug( LDAP_DEBUG_TRACE,
-				"<=- " LDAP_XSTRING(bdb_delete) ": pre-read "
-				"failed!\n", 0, 0, 0 );
-			goto return_results;
-		}
-	}
-
 	/* nested transaction */
 	rs->sr_err = TXN_BEGIN( bdb->bi_dbenv, ltid, &lt2, 
 		bdb->bi_db_opflags );
@@ -475,19 +459,6 @@ retry:	/* transaction retry */
 	}
 	ldap_pvt_thread_mutex_unlock( &bdb->bi_lastid_mutex );
 #endif
-
-	if ( !dn_match( &ctxcsn_ndn, &op->o_req_ndn ) &&
-		 !be_issuffix( op->o_bd, &op->o_req_ndn ) &&
-			LDAP_STAILQ_EMPTY( &op->o_bd->be_syncinfo )) {
-		rc = bdb_csn_commit( op, rs, ltid, ei, &suffix_ei,
-			&ctxcsn_e, &ctxcsn_added, locker );
-		switch ( rc ) {
-		case BDB_CSN_ABORT :
-			goto return_results;
-		case BDB_CSN_RETRY :
-			goto retry;
-		}
-	}
 
 	if( op->o_noop ) {
 		if ( ( rs->sr_err = TXN_ABORT( ltid ) ) != 0 ) {

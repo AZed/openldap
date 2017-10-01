@@ -1,5 +1,5 @@
 /* ad.c - routines for dealing with attribute descriptions */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/ad.c,v 1.74.2.12 2006/01/17 19:09:51 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2006 The OpenLDAP Foundation.
@@ -916,10 +916,6 @@ str2anlist( AttributeName *an, char *in, const char *brkstr )
 					anew->an_oc = oc_bvfind( &ocname );
 					if ( !anew->an_oc ) {
 						goto reterr;
-					}
-
-					if ( anew->an_name.bv_val[0] == '!' ) {
-						anew->an_oc_exclude = 1;
 					}
 
 					if ( anew->an_name.bv_val[0] == '!' ) {

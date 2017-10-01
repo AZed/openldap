@@ -1,4 +1,4 @@
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/config.c,v 1.17.2.6 2006/01/03 22:16:24 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2006 The OpenLDAP Foundation.
@@ -625,15 +625,6 @@ backsql_db_config(
 		}
 
 		ber_str2bv( argv[ 1 ], 0, 1, &bi->sql_aliasing_quote );
-
-	} else if ( !strcasecmp( argv[ 0 ], "sqllayer") ) {
-		if ( backsql_api_config( si, argv[ 1 ] ) ) {
-			Debug( LDAP_DEBUG_TRACE,
-				"<==backsql_db_config (%s line %d): "
-				"unable to load sqllayer \"%s\"\n",
-				fname, lineno, argv[ 1 ] );
-			return 1;
-		}
 
 	} else {
 		return SLAP_CONF_UNKNOWN;

@@ -1,5 +1,5 @@
 # Makefile.in for back-ldap
-# $OpenLDAP$
+# $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/Makefile.in,v 1.26.2.2 2006/01/03 22:16:18 kurt Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 1998-2006 The OpenLDAP Foundation.
@@ -27,12 +27,9 @@ BUILD_MOD = @BUILD_LDAP@
 mod_DEFS = -DSLAPD_IMPORT
 MOD_DEFS = $(@BUILD_LDAP@_DEFS)
 
-mod_REWRITE = $(LDAP_LIBREWRITE_A)
-
-REWRITE = $(@BUILD_META@_REWRITE) $(@BUILD_LDAP@_REWRITE)
 shared_LDAP_LIBS = $(LDAP_LIBLDAP_R_LA) $(LDAP_LIBLBER_LA)
-NT_LINK_LIBS = -L.. -lslapd $(@BUILD_LIBS_DYNAMIC@_LDAP_LIBS) $(REWRITE)
-UNIX_LINK_LIBS = $(@BUILD_LIBS_DYNAMIC@_LDAP_LIBS) $(REWRITE)
+NT_LINK_LIBS = -L.. -lslapd $(@BUILD_LIBS_DYNAMIC@_LDAP_LIBS)
+UNIX_LINK_LIBS = $(@BUILD_LIBS_DYNAMIC@_LDAP_LIBS)
 
 LIBBASE = back_ldap
 

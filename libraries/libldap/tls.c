@@ -1,5 +1,5 @@
 /* tls.c - Handle tls/ssl using SSLeay or OpenSSL. */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/tls.c,v 1.118.2.12 2006/01/20 20:44:30 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2006 The OpenLDAP Foundation.
@@ -1863,55 +1863,6 @@ ldap_install_tls( LDAP *ld )
 	}
 
 	return ldap_int_tls_start( ld, ld->ld_defconn, NULL );
-#endif
-}
-
-void *
-ldap_pvt_tls_sb_ctx( Sockbuf *sb )
-{
-#ifdef HAVE_TLS
-	void			*p;
-	
-	if (HAS_TLS( sb )) {
-		ber_sockbuf_ctrl( sb, LBER_SB_OPT_GET_SSL, (void *)&p );
-		return p;
-	}
-#endif
-
-	return NULL;
-}
-
-int
-ldap_pvt_tls_get_strength( void *s )
-{
-#ifdef HAVE_TLS
-	SSL_CIPHER *c;
-
-	c = SSL_get_current_cipher((SSL *)s);
-	return SSL_CIPHER_get_bits(c, NULL);
-#else
-	return 0;
-#endif
-}
-
-
-int
-ldap_pvt_tls_get_my_dn( void *s, struct berval *dn, LDAPDN_rewrite_dummy *func, unsigned flags )
-{
-#ifdef HAVE_TLS
-	X509 *x;
-	X509_NAME *xn;
-	int rc;
-
-	x = SSL_get_certificate((SSL *)s);
-
-	if (!x) return LDAP_INVALID_CREDENTIALS;
-	
-	xn = X509_get_subject_name(x);
-	rc = ldap_X509dn2bv(xn, dn, (LDAPDN_rewrite_func *)func, flags );
-	return rc;
-#else
-	return LDAP_NOT_SUPPORTED;
 #endif
 }
 

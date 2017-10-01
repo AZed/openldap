@@ -1,4 +1,4 @@
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/include/ldap.h,v 1.263.2.21 2006/01/03 22:16:06 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  * 
  * Copyright 1998-2006 The OpenLDAP Foundation.
@@ -41,11 +41,6 @@ LDAP_BEGIN_DECL
 #define LDAP_VERSION_MIN	LDAP_VERSION2
 #define	LDAP_VERSION		LDAP_VERSION2
 #define LDAP_VERSION_MAX	LDAP_VERSION3
-
-/* Use -DLDAP_DEPRECATED=0 to hide deprecated interfaces */
-#ifndef LDAP_DEPRECATED
-#define LDAP_DEPRECATED 1
-#endif
 
 /*
  * We use 3000+n here because it is above 1823 (for RFC 1823),
@@ -1981,7 +1976,6 @@ ldap_parse_vlv_control LDAP_P((
 	unsigned long *list_countp,
 	struct berval **contextp,
 	int           *errcodep ));
-
 
 /*
  * LDAP Transactions

@@ -75,9 +75,6 @@ PROXIED AUTHORIZATION CONTROL                                June 2005
    presence of the Object Identifier (OID) "2.16.840.1.113730.3.4.18" in 
    the supportedControl attribute [RFC 2252] of a server's root DSE. 
     
-   Support for the Proxy Authorization Control is indicated by the 
-   presence of the Object Identifier (OID) "2.16.840.1.113730.3.4.18" in 
-   the supportedControl attribute [RFC 2252] of a server's root DSE. 
     
 3. Proxy Authorization Control 
     
@@ -204,12 +201,6 @@ PROXIED AUTHORIZATION CONTROL                                June 2005
    English. 
     
    The limited permissions granted above are perpetual and will not be 
-  
-Expires October 2003                                          [Page 3] 
-
-PROXIED AUTHORIZATION CONTROL                               April 2003 
- 
- 
    revoked by the Internet Society or its successors or assigns. 
     
     

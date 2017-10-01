@@ -67,4 +67,4 @@ PURPOSE.
 
 
 ---
-$OpenLDAP: pkg/ldap/servers/slapd/schema/README,v 1.18.2.4 2005/01/20 17:01:18 kurt Exp $
+$OpenLDAP: pkg/ldap/servers/slapd/schema/README,v 1.23.2.4 2006/01/03 22:16:25 kurt Exp $

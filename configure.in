@@ -1,4 +1,4 @@
-dnl $OpenLDAP$
+dnl $OpenLDAP: pkg/ldap/configure.in,v 1.560.2.25 2006/01/16 19:06:12 kurt Exp $
 dnl This work is part of OpenLDAP Software <http://www.openldap.org/>.
 dnl
 dnl Copyright 1998-2006 The OpenLDAP Foundation.
@@ -25,7 +25,7 @@ dnl ================================================================
 dnl Configure.in for OpenLDAP
 AC_COPYRIGHT([[Copyright 1998-2006 The OpenLDAP Foundation. All rights reserved.
 Restrictions apply, see COPYRIGHT and LICENSE files.]])
-AC_REVISION([$OpenLDAP$])
+AC_REVISION([$OpenLDAP: pkg/ldap/configure.in,v 1.560.2.25 2006/01/16 19:06:12 kurt Exp $])
 AC_INIT([OpenLDAP],,[http://www.openldap.org/its/])
 m4_define([AC_PACKAGE_BUGREPORT],[<http://www.openldap.org/its/>])
 AC_CONFIG_SRCDIR(build/version.sh)dnl
@@ -2080,12 +2080,6 @@ fi
 if test $ol_enable_bdb = yes ||
    test $ol_enable_hdb = yes ||
    test $ol_enable_ldbm = yes ; then
-	SLAPD_LIBS="$SLAPD_LIBS \$(LDBM_LIBS)"
-fi
-
-if test $ol_enable_bdb = yes -o \
-	$ol_enable_hdb = yes -o \
-	$ol_enable_ldbm = yes ; then
 	SLAPD_LIBS="$SLAPD_LIBS \$(LDBM_LIBS)"
 fi
 

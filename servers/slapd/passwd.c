@@ -1,5 +1,5 @@
 /* passwd.c - password extended operation routines */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/passwd.c,v 1.95.2.19 2006/01/03 22:16:15 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2006 The OpenLDAP Foundation.
@@ -32,15 +32,6 @@
 #include <lber_pvt.h>
 #include <lutil.h>
 #include <lutil_sha1.h>
-
-static const char *defhash[] = {
-#ifdef LUTIL_SHA1_BYTES
-	"{SSHA}",
-#else
-	"{SMD5}",
-#endif
-	NULL
-};
 
 static const char *defhash[] = {
 #ifdef LUTIL_SHA1_BYTES
@@ -557,7 +548,6 @@ void
 slap_passwd_hash(
 	struct berval * cred,
 	struct berval * new,
-	char *hash,
 	const char **text )
 {
 	char *hash = NULL;

@@ -1,5 +1,5 @@
 /* map.c - ldap backend mapping routines */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/map.c,v 1.1.2.11 2006/01/03 22:16:20 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2006 The OpenLDAP Foundation.
@@ -39,23 +39,14 @@
  * 
  * 4. This notice may not be removed or altered.
  *
- * Copyright 1998-2005 The OpenLDAP Foundation.
- * Portions Copyright 1999-2003 Howard Chu.
- * Portions Copyright 2000-2003 Pierangelo Masarati.
- * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted only as authorized by the OpenLDAP
- * Public License.
  *
- * A copy of this license is available in the file LICENSE in the
- * top-level directory of the distribution or, alternatively, at
- * <http://www.OpenLDAP.org/license.html>.
- */
-/* ACKNOWLEDGEMENTS:
- * This work was initially developed by the Howard Chu for inclusion
- * in OpenLDAP Software and subsequently enhanced by Pierangelo
- * Masarati.
+ * Copyright 2000, Pierangelo Masarati, All rights reserved. <ando@sys-net.it>
+ * 
+ * This software is being modified by Pierangelo Masarati.
+ * The previously reported conditions apply to the modified code as well.
+ * Changes in the original code are highlighted where required.
+ * Credits for the original code go to the author, Howard Chu.
  */
 
 #include "portable.h"
@@ -234,7 +225,7 @@ map_attr_value(
 	}
 
 	if ( value == NULL ) {
-		return LDAP_SUCCESS;
+		return 0;
 	}
 
 	if ( ad->ad_type->sat_syntax == slap_schema.si_syn_distinguishedName )
@@ -253,8 +244,10 @@ map_attr_value(
 			break;
 		
 		case LDAP_UNWILLING_TO_PERFORM:
+			return -1;
+
 		case LDAP_OTHER:
-			return LDAP_OTHER;
+			return -1;
 		}
 
 	} else if ( ad == slap_schema.si_ad_objectClass || ad == slap_schema.si_ad_structuralObjectClass ) {
@@ -273,7 +266,7 @@ map_attr_value(
 		ber_memfree( vtmp.bv_val );
 	}
 	
-	return LDAP_SUCCESS;
+	return 0;
 }
 
 static int
@@ -283,7 +276,7 @@ ldap_back_int_filter_map_rewrite(
 		struct berval		*fstr,
 		int			remap )
 {
-	int		i, rc;
+	int		i;
 	Filter		*p;
 	struct berval	atmp,
 			vtmp,
@@ -549,8 +542,7 @@ computed:;
 		break;
 	}
 
-#endif /* ENABLE_REWRITE */
-	return rc;
+	return 0;
 }
 
 int

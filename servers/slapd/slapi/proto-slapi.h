@@ -1,4 +1,4 @@
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/slapi/proto-slapi.h,v 1.26.2.5 2006/01/03 22:16:25 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2002-2006 The OpenLDAP Foundation.
@@ -84,11 +84,6 @@ LDAP_SLAPI_F (int) slapi_int_clear_object_extensions LDAP_P((int objecttype, voi
 /* slapi_overlay.c */
 LDAP_SLAPI_F (int) slapi_over_is_inst LDAP_P((BackendDB *));
 LDAP_SLAPI_F (int) slapi_over_config LDAP_P((BackendDB *));
-
-int slapi_int_init_object_extensions(void);
-int slapi_int_free_object_extensions(int objecttype, void *object);
-int slapi_int_create_object_extensions(int objecttype, void *object);
-int slapi_int_clear_object_extensions(int objecttype, void *object);
 
 LDAP_END_DECL
 

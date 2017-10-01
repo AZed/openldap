@@ -1,4 +1,4 @@
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/modify.c,v 1.227.2.23 2006/01/17 19:37:20 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2006 The OpenLDAP Foundation.
@@ -608,22 +608,6 @@ int slap_mods_check(
 			return LDAP_CONSTRAINT_VIOLATION;
 		}
 #endif
-
-		if ( ml->sml_op == LDAP_MOD_INCREMENT &&
-#ifdef SLAPD_REAL_SYNTAX
-			!is_at_syntax( ad->ad_type, SLAPD_REAL_SYNTAX ) &&
-#endif
-			!is_at_syntax( ad->ad_type, SLAPD_INTEGER_SYNTAX ) )
-		{
-			/*
-			 * attribute values must be INTEGER or REAL
-			 */
-			snprintf( textbuf, textlen,
-				"%s: attribute syntax inappropriate for increment",
-				ml->sml_type.bv_val );
-			*text = textbuf;
-			return LDAP_CONSTRAINT_VIOLATION;
-		}
 
 		if ( ml->sml_op == LDAP_MOD_INCREMENT &&
 #ifdef SLAPD_REAL_SYNTAX

@@ -1,5 +1,5 @@
 #!/bin/sh
-# $OpenLDAP$
+# $OpenLDAP: pkg/ldap/tests/run.in,v 1.28.2.16 2006/01/03 22:16:27 kurt Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 1998-2006 The OpenLDAP Foundation.

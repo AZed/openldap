@@ -113,9 +113,6 @@ values (7,'ou=Referral,dc=example,dc=com',4,1,1);
 insert into ldap_entry_objclasses (entry_id,oc_name)
 values (1,'dcObject');
 
--- objectClass mapping: entries that have multiple objectClass instances are listed here with the objectClass name (view them as auxiliary objectClass)
---	entry_id	the "ldap_entries.id" of the entry this objectClass value must be added
---	oc_name		the name of the objectClass; it MUST match the name of an objectClass that is loaded in slapd's schema
 insert into ldap_entry_objclasses (entry_id,oc_name)
 values (7,'extensibleObject');
 

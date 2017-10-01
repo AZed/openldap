@@ -1,4 +1,4 @@
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/main.c,v 1.198.2.19 2006/01/03 22:16:14 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2006 The OpenLDAP Foundation.
@@ -225,7 +225,6 @@ usage( char *name )
 		"\t-s level\tSyslog level\n"
 #if defined(HAVE_SETUID) && defined(HAVE_SETGID)
 		"\t-u user\t\tUser (id or name) to run as\n"
-		"\t-V\t\tprint version info (-VV only)\n"
 #endif
 		"\t-V\t\tprint version info (-VV only)\n"
     );
@@ -267,10 +266,6 @@ int main( int argc, char **argv )
 
 	int slapd_pid_file_unlink = 0, slapd_args_file_unlink = 0;
 
-	struct berval cookie = BER_BVNULL;
-	struct sync_cookie *scp = NULL;
-	struct sync_cookie *scp_entry = NULL;
-
 #ifdef CSRIMALLOC
 	FILE *leakfile;
 	if( ( leakfile = fopen( "slapd.leak", "w" )) == NULL ) {
@@ -281,17 +276,6 @@ int main( int argc, char **argv )
 	slap_sl_mem_init();
 
 	(void) ldap_pvt_thread_initialize();
-
-	serverName = lutil_progname( "slapd", argc, argv );
-
-	if ( strcmp( serverName, "slapd" ) ) {
-		for (i=0; tools[i].name; i++) {
-			if ( !strcmp( serverName, tools[i].name ) ) {
-				rc = tools[i].func(argc, argv);
-				MAIN_RETURN(rc);
-			}
-		}
-	}
 
 	serverName = lutil_progname( "slapd", argc, argv );
 

@@ -1,5 +1,5 @@
 /* suffixmassage.c - massages ldap backend dns */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/suffixmassage.c,v 1.1.2.6 2006/01/03 22:16:20 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2003-2006 The OpenLDAP Foundation.
@@ -26,25 +26,26 @@
  * 
  * Module back-ldap, originally developed by Howard Chu
  *
- * Copyright 1999-2005 The OpenLDAP Foundation.
- * Portions Copyright 1999-2003 Howard Chu.
- * Portions Copyright 2000-2003 Pierangelo Masarati.
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted only as authorized by the OpenLDAP
- * Public License.
- *
- * A copy of this license is available in the file LICENSE in the
- * top-level directory of the distribution or, alternatively, at
- * <http://www.OpenLDAP.org/license.html>.
+ * has been modified by Pierangelo Masarati. The original copyright
+ * notice has been maintained.
+ * 
+ * Permission is granted to anyone to use this software for any purpose
+ * on any computer system, and to alter it and redistribute it, subject
+ * to the following restrictions:
+ * 
+ * 1. The author is not responsible for the consequences of use of this
+ *    software, no matter how awful, even if they arise from flaws in it.
+ * 
+ * 2. The origin of this software must not be misrepresented, either by
+ *    explicit claim or by omission.  Since few users ever read sources,
+ *    credits should appear in the documentation.
+ * 
+ * 3. Altered versions must be plainly marked as such, and must not be
+ *    misrepresented as being the original software.  Since few users
+ *    ever read sources, credits should appear in the documentation.
+ * 
+ * 4. This notice may not be removed or altered.
  */
-/* ACKNOWLEDGEMENTS:
- * This work was initially developed by the Howard Chu for inclusion
- * in OpenLDAP Software and subsequently enhanced by Pierangelo
- * Masarati.
- */
-
 
 #include "portable.h"
 
@@ -127,9 +128,9 @@ ldap_back_dn_massage(
 
 	assert( res != NULL );
 
-	res->bv_val = NULL;
-	res->bv_len = 0;
 	if ( dn == NULL ) {
+		res->bv_val = NULL;
+		res->bv_len = 0;
 		return 0;
 	}
 	if ( dc->target->mt_rwmap.rwm_suffix_massage == NULL ) {

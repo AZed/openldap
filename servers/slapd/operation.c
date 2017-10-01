@@ -1,5 +1,5 @@
 /* operation.c - routines to deal with pending ldap operations */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/operation.c,v 1.63.2.6 2006/01/03 22:16:15 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2006 The OpenLDAP Foundation.
@@ -63,8 +63,6 @@ void slap_op_destroy(void)
 void
 slap_op_free( Operation *op )
 {
-	struct berval slap_empty_bv_dup;
-
 	assert( LDAP_STAILQ_NEXT(op, o_next) == NULL );
 
 	if ( op->o_ber != NULL ) {
@@ -138,7 +136,6 @@ slap_op_alloc(
 )
 {
 	Operation	*op;
-	struct berval slap_empty_bv_dup;
 
 	ldap_pvt_thread_mutex_lock( &slap_op_mutex );
 	if ((op = LDAP_STAILQ_FIRST( &slap_free_ops ))) {

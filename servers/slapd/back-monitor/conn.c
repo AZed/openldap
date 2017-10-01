@@ -1,5 +1,5 @@
 /* conn.c - deal with connection subsystem */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/conn.c,v 1.56.2.5 2006/01/06 19:03:01 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2001-2006 The OpenLDAP Foundation.

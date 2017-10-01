@@ -1,4 +1,4 @@
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/candidates.c,v 1.12.2.11 2006/01/03 22:16:20 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2006 The OpenLDAP Foundation.
@@ -189,12 +189,6 @@ meta_clear_one_candidate(
 		memset( msc->msc_cred.bv_val, 0, msc->msc_cred.bv_len );
 		ber_memfree_x( msc->msc_cred.bv_val, NULL );
 		BER_BVZERO( &msc->msc_cred );
-	}
-
-	if ( lsc->cred.bv_val != NULL ) {
-		ber_memfree( lsc->cred.bv_val );
-		lsc->cred.bv_val = NULL;
-		lsc->cred.bv_len = 0;
 	}
 
 	return 0;

@@ -1,5 +1,5 @@
 /* result.c - routines to send ldap results, errors, and referrals */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/result.c,v 1.244.2.16 2006/01/03 22:16:15 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2006 The OpenLDAP Foundation.
@@ -53,19 +53,6 @@ int slap_freeself_cb( Operation *op, SlapReply *rs )
 	op->o_callback = NULL;
 
 	return SLAP_CB_CONTINUE;
-}
-
-int slap_replog_cb( Operation *op, SlapReply *rs )
-{
-	if ( rs->sr_err == LDAP_SUCCESS ) {
-		replog( op );
-	}
-	return SLAP_CB_CONTINUE;
-}
-
-int slap_null_cb( Operation *op, SlapReply *rs )
-{
-	return 0;
 }
 
 int slap_replog_cb( Operation *op, SlapReply *rs )
@@ -264,9 +251,6 @@ send_ldap_controls( Operation *o, BerElement *ber, LDAPControl **c )
 	rc = ber_printf( ber, "t{"/*}*/, LDAP_TAG_CONTROLS );
 	if( rc == -1 ) return rc;
 
-#ifdef LDAP_SLAPI
-	if ( c != NULL )
-#endif /* LDAP_SLAPI */
 	for( ; *c != NULL; c++) {
 		rc = send_ldap_control( ber, *c );
 		if( rc == -1 ) return rc;
@@ -585,26 +569,6 @@ slap_send_ldap_result( Operation *op, SlapReply *rs )
 			rs->sr_err = LDAP_PARTIAL_RESULTS;
 		}
 	}
-
-#ifdef LDAP_SLAPI
-	/*
-	 * Call pre-result plugins. To avoid infinite recursion plugins
-	 * should just set SLAPI_RESULT_CODE rather than sending a
-	 * result if they wish to change the result.
-	 */
-	if ( op->o_pb != NULL ) {
-		slapi_int_pblock_set_operation( op->o_pb, op );
-		slapi_pblock_set( op->o_pb, SLAPI_RESULT_CODE,
-			(void *)rs->sr_err );
-		slapi_pblock_set( op->o_pb, SLAPI_RESULT_TEXT,
-			(void *)rs->sr_text );
-		slapi_pblock_set( op->o_pb, SLAPI_RESULT_MATCHED,
-			(void *)rs->sr_matched );
-
-		(void) slapi_int_call_plugins( op->o_bd, SLAPI_PLUGIN_PRE_RESULT_FN,
-			op->o_pb );
-	}
-#endif /* LDAP_SLAPI */
 
 	if ( op->o_protocol < LDAP_VERSION3 ) {
 		tmp = v2ref( rs->sr_ref, rs->sr_text );

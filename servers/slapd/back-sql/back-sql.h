@@ -1,4 +1,4 @@
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/back-sql.h,v 1.30.2.9 2006/01/03 22:16:24 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2006 The OpenLDAP Foundation.
@@ -20,7 +20,6 @@
  * by OpenLDAP Software.  Additional significant contributors include
  * Pierangelo Masarati and Mark Adamson.
  */
-
 /*
  * The following changes have been addressed:
  *	 
@@ -584,6 +583,4 @@ typedef struct backsql_info {
 	( BACKSQL_LEGAL_ERROR( (rc) ) ? (rc) : LDAP_OTHER )
 
 #endif /* __BACKSQL_H__ */
-
-
 

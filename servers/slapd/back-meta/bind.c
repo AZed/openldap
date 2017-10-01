@@ -1,4 +1,4 @@
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/bind.c,v 1.40.2.22 2006/01/16 21:13:40 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2006 The OpenLDAP Foundation.
@@ -402,14 +402,6 @@ retry:;
 			}
 			break;
 		}
-		ber_dupbv( &lsc->cred, &op->oq_bind.rb_cred );
-		ldap_set_rebind_proc( lsc->ld, meta_back_rebind, lsc );
-	}
-
-	if ( li->cache.ttl != META_DNCACHE_DISABLED
-			&& op->o_req_ndn.bv_len != 0 ) {
-		( void )meta_dncache_update_entry( &li->cache,
-				&op->o_req_ndn, candidate );
 	}
 
 	if ( rs->sr_err != LDAP_SUCCESS ) {

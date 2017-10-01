@@ -1,5 +1,5 @@
 /* shellutil.c - common routines useful when building shell-based backends */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/shell-backends/shellutil.c,v 1.14.2.3 2006/01/03 22:16:25 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2006 The OpenLDAP Foundation.

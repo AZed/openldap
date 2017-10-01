@@ -5599,10 +5599,6 @@ openbsd*)
   fi
   ;;
 
-openedition*)
-  lt_cv_deplibs_check_method=pass_all
-  ;;
-
 osf3* | osf4* | osf5*)
   lt_cv_deplibs_check_method=pass_all
   ;;
@@ -33013,8 +33009,8 @@ fi
 echo "$as_me:$LINENO: result: $ol_cv_db_db41" >&5
 echo "${ECHO_T}$ol_cv_db_db41" >&6
 
-	if test $ol_cv_db_db_4 = yes ; then
-		ol_cv_lib_db=-ldb-4
+	if test $ol_cv_db_db41 = yes ; then
+		ol_cv_lib_db=-ldb41
 	fi
 fi
 
@@ -33122,8 +33118,8 @@ fi
 echo "$as_me:$LINENO: result: $ol_cv_db_db_41" >&5
 echo "${ECHO_T}$ol_cv_db_db_41" >&6
 
-	if test $ol_cv_db_db4 = yes ; then
-		ol_cv_lib_db=-ldb4
+	if test $ol_cv_db_db_41 = yes ; then
+		ol_cv_lib_db=-ldb-41
 	fi
 fi
 
@@ -33231,8 +33227,8 @@ fi
 echo "$as_me:$LINENO: result: $ol_cv_db_db_4_dot_1" >&5
 echo "${ECHO_T}$ol_cv_db_db_4_dot_1" >&6
 
-	if test $ol_cv_db_db = yes ; then
-		ol_cv_lib_db=-ldb
+	if test $ol_cv_db_db_4_dot_1 = yes ; then
+		ol_cv_lib_db=-ldb-4.1
 	fi
 fi
 
@@ -33340,8 +33336,8 @@ fi
 echo "$as_me:$LINENO: result: $ol_cv_db_db_4_1" >&5
 echo "${ECHO_T}$ol_cv_db_db_4_1" >&6
 
-	if test $ol_cv_db_db41 = yes ; then
-		ol_cv_lib_db=-ldb41
+	if test $ol_cv_db_db_4_1 = yes ; then
+		ol_cv_lib_db=-ldb-4-1
 	fi
 fi
 
@@ -33450,8 +33446,8 @@ fi
 echo "$as_me:$LINENO: result: $ol_cv_db_db_4" >&5
 echo "${ECHO_T}$ol_cv_db_db_4" >&6
 
-	if test $ol_cv_db_db_41 = yes ; then
-		ol_cv_lib_db=-ldb-41
+	if test $ol_cv_db_db_4 = yes ; then
+		ol_cv_lib_db=-ldb-4
 	fi
 fi
 
@@ -33559,8 +33555,8 @@ fi
 echo "$as_me:$LINENO: result: $ol_cv_db_db4" >&5
 echo "${ECHO_T}$ol_cv_db_db4" >&6
 
-	if test $ol_cv_db_db_4_dot_1 = yes ; then
-		ol_cv_lib_db=-ldb-4.1
+	if test $ol_cv_db_db4 = yes ; then
+		ol_cv_lib_db=-ldb4
 	fi
 fi
 
@@ -33668,8 +33664,8 @@ fi
 echo "$as_me:$LINENO: result: $ol_cv_db_db" >&5
 echo "${ECHO_T}$ol_cv_db_db" >&6
 
-	if test $ol_cv_db_db_4_1 = yes ; then
-		ol_cv_lib_db=-ldb-4-1
+	if test $ol_cv_db_db = yes ; then
+		ol_cv_lib_db=-ldb
 	fi
 fi
 
@@ -34396,90 +34392,6 @@ main ()
 	(void) dbopen( NULL, 0, 0, 0, NULL);
 #endif
 
-; return 0; }
-EOF
-if { (eval echo configure:19859: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
-  rm -rf conftest*
-  ol_cv_db_db_1=yes
-else
-  echo "configure: failed program was:" >&5
-  cat conftest.$ac_ext >&5
-  rm -rf conftest*
-  ol_cv_db_db_1=no
-fi
-rm -f conftest*
-
-	LIBS="$ol_LIBS"
-
-fi
-
-echo "$ac_t""$ol_cv_db_db_1" 1>&6
-
-	if test $ol_cv_db_db_1 = yes ; then
-		ol_cv_lib_db=-ldb-1
-	fi
-fi
-
-
-	if test "$ol_cv_lib_db" != no ; then
-		ol_cv_berkeley_db=yes
-		echo $ac_n "checking for Berkeley DB version match""... $ac_c" 1>&6
-echo "configure:19885: checking for Berkeley DB version match" >&5
-if eval "test \"\${ol_cv_berkeley_db_version+set}\" = set"; then
-  echo $ac_n "(cached) $ac_c" 1>&6
-else
-  
-	ol_LIBS="$LIBS"
-	LIBS="$LTHREAD_LIBS $LIBS"
-	if test $ol_cv_lib_db != yes ; then
-		LIBS="$ol_cv_lib_db $LIBS"
-	fi
-
-	if test "$cross_compiling" = yes; then
-  ol_cv_berkeley_db_version=cross
-else
-  cat > conftest.$ac_ext <<EOF
-#line 19900 "configure"
-#include "confdefs.h"
-
-#ifdef HAVE_DB_185_H
-	choke me;
-#else
-#include <db.h>
-#endif
-#ifndef DB_VERSION_MAJOR
-# define DB_VERSION_MAJOR 1
-#endif
-#ifndef NULL
-#define NULL ((void *)0)
-#endif
-main()
-{
-#if DB_VERSION_MAJOR > 1
-	char *version;
-	int major, minor, patch;
-
-	version = db_version( &major, &minor, &patch );
-
-		if( major != DB_VERSION_MAJOR ||
-			minor < DB_VERSION_MINOR )
-		{
-			printf("Berkeley DB version mismatch\n"
-				"\theader: %s\n\tlibrary: %s\n",
-				DB_VERSION_STRING, version);
-			return 1;
-		}
-	}
-#endif
-
-#if DB_VERSION_MAJOR > 2
-	db_env_create( NULL, 0 );
-#elif DB_VERSION_MAJOR > 1
-	db_appexit( NULL );
-#else
-	(void) dbopen( NULL, 0, 0, 0, NULL);
-#endif
-
   ;
   return 0;
 }
@@ -34525,6 +34437,7 @@ echo "${ECHO_T}$ol_cv_db_none" >&6
 	if test $ol_cv_db_none = yes ; then
 		ol_cv_lib_db=yes
 	fi
+fi
 
 
 	if test "$ol_cv_lib_db" != no ; then
@@ -36013,12 +35926,6 @@ fi
 if test $ol_enable_bdb = yes ||
    test $ol_enable_hdb = yes ||
    test $ol_enable_ldbm = yes ; then
-	SLAPD_LIBS="$SLAPD_LIBS \$(LDBM_LIBS)"
-fi
-
-if test $ol_enable_bdb = yes -o \
-	$ol_enable_hdb = yes -o \
-	$ol_enable_ldbm = yes ; then
 	SLAPD_LIBS="$SLAPD_LIBS \$(LDBM_LIBS)"
 fi
 
@@ -41961,46 +41868,6 @@ cat >>confdefs.h <<_ACEOF
 #define SIZEOF_WCHAR_T $ac_cv_sizeof_wchar_t
 _ACEOF
 
-
-echo $ac_n "checking size of wchar_t""... $ac_c" 1>&6
-echo "configure:22832: checking size of wchar_t" >&5 
-if eval "test \"\${ac_cv_sizeof_wchar_t+set}\" = set"; then
-  echo $ac_n "(cached) $ac_c" 1>&6
-else
-  for ac_size in 4 8 1 2 16  ; do # List sizes in rough order of prevalence. 
-  cat > conftest.$ac_ext <<EOF
-#line 22838 "configure"
-#include "confdefs.h"
-#include "confdefs.h" 
-#include <stdlib.h>
-#include <sys/types.h> 
- 
-
-int main() {
-switch (0) case 0: case (sizeof (wchar_t) == $ac_size):;
-; return 0; }
-EOF
-if { (eval echo configure:22849: \"$ac_compile\") 1>&5; (eval $ac_compile) 2>&5; }; then
-  rm -rf conftest*
-  ac_cv_sizeof_wchar_t=$ac_size
-else
-  echo "configure: failed program was:" >&5
-  cat conftest.$ac_ext >&5
-fi
-rm -f conftest* 
-  if test x$ac_cv_sizeof_wchar_t != x ; then break; fi 
-done 
-
-fi
- 
-if test x$ac_cv_sizeof_wchar_t = x ; then 
-  { echo "configure: error: cannot determine a size for wchar_t" 1>&2; exit 1; } 
-fi 
-echo "$ac_t""$ac_cv_sizeof_wchar_t" 1>&6 
-cat >> confdefs.h <<EOF
-#define SIZEOF_WCHAR_T $ac_cv_sizeof_wchar_t
-EOF
- 
 
 
 if test "$ac_cv_sizeof_int" -lt 4 ; then

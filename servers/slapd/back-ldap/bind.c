@@ -1,5 +1,5 @@
 /* bind.c - ldap backend bind function */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/bind.c,v 1.85.2.22 2006/01/16 21:13:40 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2006 The OpenLDAP Foundation.
@@ -854,7 +854,6 @@ ldap_back_default_rebind( LDAP *ld, LDAP_CONST char *url, ber_tag_t request,
 	return ldap_sasl_bind_s( ld, lc->lc_bound_ndn.bv_val,
 			LDAP_SASL_SIMPLE, &lc->lc_cred, NULL, NULL, NULL );
 }
-#endif
 
 int
 ldap_back_op_result(
@@ -868,8 +867,6 @@ ldap_back_op_result(
 	char		*match = NULL;
 	LDAPMessage	*res = NULL;
 	char		*text = NULL;
-
-#define	ERR_OK(err) ((err) == LDAP_SUCCESS || (err) == LDAP_COMPARE_FALSE || (err) == LDAP_COMPARE_TRUE)
 
 #define	ERR_OK(err) ((err) == LDAP_SUCCESS || (err) == LDAP_COMPARE_FALSE || (err) == LDAP_COMPARE_TRUE)
 

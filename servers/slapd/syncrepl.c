@@ -1,5 +1,5 @@
 /* syncrepl.c -- Replication Engine which uses the LDAP Sync protocol */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/syncrepl.c,v 1.168.2.27 2006/01/16 21:02:39 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2003-2006 The OpenLDAP Foundation.
@@ -1156,7 +1156,7 @@ reload:
 	ldap_pvt_thread_mutex_unlock( &slapd_rq.rq_mutex );
 	ldap_pvt_thread_mutex_unlock( &si->si_mutex );
 
-	return rc;
+	return NULL;
 }
 
 static slap_verbmasks modops[] = {
@@ -1581,35 +1581,7 @@ typedef struct dninfo {
 	AttributeDescription **ads;
 } dninfo;
 
-/* During a refresh, we may get an LDAP_SYNC_ADD for an already existing
- * entry if a previous refresh was interrupted before sending us a new
- * context state. We try to compare the new entry to the existing entry
- * and ignore the new entry if they are the same.
- *
- * Also, we may get an update where the entryDN has changed, due to
- * a ModDn on the provider. We detect this as well, so we can issue
- * the corresponding operation locally.
- *
- * In the case of a modify, we get a list of all the attributes
- * in the original entry. Rather than deleting the entry and re-adding it,
- * we issue a Modify request that deletes all the attributes and adds all
- * the new ones. This avoids the issue of trying to delete/add a non-leaf
- * entry.
- *
- * We don't try to otherwise distinguish ModDN from Modify; in the case of
- * a ModDN we will issue both operations on the local database.
- */
-typedef struct dninfo {
-	Entry *new_entry;
-	struct berval dn;
-	struct berval ndn;
-	int renamed;    /* Was an existing entry renamed? */
-	int wasChanged; /* are the attributes changed? */
-	int attrs;      /* how many attribute types are in the ads list */
-	AttributeDescription **ads;
-} dninfo;
-
-int
+static int
 syncrepl_entry(
 	syncinfo_t* si,
 	Operation *op,
@@ -2295,29 +2267,7 @@ syncrepl_add_glue(
 	return;
 }
 
-static struct berval ocbva[] = {
-	BER_BVC("top"),
-	BER_BVC("subentry"),
-	BER_BVC("syncConsumerSubentry"),
-	BER_BVNULL
-};
-
-static struct berval cnbva[] = {
-	BER_BVNULL,
-	BER_BVNULL
-};
-
-static struct berval ssbva[] = {
-	BER_BVC("{}"),
-	BER_BVNULL
-};
-
-static struct berval scbva[] = {
-	BER_BVNULL,
-	BER_BVNULL
-};
-
-void
+static void
 syncrepl_updateCookie(
 	syncinfo_t *si,
 	Operation *op,
@@ -2562,8 +2512,6 @@ slap_uuidstr_from_normalized(
 		}
 		return NULL;
 	}
-	return LDAP_SUCCESS;
-}
 
 	for ( i = 0; i < 16; i++ ) {
 		if ( i == 4 || i == 6 || i == 8 || i == 10 ) {

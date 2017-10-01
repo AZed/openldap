@@ -1,4 +1,4 @@
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/proto-slap.h,v 1.552.2.35 2006/01/23 23:52:17 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2006 The OpenLDAP Foundation.
@@ -439,14 +439,6 @@ LDAP_SLAPD_F (int) slap_cf_aux_table_parse LDAP_P(( const char *word, void *bc, 
 LDAP_SLAPD_F (int) slap_cf_aux_table_unparse LDAP_P(( void *bc, struct berval *bv, slap_cf_aux_table *tab0 ));
 
 /*
- * backover.c
- */
-
-LDAP_SLAPD_F (int) overlay_register( slap_overinst *on );
-LDAP_SLAPD_F (int) overlay_config( BackendDB *be, const char *ov );
-LDAP_SLAPD_F (slap_overinst *) overlay_next( slap_overinst *on );
-
-/*
  * ch_malloc.c
  */
 LDAP_SLAPD_V (BerMemoryFunctions) ch_mfuncs;
@@ -747,9 +739,6 @@ LDAP_SLAPD_V (volatile sig_atomic_t) slapd_shutdown;
 LDAP_SLAPD_V (int) slapd_register_slp;
 LDAP_SLAPD_V (slap_ssf_t) local_ssf;
 LDAP_SLAPD_V (struct runqueue_s) slapd_rq;
-
-LDAP_SLAPD_V (volatile sig_atomic_t) slapd_abrupt_shutdown;
-LDAP_SLAPD_V (volatile sig_atomic_t) slapd_shutdown;
 
 /*
  * dn.c
@@ -1052,8 +1041,7 @@ LDAP_SLAPD_F( int ) slap_mods_no_user_mod_check(
 	Operation *op,
 	Modifications *ml,
 	const char **text,
-	char *textbuf, size_t textlen,
-	int manage_ctxcsn );
+	char *textbuf, size_t textlen );
 
 LDAP_SLAPD_F ( int ) slap_mods_no_repl_user_mod_check(
 	Operation *op,
@@ -1780,7 +1768,6 @@ LDAP_SLAPD_V (struct berval)	NoAttrs;
  * operations
  */
 LDAP_SLAPD_F (int) do_abandon LDAP_P((Operation *op, SlapReply *rs));
-LDAP_SLAPD_F (int) fe_op_abandon LDAP_P((Operation *op, SlapReply *rs));
 LDAP_SLAPD_F (int) do_add LDAP_P((Operation *op, SlapReply *rs));
 LDAP_SLAPD_F (int) do_bind LDAP_P((Operation *op, SlapReply *rs));
 LDAP_SLAPD_F (int) do_compare LDAP_P((Operation *op, SlapReply *rs));

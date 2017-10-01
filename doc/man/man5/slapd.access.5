@@ -272,18 +272,6 @@ with
 	<modifier>={expand}
 .fi
 .LP
-with
-.LP
-.nf
-	<dnstyle>={{exact|base}|regex|sub(tree)|one(level)|children}
-	<groupstyle>={exact|expand}
-	<style>={exact|regex|expand}
-	<peernamestyle>={<style>|ip|path}
-	<domainstyle>={exact|regex|sub(tree)}
-	<setstyle>={exact|regex}
-	<modifier>={expand}
-.fi
-.LP
 They may be specified in combination.
 .LP
 .nf
@@ -489,17 +477,6 @@ other styles provide limited submatches as discussed above about
 the DN form of the 
 .B <by>
 clause.
-.LP
-For static groups, the specified attributeType must have
-.B DistinguishedName
-or
-.B NameAndOptionalUID
-syntax. For dynamic groups the attributeType must
-be a subtype of the
-.B labeledURI
-attributeType. Only LDAP URIs of the form
-.B ldap:///<base>??<scope>?<filter>
-will be evaluated in a dynamic group, by searching the local server only.
 .LP
 For static groups, the specified attributeType must have
 .B DistinguishedName

@@ -1,4 +1,4 @@
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/libraries/librewrite/rule.c,v 1.14.2.6 2006/01/03 22:16:11 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2006 The OpenLDAP Foundation.
@@ -423,7 +423,6 @@ recurse:;
 	if ( rc != 0 ) {
 		if ( *result == NULL && string != arg ) {
 			free( string );
-			string = NULL;
 		}
 
 		/*

@@ -1,5 +1,5 @@
 /* database.c - deals with database subsystem */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/database.c,v 1.61.2.8 2006/01/03 22:16:21 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2001-2006 The OpenLDAP Foundation.
@@ -192,13 +192,6 @@ monitor_subsys_database_init(
 		bi = be->bd_info;
 
 		if ( overlay_is_over( be ) ) {
-			oi = (slap_overinfo *)be->bd_info->bi_private;
-			bi = oi->oi_orig;
-		}
-
-		bi = be->bd_info;
-
-		if ( strcmp( be->bd_info->bi_type, "over" ) == 0 ) {
 			oi = (slap_overinfo *)be->bd_info->bi_private;
 			bi = oi->oi_orig;
 		}

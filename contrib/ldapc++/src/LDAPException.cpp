@@ -15,8 +15,8 @@
 using namespace std;
 
 LDAPException::LDAPException(int res_code, const string& err_string){
-    m_res_code=res_code;
-    m_res_string=string(ldap_err2string(res_code));
+	m_res_code=res_code;
+	m_res_string=string(ldap_err2string(res_code));
     m_err_string=err_string;
 }
 
@@ -42,11 +42,11 @@ LDAPException::~LDAPException(){
 }
 
 int LDAPException::getResultCode() const{
-    return m_res_code;
+	return m_res_code;
 }
 
 const string& LDAPException::getResultMsg() const{
-    return m_res_string;
+	return m_res_string;
 }
 
 const string& LDAPException::getServerMsg() const{

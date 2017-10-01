@@ -1,5 +1,5 @@
 /* config.c - configuration file handling routines */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/config.c,v 1.341.2.20 2006/01/03 22:16:13 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2006 The OpenLDAP Foundation.
@@ -818,22 +818,6 @@ read_config_file(const char *fname, int depth, ConfigArgs *cf, ConfigTable *cft)
 				default:
 					rc = 1;
 					goto done;
-				}
-
-				*tgt = strtol( src, &next, 10 );
-				if ( next == NULL || next[0] != '\0' ) {
-#ifdef NEW_LOGGING
-					LDAP_LOG( CONFIG, CRIT, 
-						   "%s: line %d: unable to parse factor \"%s\" in "
-						   "\"security <factors>\" line.\n",
-						   fname, lineno, cargv[1] );
-#else
-					Debug( LDAP_DEBUG_ANY,
-		    "%s: line %d: unable to parse factor \"%s\" in \"security <factors>\" line\n",
-					    fname, lineno, cargv[i] );
-#endif
-
-					return( 1 );
 				}
 			}
 

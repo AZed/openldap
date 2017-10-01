@@ -284,17 +284,6 @@ INTERNET-DRAFT       draft-zeilenga-ldap-authzid-10     19 November 2004
   The LDAP "Who am I?" operation takes it name from the UNIX whoami(1)
   command.  The whoami(1) command displays the effective user id.
 
-  The LDAP "Who am I?" operation takes it name from the UNIX whoami(1)
-  command.  The whoami(1) command displays the effective user id.
-
-
-
-
-
-Zeilenga                    LDAP "Who am I?"                    [Page 5]
-
-INTERNET-DRAFT       draft-zeilenga-ldap-authzid-08      1 November 2002
-
 
 8. Author's Address
 

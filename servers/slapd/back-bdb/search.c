@@ -1,5 +1,5 @@
 /* search.c - search operation */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/search.c,v 1.221.2.14 2006/01/16 18:59:27 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2006 The OpenLDAP Foundation.
@@ -583,28 +583,6 @@ dn2entry_retry:
 		bdb_cache_return_entry_r(bdb->bi_dbenv, &bdb->bi_cache, e, &lock);
 	}
 	e = NULL;
-
-	if ( !IS_PSEARCH ) {
-		rs->sr_err = bdb_get_commit_csn( sop, rs, &search_context_csn,
-			locker, &ctxcsn_lock );
-
-		if ( rs->sr_err != LDAP_SUCCESS ) {
-			send_ldap_error( sop, rs, rs->sr_err,
-				"error in csn management in search" );
-			goto done;
-		}
-
-		if ( sop->o_sync_mode != SLAP_SYNC_NONE &&
-			sop->o_sync_state.ctxcsn &&
-			sop->o_sync_state.ctxcsn->bv_val &&
-			ber_bvcmp( &sop->o_sync_state.ctxcsn[0], search_context_csn ) == 0 )
-		{
-			bdb_cache_entry_db_unlock( bdb->bi_dbenv, &ctxcsn_lock );
-			goto nochange;
-		}
-	} else {
-		search_context_csn = ber_dupbv( NULL, &op->o_sync_csn );	
-	}
 
 	/* select candidates */
 	if ( op->oq_search.rs_scope == LDAP_SCOPE_BASE ) {

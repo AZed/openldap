@@ -1,4 +1,4 @@
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/controls.c,v 1.125.2.19 2006/01/10 01:27:01 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2006 The OpenLDAP Foundation.
@@ -33,7 +33,6 @@ static SLAP_CTRL_PARSE_FN parseDontUseCopy;
 static SLAP_CTRL_PARSE_FN parseManageDIT;
 #endif
 static SLAP_CTRL_PARSE_FN parseManageDSAit;
-static SLAP_CTRL_PARSE_FN parseModifyIncrement;
 static SLAP_CTRL_PARSE_FN parseNoOp;
 static SLAP_CTRL_PARSE_FN parsePagedResults;
 #ifdef LDAP_DEVEL
@@ -93,12 +92,6 @@ static LDAP_SLIST_HEAD(ControlsList, slap_control) controls_list
  */
 char *slap_known_controls[SLAP_MAX_CIDS+1];
 static int num_known_controls = 1;
-
-static char *proxy_authz_extops[] = {
-	LDAP_EXOP_MODIFY_PASSWD,
-	LDAP_EXOP_X_WHO_AM_I,
-	NULL
-};
 
 static char *proxy_authz_extops[] = {
 	LDAP_EXOP_MODIFY_PASSWD,
@@ -679,7 +672,6 @@ int get_ctrls(
 		if ( rs->sr_err != LDAP_SUCCESS ) {
 			goto return_results;
 		}
-next_ctrl:;
 	}
 
 return_results:
@@ -913,9 +905,6 @@ static int parseProxyAuthz (
 
 	ch_free( op->o_ndn.bv_val );
 	ch_free( op->o_dn.bv_val );
-
-	Statslog( LDAP_DEBUG_STATS, "conn=%lu op=%lu PROXYAUTHZ dn=\"%s\"\n",
-	    op->o_connid, op->o_opid, dn.bv_val, 0, 0 );
 
 	/*
 	 * NOTE: since slap_sasl_getdn() returns a normalized dn,

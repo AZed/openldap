@@ -1,5 +1,5 @@
 /* Generic syslog.h */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/include/ac/syslog.h,v 1.15.2.2 2006/01/03 22:16:07 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2006 The OpenLDAP Foundation.

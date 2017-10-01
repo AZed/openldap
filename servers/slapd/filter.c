@@ -1,5 +1,5 @@
 /* filter.c - routines for parsing and dealing with filters */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/filter.c,v 1.125.2.8 2006/01/23 23:52:17 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2006 The OpenLDAP Foundation.
@@ -44,11 +44,6 @@ static int	get_ssa(
 	BerElement *ber,
 	SubstringsAssertion **s,
 	const char **text );
-
-static int filter_escape_value_x(
-	struct berval *in,
-	struct berval *out,
-	void *ctx );
 
 static void simple_vrFilter2bv(
 	Operation *op,

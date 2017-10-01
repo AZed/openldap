@@ -7143,10 +7143,6 @@ int
 main ()
 {
 
-int
-main ()
-{
-return f != shl_load;
   ;
   return 0;
 }
@@ -19319,7 +19315,7 @@ DLLTOOL="$DLLTOOL"
 OBJDUMP="$OBJDUMP"
 
 # Used on cygwin: assembler.
-AS=$lt_AS
+AS="$AS"
 
 # The name of the directory that contains temporary libtool files.
 objdir=$objdir

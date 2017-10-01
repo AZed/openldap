@@ -1,4 +1,4 @@
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/proto-bdb.h,v 1.111.2.9 2006/01/03 22:16:17 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2006 The OpenLDAP Foundation.
@@ -65,20 +65,6 @@ void bdb_attr_info_free( AttrInfo *ai );
 #define bdb_back_init_cf				BDB_SYMBOL(back_init_cf)
 
 int bdb_back_init_cf( BackendInfo *bi );
-
-/*
- * ctxcsn.c
- */
-#define bdb_csn_commit				BDB_SYMBOL(csn_commit)
-#define bdb_get_commit_csn			BDB_SYMBOL(get_commit_csn)
-
-int bdb_csn_commit LDAP_P(( Operation *op, SlapReply *rs, DB_TXN *tid,
-						EntryInfo *ei, EntryInfo **suffix_ei, Entry **ctxcsn_e,
-						int *ctxcsn_added, u_int32_t locker ));
-
-int bdb_get_commit_csn LDAP_P(( Operation *op, SlapReply *rs,
-						struct berval **search_context_csn,
-						u_int32_t locker, DB_LOCK *ctxcsn_lock ));
 
 /*
  * dbcache.c

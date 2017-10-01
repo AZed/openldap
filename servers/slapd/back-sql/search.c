@@ -1,4 +1,4 @@
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/search.c,v 1.81.2.10 2006/01/03 22:16:24 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2006 The OpenLDAP Foundation.
@@ -247,14 +247,6 @@ backsql_init_search(
 				backsql_attrlist_add( bsi, p->an_desc );
 			}
 
-		}
-
-		if ( is_oc == 0 ) {
-			/* add objectClass if not present,
-			 * because it is required to understand
-			 * if an entry is a referral, an alias 
-			 * or so... */
-			backsql_attrlist_add( bsi, slap_schema.si_ad_objectClass );
 		}
 	}
 
@@ -1436,19 +1428,6 @@ backsql_srch_query( backsql_srch_info *bsi, struct berval *query )
 		}
 		break;
 		
-	case BACKSQL_SCOPE_BASE_LIKE:
-		if ( BACKSQL_CANUPPERCASE( bi ) ) {
-			backsql_strfcat( &bsi->bsi_join_where, "bl",
-					&bi->upper_func,
-					(ber_len_t)STRLENOF( "(ldap_entries.dn) LIKE ?" ),
-						"(ldap_entries.dn) LIKE ?" );
-		} else {
-			backsql_strfcat( &bsi->bsi_join_where, "l",
-					(ber_len_t)STRLENOF( "ldap_entries.dn LIKE ?" ),
-						"ldap_entries.dn LIKE ?" );
-		}
-		break;
-		
 	case LDAP_SCOPE_ONELEVEL:
 		backsql_strfcat_x( &bsi->bsi_join_where,
 				bsi->bsi_op->o_tmpmemctx,
@@ -2200,32 +2179,6 @@ backsql_search( Operation *op, SlapReply *rs )
 				continue;
 			}
 			e = &user_entry;
-		}
-
-		/* check scope */
-		switch ( op->ors_scope ) {
-		case LDAP_SCOPE_BASE:
-		case BACKSQL_SCOPE_BASE_LIKE:
-			if ( !bvmatch( &user_entry.e_nname, &op->o_req_ndn ) ) {
-				goto next_entry;
-			}
-			break;
-
-		case LDAP_SCOPE_ONE:
-		{
-			struct berval	rdn = user_entry.e_nname;
-			rdn.bv_len -= op->o_req_ndn.bv_len + STRLENOF( "," );
-			if ( !dnIsOneLevelRDN( &rdn ) ) {
-				goto next_entry;
-			}
-			/* fall thru */
-		}
-
-		case LDAP_SCOPE_SUBTREE:
-			if ( !dnIsSuffix( &user_entry.e_nname, &op->o_req_ndn ) ) {
-				goto next_entry;
-			}
-			break;
 		}
 
 		if ( !manageDSAit &&

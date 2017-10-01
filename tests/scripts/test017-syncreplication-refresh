@@ -1,5 +1,5 @@
 #! /bin/sh
-# $OpenLDAP$
+# $OpenLDAP: pkg/ldap/tests/scripts/test017-syncreplication-refresh,v 1.24.2.3 2006/01/03 22:16:29 kurt Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 1998-2006 The OpenLDAP Foundation.
@@ -22,8 +22,6 @@ if test $SYNCPROV = syncprovno; then
 fi 
 
 mkdir -p $TESTDIR $DBDIR1 $DBDIR2
-
-mkdir -p $TESTDIR $DBDIR1 $DBDIR2 $DBDIR3
 
 #
 # Test replication:

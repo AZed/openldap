@@ -1,4 +1,4 @@
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/entry-id.c,v 1.46.2.10 2006/01/03 22:16:24 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2006 The OpenLDAP Foundation.
@@ -65,11 +65,6 @@ backsql_free_entryID( Operation *op, backsql_entryID *id, int freeit )
 	if ( !BER_BVISNULL( &id->eid_keyval ) ) {
 		op->o_tmpfree( id->eid_keyval.bv_val, op->o_tmpmemctx );
 		BER_BVZERO( &id->eid_keyval );
-	}
-#endif /* BACKSQL_ARBITRARY_KEY */
-
-	if ( id->eid_keyval.bv_val ) {
-		free( id->eid_keyval.bv_val );
 	}
 #endif /* BACKSQL_ARBITRARY_KEY */
 
@@ -555,18 +550,6 @@ backsql_get_attr_vals( void *v_at, void *v_bsi )
 		SQLFreeStmt( sth, SQL_DROP );
 		return 1;
 	}
-
-#ifdef BACKSQL_TRACE
-#ifdef BACKSQL_ARBITRARY_KEY
-	Debug( LDAP_DEBUG_TRACE, "backsql_get_attr_values(): "
-		"query=\"%s\" keyval=%s\n", at->bam_query,
-		bsi->bsi_c_eid->eid_keyval.bv_val, 0 );
-#else /* !BACKSQL_ARBITRARY_KEY */
-	Debug( LDAP_DEBUG_TRACE, "backsql_get_attr_values(): "
-		"query=\"%s\" keyval=%d\n", at->bam_query,
-		bsi->bsi_c_eid->eid_keyval, 0 );
-#endif /* ! BACKSQL_ARBITRARY_KEY */
-#endif /* BACKSQL_TRACE */
 
 	rc = SQLExecute( sth );
 	if ( ! BACKSQL_SUCCESS( rc ) ) {

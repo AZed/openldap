@@ -1,5 +1,5 @@
 /* backend.c - routines for dealing with back-end databases */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/backend.c,v 1.288.2.22 2006/01/03 22:16:13 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2006 The OpenLDAP Foundation.
@@ -223,9 +223,9 @@ int backend_startup_one(Backend *be)
 	return rc;
 }
 
-/* startup a specific backend database */
-int backend_startup_one(Backend *be)
+int backend_startup(Backend *be)
 {
+	int i;
 	int rc = 0;
 	BackendInfo *bi;
 
@@ -1254,17 +1254,6 @@ fe_acl_group(
 		op->o_private = o_priv;
 	}
 	if ( e ) {
-#ifdef LDAP_SLAPI
-		if ( op->o_pb != NULL ) {
-			init_group_pblock( op, target, e, op_ndn, group_at );
-
-			rc = call_group_preop_plugins( op );
-			if ( rc == LDAP_SUCCESS ) {
-				goto done;
-			}
-		}
-#endif /* LDAP_SLAPI */
-
 		a = attr_find( e->e_attrs, group_at );
 		if ( a ) {
 			/* If the attribute is a subtype of labeledURI, treat this as
@@ -1380,10 +1369,6 @@ loopit:
 		rc = LDAP_NO_SUCH_OBJECT;
 	}
 
-#ifdef LDAP_SLAPI
-	if ( op->o_pb ) call_group_postop_plugins( op );
-#endif /* LDAP_SLAPI */
-
 	if ( op->o_tag != LDAP_REQ_BIND && !op->o_do_not_cache ) {
 		g = op->o_tmpalloc( sizeof( GroupAssertion ) + gr_ndn->bv_len,
 			op->o_tmpmemctx );
@@ -1400,57 +1385,6 @@ done:
 	op->o_bd = be;
 	return rc;
 }
-
-#ifdef LDAP_SLAPI
-static int backend_compute_output_attr(computed_attr_context *c, Slapi_Attr *a, Slapi_Entry *e)
-{
-	BerVarray v;
-	int rc;
-	BerVarray *vals = (BerVarray *)c->cac_private;
-	Operation *op = NULL;
-	int i, j;
-
-	slapi_pblock_get( c->cac_pb, SLAPI_OPERATION, &op );
-	if ( op == NULL ) {
-		return 1;
-	}
-
-	if ( op->o_conn && access_allowed( op,
-		e, a->a_desc, NULL, ACL_AUTH,
-		&c->cac_acl_state ) == 0 ) {
-		return 1;
-	}
-
-	for ( i=0; a->a_vals[i].bv_val; i++ ) ;
-			
-	v = op->o_tmpalloc( sizeof(struct berval) * (i+1),
-		op->o_tmpmemctx );
-	for ( i=0,j=0; a->a_vals[i].bv_val; i++ ) {
-		if ( op->o_conn && access_allowed( op,
-			e, a->a_desc,
-			&a->a_nvals[i],
-			ACL_AUTH, &c->cac_acl_state ) == 0 ) {
-			continue;
-		}
-		ber_dupbv_x( &v[j],
-			&a->a_nvals[i], op->o_tmpmemctx );
-		if (v[j].bv_val ) j++;
-	}
-
-	if (j == 0) {
-		op->o_tmpfree( v, op->o_tmpmemctx );
-		*vals = NULL;
-		rc = 1;
-	} else {
-		v[j].bv_val = NULL;
-		v[j].bv_len = 0;
-		*vals = v;
-		rc = 0;
-	}
-
-	return rc;
-}
-#endif /* LDAP_SLAPI */
 
 int 
 backend_group(
@@ -1791,39 +1725,4 @@ int backend_operational( Operation *op, SlapReply *rs )
 
 	return rc;
 }
-
-#ifdef LDAP_SLAPI
-static void init_group_pblock( Operation *op, Entry *target,
-	Entry *e, struct berval *op_ndn, AttributeDescription *group_at )
-{
-	slapi_int_pblock_set_operation( op->o_pb, op );
-	slapi_pblock_set( op->o_pb, SLAPI_X_GROUP_ENTRY, (void *)e );
-	slapi_pblock_set( op->o_pb, SLAPI_X_GROUP_OPERATION_DN, (void *)op_ndn->bv_val );
-	slapi_pblock_set( op->o_pb, SLAPI_X_GROUP_ATTRIBUTE, (void *)group_at->ad_cname.bv_val );
-	slapi_pblock_set( op->o_pb, SLAPI_X_GROUP_TARGET_ENTRY, (void *)target );
-}
-
-static int call_group_preop_plugins( Operation *op )
-{
-	int rc;
-
-	rc = slapi_int_call_plugins( op->o_bd, SLAPI_X_PLUGIN_PRE_GROUP_FN, op->o_pb );
-	if ( rc < 0 ) {
-		if (( slapi_pblock_get( op->o_pb, SLAPI_RESULT_CODE,
-			(void *)&rc ) != 0 ) || rc == LDAP_SUCCESS )
-		{
-			rc = LDAP_NO_SUCH_ATTRIBUTE;
-		}
-	} else {
-		rc = LDAP_SUCCESS;
-	}
-
-	return rc;
-}
-
-static void call_group_postop_plugins( Operation *op )
-{
-	(void) slapi_int_call_plugins( op->o_bd, SLAPI_X_PLUGIN_POST_GROUP_FN, op->o_pb );
-}
-#endif /* LDAP_SLAPI */
 

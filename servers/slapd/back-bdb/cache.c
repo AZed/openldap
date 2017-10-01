@@ -1,5 +1,5 @@
 /* cache.c - routines to maintain an in-core cache of entries */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/cache.c,v 1.88.2.14 2006/01/07 18:51:55 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2006 The OpenLDAP Foundation.
@@ -39,8 +39,6 @@ static int	bdb_cache_delete_internal(Cache *cache, EntryInfo *e, int decr);
 static void	bdb_lru_print(Cache *cache);
 #endif
 #endif
-
-static int bdb_txn_get( Operation *op, DB_ENV *env, DB_TXN **txn, int reset );
 
 static EntryInfo *
 bdb_cache_entryinfo_new( Cache *cache )
@@ -1294,62 +1292,6 @@ bdb_lru_print( Cache *cache )
 }
 #endif
 #endif
-
-static void
-bdb_txn_free( void *key, void *data )
-{
-	DB_TXN *txn = data;
-	TXN_ABORT( txn );
-}
-
-/* Obtain a long-lived transaction for the current thread.
- * If reset == 1, remove the current transaction. */
-static int
-bdb_txn_get( Operation *op, DB_ENV *env, DB_TXN **txn, int reset )
-{
-	int i, rc, lockid;
-	void *ctx, *data = NULL;
-
-	/* If no op was provided, try to find the ctx anyway... */
-	if ( op ) {
-		ctx = op->o_threadctx;
-	} else {
-		ctx = ldap_pvt_thread_pool_context();
-	}
-
-	/* Shouldn't happen unless we're single-threaded */
-	if ( !ctx ) {
-		*txn = NULL;
-		return 0;
-	}
-
-	if ( reset ) {
-		TXN_ABORT( *txn );
-		return ldap_pvt_thread_pool_setkey( ctx, ((char *)env)+1, NULL, NULL );
-	}
-
-	if ( ldap_pvt_thread_pool_getkey( ctx, ((char *)env)+1, &data, NULL ) ||
-		data == NULL ) {
-		for ( i=0, rc=1; rc != 0 && i<4; i++ ) {
-			rc = TXN_BEGIN( env, NULL, txn, 0 );
-			if (rc) ldap_pvt_thread_yield();
-		}
-		if ( rc != 0) {
-			return rc;
-		}
-		if ( ( rc = ldap_pvt_thread_pool_setkey( ctx, ((char *)env)+1,
-			*txn, bdb_txn_free ) ) ) {
-			TXN_ABORT( *txn );
-			Debug( LDAP_DEBUG_ANY, "bdb_txn_get: err %s(%d)\n",
-				db_strerror(rc), rc, 0 );
-
-			return rc;
-		}
-	} else {
-		*txn = data;
-	}
-	return 0;
-}
 
 #ifdef BDB_REUSE_LOCKERS
 static void

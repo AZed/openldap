@@ -1,4 +1,4 @@
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/init.c,v 1.47.2.11 2006/01/03 22:16:24 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2006 The OpenLDAP Foundation.
@@ -30,7 +30,7 @@
 #include "proto-sql.h"
 
 int
-backsql_initialize(
+sql_back_initialize(
 	BackendInfo	*bi )
 { 
 	static char *controls[] = {
@@ -38,7 +38,6 @@ backsql_initialize(
 		LDAP_CONTROL_MANAGEDSAIT,
 #if 0 /* needs improvements */
 		LDAP_CONTROL_NOOP,
-#endif /* LDAP_CONTROL_NOOP */
 #endif
 #ifdef SLAP_CONTROL_X_TREE_DELETE
 		SLAP_CONTROL_X_TREE_DELETE,

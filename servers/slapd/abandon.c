@@ -1,5 +1,5 @@
 /* abandon.c - decode and handle an ldap abandon operation */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/abandon.c,v 1.45.2.7 2006/01/03 22:16:12 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2006 The OpenLDAP Foundation.
@@ -111,20 +111,6 @@ int
 fe_op_abandon( Operation *op, SlapReply *rs )
 {
 	LDAP_STAILQ_FOREACH( op->o_bd, &backendDB, be_next ) {
-		if ( op->o_bd->be_abandon ) {
-			(void)op->o_bd->be_abandon( op, rs );
-		}
-	}
-
-	return LDAP_SUCCESS;
-}
-
-int fe_op_abandon( Operation *op, SlapReply *rs )
-{
-	int i;
-
-	for ( i = 0; i < nbackends; i++ ) {
-		op->o_bd = &backends[i];
 		if ( op->o_bd->be_abandon ) {
 			(void)op->o_bd->be_abandon( op, rs );
 		}

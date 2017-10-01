@@ -1,5 +1,5 @@
 /* add.c - ldap ldbm back-end add routine */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/add.c,v 1.92.2.6 2006/01/03 22:16:18 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2006 The OpenLDAP Foundation.
@@ -161,7 +161,6 @@ ldbm_back_add(
 
 			return LDAP_INSUFFICIENT_ACCESS;
 		}
-#endif
 
 #ifdef LDBM_SUBENTRIES
 		if ( is_entry_subentry( p )) {

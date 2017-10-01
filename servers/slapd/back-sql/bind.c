@@ -1,4 +1,4 @@
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/bind.c,v 1.28.2.4 2006/01/03 22:16:24 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2006 The OpenLDAP Foundation.
@@ -37,7 +37,6 @@ backsql_bind( Operation *op, SlapReply *rs )
 	backsql_srch_info	bsi = { 0 };
 	AttributeName		anlist[2];
 	int			rc;
-	struct berval		dn;
  
  	Debug( LDAP_DEBUG_TRACE, "==>backsql_bind()\n", 0, 0, 0 );
 
@@ -92,7 +91,6 @@ backsql_bind( Operation *op, SlapReply *rs )
 		rs->sr_err = LDAP_INVALID_CREDENTIALS;
 		goto error_return;
 	}
-	e = &user_entry;
 
 	if ( slap_passwd_check( op, &e, a, &op->oq_bind.rb_cred,
 				&rs->sr_text ) != 0 )

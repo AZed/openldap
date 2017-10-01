@@ -1,5 +1,5 @@
 /* back-ldap.h - ldap backend header file */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/back-ldap.h,v 1.63.2.16 2006/01/10 01:07:31 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2006 The OpenLDAP Foundation.
@@ -216,17 +216,6 @@ typedef enum ldap_back_send_t {
 		(tv)->tv_sec = LDAP_BACK_RESULT_TIMEOUT; \
 		(tv)->tv_usec = LDAP_BACK_RESULT_UTIMEOUT; \
 	} while ( 0 )
-
-extern int ldap_chain_setup();
-
-#ifdef LDAP_BACK_PROXY_AUTHZ
-extern int
-ldap_back_proxy_authz_ctrl(
-		struct ldapconn	*lc,
-		Operation	*op,
-		SlapReply	*rs,
-		LDAPControl	***pctrls );
-#endif /* LDAP_BACK_PROXY_AUTHZ */
 
 LDAP_END_DECL
 

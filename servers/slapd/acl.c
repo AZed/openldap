@@ -1,5 +1,5 @@
 /* acl.c - routines to parse and check acl's */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/acl.c,v 1.250.2.22 2006/01/04 18:09:37 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2006 The OpenLDAP Foundation.
@@ -36,10 +36,6 @@
 #include "sets.h"
 #include "lber_pvt.h"
 #include "lutil.h"
-
-#ifdef LDAP_SLAPI
-#include "slapi/slapi.h"
-#endif /* LDAPI_SLAPI */
 
 #define ACL_BUF_SIZE 	1024	/* use most appropriate size */
 
@@ -152,16 +148,6 @@ slap_access_allowed(
 	assert( attr != NULL );
 
 	ACL_INIT( mask );
-
-#ifdef LDAP_SLAPI
-	if ( op->o_pb != NULL ) {
-		ret = slapi_int_access_allowed( op, e, desc, val, access, state );
-		if ( ret == 0 ) {
-			/* ACL plugin denied access */
-			goto done;
-		}
-	}
-#endif /* LDAP_SLAPI */
 
 	/* grant database root access */
 	if ( be_isroot( op ) ) {
@@ -403,7 +389,6 @@ access_allowed_mask(
 		} else {
 			*state = state_init;
 		}
-		prev = NULL;
 
 		state->as_vd_ad = desc;
 	}
@@ -2479,8 +2464,6 @@ acl_set_cb_gather( Operation *op, SlapReply *rs )
 
 					bvalsp = a->a_nvals;
 				}
-				ber_bvarray_free_x(bvals, op->o_tmpmemctx);
-				sl_free(ndn.bv_val, op->o_tmpmemctx);
 			}
 		}
 

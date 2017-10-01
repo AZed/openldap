@@ -1,4 +1,4 @@
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/slapi/slapi_utils.c,v 1.136.2.10 2006/01/23 23:52:18 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2002-2006 The OpenLDAP Foundation.
@@ -2684,10 +2684,6 @@ Modifications *slapi_int_ldapmods2modifications ( LDAPMod **mods )
 	LDAPMod **modp;
 	char textbuf[SLAP_TEXT_BUFLEN];
 	const char *text;
-
-	if ( mods == NULL ) {
-		return NULL;
-	}
 
 	if ( mods == NULL ) {
 		return NULL;

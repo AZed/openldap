@@ -1,4 +1,4 @@
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/sasl.c,v 1.212.2.15 2006/01/03 22:16:15 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2006 The OpenLDAP Foundation.
@@ -506,12 +506,12 @@ static sasl_auxprop_plug_t slap_auxprop_plugin = {
 };
 
 static int
-slap_auxprop_store(
-	void *glob_context,
-	sasl_server_params_t *sparams,
-	struct propctx *prctx,
-	const char *user,
-	unsigned ulen)
+slap_auxprop_init(
+	const sasl_utils_t *utils,
+	int max_version,
+	int *out_version,
+	sasl_auxprop_plug_t **plug,
+	const char *plugname)
 {
 	if ( !out_version || !plug ) return SASL_BADPARAM;
 
@@ -1642,12 +1642,6 @@ int slap_sasl_getdn( Connection *conn, Operation *op, struct berval *id,
 	}
 
 	if ( !BER_BVISEMPTY( &conn->c_sasl_bind_mech ) ) {
-		mech = &conn->c_sasl_bind_mech;
-	} else {
-		mech = &conn->c_authmech;
-	}
-
-	if ( conn->c_sasl_bind_mech.bv_len ) {
 		mech = &conn->c_sasl_bind_mech;
 	} else {
 		mech = &conn->c_authmech;

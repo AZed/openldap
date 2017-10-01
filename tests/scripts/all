@@ -1,5 +1,5 @@
 #! /bin/sh
-# $OpenLDAP$
+# $OpenLDAP: pkg/ldap/tests/scripts/all,v 1.23.2.3 2006/01/03 22:16:28 kurt Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 1998-2006 The OpenLDAP Foundation.
@@ -17,8 +17,6 @@ SHTOOL="$SRCDIR/../build/shtool"
 TB=`$SHTOOL echo -e "%B"`
 TN=`$SHTOOL echo -e "%b"`
 SLEEPTIME=10
-
-echo ">>>>> Executing all LDAP tests for $BACKEND"
 
 echo ">>>>> Executing all LDAP tests for $BACKEND"
 

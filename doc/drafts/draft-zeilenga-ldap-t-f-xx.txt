@@ -243,13 +243,6 @@ INTERNET-DRAFT       draft-zeilenga-ldap-t-f-10.txt     10 February 2005
                 http://www.iana.org/assignments/enterprise-numbers.
 
 
-  The IETF takes no position regarding the validity or scope of any
-  intellectual property or other rights that might be claimed to pertain
-  to the implementation or use of the technology described in this
-  document or the extent to which any license under such rights might or
-  might not be available; neither does it represent that it has made any
-  effort to identify any such rights.  Information on the IETF's
-  procedures with respect to rights in standards-track and
 
 Intellectual Property Rights
 

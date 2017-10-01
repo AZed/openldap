@@ -1,5 +1,5 @@
 /* modrdn.c - ldbm backend modrdn routine */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/modrdn.c,v 1.153.2.7 2006/01/03 22:16:19 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2006 The OpenLDAP Foundation.
@@ -92,9 +92,6 @@ ldbm_back_modrdn(
 		send_ldap_result( op, rs );
 
 		if ( rs->sr_ref ) ber_bvarray_free( rs->sr_ref );
-		if ( deref != default_referral ) {
-			ber_bvarray_free( deref );
-		}
 		free( (char *)rs->sr_matched );
 		rs->sr_ref = NULL;
 		rs->sr_matched = NULL;

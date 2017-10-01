@@ -1,5 +1,5 @@
 /* schema_init.c - init builtin schema */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/schema_init.c,v 1.360.2.13 2006/01/03 22:16:15 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2006 The OpenLDAP Foundation.
@@ -2107,8 +2107,6 @@ IA5StringNormalize(
 
 	assert( SLAP_MR_IS_VALUE_OF_SYNTAX( use ));
 
-	assert( SLAP_MR_IS_VALUE_OF_SYNTAX( use ));
-
 	p = val->bv_val;
 
 	/* Ignore initial whitespace */
@@ -3063,7 +3061,6 @@ int generalizedTimeFilter(
 
 	*keysp = keys;
 
-	*matchp = match;
 	return LDAP_SUCCESS;
 }
 

@@ -1,5 +1,5 @@
 /* operational.c - bdb backend operational attributes function */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/operational.c,v 1.24.2.4 2006/01/16 18:59:27 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2006 The OpenLDAP Foundation.
@@ -37,15 +37,6 @@ bdb_hasSubordinates(
 	int		rc;
 	
 	assert( e != NULL );
-
-	/* NOTE: this should never happen, but it actually happens
-	 * when using back-relay; until we find a better way to
-	 * preserve entry's private information while rewriting it,
-	 * let's disable the hasSubordinate feature for back-relay.
-	 */
-	if ( BEI( e ) == NULL ) {
-		return LDAP_OTHER;
-	}
 
 	/* NOTE: this should never happen, but it actually happens
 	 * when using back-relay; until we find a better way to

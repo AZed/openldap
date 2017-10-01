@@ -1,5 +1,5 @@
 /* limits.c - routines to handle regex-based size and time limits */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/limits.c,v 1.62.2.6 2006/01/03 22:16:14 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2006 The OpenLDAP Foundation.
@@ -23,45 +23,6 @@
 
 #include "slap.h"
 #include "lutil.h"
-
-/* define to get an error if requesting limit higher than hard */
-#undef ABOVE_HARD_LIMIT_IS_ERROR
-
-static char *
-limits2str( unsigned i )
-{
-	switch ( i ) {
-	case SLAP_LIMITS_UNDEFINED:
-		return "UNDEFINED";
-
-	case SLAP_LIMITS_EXACT:
-		return "EXACT";
-			
-	case SLAP_LIMITS_ONE:
-		return "ONELEVEL";	
-
-	case SLAP_LIMITS_SUBTREE:
-		return "SUBTREE";
-
-	case SLAP_LIMITS_CHILDREN:
-		return "CHILDREN";
-
-	case SLAP_LIMITS_REGEX:
-		return "REGEX";
-
-	case SLAP_LIMITS_ANONYMOUS:
-		return "ANONYMOUS";
-		
-	case SLAP_LIMITS_USERS:
-		return "USERS";
-		
-	case SLAP_LIMITS_ANY:
-		return "ANY";
-
-	default:
-		return "UNKNOWN";
-	}
-}
 
 /* define to get an error if requesting limit higher than hard */
 #undef ABOVE_HARD_LIMIT_IS_ERROR

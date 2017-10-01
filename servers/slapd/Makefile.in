@@ -1,5 +1,5 @@
 ## Makefile.in for slapd
-# $OpenLDAP$
+# $OpenLDAP: pkg/ldap/servers/slapd/Makefile.in,v 1.163.2.11 2006/01/03 22:16:12 kurt Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 1998-2006 The OpenLDAP Foundation.
@@ -87,7 +87,7 @@ NT_SLAPD_OBJECTS = slapd.exp symdummy.o $(OBJS) version.o
 UNIX_SLAPD_DEPENDS = $(SLAPD_STATIC_DEPENDS) version.o $(SLAPD_L)
 UNIX_SLAPD_OBJECTS = $(OBJS) version.o
 
-SLAPD_DEPENDS = liboverlays.a $(@PLAT@_SLAPD_DEPENDS)
+SLAPD_DEPENDS = $(@PLAT@_SLAPD_DEPENDS)
 SLAPD_OBJECTS = $(@PLAT@_SLAPD_OBJECTS)
 
 # Notes about slapd for Windows

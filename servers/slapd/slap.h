@@ -1,5 +1,5 @@
 /* slap.h - stand alone ldap server include file */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/slap.h,v 1.612.2.37 2006/01/03 22:16:15 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2006 The OpenLDAP Foundation.
@@ -1837,7 +1837,6 @@ struct slap_backend_db {
 	ldap_pvt_thread_mutex_t					*be_pcl_mutexp;
 	struct syncinfo_s						*be_syncinfo; /* For syncrepl */
 
-	char	*be_realm;
 	void    *be_pb;         /* Netscape plugin */
 	struct ConfigOCs *be_cf_ocs;
 
@@ -2146,12 +2145,12 @@ struct slap_backend_info {
 	BI_connection_destroy	*bi_connection_destroy;
 
 	/* hooks for slap tools */
-	BI_tool_entry_open		*bi_tool_entry_open;
-	BI_tool_entry_close		*bi_tool_entry_close;
-	BI_tool_entry_first		*bi_tool_entry_first;
-	BI_tool_entry_next		*bi_tool_entry_next;
-	BI_tool_entry_get		*bi_tool_entry_get;
-	BI_tool_entry_put		*bi_tool_entry_put;
+	BI_tool_entry_open	*bi_tool_entry_open;
+	BI_tool_entry_close	*bi_tool_entry_close;
+	BI_tool_entry_first	*bi_tool_entry_first;
+	BI_tool_entry_next	*bi_tool_entry_next;
+	BI_tool_entry_get	*bi_tool_entry_get;
+	BI_tool_entry_put	*bi_tool_entry_put;
 	BI_tool_entry_reindex	*bi_tool_entry_reindex;
 	BI_tool_sync		*bi_tool_sync;
 	BI_tool_dn2id_get	*bi_tool_dn2id_get;

@@ -1,5 +1,5 @@
 /* dn.c - routines for dealing with distinguished names */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/dn.c,v 1.170.2.8 2006/01/03 22:16:14 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2006 The OpenLDAP Foundation.
@@ -751,11 +751,7 @@ dnPretty(
 		}
 	}
 
-#ifdef NEW_LOGGING
-	LDAP_LOG( OPERATION, ARGS, "<<< dnPretty: <%s>\n", out->bv_val, 0, 0 );
-#else
 	Debug( LDAP_DEBUG_TRACE, "<<< dnPretty: <%s>\n", out->bv_val, 0, 0 );
-#endif
 
 	return LDAP_SUCCESS;
 }
@@ -1170,33 +1166,6 @@ dnRdn(
 
 	*rdn = *dn;
 	p = ber_bvchr( dn, ',' );
-
-	/* one-level dn */
-	if ( p == NULL ) {
-		return;
-	}
-
-	assert( DN_SEPARATOR( p[ 0 ] ) );
-	assert( ATTR_LEADCHAR( p[ 1 ] ) );
-	rdn->bv_len = p - dn->bv_val;
-
-	return;
-}
-
-/*
- * dnRdn - dn's rdn, in-place
- * note: the incoming dn is assumed to be normalized/prettyfied,
- * so that escaped rdn/ava separators are in '\'+hexpair form
- */
-void
-dnRdn( 
-	struct berval	*dn, 
-	struct berval	*rdn )
-{
-	char	*p;
-
-	*rdn = *dn;
-	p = strchr( dn->bv_val, ',' );
 
 	/* one-level dn */
 	if ( p == NULL ) {
