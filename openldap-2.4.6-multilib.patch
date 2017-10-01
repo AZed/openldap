@@ -7,32 +7,23 @@ diff -up openldap-2.4.11/doc/man/man8/slapd.8.patch9 openldap-2.4.11/doc/man/man
  .SH SYNOPSIS
 -.B LIBEXECDIR/slapd 
 +.B slapd 
- .B [\-[4|6]]
- .B [\-T {acl|add|auth|cat|dn|index|passwd|test}]
- .B [\-d debug\-level]
-@@ -263,7 +263,7 @@ the LDAP databases defined in the defaul
+ [\c
+ .BR \-4 | \-6 ]
+ [\c
+@@ -312,7 +312,7 @@ on voluminous debugging which will be pr
  .LP
  .nf
  .ft tt
--	LIBEXECDIR/slapd
-+	slapd
- .ft
- .fi
- .LP
-@@ -274,7 +274,7 @@ on voluminous debugging which will be pr
- .LP
- .nf
- .ft tt
--	LIBEXECDIR/slapd -f /var/tmp/slapd.conf -d 255
+-	LIBEXECDIR/slapd \-f /var/tmp/slapd.conf \-d 255
 +	slapd -f /var/tmp/slapd.conf -d 255
  .ft
  .fi
  .LP
-@@ -282,7 +282,7 @@ To test whether the configuration file i
+@@ -320,7 +320,7 @@ To test whether the configuration file i
  .LP
  .nf
  .ft tt
--	LIBEXECDIR/slapd -Tt
+-	LIBEXECDIR/slapd \-Tt
 +	slapd -Tt
  .ft
  .fi

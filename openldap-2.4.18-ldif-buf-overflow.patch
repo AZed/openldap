@@ -1,0 +1,17 @@
+Avoid the struct hack, just malloc two data structures in one chunk:
+
+--- openldap-2.4.18/servers/slapd/back-ldif/ldif.c.orig	2009-08-18 23:58:27
++++ openldap-2.4.18/servers/slapd/back-ldif/ldif.c	2009-09-24 16:08:14
+@@ -593,9 +593,9 @@ typedef struct bvlist {
+ 	char *trunc;	/* filename was truncated here */
+ 	int  inum;		/* num from "attr={num}" in filename, or INT_MIN */
+ 	char savech;	/* original char at *trunc */
+-	char fname;		/* variable length array BVL_NAME(bvl) = &fname */
+-#	define BVL_NAME(bvl) ((char *) (bvl) + offsetof(bvlist, fname))
+-#	define BVL_SIZE(namelen) (sizeof(bvlist) + (namelen))
++	/* BVL_NAME(&bvlist) is the filename, allocated after the struct: */
++#	define BVL_NAME(bvl)     ((char *) ((bvl) + 1))
++#	define BVL_SIZE(namelen) (sizeof(bvlist) + (namelen) + 1)
+ } bvlist;
+ 
+ static int

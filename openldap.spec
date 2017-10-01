@@ -3,7 +3,7 @@
 # not work with some versions of OpenLDAP.
 %define db_version 4.7.25
 %define ldbm_backend berkeley
-%define version 2.4.15
+%define version 2.4.18
 %define evolution_connector_prefix %{_libdir}/evolution-openldap
 %define evolution_connector_includedir %{evolution_connector_prefix}/include
 %define evolution_connector_libdir %{evolution_connector_prefix}/%{_lib}
@@ -11,7 +11,7 @@
 Summary: LDAP support libraries
 Name: openldap
 Version: %{version}
-Release: 7%{?dist}
+Release: 5%{?dist}
 License: OpenLDAP
 Group: System Environment/Daemons
 Source0: ftp://ftp.OpenLDAP.org/pub/OpenLDAP/openldap-release/openldap-%{version}.tgz
@@ -34,8 +34,8 @@ Patch5: openldap-2.4.6-nosql.patch
 Patch6: openldap-2.3.19-gethostbyXXXX_r.patch
 Patch9: openldap-2.3.37-smbk5pwd.patch
 Patch10: openldap-2.4.6-multilib.patch
-Patch11: openldap-2.4.12-options.patch
-Patch12: openldap-2.4.15-tls-null-char.patch
+Patch11: openldap-2.4.16-doc-cacertdir.patch
+Patch12: openldap-2.4.18-ldif-buf-overflow.patch
 
 # Patches for the evolution library
 Patch200: openldap-2.4.6-evolution-ntlm.patch
@@ -141,8 +141,8 @@ pushd openldap-%{version}
 %patch6 -p1 -b .gethostbyname_r
 %patch9 -p1 -b .smbk5pwd
 %patch10 -p1 -b .multilib
-%patch11 -p1 -b .options
-%patch12 -p1 -b .tls-null-char
+%patch11 -p1 -b .cacertdir
+%patch12 -p1 -b .malloc
 
 cp %{_datadir}/libtool/config/config.{sub,guess} build/
 popd
@@ -361,7 +361,7 @@ rm -f $RPM_BUILD_ROOT/%{_sysconfdir}/openldap/schema/*.default
 
 # Install an init script for the servers.
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d
-install -m 755 %SOURCE4 $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d/ldap
+install -m 755 %SOURCE4 $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d/slapd
 
 # Install syconfig/ldap
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig
@@ -387,6 +387,10 @@ for X in acl add auth cat dn index passwd test; do ln -s slapd $RPM_BUILD_ROOT/%
 # Tweak permissions on the libraries to make sure they're correct.
 chmod 755 $RPM_BUILD_ROOT/%{_libdir}/lib*.so*
 chmod 644 $RPM_BUILD_ROOT/%{_libdir}/lib*.*a
+
+# Add files and dirs which would be created by %post scriptlet
+touch $RPM_BUILD_ROOT/%{_sysconfdir}/openldap/slapd.conf.bak
+mkdir $RPM_BUILD_ROOT/%{_sysconfdir}/openldap/slapd.d
 
 # Remove files which we don't want packaged.
 rm -f $RPM_BUILD_ROOT/%{_libdir}/*.la
@@ -427,6 +431,14 @@ if [ "$1" = "2" ]; then
 
     OLD_SLAPD_VERSION=$( rpm -q --qf "%{VERSION}" openldap-servers | sed 's/\.[0-9]*$//' )
     NEW_SLAPD_VERSION=$( echo %{version} | sed 's/\.[0-9]*$//' )
+    # we need to detect how is the init script named
+    # - in older versions ldap
+    # - in newer versions slapd
+    if [ -f %{_initrddir}/ldap ]; then
+        SERVICE_NAME=ldap
+    elif [ -f %{_initrddir}/slapd ]; then
+        SERVICE_NAME=slapd
+    fi
 
     if [ "$OLD_SLAPD_VERSION" != "$NEW_SLAPD_VERSION" ]; then
         # Minor version number has changed -> slapcat/slapadd of the BDB database 
@@ -435,9 +447,9 @@ if [ "$1" = "2" ]; then
         # directory - Just In Case (TM)
 
         # stop the server
-        if /sbin/service ldap status &>/dev/null; then 
+        if /sbin/service $SERVICE_NAME status &>/dev/null; then 
             touch /var/lib/ldap/need_start
-            /sbin/service ldap stop &>/dev/null
+            /sbin/service $SERVICE_NAME stop &>/dev/null
         fi
 
         files=$(echo /var/lib/ldap/{log.*,__db.*,[a]lock})
@@ -458,9 +470,9 @@ if [ "$1" = "2" ]; then
             # Minor version number of bdb has changed -> run db_upgrade in % post script 
     
             # stop the server
-            if /sbin/service ldap status &>/dev/null; then 
+            if /sbin/service $SERVICE_NAME status &>/dev/null; then 
                 touch /var/lib/ldap/need_start
-                /sbin/service ldap stop &>/dev/null
+                /sbin/service $SERVICE_NAME stop &>/dev/null
             fi
 
             # Ensure, that the database is correct
@@ -474,7 +486,7 @@ exit 0
 
 %post servers
 /sbin/ldconfig
-/sbin/chkconfig --add ldap
+/sbin/chkconfig --add slapd
 # If there's a /var/lib/ldap/upgrade.ldif file, slapadd it and delete it.
 # It was created by the % pre above.
 if [ -f /var/lib/ldap/upgrade.ldif ] ; then
@@ -493,7 +505,7 @@ fi
 if [ ! -f %{_sysconfdir}/pki/tls/certs/slapd.pem ] ; then
 pushd %{_sysconfdir}/pki/tls/certs
 umask 077
-cat << EOF | make slapd.pem
+cat << EOF | make slapd.pem > /dev/null 2>&1
 --
 SomeState
 SomeCity
@@ -507,11 +519,34 @@ chmod 640 slapd.pem
 popd
 fi
 
+if [ -f %{_sysconfdir}/openldap/slapd.conf ]; then
+    # if there is no slapd.conf, we probably already have new configuration in place
+    mv %{_sysconfdir}/openldap/slapd.conf %{_sysconfdir}/openldap/slapd.conf.bak
+    mkdir -p %{_sysconfdir}/openldap/slapd.d/
+    lines=`egrep -n '^(database|backend)' %{_sysconfdir}/openldap/slapd.conf.bak | cut -d: -f1 | head -n 1`
+    lines=$(($lines-1))
+    head -n $lines %{_sysconfdir}/openldap/slapd.conf.bak > %{_sysconfdir}/openldap/slapd.conf
+    cat >> %{_sysconfdir}/openldap/slapd.conf << EOF
+database config
+rootdn   "cn=admin,cn=config"
+#rootpw   secret
+EOF
+    lines_r=`wc --lines %{_sysconfdir}/openldap/slapd.conf.bak | cut -f1 -d" "`
+    lines_r=$(($lines_r-$lines))
+    tail -n $lines_r %{_sysconfdir}/openldap/slapd.conf.bak >> %{_sysconfdir}/openldap/slapd.conf
+    slaptest -f %{_sysconfdir}/openldap/slapd.conf -F %{_sysconfdir}/openldap/slapd.d > /dev/null 2> /dev/null
+    chown -R ldap:ldap %{_sysconfdir}/openldap/slapd.d
+    chmod -R 000 %{_sysconfdir}/openldap/slapd.d
+    chmod -R u+rwX %{_sysconfdir}/openldap/slapd.d
+    rm -f %{_sysconfdir}/openldap/slapd.conf
+fi
+
+
 if [ $1 -ge 1 ] ; then
-    /sbin/service ldap condrestart &>/dev/null
-    /sbin/service ldap status &>/dev/null
+    /sbin/service slapd condrestart &>/dev/null
+    /sbin/service slapd status &>/dev/null
     if [ "$?" != "0" -a -f /var/lib/ldap/need_start ]; then
-        /sbin/service ldap start &>/dev/null
+        /sbin/service slapd start &>/dev/null
         rm -f /var/lib/ldap/need_start &>/dev/null 
     fi
 fi
@@ -520,8 +555,8 @@ exit 0
 
 %preun servers
 if [ "$1" = "0" ] ; then
-  /sbin/service ldap stop > /dev/null 2>&1 || :
-  /sbin/chkconfig --del ldap
+  /sbin/service slapd stop > /dev/null 2>&1 || :
+  /sbin/chkconfig --del slapd
 # Openldap-servers are being removed from system.
 # Do not touch the database! Older versions of this
 # package attempted to store database in LDIF format, so
@@ -563,9 +598,11 @@ fi
 %attr(0644,root,root) %doc DB_CONFIG.example
 %doc README.schema
 %ghost %config(noreplace) %{_sysconfdir}/pki/tls/certs/slapd.pem
-%attr(0755,root,root) %{_sysconfdir}/rc.d/init.d/ldap
+%attr(0755,root,root) %{_sysconfdir}/rc.d/init.d/slapd
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/openldap/ldap*.conf
-%attr(0640,root,ldap) %config(noreplace) %{_sysconfdir}/openldap/slapd.conf
+%attr(0640,root,ldap) %config(noreplace,missingok) %{_sysconfdir}/openldap/slapd.conf
+%attr(0640,root,ldap) %ghost %{_sysconfdir}/openldap/slapd.conf.bak
+%attr(0640,ldap,ldap) %ghost %{_sysconfdir}/openldap/slapd.d
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/sysconfig/ldap
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/openldap/schema/*.schema*
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/openldap/schema/*.ldif
@@ -608,14 +645,46 @@ fi
 %attr(0644,root,root)      %{evolution_connector_libdir}/*.a
 
 %changelog
-* Mon Jan 18 2010 Jan Zeleny <jzeleny@redhat.com> - 2.4.15-7
-- upstream path fixing CVE-2009-3767 (#537895)
+* Wed Oct 07 2009 Jan Zeleny <jzeleny@redhat.com> 2.4.18-5
+- updated smbk5pwd patch to be linked with libldap (#526500)
 
-* Wed Oct 07 2009 Jan Zeleny <jzeleny@redhat.com> 2.4.15-6
-- fix of smbk5pwd patch - linking with libldap (#526500)
+* Wed Sep 30 2009 Jan Zeleny <jzeleny@redhat.com> 2.4.18-4
+- buffer overflow patch from upstream
+- added /etc/openldap/slapd.d and /etc/openldap/slapd.conf.bak
+  to files owned by openldap-servers
 
-* Tue Aug 25 2009 Jan Zeleny <jzeleny@redhat.com> 2.4.15-5
-- fix of spec file - group ldap created with correct gid
+* Thu Sep 24 2009 Jan Zeleny <jzeleny@redhat.com> 2.4.18-3
+- cleanup of previous patch fixing buffer overflow
+
+* Tue Sep 22 2009 Jan Zeleny <jzeleny@redhat.com> 2.4.18-2
+- changed configuration approach. Instead od slapd.conf slapd
+  is using slapd.d directory now
+- fix of some issues caused by renaming of init script
+- fix of buffer overflow issue in ldif.c pointed out by new glibc
+
+* Fri Sep 18 2009 Jan Zeleny <jzeleny@redhat.com> 2.4.18-1
+- rebase of openldap to 2.4.18
+
+* Wed Sep 16 2009 Jan Zeleny <jzeleny@redhat.com> 2.4.16-7
+- updated documentation (hashing the cacert dir)
+
+* Wed Sep 16 2009 Jan Zeleny <jzeleny@redhat.com> 2.4.16-6
+- updated init script to be LSB-compliant (#523434)
+- init script renamed to slapd
+
+* Thu Aug 27 2009 Tomas Mraz <tmraz@redhat.com> - 2.4.16-5
+- rebuilt with new openssl
+
+* Tue Aug 25 2009 Jan Zeleny <jzeleny@redhat.com> 2.4.16-4
+- updated %pre script to correctly install openldap group
+
+* Sat Jul 25 2009 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 2.4.16-2
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_12_Mass_Rebuild
+
+* Wed Jul 01 2009 Jan Zeleny <jzeleny@redhat.com> 2.4.16-1
+- rebase of openldap to 2.4.16
+- fixed minor issue in spec file (output looking interactive
+  when installing servers)
 
 * Tue Jun 09 2009 Jan Zeleny <jzeleny@redhat.com> 2.4.15-4
 - added $SLAPD_URLS variable to init script (#504504)
