@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/operation.c,v 1.63.2.6 2006/01/03 22:16:15 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2006 The OpenLDAP Foundation.
+ * Copyright 1998-2007 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -61,6 +61,17 @@ void slap_op_destroy(void)
 }
 
 void
+slap_op_groups_free( Operation *op )
+{
+	GroupAssertion *g, *n;
+	for ( g = op->o_groups; g; g = n ) {
+		n = g->ga_next;
+		slap_sl_free( g, op->o_tmpmemctx );
+	}
+	op->o_groups = NULL;
+}
+
+void
 slap_op_free( Operation *op )
 {
 	assert( LDAP_STAILQ_NEXT(op, o_next) == NULL );
@@ -87,13 +98,8 @@ slap_op_free( Operation *op )
 	}
 #endif
 
-	{
-		GroupAssertion *g, *n;
-		for ( g = op->o_groups; g; g = n ) {
-			n = g->ga_next;
-			slap_sl_free( g, op->o_tmpmemctx );
-		}
-		op->o_groups = NULL;
+	if ( op->o_groups ) {
+		slap_op_groups_free( op );
 	}
 
 #if defined( LDAP_SLAPI )
@@ -165,4 +171,33 @@ slap_op_alloc(
 #endif /* defined( LDAP_SLAPI ) */
 
 	return( op );
+}
+
+slap_op_t
+slap_req2op( ber_tag_t tag )
+{
+	switch ( tag ) {
+	case LDAP_REQ_BIND:
+		return SLAP_OP_BIND;
+	case LDAP_REQ_UNBIND:
+		return SLAP_OP_UNBIND;
+	case LDAP_REQ_ADD:
+		return SLAP_OP_ADD;
+	case LDAP_REQ_DELETE:
+		return SLAP_OP_DELETE;
+	case LDAP_REQ_MODRDN:
+		return SLAP_OP_MODRDN;
+	case LDAP_REQ_MODIFY:
+		return SLAP_OP_MODIFY;
+	case LDAP_REQ_COMPARE:
+		return SLAP_OP_COMPARE;
+	case LDAP_REQ_SEARCH:
+		return SLAP_OP_SEARCH;
+	case LDAP_REQ_ABANDON:
+		return SLAP_OP_ABANDON;
+	case LDAP_REQ_EXTENDED:
+		return SLAP_OP_EXTENDED;
+	}
+
+	return SLAP_OP_LAST;
 }

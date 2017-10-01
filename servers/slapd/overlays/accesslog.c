@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/overlays/accesslog.c,v 1.2.2.16 2006/08/15 05:20:54 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2005-2006 The OpenLDAP Foundation.
+ * Copyright 2005-2007 The OpenLDAP Foundation.
  * Portions copyright 2004-2005 Symas Corporation.
  * All rights reserved.
  *
@@ -484,6 +484,7 @@ typedef struct purge_data {
 	int used;
 	BerVarray dn;
 	BerVarray ndn;
+	struct berval csn;	/* an arbitrary old CSN */
 } purge_data;
 
 static int
@@ -495,6 +496,18 @@ log_old_lookup( Operation *op, SlapReply *rs )
 
 	if ( slapd_shutdown ) return 0;
 
+	/* Remember old CSN */
+	if ( pd->csn.bv_val[0] == '\0' ) {
+		Attribute *a = attr_find( rs->sr_entry->e_attrs,
+			slap_schema.si_ad_entryCSN );
+		if ( a ) {
+			int len = a->a_vals[0].bv_len;
+			if ( len > pd->csn.bv_len )
+				len = pd->csn.bv_len;
+			AC_MEMCPY( pd->csn.bv_val, a->a_vals[0].bv_val, len );
+			pd->csn.bv_len = len;
+		}
+	}
 	if ( pd->used >= pd->slots ) {
 		pd->slots += PURGE_INCREMENT;
 		pd->dn = ch_realloc( pd->dn, pd->slots * sizeof( struct berval ));
@@ -522,6 +535,7 @@ accesslog_purge( void *ctx, void *arg )
 	AttributeAssertion ava = {0};
 	purge_data pd = {0};
 	char timebuf[LDAP_LUTIL_GENTIME_BUFSIZE];
+	char csnbuf[LDAP_LUTIL_CSNSTR_BUFSIZE];
 	time_t old = slap_get_time();
 
 	connection_fake_init( &conn, op, ctx );
@@ -553,6 +567,9 @@ accesslog_purge( void *ctx, void *arg )
 	op->ors_attrs = slap_anlist_no_attrs;
 	op->ors_attrsonly = 1;
 	
+	pd.csn.bv_len = sizeof( csnbuf );
+	pd.csn.bv_val = csnbuf;
+	csnbuf[0] = '\0';
 	cb.sc_private = &pd;
 
 	op->o_bd->be_search( op, &rs );
@@ -563,6 +580,7 @@ accesslog_purge( void *ctx, void *arg )
 
 		op->o_tag = LDAP_REQ_DELETE;
 		op->o_callback = &nullsc;
+		op->o_csn = pd.csn;
 
 		for (i=0; i<pd.used; i++) {
 			op->o_req_dn = pd.dn[i];
@@ -597,6 +615,14 @@ log_cf_gen(ConfigArgs *c)
 	case SLAP_CONFIG_EMIT:
 		switch( c->type ) {
 		case LOG_DB:
+			if ( li->li_db == NULL ) {
+				snprintf( c->msg, sizeof( c->msg ),
+					"accesslog: \"logdb <suffix>\" must be specified" );
+				Debug( LDAP_DEBUG_ANY, "%s: %s \"%s\"\n",
+					c->log, c->msg, c->value_dn.bv_val );
+				rc = 1;
+				break;
+			}
 			value_add( &c->rvalue_vals, li->li_db->be_suffix );
 			value_add( &c->rvalue_nvals, li->li_db->be_nsuffix );
 			break;
@@ -626,7 +652,7 @@ log_cf_gen(ConfigArgs *c)
 		case LOG_OLD:
 			if ( li->li_oldf ) {
 				filter2bv( li->li_oldf, &agebv );
-				value_add_one( &c->rvalue_vals, &agebv );
+				ber_bvarray_add( &c->rvalue_vals, &agebv );
 			}
 			else
 				rc = 1;
@@ -674,7 +700,8 @@ log_cf_gen(ConfigArgs *c)
 		case LOG_DB:
 			li->li_db = select_backend( &c->value_ndn, 0, 0 );
 			if ( !li->li_db ) {
-				sprintf( c->msg, "<%s> no matching backend found for suffix",
+				snprintf( c->msg, sizeof( c->msg ),
+					"<%s> no matching backend found for suffix",
 					c->argv[0] );
 				Debug( LDAP_DEBUG_ANY, "%s: %s \"%s\"\n",
 					c->log, c->msg, c->value_dn.bv_val );
@@ -957,7 +984,8 @@ static int accesslog_response(Operation *op, SlapReply *rs) {
 				for (b=m->sml_values; !BER_BVISNULL( b ); b++) {
 					i++;
 				}
-			} else if ( m->sml_op == LDAP_MOD_DELETE ) {
+			} else if ( m->sml_op == LDAP_MOD_DELETE ||
+				m->sml_op == LDAP_MOD_REPLACE ) {
 				i++;
 			}
 		}
@@ -995,13 +1023,17 @@ static int accesslog_response(Operation *op, SlapReply *rs) {
 					}
 					accesslog_val2val( m->sml_desc, b, c_op, &vals[i] );
 				}
-			} else if ( m->sml_op == LDAP_MOD_DELETE ) {
+			} else if ( m->sml_op == LDAP_MOD_DELETE ||
+				m->sml_op == LDAP_MOD_REPLACE ) {
 				vals[i].bv_len = m->sml_desc->ad_cname.bv_len + 2;
 				vals[i].bv_val = ch_malloc( vals[i].bv_len+1 );
 				ptr = lutil_strcopy( vals[i].bv_val,
 					m->sml_desc->ad_cname.bv_val );
 				*ptr++ = ':';
-				*ptr++ = '-';
+				if ( m->sml_op == LDAP_MOD_DELETE )
+					*ptr++ = '-';
+				else
+					*ptr++ = '=';
 				*ptr = '\0';
 				i++;
 			}
@@ -1318,6 +1350,8 @@ accesslog_db_destroy(
 	slap_overinst *on = (slap_overinst *)be->bd_info;
 	log_info *li = on->on_bi.bi_private;
 
+	if ( li->li_oldf )
+		filter_free( li->li_oldf );
 	ldap_pvt_thread_mutex_destroy( &li->li_log_mutex );
 	ldap_pvt_thread_mutex_destroy( &li->li_op_mutex );
 	free( li );
@@ -1338,6 +1372,13 @@ accesslog_db_open(
 	Entry *e;
 	int rc;
 	void *thrctx;
+
+	if ( li->li_db == NULL ) {
+		Debug( LDAP_DEBUG_ANY,
+			"accesslog: \"logdb <suffix>\" must be specified.\n",
+			0, 0, 0 );
+		return 1;
+	}
 
 	if ( slapMode & SLAP_TOOL_MODE )
 		return 0;
@@ -1414,7 +1455,6 @@ accesslog_db_open(
 		attrs_free( e->e_attrs );
 		ch_free( e );
 	}
-	ldap_pvt_thread_pool_context_reset( thrctx );
 	return rc;
 }
 

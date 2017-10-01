@@ -1,7 +1,7 @@
 /* $OpenLDAP: pkg/ldap/libraries/libldap/request.c,v 1.103.2.13 2006/05/15 15:26:46 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2006 The OpenLDAP Foundation.
+ * Copyright 1998-2007 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -149,7 +149,7 @@ ldap_int_flush_request(
 	LDAPConn *lc = lr->lr_conn;
 
 	if ( ber_flush( lc->lconn_sb, lr->lr_ber, 0 ) != 0 ) {
-		if ( errno == EAGAIN ) {
+		if ( sock_errno() == EAGAIN ) {
 			/* need to continue write later */
 			lr->lr_status = LDAP_REQST_WRITING;
 			ldap_mark_select_write( ld, lc->lconn_sb );

@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/overlays/translucent.c,v 1.1.2.10 2006/05/09 17:43:12 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2004-2006 The OpenLDAP Foundation.
+ * Copyright 2004-2007 The OpenLDAP Foundation.
  * Portions Copyright 2005 Symas Corporation.
  * All rights reserved.
  *
@@ -232,7 +232,7 @@ static int translucent_modify(Operation *op, SlapReply *rs) {
 	void *private = op->o_bd->be_private;
 	Entry ne, *e = NULL, *re = NULL;
 	Attribute *a, *ax;
-	Modifications *m, *mm;
+	Modifications *m, **mm;
 	int del, rc, erc = 0;
 	slap_callback cb = { 0 };
 
@@ -275,10 +275,14 @@ static int translucent_modify(Operation *op, SlapReply *rs) {
 
 	if(e && rc == LDAP_SUCCESS) {
 		Debug(LDAP_DEBUG_TRACE, "=> translucent_modify: found local entry\n", 0, 0, 0);
-		for(m = op->orm_modlist; m; m = m->sml_next) {
+		for(mm = &op->orm_modlist; *mm; ) {
+			m = *mm;
 			for(a = e->e_attrs; a; a = a->a_next)
 				if(a->a_desc == m->sml_desc) break;
-			if(a) continue;		/* found local attr */
+			if(a) {
+				mm = &m->sml_next;
+				continue;		/* found local attr */
+			}
 			if(m->sml_op == LDAP_MOD_DELETE) {
 				for(a = re->e_attrs; a; a = a->a_next)
 					if(a->a_desc == m->sml_desc) break;
@@ -294,15 +298,13 @@ static int translucent_modify(Operation *op, SlapReply *rs) {
 				Debug(LDAP_DEBUG_TRACE,
 					"=> translucent_modify: silently dropping delete: %s\n",
 					m->sml_desc->ad_cname.bv_val, 0, 0);
-				for(mm = op->orm_modlist; mm->sml_next != m; mm = mm->sml_next);
-				mm->sml_next = m->sml_next;
-				mm = m;
-				m = m->sml_next;
-				mm->sml_next = NULL;		/* hack */
-				slap_mods_free(mm, 1);
-				if(m) continue;
+				*mm = m->sml_next;
+				m->sml_next = NULL;
+				slap_mods_free(m, 1);
+				continue;
 			}
 			m->sml_op = LDAP_MOD_ADD;
+			mm = &m->sml_next;
 		}
 		erc = SLAP_CB_CONTINUE;
 release:
@@ -360,7 +362,7 @@ release:
 		a = ch_calloc(1, sizeof(Attribute));
 		a->a_desc  = m->sml_desc;
 		a->a_vals  = m->sml_values;
-		a->a_nvals = m->sml_nvalues;
+		a->a_nvals = m->sml_nvalues ? m->sml_nvalues : a->a_vals;
 		a->a_next  = ax;
 		ax = a;
 	}

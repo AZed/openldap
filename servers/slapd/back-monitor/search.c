@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/search.c,v 1.32.2.5 2006/01/03 22:16:21 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2001-2006 The OpenLDAP Foundation.
+ * Copyright 2001-2007 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * All rights reserved.
  *
@@ -35,8 +35,7 @@ monitor_send_children(
 	Operation	*op,
 	SlapReply	*rs,
 	Entry		*e_parent,
-	int		sub
-)
+	int		sub )
 {
 	monitor_info_t	*mi = ( monitor_info_t * )op->o_bd->be_private;
 	Entry 			*e,
@@ -234,7 +233,9 @@ monitor_back_search( Operation *op, SlapReply *rs )
 		break;
 
 	case LDAP_SCOPE_ONELEVEL:
-		rc = monitor_send_children( op, rs, e, 0 );
+	case LDAP_SCOPE_SUBORDINATE:
+		rc = monitor_send_children( op, rs, e,
+			op->oq_search.rs_scope == LDAP_SCOPE_SUBORDINATE );
 		break;
 
 	case LDAP_SCOPE_SUBTREE:
@@ -249,6 +250,10 @@ monitor_back_search( Operation *op, SlapReply *rs )
 
 		rc = monitor_send_children( op, rs, e, 1 );
 		break;
+
+	default:
+		rc = LDAP_UNWILLING_TO_PERFORM;
+		monitor_cache_release( mi, e );
 	}
 
 	rs->sr_attrs = NULL;

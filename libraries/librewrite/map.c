@@ -1,7 +1,7 @@
 /* $OpenLDAP: pkg/ldap/libraries/librewrite/map.c,v 1.18.2.3 2006/01/03 22:16:11 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2006 The OpenLDAP Foundation.
+ * Copyright 2000-2007 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -354,7 +354,12 @@ rewrite_map_apply(
 				( struct rewrite_context * )map->lm_data,
 				key->bv_val, &val->bv_val );
 		if ( val->bv_val != NULL ) {
-			val->bv_len = strlen( val->bv_val );
+			if ( val->bv_val == key->bv_val ) {
+				val->bv_len = key->bv_len;
+				key->bv_val = NULL;
+			} else {
+				val->bv_len = strlen( val->bv_val );
+			}
 		}
 		break;
 

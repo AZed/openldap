@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/overlays/retcode.c,v 1.4.2.8 2006/06/02 13:15:49 ando Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2005-2006 The OpenLDAP Foundation.
+ * Copyright 2005-2007 The OpenLDAP Foundation.
  * Portions Copyright 2005 Pierangelo Masarati <ando@sys-net.it>
  * All rights reserved.
  *

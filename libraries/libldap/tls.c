@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/libraries/libldap/tls.c,v 1.118.2.13 2006/07/28 13:01:35 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2006 The OpenLDAP Foundation.
+ * Copyright 1998-2007 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -115,7 +115,10 @@ static void tls_init_threads( void )
 		ldap_pvt_thread_mutex_init( &tls_mutexes[i] );
 	}
 	CRYPTO_set_locking_callback( tls_locking_cb );
-	/* FIXME: the thread id should be added somehow... */
+	CRYPTO_set_id_callback( ldap_pvt_thread_self );
+	/* FIXME: CRYPTO_set_id_callback only works when ldap_pvt_thread_t
+	 * is an integral type that fits in an unsigned long
+	 */
 
 	ldap_pvt_thread_mutex_init( &tls_def_ctx_mutex );
 	ldap_pvt_thread_mutex_init( &tls_connect_mutex );
@@ -590,7 +593,7 @@ sb_tls_read( Sockbuf_IO_Desc *sbiod, void *buf, ber_len_t len)
 	err = SSL_get_error( p->ssl, ret );
 	if (err == SSL_ERROR_WANT_READ ) {
 		sbiod->sbiod_sb->sb_trans_needs_read = 1;
-		errno = EWOULDBLOCK;
+		sock_errset(EWOULDBLOCK);
 	}
 	else
 		sbiod->sbiod_sb->sb_trans_needs_read = 0;
@@ -616,7 +619,7 @@ sb_tls_write( Sockbuf_IO_Desc *sbiod, void *buf, ber_len_t len)
 	err = SSL_get_error( p->ssl, ret );
 	if (err == SSL_ERROR_WANT_WRITE ) {
 		sbiod->sbiod_sb->sb_trans_needs_write = 1;
-		errno = EWOULDBLOCK;
+		sock_errset(EWOULDBLOCK);
 
 	} else {
 		sbiod->sbiod_sb->sb_trans_needs_write = 0;
@@ -672,7 +675,7 @@ sb_tls_bio_read( BIO *b, char *buf, int len )
 
 	BIO_clear_retry_flags( b );
 	if ( ret < 0 ) {
-		int err = errno;
+		int err = sock_errno();
 		if ( err == EAGAIN || err == EWOULDBLOCK ) {
 			BIO_set_retry_read( b );
 		}
@@ -699,7 +702,7 @@ sb_tls_bio_write( BIO *b, const char *buf, int len )
 
 	BIO_clear_retry_flags( b );
 	if ( ret < 0 ) {
-		int err = errno;
+		int err = sock_errno();
 		if ( err == EAGAIN || err == EWOULDBLOCK ) {
 			BIO_set_retry_write( b );
 		}
@@ -1287,6 +1290,10 @@ ldap_pvt_tls_get_option( LDAP *ld, int option, void *arg )
 		*(int *)arg = tls_opt_crlcheck;
 		break;
 #endif
+	case LDAP_OPT_X_TLS_CIPHER_SUITE:
+		*(char **)arg = tls_opt_ciphersuite ?
+			LDAP_STRDUP( tls_opt_ciphersuite ) : NULL;
+		break;
 	case LDAP_OPT_X_TLS_RANDOM_FILE:
 		*(char **)arg = tls_opt_randfile ?
 			LDAP_STRDUP( tls_opt_randfile ) : NULL;

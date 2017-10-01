@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/value.c,v 1.79.2.13 2006/04/07 00:16:31 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2006 The OpenLDAP Foundation.
+ * Copyright 1998-2007 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

@@ -2,7 +2,7 @@
 # $OpenLDAP: pkg/openldap-guide/admin/Makefile,v 1.4.2.2 2006/01/03 22:16:03 kurt Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 2005-2006 The OpenLDAP Foundation.
+## Copyright 2005-2007 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without

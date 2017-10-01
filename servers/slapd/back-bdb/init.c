@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/init.c,v 1.177.2.25 2006/05/11 16:56:41 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2006 The OpenLDAP Foundation.
+ * Copyright 2000-2007 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -481,7 +481,9 @@ bdb_db_close( BackendDB *be )
 			XLOCK_ID_FREE(bdb->bi_dbenv, bdb->bi_cache.c_locker);
 			bdb->bi_cache.c_locker = 0;
 		}
-
+#ifdef BDB_REUSE_LOCKERS
+		bdb_locker_flush( bdb->bi_dbenv );
+#endif
 		/* force a checkpoint, but not if we were ReadOnly,
 		 * and not in Quick mode since there are no transactions there.
 		 */

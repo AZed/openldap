@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/cache.c,v 1.88.2.17 2006/07/28 13:01:37 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2006 The OpenLDAP Foundation.
+ * Copyright 2000-2007 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -707,6 +707,7 @@ again:	ldap_pvt_thread_rdwr_rlock( &bdb->bi_cache.c_rwlock );
 				&ep->e_nname, eip );
 			if ( *eip ) islocked = 1;
 			if ( rc ) {
+				ep->e_private = NULL;
 #ifdef SLAP_ZONE_ALLOC
 				bdb_entry_return( bdb, ep, (*eip)->bei_zseq );
 #else
@@ -769,7 +770,9 @@ load1:
 #endif
 						ep = NULL;
 					}
+					bdb_cache_entryinfo_lock( *eip );
 					(*eip)->bei_state ^= CACHE_ENTRY_LOADING;
+					bdb_cache_entryinfo_unlock( *eip );
 					if ( rc == 0 ) {
 						/* If we succeeded, downgrade back to a readlock. */
 						rc = bdb_cache_entry_db_relock( bdb->bi_dbenv, locker,
@@ -811,6 +814,7 @@ load1:
 		bdb_cache_entryinfo_unlock( *eip );
 	}
 	if ( ep ) {
+		ep->e_private = NULL;
 #ifdef SLAP_ZONE_ALLOC
 		bdb_entry_return( bdb, ep, (*eip)->bei_zseq );
 #else
@@ -1286,6 +1290,19 @@ bdb_locker_id_free( void *key, void *data )
 		lr.obj = NULL;
 		env->lock_vec( env, lockid, 0, &lr, 1, NULL );
 		XLOCK_ID_FREE( env, lockid );
+	}
+}
+
+/* free up any keys used by the main thread */
+void
+bdb_locker_flush( DB_ENV *env )
+{
+	void *data;
+	void *ctx = ldap_pvt_thread_pool_context();
+
+	if ( !ldap_pvt_thread_pool_getkey( ctx, env, &data, NULL ) ) {
+		ldap_pvt_thread_pool_setkey( ctx, env, NULL, NULL );
+		bdb_locker_id_free( env, data );
 	}
 }
 

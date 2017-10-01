@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/libraries/libldap_r/thr_debug.c,v 1.1.2.3 2006/05/09 17:43:11 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2005-2006 The OpenLDAP Foundation.
+ * Copyright 2005-2007 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/libraries/libldap/result.c,v 1.99.2.17 2006/08/18 15:14:38 ando Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2006 The OpenLDAP Foundation.
+ * Copyright 1998-2007 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -301,13 +301,13 @@ wait4msg(
 				if ( rc == -1 ) {
 					Debug( LDAP_DEBUG_TRACE,
 						"ldap_int_select returned -1: errno %d\n",
-						errno, 0, 0 );
+						sock_errno(), 0, 0 );
 				}
 #endif
 
 				if ( rc == 0 || ( rc == -1 && (
 					!LDAP_BOOL_GET(&ld->ld_options, LDAP_BOOL_RESTART)
-						|| errno != EINTR )))
+						|| sock_errno() != EINTR )))
 				{
 					ld->ld_errno = (rc == -1 ? LDAP_SERVER_DOWN :
 						LDAP_TIMEOUT);
@@ -445,7 +445,7 @@ retry:
 	assert( LBER_VALID (ber) );
 
 	/* get the next message */
-	errno = 0;
+	sock_errset(0);
 #ifdef LDAP_CONNECTIONLESS
 	if ( LDAP_IS_UDP(ld) ) {
 		struct sockaddr from;
@@ -469,10 +469,10 @@ nextresp3:
 				"ber_get_next failed.\n", 0, 0, 0 );
 #endif		   
 #ifdef EWOULDBLOCK			
-			if (errno==EWOULDBLOCK) return LDAP_MSG_X_KEEP_LOOKING;
+			if ( sock_errno() == EWOULDBLOCK ) return LDAP_MSG_X_KEEP_LOOKING;
 #endif
 #ifdef EAGAIN
-			if (errno == EAGAIN) return LDAP_MSG_X_KEEP_LOOKING;
+			if ( sock_errno() == EAGAIN ) return LDAP_MSG_X_KEEP_LOOKING;
 #endif
 			ld->ld_errno = LDAP_SERVER_DOWN;
 			return -1;
@@ -566,7 +566,7 @@ nextresp2:
 								lr->lr_msgid, 0, 0);
 						}
 
-						/* We sucessfully chased the reference */
+						/* We successfully chased the reference */
 						v3ref = V3REF_SUCCESS;
 					}
 				}
@@ -612,9 +612,6 @@ nextresp2:
 					if( LDAP_BOOL_GET(&ld->ld_options, LDAP_BOOL_REFERRALS)
 							 || (lr->lr_parent != NULL) )
 					{
-						/* Assume referral not chased and return it to app */
-						v3ref = V3REF_TOAPP;
-
 						/* Get the referral list */
 						if( ber_scanf( &tmpber, "{v}", &refs) == LBER_ERROR) {
 							rc = LDAP_DECODING_ERROR;
@@ -630,11 +627,15 @@ nextresp2:
 							    0, &lr->lr_res_error, &hadref );
 							lr->lr_status = LDAP_REQST_COMPLETED;
 							Debug( LDAP_DEBUG_TRACE,
-								"read1msg: referral chased, mark request completed, ld %p msgid %d\n",
-								(void *)ld, lr->lr_msgid, 0);
+								"read1msg: referral %s chased, "
+								"mark request completed, ld %p msgid %d\n",
+								hadref ? "" : "not",
+								(void *)ld, lr->lr_msgid);
 							if( refer_cnt > 0) {
 								/* Referral successfully chased */
 								v3ref = V3REF_SUCCESS;
+							} else {
+								refer_cnt = 0;
 							}
 						}
 					}
@@ -656,11 +657,13 @@ nextresp2:
 	 * go through the following code.  This code also chases V2 referrals
 	 * and checks if all referrals have been chased.
 	 */
-	if ( (tag != LDAP_RES_SEARCH_ENTRY) && (v3ref != V3REF_TOAPP) &&
-		(tag != LDAP_RES_INTERMEDIATE ))
+	if ( tag != LDAP_RES_SEARCH_ENTRY &&
+		tag != LDAP_RES_SEARCH_REFERENCE &&
+		tag != LDAP_RES_INTERMEDIATE )
 	{
 		/* For a v3 search referral/reference, only come here if already chased it */
 		if ( ld->ld_version >= LDAP_VERSION2 &&
+			v3ref != V3REF_TOAPP &&
 			( lr->lr_parent != NULL ||
 			LDAP_BOOL_GET(&ld->ld_options, LDAP_BOOL_REFERRALS) ) )
 		{

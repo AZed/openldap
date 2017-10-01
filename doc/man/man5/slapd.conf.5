@@ -1,5 +1,5 @@
 .TH SLAPD.CONF 5 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 1998-2006 The OpenLDAP Foundation All Rights Reserved.
+.\" Copyright 1998-2007 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .\" $OpenLDAP: pkg/ldap/doc/man/man5/slapd.conf.5,v 1.191.2.22 2006/07/31 23:09:53 quanah Exp $
 .SH NAME
@@ -213,7 +213,7 @@ and
 .I authzTo
 describes an 
 .B identity 
-or a set of identities; it can take three forms:
+or a set of identities; it can take five forms:
 .RS
 .TP
 .B ldap:///<base>??[<scope>]?<filter>
@@ -1504,7 +1504,7 @@ in order to work over all of the glued databases. E.g.
 .B [type=refreshOnly|refreshAndPersist]
 .B [interval=dd:hh:mm:ss]
 .B [retry=[<retry interval> <# of retries>]+]
-.B [searchbase=<base DN>]
+.B searchbase=<base DN>
 .B [filter=<filter str>]
 .B [scope=sub|one|base]
 .B [attrs=<attr list>]
@@ -1596,9 +1596,10 @@ The
 .B starttls
 parameter specifies use of the StartTLS extended operation
 to establish a TLS session before Binding to the provider. If the
+StartTLS request fails and the
 .B critical
-argument is supplied, the session will be aborted if the StartTLS request
-fails. Otherwise the syncrepl session continues without TLS.
+argument was used, the session will be aborted. Otherwise the syncrepl
+session continues without TLS.
 A
 .B bindmethod
 of 

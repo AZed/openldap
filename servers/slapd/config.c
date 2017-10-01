@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/config.c,v 1.341.2.21 2006/02/13 17:28:42 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2006 The OpenLDAP Foundation.
+ * Copyright 1998-2007 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -308,7 +308,8 @@ int config_set_vals(ConfigTable *Conf, ConfigArgs *c) {
 		return(0);
 	}
 	if(arg_type & ARG_OFFSET) {
-		if (c->be)
+		if (c->be && (!overlay_is_over(c->be) || 
+			((slap_overinfo *)c->be->bd_info)->oi_orig == c->bi))
 			ptr = c->be->be_private;
 		else if (c->bi)
 			ptr = c->bi->bi_private;
@@ -399,7 +400,8 @@ config_get_vals(ConfigTable *cf, ConfigArgs *c)
 		if ( rc ) return rc;
 	} else {
 		if ( cf->arg_type & ARG_OFFSET ) {
-			if ( c->be )
+			if (c->be && (!overlay_is_over(c->be) || 
+				((slap_overinfo *)c->be->bd_info)->oi_orig == c->bi))
 				ptr = c->be->be_private;
 			else if ( c->bi )
 				ptr = c->bi->bi_private;
@@ -1028,15 +1030,21 @@ static slap_verbmasks methkey[] = {
 
 static slap_cf_aux_table bindkey[] = {
 	{ BER_BVC("uri="), offsetof(slap_bindconf, sb_uri), 'b', 1, NULL },
-	{ BER_BVC("starttls="), offsetof(slap_bindconf, sb_tls), 'd', 0, tlskey },
-	{ BER_BVC("bindmethod="), offsetof(slap_bindconf, sb_method), 'd', 0, methkey },
-	{ BER_BVC("binddn="), offsetof(slap_bindconf, sb_binddn), 'b', 1, NULL },
+	{ BER_BVC("starttls="), offsetof(slap_bindconf, sb_tls), 'i', 0, tlskey },
+	{ BER_BVC("bindmethod="), offsetof(slap_bindconf, sb_method), 'i', 0, methkey },
+	{ BER_BVC("binddn="), offsetof(slap_bindconf, sb_binddn), 'b', 1, dnNormalize },
 	{ BER_BVC("credentials="), offsetof(slap_bindconf, sb_cred), 'b', 1, NULL },
 	{ BER_BVC("saslmech="), offsetof(slap_bindconf, sb_saslmech), 'b', 0, NULL },
 	{ BER_BVC("secprops="), offsetof(slap_bindconf, sb_secprops), 's', 0, NULL },
 	{ BER_BVC("realm="), offsetof(slap_bindconf, sb_realm), 'b', 0, NULL },
+#ifndef SLAP_AUTHZ_SYNTAX
 	{ BER_BVC("authcID="), offsetof(slap_bindconf, sb_authcId), 'b', 0, NULL },
 	{ BER_BVC("authzID="), offsetof(slap_bindconf, sb_authzId), 'b', 1, NULL },
+#else /* SLAP_AUTHZ_SYNTAX */
+	{ BER_BVC("authcID="), offsetof(slap_bindconf, sb_authcId), 'b', 0, authzNormalize },
+	{ BER_BVC("authzID="), offsetof(slap_bindconf, sb_authzId), 'b', 1, authzNormalize },
+#endif /* SLAP_AUTHZ_SYNTAX */
+
 	{ BER_BVNULL, 0, 0, 0, NULL }
 };
 
@@ -1064,26 +1072,39 @@ slap_cf_aux_table_parse( const char *word, void *dst, slap_cf_aux_table *tab0, L
 
 			case 'b':
 				bptr = (struct berval *)((char *)dst + tab->off);
-				ber_str2bv( val, 0, 1, bptr );
-				break;
+				if ( tab->aux != NULL ) {
+					struct berval	dn;
+					slap_mr_normalize_func *normalize = (slap_mr_normalize_func *)tab->aux;
 
-			case 'd':
-				assert( tab->aux != NULL );
-				iptr = (int *)((char *)dst + tab->off);
+					ber_str2bv( val, 0, 0, &dn );
+					rc = normalize( 0, NULL, NULL, &dn, bptr, NULL );
 
-				rc = 1;
-				for ( j = 0; !BER_BVISNULL( &tab->aux[j].word ); j++ ) {
-					if ( !strcasecmp( val, tab->aux[j].word.bv_val ) ) {
-						*iptr = tab->aux[j].mask;
-						rc = 0;
-					}
+				} else {
+					ber_str2bv( val, 0, 1, bptr );
+					rc = 0;
 				}
 				break;
 
 			case 'i':
 				iptr = (int *)((char *)dst + tab->off);
 
-				rc = lutil_atoix( iptr, val, 0 );
+				if ( tab->aux != NULL ) {
+					slap_verbmasks *aux = (slap_verbmasks *)tab->aux;
+
+					assert( aux != NULL );
+
+					rc = 1;
+					for ( j = 0; !BER_BVISNULL( &aux[j].word ); j++ ) {
+						if ( !strcasecmp( val, aux[j].word.bv_val ) ) {
+							*iptr = aux[j].mask;
+							rc = 0;
+							break;
+						}
+					}
+
+				} else {
+					rc = lutil_atoix( iptr, val, 0 );
+				}
 				break;
 
 			case 'u':
@@ -1120,7 +1141,7 @@ slap_cf_aux_table_parse( const char *word, void *dst, slap_cf_aux_table *tab0, L
 int
 slap_cf_aux_table_unparse( void *src, struct berval *bv, slap_cf_aux_table *tab0 )
 {
-	char buf[BUFSIZ], *ptr;
+	char buf[AC_LINE_MAX], *ptr;
 	slap_cf_aux_table *tab;
 	struct berval tmp;
 
@@ -1139,6 +1160,7 @@ slap_cf_aux_table_unparse( void *src, struct berval *bv, slap_cf_aux_table *tab0
 		case 'b':
 			bptr = (struct berval *)((char *)src + tab->off);
 			cptr = &bptr->bv_val;
+
 		case 's':
 			if ( *cptr ) {
 				*ptr++ = ' ';
@@ -1149,25 +1171,26 @@ slap_cf_aux_table_unparse( void *src, struct berval *bv, slap_cf_aux_table *tab0
 			}
 			break;
 
-		case 'd':
-			assert( tab->aux != NULL );
-			iptr = (int *)((char *)src + tab->off);
-		
-			for ( i = 0; !BER_BVISNULL( &tab->aux[i].word ); i++ ) {
-				if ( *iptr == tab->aux[i].mask ) {
-					*ptr++ = ' ';
-					ptr = lutil_strcopy( ptr, tab->key.bv_val );
-					ptr = lutil_strcopy( ptr, tab->aux[i].word.bv_val );
-					break;
-				}
-			}
-			break;
-
 		case 'i':
 			iptr = (int *)((char *)src + tab->off);
-			*ptr++ = ' ';
-			ptr = lutil_strcopy( ptr, tab->key.bv_val );
-			ptr += snprintf( ptr, sizeof( buf ) - ( ptr - buf ), "%d", *iptr );
+
+			if ( tab->aux != NULL ) {
+				slap_verbmasks *aux = (slap_verbmasks *)tab->aux;
+
+				for ( i = 0; !BER_BVISNULL( &aux[i].word ); i++ ) {
+					if ( *iptr == aux[i].mask ) {
+						*ptr++ = ' ';
+						ptr = lutil_strcopy( ptr, tab->key.bv_val );
+						ptr = lutil_strcopy( ptr, aux[i].word.bv_val );
+						break;
+					}
+				}
+
+			} else {
+				*ptr++ = ' ';
+				ptr = lutil_strcopy( ptr, tab->key.bv_val );
+				ptr += snprintf( ptr, sizeof( buf ) - ( ptr - buf ), "%d", *iptr );
+			}
 			break;
 
 		case 'u':
@@ -1307,7 +1330,7 @@ strtok_quote( char *line, char *sep, char **quote_ptr )
 	return( tmp );
 }
 
-static char	buf[BUFSIZ];
+static char	buf[AC_LINE_MAX];
 static char	*line;
 static size_t lmax, lcur;
 
@@ -1315,7 +1338,7 @@ static size_t lmax, lcur;
 	do { \
 		size_t len = strlen( buf ); \
 		while ( lcur + len + 1 > lmax ) { \
-			lmax += BUFSIZ; \
+			lmax += AC_LINE_MAX; \
 			line = (char *) ch_realloc( line, lmax ); \
 		} \
 		strcpy( line + lcur, buf ); \

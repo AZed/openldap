@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/entry.c,v 1.129.2.10 2006/01/03 22:16:14 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2006 The OpenLDAP Foundation.
+ * Copyright 1998-2007 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -173,6 +173,8 @@ str2entry2( char *s, int checkvals )
 		goto fail;
 	}
 
+#define bvcasematch(bv1, bv2)	( ((bv1)->bv_len == (bv2)->bv_len) && (strncasecmp((bv1)->bv_val, (bv2)->bv_val, (bv1)->bv_len) == 0) )
+
 	/* Make sure all attributes with multiple values are contiguous */
 	if ( checkvals ) {
 		int j, k;
@@ -181,7 +183,7 @@ str2entry2( char *s, int checkvals )
 
 		for (i=0; i<lines; i++) {
 			for ( j=i+1; j<lines; j++ ) {
-				if ( bvmatch( type+i, type+j )) {
+				if ( bvcasematch( type+i, type+j )) {
 					/* out of order, move intervening attributes down */
 					if ( j != i+1 ) {
 						bv = vals[j];
@@ -204,7 +206,7 @@ str2entry2( char *s, int checkvals )
 
 	for ( i=0; i<=lines; i++ ) {
 		ad_prev = ad;
-		if ( !ad || ( i<lines && !bvmatch( type+i, &ad->ad_cname ))) {
+		if ( !ad || ( i<lines && !bvcasematch( type+i, &ad->ad_cname ))) {
 			ad = NULL;
 			rc = slap_bv2ad( type+i, &ad, &text );
 

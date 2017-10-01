@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/clients/tools/ldapmodify.c,v 1.158.2.9 2006/04/04 03:23:28 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2006 The OpenLDAP Foundation.
+ * Copyright 1998-2007 The OpenLDAP Foundation.
  * Portions Copyright 1998-2003 Kurt D. Zeilenga.
  * Portions Copyright 1998-2001 Net Boolean Incorporated.
  * Portions Copyright 2001-2003 IBM Corporation.
@@ -1155,6 +1155,7 @@ static int process_response(
 
 		if ( rc == -1 ) {
 			ldap_get_option( ld, LDAP_OPT_ERROR_NUMBER, &rc );
+			tool_perror( "ldap_result", rc, NULL, NULL, NULL, NULL );
 			return rc;
 		}
 

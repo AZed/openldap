@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/clients/tools/ldapsearch.c,v 1.207.2.9 2006/01/07 18:59:16 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2006 The OpenLDAP Foundation.
+ * Copyright 1998-2007 The OpenLDAP Foundation.
  * Portions Copyright 1998-2003 Kurt D. Zeilenga.
  * Portions Copyright 1998-2001 Net Boolean Incorporated.
  * Portions Copyright 2001-2003 IBM Corporation.
@@ -611,11 +611,31 @@ main( int argc, char **argv )
 	}
 
 	if ( infile != NULL ) {
+		int percent = 0;
+	
 		if ( infile[0] == '-' && infile[1] == '\0' ) {
 			fp = stdin;
 		} else if (( fp = fopen( infile, "r" )) == NULL ) {
 			perror( infile );
 			return EXIT_FAILURE;
+		}
+
+		for( i=0 ; filtpattern[i] ; i++ ) {
+			if( filtpattern[i] == '%' ) {
+				if( percent ) {
+					fprintf( stderr, _("Bad filter pattern \"%s\"\n"),
+						filtpattern );
+					return EXIT_FAILURE;
+				}
+
+				percent++;
+
+				if( filtpattern[i+1] != 's' ) {
+					fprintf( stderr, _("Bad filter pattern \"%s\"\n"),
+						filtpattern );
+					return EXIT_FAILURE;
+				}
+			}
 		}
 	}
 

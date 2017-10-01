@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/aclparse.c,v 1.145.2.19 2006/04/05 20:07:02 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2006 The OpenLDAP Foundation.
+ * Copyright 1998-2007 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -2266,9 +2266,9 @@ acl_usage( void )
 {
 	char *access =
 		"<access clause> ::= access to <what> "
-				"[ by <who> <access> [ <control> ] ]+ \n";
+				"[ by <who> [ <access> ] [ <control> ] ]+ \n";
 	char *what =
-		"<what> ::= * | [dn[.<dnstyle>]=<DN>] [filter=<filter>] [attrs=<attrspec>]\n"
+		"<what> ::= * | dn[.<dnstyle>=<DN>] [filter=<filter>] [attrs=<attrspec>]\n"
 		"<attrspec> ::= <attrname> [val[/<matchingRule>][.<attrstyle>]=<value>] | <attrlist>\n"
 		"<attrlist> ::= <attr> [ , <attrlist> ]\n"
 		"<attr> ::= <attrname> | @<objectClass> | !<objectClass> | entry | children\n";

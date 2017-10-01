@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/search.c,v 1.148.2.30 2006/05/16 20:38:16 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2006 The OpenLDAP Foundation.
+ * Copyright 1999-2007 The OpenLDAP Foundation.
  * Portions Copyright 1999-2003 Howard Chu.
  * Portions Copyright 2000-2003 Pierangelo Masarati.
  * All rights reserved.
@@ -75,7 +75,7 @@ ldap_back_munge_filter(
 
 		if ( strncmp( ptr, bv_true.bv_val, bv_true.bv_len ) == 0 ) {
 			oldbv = &bv_true;
-			if ( li->li_flags & LDAP_BACK_F_SUPPORT_T_F ) {
+			if ( LDAP_BACK_T_F( li ) ) {
 				newbv = &bv_t;
 
 			} else {
@@ -85,7 +85,7 @@ ldap_back_munge_filter(
 		} else if ( strncmp( ptr, bv_false.bv_val, bv_false.bv_len ) == 0 )
 		{
 			oldbv = &bv_false;
-			if ( li->li_flags & LDAP_BACK_F_SUPPORT_T_F ) {
+			if ( LDAP_BACK_T_F( li ) ) {
 				newbv = &bv_f;
 
 			} else {
@@ -141,15 +141,18 @@ ldap_back_search(
 		Operation	*op,
 		SlapReply	*rs )
 {
-	ldapconn_t	*lc;
+	ldapinfo_t	*li = (ldapinfo_t *) op->o_bd->be_private;
+
+	ldapconn_t	*lc = NULL;
 	struct timeval	tv;
-	time_t		stoptime = (time_t)-1;
+	time_t		stoptime = (time_t)(-1);
 	LDAPMessage	*res,
 			*e;
 	int		rc = 0,
 			msgid; 
 	struct berval	match = BER_BVNULL,
 			filter = BER_BVNULL;
+	int		free_filter = 0;
 	int		i;
 	char		**attrs = NULL;
 	int		freetext = 0;
@@ -158,8 +161,7 @@ ldap_back_search(
 	/* FIXME: shouldn't this be null? */
 	const char	*save_matched = rs->sr_matched;
 
-	lc = ldap_back_getconn( op, rs, LDAP_BACK_SENDERR );
-	if ( !lc || !ldap_back_dobind( lc, op, rs, LDAP_BACK_SENDERR ) ) {
+	if ( !ldap_back_dobind( &lc, op, rs, LDAP_BACK_SENDERR ) ) {
 		return rs->sr_err;
 	}
 
@@ -201,7 +203,8 @@ ldap_back_search(
 	}
 
 	ctrls = op->o_ctrls;
-	rc = ldap_back_proxy_authz_ctrl( lc, op, rs, &ctrls );
+	rc = ldap_back_proxy_authz_ctrl( &lc->lc_bound_ndn,
+		li->li_version, &li->li_idassert, op, rs, &ctrls );
 	if ( rc != LDAP_SUCCESS ) {
 		goto finish;
 	}
@@ -237,6 +240,7 @@ retry:
 
 		case LDAP_FILTER_ERROR:
 			if ( ldap_back_munge_filter( op, &filter ) ) {
+				free_filter = 1;
 				goto retry;
 			}
 
@@ -252,38 +256,64 @@ retry:
 		}
 	}
 
+	/* if needed, initialize timeout */
+	if ( li->li_timeout[ SLAP_OP_SEARCH ] ) {
+		if ( tv.tv_sec == 0 || tv.tv_sec > li->li_timeout[ SLAP_OP_SEARCH ] ) {
+			tv.tv_sec = li->li_timeout[ SLAP_OP_SEARCH ];
+			tv.tv_usec = 0;
+		}
+	}
+
 	/* We pull apart the ber result, stuff it into a slapd entry, and
 	 * let send_search_entry stuff it back into ber format. Slow & ugly,
 	 * but this is necessary for version matching, and for ACL processing.
 	 */
 
-	for ( rc = 0; rc != -1; rc = ldap_result( lc->lc_ld, msgid, LDAP_MSG_ONE, &tv, &res ) )
+	for ( rc = -2; rc != -1; rc = ldap_result( lc->lc_ld, msgid, LDAP_MSG_ONE, &tv, &res ) )
 	{
 		/* check for abandon */
-		if ( op->o_abandon ) {
+		if ( op->o_abandon || LDAP_BACK_CONN_ABANDON( lc ) ) {
 			if ( rc > 0 ) {
 				ldap_msgfree( res );
 			}
-			ldap_abandon_ext( lc->lc_ld, msgid, NULL, NULL );
+			(void)ldap_back_cancel( lc, op, rs, msgid, LDAP_BACK_DONTSEND );
 			rc = SLAPD_ABANDON;
 			goto finish;
 		}
 
-		if ( rc == 0 ) {
-			LDAP_BACK_TV_SET( &tv );
+		if ( rc == 0 || rc == -2 ) {
 			ldap_pvt_thread_yield();
+
+			/* check timeout */
+			if ( li->li_timeout[ SLAP_OP_SEARCH ] ) {
+				if ( rc == 0 ) {
+					(void)ldap_back_cancel( lc, op, rs, msgid, LDAP_BACK_DONTSEND );
+					rs->sr_text = "Operation timed out";
+					rc = rs->sr_err = op->o_protocol >= LDAP_VERSION3 ?
+						LDAP_ADMINLIMIT_EXCEEDED : LDAP_OTHER;
+					goto finish;
+				}
+
+			} else {
+				LDAP_BACK_TV_SET( &tv );
+			}
 
 			/* check time limit */
 			if ( op->ors_tlimit != SLAP_NO_LIMIT
 					&& slap_get_time() > stoptime )
 			{
-				ldap_abandon_ext( lc->lc_ld, msgid, NULL, NULL );
+				(void)ldap_back_cancel( lc, op, rs, msgid, LDAP_BACK_DONTSEND );
 				rc = rs->sr_err = LDAP_TIMELIMIT_EXCEEDED;
 				goto finish;
 			}
 			continue;
 
 		} else {
+			/* only touch when activity actually took place... */
+			if ( li->li_idle_timeout && lc ) {
+				lc->lc_time = op->o_time;
+			}
+
 			/* don't retry any more */
 			dont_retry = 1;
 		}
@@ -320,7 +350,7 @@ retry:
 				if ( rc == LDAP_UNAVAILABLE ) {
 					rc = rs->sr_err = LDAP_OTHER;
 				} else {
-					ldap_abandon_ext( lc->lc_ld, msgid, NULL, NULL );
+					(void)ldap_back_cancel( lc, op, rs, msgid, LDAP_BACK_DONTSEND );
 				}
 				goto finish;
 			}
@@ -344,7 +374,8 @@ retry:
 					/* NO OP */ ;
 
 				/* FIXME: there MUST be at least one */
-				rs->sr_ref = ch_malloc( ( cnt + 1 ) * sizeof( struct berval ) );
+				rs->sr_ref = op->o_tmpalloc( ( cnt + 1 ) * sizeof( struct berval ),
+					op->o_tmpmemctx );
 
 				for ( cnt = 0; references[ cnt ]; cnt++ ) {
 					ber_str2bv( references[ cnt ], 0, 0, &rs->sr_ref[ cnt ] );
@@ -365,7 +396,7 @@ retry:
 			/* cleanup */
 			if ( references ) {
 				ber_memvfree( (void **)references );
-				ch_free( rs->sr_ref );
+				op->o_tmpfree( rs->sr_ref, op->o_tmpmemctx );
 				rs->sr_ref = NULL;
 			}
 
@@ -405,7 +436,8 @@ retry:
 				for ( cnt = 0; references[ cnt ]; cnt++ )
 					/* NO OP */ ;
 				
-				rs->sr_ref = ch_malloc( ( cnt + 1 ) * sizeof( struct berval ) );
+				rs->sr_ref = op->o_tmpalloc( ( cnt + 1 ) * sizeof( struct berval ),
+					op->o_tmpmemctx );
 
 				for ( cnt = 0; references[ cnt ]; cnt++ ) {
 					/* duplicating ...*/
@@ -439,6 +471,14 @@ retry:
 
 			rc = 0;
 			break;
+		}
+
+		/* if needed, restore timeout */
+		if ( li->li_timeout[ SLAP_OP_SEARCH ] ) {
+			if ( tv.tv_sec == 0 || tv.tv_sec > li->li_timeout[ SLAP_OP_SEARCH ] ) {
+				tv.tv_sec = li->li_timeout[ SLAP_OP_SEARCH ];
+				tv.tv_usec = 0;
+			}
 		}
 	}
 
@@ -474,7 +514,15 @@ retry:
 	}
 
 finish:;
-	if ( rc != SLAPD_ABANDON ) {
+	if ( LDAP_BACK_QUARANTINE( li ) ) {
+		ldap_back_quarantine( op, rs );
+	}
+
+#if 0
+	/* let send_ldap_result play cleanup handlers (ITS#4645) */
+	if ( rc != SLAPD_ABANDON )
+#endif
+	{
 		send_ldap_result( op, rs );
 	}
 
@@ -495,7 +543,7 @@ finish:;
 		rs->sr_matched = save_matched;
 	}
 
-	if ( !BER_BVISNULL( &filter ) && filter.bv_val != op->ors_filterstr.bv_val ) {
+	if ( free_filter ) {
 		op->o_tmpfree( filter.bv_val, op->o_tmpmemctx );
 	}
 
@@ -507,7 +555,7 @@ finish:;
 	}
 
 	if ( rs->sr_ref ) {
-		ber_bvarray_free( rs->sr_ref );
+		ber_bvarray_free_x( rs->sr_ref, op->o_tmpmemctx );
 		rs->sr_ref = NULL;
 	}
 
@@ -516,7 +564,7 @@ finish:;
 	}
 
 	if ( lc != NULL ) {
-		ldap_back_release_conn( op, rs, lc );
+		ldap_back_release_conn( li, lc );
 	}
 
 	return rs->sr_err;
@@ -714,10 +762,11 @@ ldap_back_entry_get(
 		ObjectClass		*oc,
 		AttributeDescription	*at,
 		int			rw,
-		Entry			**ent
-)
+		Entry			**ent )
 {
-	ldapconn_t	*lc;
+	ldapinfo_t	*li = (ldapinfo_t *) op->o_bd->be_private;
+
+	ldapconn_t	*lc = NULL;
 	int		rc = 1,
 			do_not_cache;
 	struct berval	bdn;
@@ -734,8 +783,7 @@ ldap_back_entry_get(
 	/* Tell getconn this is a privileged op */
 	do_not_cache = op->o_do_not_cache;
 	op->o_do_not_cache = 1;
-	lc = ldap_back_getconn( op, &rs, LDAP_BACK_DONTSEND );
-	if ( !lc || !ldap_back_dobind( lc, op, &rs, LDAP_BACK_DONTSEND ) ) {
+	if ( !ldap_back_dobind( &lc, op, &rs, LDAP_BACK_DONTSEND ) ) {
 		op->o_do_not_cache = do_not_cache;
 		return rs.sr_err;
 	}
@@ -765,13 +813,14 @@ ldap_back_entry_get(
 		*ptr++ = '\0';
 	}
 
+retry:
 	ctrls = op->o_ctrls;
-	rc = ldap_back_proxy_authz_ctrl( lc, op, &rs, &ctrls );
+	rc = ldap_back_proxy_authz_ctrl( &lc->lc_bound_ndn,
+		li->li_version, &li->li_idassert, op, &rs, &ctrls );
 	if ( rc != LDAP_SUCCESS ) {
 		goto cleanup;
 	}
 	
-retry:
 	rc = ldap_search_ext_s( lc->lc_ld, ndn->bv_val, LDAP_SCOPE_BASE, filter,
 				attrp, 0, ctrls, NULL,
 				NULL, LDAP_NO_LIMIT, &result );
@@ -779,6 +828,8 @@ retry:
 		if ( rc == LDAP_SERVER_DOWN && do_retry ) {
 			do_retry = 0;
 			if ( ldap_back_retry( &lc, op, &rs, LDAP_BACK_DONTSEND ) ) {
+				/* if the identity changed, there might be need to re-authz */
+				(void)ldap_back_proxy_authz_ctrl_free( op, &ctrls );
 				goto retry;
 			}
 		}
@@ -800,7 +851,7 @@ retry:
 	rc = ldap_build_entry( op, e, *ent, &bdn );
 
 	if ( rc != LDAP_SUCCESS ) {
-		ch_free( *ent );
+		entry_free( *ent );
 		*ent = NULL;
 	}
 
@@ -816,7 +867,7 @@ cleanup:
 	}
 
 	if ( lc != NULL ) {
-		ldap_back_release_conn( op, &rs, lc );
+		ldap_back_release_conn( li, lc );
 	}
 
 	return rc;
