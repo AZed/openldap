@@ -15,7 +15,7 @@
 Summary: The configuration files, libraries, and documentation for OpenLDAP.
 Name: openldap
 Version: %{version_22}
-Release: 3
+Release: 4
 License: OpenLDAP
 Group: System Environment/Daemons
 Source0: ftp://ftp.OpenLDAP.org/pub/OpenLDAP/openldap-release/openldap-%{version_22}.tgz
@@ -54,6 +54,10 @@ Patch25: MigrationTools-44-schema.patch
 Patch30: http://www.sleepycat.com/update/4.2.52/patch.4.2.52.1
 Patch31: http://www.sleepycat.com/update/4.2.52/patch.4.2.52.2
 Patch40: openldap-ntlm.diff
+Patch41: openldap-2.2.13-tls-fix-connection-test.patch
+Patch42: openldap-2.2.13-hop.patch
+Patch43: openldap-2.0.27-hop.patch
+Patch44: openldap-2.1.30-hop.patch
 URL: http://www.openldap.org/
 BuildRoot: %{_tmppath}/%{name}-%{version_22}-root
 BuildPreReq: cyrus-sasl-devel >= 2.1, gdbm-devel, libtool >= 1.5.6-2, krb5-devel
@@ -154,6 +158,9 @@ pushd openldap-%{version_22}
 %patch8 -p1 -b .nosql
 %patch10 -p0 -b .3201
 %patch11 -p0 -b .dryrun
+%patch41 -p1 -b .CAN-2005-2069
+%patch42 -p1 -b .hop
+
 cp %{_datadir}/libtool/config.{sub,guess} build/
 popd
 
@@ -187,6 +194,8 @@ pushd MigrationTools-%{migtools_version}
 popd
 
 pushd openldap-%{version_20}
+%patch43 -p1 -b .hop
+
 	for subdir in build-gdbm build-db build-clients build-compat ; do
 		mkdir $subdir
 		ln -s ../configure $subdir
@@ -195,6 +204,7 @@ popd
 
 pushd openldap-%{version_21}
 %patch9 -p1 -b .ldapi
+%patch44 -p1 -b .hop
 	for subdir in build-servers build-compat ; do
 		mkdir $subdir
 		ln -s ../configure $subdir
@@ -549,6 +559,12 @@ pushd openldap-%{version_22}/build-clients
 make install DESTDIR=$RPM_BUILD_ROOT libdir=%{_libdir} LIBTOOL="$libtool"
 popd
 
+# Create this directory so that authconfig setting TLS_CACERT to
+# /etc/openldap/cacerts doesn't cause TLS startup of any kind to fail
+# when the directory doesn't exist.
+mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/openldap/cacerts
+
+
 # Install the padl.com migration tools.
 mkdir -p $RPM_BUILD_ROOT%{_datadir}/openldap/migration
 install -m 755 MigrationTools-%{migtools_version}/migrate_* \
@@ -599,7 +615,7 @@ rm -f $RPM_BUILD_ROOT/%{evolution_connector_libdir}/*.so*
 rm -f $RPM_BUILD_ROOT/%{_sbindir}/openldap/*.a
 rm -f $RPM_BUILD_ROOT/%{_sbindir}/openldap/*.so
 
-%clean 
+%clean
 rm -rf $RPM_BUILD_ROOT
 
 %post -p /sbin/ldconfig
@@ -661,6 +677,7 @@ fi
 %doc openldap-%{version_22}/LICENSE
 %doc openldap-%{version_22}/README
 %attr(0755,root,root) %dir /etc/openldap
+%attr(0755,root,root) %dir /etc/openldap/cacerts
 %attr(0644,root,root) %config(noreplace) /etc/openldap/ldap*.conf
 %attr(0755,root,root) %{_libdir}/liblber-*.so.*
 %attr(0755,root,root) %{_libdir}/libldap-*.so.*
@@ -734,6 +751,18 @@ fi
 %attr(0644,root,root)      %{evolution_connector_libdir}/*.a
 
 %changelog
+* Thu Aug 11 2005 Jay Fenlason <fenlason@redhat.com> 2.2.13-3.4E
+- Backport the -hop patches to prevent infinite looping when chasing referrals.
+  OpenLDAP ITS #3578 as described in
+  bz#158120 [RHEL3] Need help configuring host as an LDAP client
+
+- Create and own the /etc/openldap/cacerts directory, to close
+  bz#159151 Authconfig update creates a problem with OpenLDAP server
+
+* Tue Jul 5 2005 Jay Fenlason <fenlason@redhat.com>
+- Include fix for
+  bz#161990 openldap password disclosure issue
+
 * Tue Apr 19 2005 Nalin Dahyabhai <nalin@redhat.com> 2.2.13-3
 - move nptl libraries into arch-specific subdirectories on %%{ix86} boxes,
   to match glibc's layout
@@ -1262,7 +1291,7 @@ fi
 * Fri Jun 16 2000 Nalin Dahyabhai <nalin@redhat.com>
 - update to 1.2.11
 - add condrestart logic to init script
-- munge migration scripts so that you don't have to be 
+- munge migration scripts so that you don't have to be
   /usr/share/openldap/migration to run them
 - add code to create pid files in /var/run
 

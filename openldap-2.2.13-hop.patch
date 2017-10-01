@@ -1,0 +1,67 @@
+OpenLDAP ITS #3578
+
+When chasing v3 referrals, we need to keep track of how deep the stack
+of referrals is, but we actually mark the depth of all searches as the
+depth of the top search (0) plus one, which never increases.  The result
+is an infinite loop if we don't keep track of what's actually going on.
+
+--- openldap/libraries/libldap/ldap-int.h
++++ openldap/libraries/libldap/ldap-int.h
+@@ -436,7 +436,7 @@
+ LDAP_F (BerElement *) ldap_alloc_ber_with_options( LDAP *ld );
+ LDAP_F (void) ldap_set_ber_options( LDAP *ld, BerElement *ber );
+ 
+-LDAP_F (int) ldap_send_server_request( LDAP *ld, BerElement *ber, ber_int_t msgid, LDAPRequest *parentreq, LDAPURLDesc *srvlist, LDAPConn *lc, LDAPreqinfo *bind );
++LDAP_F (int) ldap_send_server_request( LDAP *ld, BerElement *ber, ber_int_t msgid, LDAPRequest *parentreq, int parentcnt, LDAPURLDesc *srvlist, LDAPConn *lc, LDAPreqinfo *bind );
+ LDAP_F (LDAPConn *) ldap_new_connection( LDAP *ld, LDAPURLDesc *srvlist, int use_ldsb, int connect, LDAPreqinfo *bind );
+ LDAP_F (LDAPRequest *) ldap_find_request_by_msgid( LDAP *ld, ber_int_t msgid );
+ LDAP_F (void) ldap_free_request( LDAP *ld, LDAPRequest *lr );
+--- openldap-2.2.13/libraries/libldap/request.c.hop	2004-04-12 11:16:23.000000000 -0400
++++ openldap-2.2.13/libraries/libldap/request.c	2005-07-13 16:01:20.000000000 -0400
+@@ -144,7 +144,7 @@
+ #ifdef LDAP_R_COMPILE
+ 	ldap_pvt_thread_mutex_lock( &ld->ld_req_mutex );
+ #endif
+-	rc = ldap_send_server_request( ld, ber, msgid, NULL,
++	rc = ldap_send_server_request( ld, ber, msgid, NULL, -1,
+ 									servers, NULL, NULL );
+ #ifdef LDAP_R_COMPILE
+ 	ldap_pvt_thread_mutex_unlock( &ld->ld_req_mutex );
+@@ -195,6 +195,7 @@
+ 	BerElement *ber,
+ 	ber_int_t msgid,
+ 	LDAPRequest *parentreq,
++	int parentcnt,
+ 	LDAPURLDesc *srvlist,
+ 	LDAPConn *lc,
+ 	LDAPreqinfo *bind )
+@@ -276,7 +277,10 @@
+ 			++parentreq->lr_outrefcnt;
+ 		}
+ 		lr->lr_origid = parentreq->lr_origid;
+-		lr->lr_parentcnt = parentreq->lr_parentcnt + 1;
++		if ( parentcnt < 0 ) {
++			parentcnt = lr->lr_parentcnt;
++		}
++		lr->lr_parentcnt = parentcnt + 1;
+ 		lr->lr_parent = parentreq;
+ 		lr->lr_refnext = parentreq->lr_child;
+ 		parentreq->lr_child = lr;
+@@ -890,7 +894,7 @@
+ 		ldap_pvt_thread_mutex_lock( &ld->ld_req_mutex );
+ #endif
+ 		rc = ldap_send_server_request( ld, ber, id,
+-		    	origreq, srv, NULL, &rinfo );
++		    	origreq, lr->lr_parentcnt, srv, NULL, &rinfo );
+ #ifdef LDAP_R_COMPILE
+ 		ldap_pvt_thread_mutex_unlock( &ld->ld_req_mutex );
+ #endif
+@@ -1086,7 +1090,7 @@
+ 	ldap_pvt_thread_mutex_lock( &ld->ld_req_mutex );
+ #endif
+ 		rc = ldap_send_server_request( ld, ber, id,
+-		    lr, srv, NULL, &rinfo );
++		    lr, -1, srv, NULL, &rinfo );
+ #ifdef LDAP_R_COMPILE
+ 	ldap_pvt_thread_mutex_unlock( &ld->ld_req_mutex );
+ #endif
