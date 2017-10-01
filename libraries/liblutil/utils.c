@@ -379,7 +379,7 @@ lutil_gettime( struct lutil_tm *ltm )
 	t = tv.tv_sec;
 
 	if ( tv.tv_sec < prevTv.tv_sec
-		|| ( tv.tv_sec == prevTv.tv_sec && tv.tv_usec == prevTv.tv_usec )) {
+		|| ( tv.tv_sec == prevTv.tv_sec && tv.tv_usec <= prevTv.tv_usec )) {
 		subs++;
 	} else {
 		subs = 0;
@@ -567,7 +567,7 @@ int closedir(DIR *dir)
  * Memory Reverse Search
  */
 void *
-lutil_memrchr(const void *b, int c, size_t n)
+(lutil_memrchr)(const void *b, int c, size_t n)
 {
 	if (n != 0) {
 		const unsigned char *s, *bb = b, cc = c;

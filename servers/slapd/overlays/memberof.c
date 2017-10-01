@@ -224,16 +224,8 @@ memberof_saveMember_cb( Operation *op, SlapReply *rs )
 		a = attr_find( rs->sr_entry->e_attrs, mc->ad );
 		if ( a != NULL ) {
 			ber_bvarray_dup_x( &mc->vals, a->a_nvals, op->o_tmpmemctx );
-		}
 
-		if ( a && attr_find( a->a_next, mc->ad ) != NULL ) {
-			Debug( LDAP_DEBUG_ANY,
-				"%s: memberof_saveMember_cb(\"%s\"): "
-				"more than one occurrence of \"%s\" "
-				"attribute.\n",
-				op->o_log_prefix,
-				rs->sr_entry->e_name.bv_val,
-				mc->ad->ad_cname.bv_val );
+			assert( attr_find( a->a_next, mc->ad ) == NULL );
 		}
 	}
 
@@ -393,6 +385,7 @@ memberof_value_modify(
 	ml->sml_flags = SLAP_MOD_INTERNAL;
 	ml->sml_next = op2.orm_modlist;
 	op2.orm_modlist = ml;
+	op2.orm_no_opattrs = 0;
 
 	if ( new_ndn != NULL ) {
 		assert( !BER_BVISNULL( new_dn ) );

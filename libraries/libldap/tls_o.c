@@ -398,11 +398,22 @@ tlso_session_upflags( Sockbuf *sb, tls_session *sess, int rc )
 }
 
 static char *
-tlso_session_errmsg( int rc, char *buf, size_t len )
+tlso_session_errmsg( tls_session *sess, int rc, char *buf, size_t len )
 {
+	char err[256] = "";
+	const char *certerr=NULL;
+	tlso_session *s = (tlso_session *)sess;
+
 	rc = ERR_peek_error();
 	if ( rc ) {
-		ERR_error_string_n( rc, buf, len );
+		ERR_error_string_n( rc, err, sizeof(err) );
+		if ( ( ERR_GET_LIB(rc) == ERR_LIB_SSL ) && 
+				( ERR_GET_REASON(rc) == SSL_R_CERTIFICATE_VERIFY_FAILED ) ) {
+			int certrc = SSL_get_verify_result(s);
+			certerr = (char *)X509_verify_cert_error_string(certrc);
+		}
+		snprintf(buf, len, "%s%s%s%s", err, certerr ? " (" :"", 
+				certerr ? certerr : "", certerr ?  ")" : "" );
 		return buf;
 	}
 	return NULL;
@@ -1070,6 +1081,7 @@ tlso_tmp_rsa_cb( SSL *ssl, int is_export, int key_length )
 	/* FIXME:  Who frees the key? */
 #if OPENSSL_VERSION_NUMBER > 0x00908000
 	BIGNUM *bn = BN_new();
+	tmp_rsa = NULL;
 	if ( bn ) {
 		if ( BN_set_word( bn, RSA_F4 )) {
 			tmp_rsa = RSA_new();
@@ -1079,8 +1091,6 @@ tlso_tmp_rsa_cb( SSL *ssl, int is_export, int key_length )
 			}
 		}
 		BN_free( bn );
-	} else {
-		tmp_rsa = NULL;
 	}
 #else
 	tmp_rsa = RSA_generate_key( key_length, RSA_F4, NULL, NULL );
@@ -1090,7 +1100,6 @@ tlso_tmp_rsa_cb( SSL *ssl, int is_export, int key_length )
 		Debug( LDAP_DEBUG_ANY,
 			"TLS: Failed to generate temporary %d-bit %s RSA key\n",
 			key_length, is_export ? "export" : "domestic", 0 );
-		return NULL;
 	}
 	return tmp_rsa;
 }

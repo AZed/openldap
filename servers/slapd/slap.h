@@ -1630,6 +1630,14 @@ typedef struct slap_cf_aux_table {
 	void *aux;
 } slap_cf_aux_table;
 
+typedef int 
+slap_cf_aux_table_parse_x LDAP_P((
+	struct berval *val,
+	void *bc,
+	slap_cf_aux_table *tab0,
+	const char *tabmsg,
+	int unparse ));
+
 #define SLAP_LIMIT_TIME	1
 #define SLAP_LIMIT_SIZE	2
 
@@ -1703,6 +1711,13 @@ struct syncinfo_s;
 
 #define SLAP_SYNC_RID_MAX	999
 #define SLAP_SYNC_SID_MAX	4095	/* based on liblutil/csn.c field width */
+
+/* fake conn connid constructed as rid; real connids start
+ * at SLAPD_SYNC_CONN_OFFSET */
+#define SLAPD_SYNC_SYNCCONN_OFFSET (SLAP_SYNC_RID_MAX + 1)
+#define SLAPD_SYNC_IS_SYNCCONN(connid) ((connid) < SLAPD_SYNC_SYNCCONN_OFFSET)
+#define SLAPD_SYNC_RID2SYNCCONN(rid) (rid)
+
 #define SLAP_SYNCUUID_SET_SIZE 256
 
 struct sync_cookie {
@@ -1804,6 +1819,7 @@ struct BackendDB {
 #define SLAP_DBFLAG_SHADOW_MASK		(SLAP_DBFLAG_SHADOW|SLAP_DBFLAG_SINGLE_SHADOW|SLAP_DBFLAG_SYNC_SHADOW|SLAP_DBFLAG_SLURP_SHADOW)
 #define SLAP_DBFLAG_CLEAN		0x10000U /* was cleanly shutdown */
 #define SLAP_DBFLAG_ACL_ADD		0x20000U /* check attr ACLs on adds */
+#define SLAP_DBFLAG_SYNC_SUBENTRY	0x40000U /* use subentry for context */
 	slap_mask_t	be_flags;
 #define SLAP_DBFLAGS(be)			((be)->be_flags)
 #define SLAP_NOLASTMOD(be)			(SLAP_DBFLAGS(be) & SLAP_DBFLAG_NOLASTMOD)
@@ -1830,6 +1846,7 @@ struct BackendDB {
 #define SLAP_MULTIMASTER(be)			(!SLAP_SINGLE_SHADOW(be))
 #define SLAP_DBCLEAN(be)			(SLAP_DBFLAGS(be) & SLAP_DBFLAG_CLEAN)
 #define SLAP_DBACL_ADD(be)			(SLAP_DBFLAGS(be) & SLAP_DBFLAG_ACL_ADD)
+#define SLAP_SYNC_SUBENTRY(be)			(SLAP_DBFLAGS(be) & SLAP_DBFLAG_SYNC_SUBENTRY)
 
 	slap_mask_t	be_restrictops;		/* restriction operations */
 #define SLAP_RESTRICT_OP_ADD		0x0001U
@@ -2760,9 +2777,26 @@ typedef struct Listener Listener;
 /*
  * represents a connection from an ldap client
  */
+/* structure state (protected by connections_mutex) */
+enum sc_struct_state {
+	SLAP_C_UNINITIALIZED = 0,	/* MUST BE ZERO (0) */
+	SLAP_C_UNUSED,
+	SLAP_C_USED,
+	SLAP_C_PENDING
+};
+
+/* connection state (protected by c_mutex ) */
+enum sc_conn_state {
+	SLAP_C_INVALID = 0,		/* MUST BE ZERO (0) */
+	SLAP_C_INACTIVE,		/* zero threads */
+	SLAP_C_CLOSING,			/* closing */
+	SLAP_C_ACTIVE,			/* one or more threads */
+	SLAP_C_BINDING,			/* binding */
+	SLAP_C_CLIENT			/* outbound client conn */
+};
 struct Connection {
-	int			c_struct_state; /* structure management state */
-	int			c_conn_state;	/* connection state */
+	enum sc_struct_state	c_struct_state; /* structure management state */
+	enum sc_conn_state	c_conn_state;	/* connection state */
 	int			c_conn_idx;		/* slot in connections array */
 	ber_socket_t	c_sd;
 	const char	*c_close_reason; /* why connection is closing */
