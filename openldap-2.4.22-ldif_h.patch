@@ -1,0 +1,22 @@
+--- openldap-2.4.22/include/Makefile.in.orig	2010-06-03 07:38:29.000000000 -0600
++++ openldap-2.4.22/include/Makefile.in	2010-06-03 07:39:21.000000000 -0600
+@@ -15,17 +15,18 @@
+ 
+ all-local: ldap_config.h FORCE
+ 
+ install-local: FORCE
+ 	-$(MKDIR) $(DESTDIR)$(includedir)
+ 	for header in $(srcdir)/lber.h lber_types.h \
+ 		$(srcdir)/ldap.h $(srcdir)/ldap_cdefs.h \
+ 		$(srcdir)/ldap_schema.h $(srcdir)/ldap_utf8.h \
+-		$(srcdir)/slapi-plugin.h ldap_features.h; \
++		$(srcdir)/slapi-plugin.h ldap_features.h \
++		$(srcdir)/ldif.h ; \
+ 	do \
+ 		$(INSTALL) $(INSTALLFLAGS) -m 644 $$header $(DESTDIR)$(includedir); \
+ 	done
+ 
+ clean-local: FORCE 
+ 	$(RM) ldap_config.h
+ 
+ veryclean-local: clean-local FORCE

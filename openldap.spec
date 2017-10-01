@@ -3,7 +3,7 @@
 # not work with some versions of OpenLDAP.
 %define db_version 4.8.26
 %define ldbm_backend berkeley
-%define version 2.4.21
+%define version 2.4.22
 %define evolution_connector_prefix %{_libdir}/evolution-openldap
 %define evolution_connector_includedir %{evolution_connector_prefix}/include
 %define evolution_connector_libdir %{evolution_connector_prefix}/%{_lib}
@@ -11,7 +11,7 @@
 Summary: LDAP support libraries
 Name: openldap
 Version: %{version}
-Release: 11%{?dist}
+Release: 7%{?dist}
 License: OpenLDAP
 Group: System Environment/Daemons
 Source0: ftp://ftp.OpenLDAP.org/pub/OpenLDAP/openldap-release/openldap-%{version}.tgz
@@ -36,8 +36,11 @@ Patch9: openldap-2.3.37-smbk5pwd.patch
 Patch10: openldap-2.4.6-multilib.patch
 Patch11: openldap-2.4.16-doc-cacertdir.patch
 Patch12: openldap-2.4.21-dn2id-segfault.patch
-Patch13: openldap-2.4.21-modrdn-segfault.patch
-Patch14: openldap-2.4.21-config_emtpy_uri.patch
+Patch13: openldap-2.4.22-ldif_h.patch
+Patch14: openldap-2.4.22-libldif.patch
+Patch15: openldap-2.4.22-modrdn-segfault.patch
+Patch16: openldap-2.4.23-selfsignedcacert.patch
+Patch17: openldap-2.4.22-initauthtoken.patch
 
 # Patches for the evolution library
 Patch200: openldap-2.4.6-evolution-ntlm.patch
@@ -47,6 +50,7 @@ BuildRoot: %{_tmppath}/%{name}-%{version}-root
 BuildRequires: cyrus-sasl-devel >= 2.1, gdbm-devel, libtool >= 1.5.6-2, krb5-devel
 BuildRequires: openssl-devel, pam-devel, perl, pkgconfig, tcp_wrappers-devel,
 BuildRequires: unixODBC-devel, libtool-ltdl-devel, groff
+BuildRequires: nss-devel
 Requires: glibc >= 2.2.3-48, mktemp
 Obsoletes: compat-openldap < 2.4
 
@@ -134,8 +138,11 @@ pushd openldap-%{version}
 %patch10 -p1 -b .multilib
 %patch11 -p1 -b .cacertdir
 %patch12 -p1 -b .segfault
-%patch13 -p1 -b .modrdn-segfault
-%patch14 -p1 -b .config-emtpy-uri
+%patch13 -p1 -b .ldif_h
+%patch14 -p1 -b .libldif
+%patch15 -p1 -b .modrdn-segfault
+%patch16 -p1 -b .selfsignedcacert
+%patch17 -p1 -b .initauthtoken
 
 cp %{_datadir}/libtool/config/config.{sub,guess} build/
 popd
@@ -195,10 +202,12 @@ make install libdb_base=libslapd_db libso_base=libslapd_db strip="false"
 ln -sf libslapd_db.so ${dbdir}/%{_lib}/${subdir}/libdb.so
 popd
 
-export CPPFLAGS="-I${dbdir}/include"
-export CFLAGS="$CPPFLAGS $RPM_OPT_FLAGS -D_REENTRANT -DLDAP_CONNECTIONLESS -fPIC -D_GNU_SOURCE"
+export CPPFLAGS="-I${dbdir}/include -I%_includedir/nss3 -I%_includedir/nspr4"
+export CFLAGS="$CPPFLAGS $RPM_OPT_FLAGS -D_REENTRANT -DLDAP_CONNECTIONLESS -fPIC -D_GNU_SOURCE -DHAVE_TLS -DHAVE_MOZNSS -DSLAPD_LMHASH"
 export LDFLAGS="-L${dbdir}/%{_lib}"
 export LD_LIBRARY_PATH=${dbdir}/%{_lib}${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
+MOZNSS_TLS_LIBS="-lssl3 -lsmime3 -lnss3 -lnssutil3 -lplds4 -lplc4 -lnspr4"
+export LIBS="$MOZNSS_TLS_LIBS"
 
 build() {
 %configure \
@@ -206,7 +215,7 @@ build() {
     \
     --enable-local --enable-rlookups \
     \
-    --with-tls \
+    --with-tls=no \
     --with-cyrus-sasl \
     \
     --enable-wrappers \
@@ -216,17 +225,29 @@ build() {
     --enable-cleartext \
     --enable-crypt \
     --enable-spasswd \
-    --enable-lmpasswd \
+    --disable-lmpasswd \
     --enable-modules \
     --disable-sql \
     \
     --libexecdir=%{_libdir} \
     $@
+# HACK HACK HACK
+# openldap uses #include <nss/somemoznssfile.h>
+# this doesn't work on fedora and similar which uses /usr/include/nss3
+# so we have to fake it out
+pushd include
+if [ ! -d nss ] ; then
+    ln -s %_includedir/nss3 nss
+fi
+if [ ! -d nspr ] ; then
+    ln -s %_includedir/nspr4 nspr
+fi
+popd
 make %{_smp_mflags} LIBTOOL="$libtool"
 }
 
 # Build the servers with Kerberos support (for password checking, mainly).
-LIBS=-lpthread; export LIBS
+LIBS="$LIBS -lpthread"; export LIBS
 LD_LIBRARY_PATH=${dbdir}/%{_lib}${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}; export LD_LIBRARY_PATH
 pushd openldap-%{version}/build-servers
 build \
@@ -257,6 +278,7 @@ popd
 
 # Build clients without Kerberos password-checking support, which is only
 # useful in the server anyway, to avoid stray dependencies.
+export LIBS="$MOZNSS_TLS_LIBS"
 pushd openldap-%{version}/build-clients
 build \
     --disable-slapd \
@@ -517,13 +539,13 @@ popd
 fi
 
 if [ `find %{_sysconfdir}/openldap/slapd.d -maxdepth 0 -empty | wc -l` = "1" ]; then
-    # configuration in slapd.d not available
+	# configuration in slapd.d not available
 
-    [ ! -f %{_sysconfdir}/openldap/slapd.conf ]
-    fresh_install=$?
+	[ ! -f %{_sysconfdir}/openldap/slapd.conf ]
+	fresh_install=$?
 
-    [ $fresh_install -eq 0 ] && \
-        cp %{_datadir}/openldap-servers/slapd.conf.obsolete %{_sysconfdir}/openldap/slapd.conf
+	[ $fresh_install -eq 0 ] && \
+		cp %{_datadir}/openldap-servers/slapd.conf.obsolete %{_sysconfdir}/openldap/slapd.conf
 
     mv %{_sysconfdir}/openldap/slapd.conf %{_sysconfdir}/openldap/slapd.conf.bak
     mkdir -p %{_sysconfdir}/openldap/slapd.d/
@@ -545,9 +567,8 @@ EOF
     rm -f %{_sysconfdir}/openldap/slapd.conf
 	rm -f %{_sharedstatedir}/ldap/__db* %{_sharedstatedir}/ldap/alock
 
-    [ $fresh_install -eq 0 ] && rm -f %{_sysconfdir}/openldap/slapd.conf.bak
+	[ $fresh_install -eq 0 ] && rm -f %{_sysconfdir}/openldap/slapd.conf.bak
 fi
-
 
 if [ $1 -ge 1 ] ; then
     /sbin/service slapd condrestart &>/dev/null
@@ -588,6 +609,7 @@ fi
 %attr(0755,root,root) %dir %{_sysconfdir}/openldap
 %attr(0755,root,root) %dir %{_sysconfdir}/openldap/cacerts
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/openldap/ldap*.conf
+%attr(0755,root,root) %{_libdir}/libldif-2.4*.so.*
 %attr(0755,root,root) %{_libdir}/liblber-2.4*.so.*
 %attr(0755,root,root) %{_libdir}/libldap-2.4*.so.*
 %attr(0755,root,root) %{_libdir}/libldap_r-2.4*.so.*
@@ -653,23 +675,35 @@ fi
 %attr(0644,root,root)      %{evolution_connector_libdir}/*.a
 
 %changelog
-* Thu Sep 16 2010 Jan Vcelak <jvcelak@redhat.com> 2.4.21-11
-- fix: startup error after converting to slapd-config (#628726)
+* Thu Jul 22 2010 Jan Vcelak <jvcelak@redhat.com> 2.4.22-7
+- Mozilla NSS - delay token auth until needed (#616552)
+- Mozilla NSS - support use of self signed CA certs as server certs (#614545)
 
-* Tue Jul 20 2010 Jan Vcelak <jvcelak@redhat.com> - 2.4.21-10
+* Tue Jul 20 2010 Jan Vcelak <jvcelak@redhat.com> - 2.4.22-6
 - CVE-2010-0211 openldap: modrdn processing uninitialized pointer free (#605448)
 - CVE-2010-0212 openldap: modrdn processing IA5StringNormalize NULL pointer dereference (#605452)
 - obsolete configuration file moved to /usr/share/openldap-servers (#612602)
 
-* Thu Jul 01 2010 Jan Zeleny <jzeleny@redhat.com> - 2.4.21-9
+* Thu Jul 01 2010 Jan Zeleny <jzeleny@redhat.com> - 2.4.22-5
 - another shot at previous fix
 
-* Wed Jun 30 2010 Jan Zeleny <jzeleny@redhat.com> - 2.4.21-8
+* Thu Jul 01 2010 Jan Zeleny <jzeleny@redhat.com> - 2.4.22-4
 - fixed issue with owner of /usr/lib/ldap/__db.* (#609523)
 
-* Thu May 27 2010 Jan Zeleny <jzeleny@redhat.com> - 2.4.21-7
-- updated autofs schema (#587722)
-- openldap built with conectionless support (#587722)
+* Thu Jun  3 2010 Rich Megginson <rmeggins@redhat.com> - 2.4.22-3
+- added ldif.h to the public api in the devel package
+- added -lldif to the public api
+- added HAVE_MOZNSS and other flags to use Mozilla NSS for crypto
+
+* Tue May 18 2010 Jan Zeleny <jzeleny@redhat.com> - 2.4.22-2
+- rebuild with connectionless support (#587722)
+- updated autofs schema (#584808)
+
+* Tue May 04 2010 Jan Zeleny <jzeleny@redhat.com> - 2.4.22-1
+- rebased to 2.4.22 (mostly bugfixes, added back-ldif, back-null testing support)
+- due to some possible issues pointed out in last update testing phase, I'm
+  pulling back the last change (slapd can't be moved since it depends on /usr
+  possibly mounted from network)
 
 * Fri Mar 19 2010 Jan Zeleny <jzeleny@redhat.com> - 2.4.21-6
 - moved slapd to start earlier during boot sequence

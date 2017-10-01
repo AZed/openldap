@@ -3,7 +3,7 @@
 # slapd	This shell script takes care of starting and stopping
 #	ldap servers (slapd).
 #
-# chkconfig: - 12 73
+# chkconfig: - 27 73
 # description: LDAP stands for Lightweight Directory Access Protocol, used \
 #              for implementing the industry standard directory services.
 # processname: slapd
