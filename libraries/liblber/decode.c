@@ -1,5 +1,5 @@
 /* decode.c - ber input decoding routines */
-/* $OpenLDAP: pkg/ldap/libraries/liblber/decode.c,v 1.105.2.8 2009/08/13 00:56:58 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/liblber/decode.c,v 1.105.2.10 2009/11/04 16:08:50 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2009 The OpenLDAP Foundation.

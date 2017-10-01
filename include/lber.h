@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/include/lber.h,v 1.99.2.8 2009/08/13 00:56:58 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/include/lber.h,v 1.99.2.11 2009/12/02 16:54:36 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2009 The OpenLDAP Foundation.

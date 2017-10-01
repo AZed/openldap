@@ -1,5 +1,5 @@
 /* tls_g.c - Handle tls/ssl using GNUTLS. */
-/* $OpenLDAP: pkg/ldap/libraries/libldap/tls_g.c,v 1.6.2.6 2009/08/13 00:52:04 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/tls_g.c,v 1.6.2.7 2009/10/30 17:48:17 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2008-2009 The OpenLDAP Foundation.

@@ -1,5 +1,5 @@
 /* alock.c - access lock library */
-/* $OpenLDAP: pkg/ldap/servers/slapd/alock.c,v 1.5.2.11 2009/03/09 23:16:48 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/alock.c,v 1.5.2.12 2009/11/18 20:49:24 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2005-2009 The OpenLDAP Foundation.

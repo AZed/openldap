@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/tests/progs/slapd-common.c,v 1.4.2.8 2009/02/10 17:13:05 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/tests/progs/slapd-common.c,v 1.4.2.9 2009/10/30 23:59:29 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2009 The OpenLDAP Foundation.

@@ -1,5 +1,5 @@
 /* unique.c - attribute uniqueness module */
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/unique.c,v 1.20.2.16 2009/08/02 18:44:04 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/unique.c,v 1.20.2.17 2009/12/02 16:52:10 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2004-2009 The OpenLDAP Foundation.
