@@ -5,7 +5,7 @@
 
 Name: openldap
 Version: 2.4.23
-Release: 31%{?dist}
+Release: 32%{?dist}
 Summary: LDAP support libraries
 Group: System Environment/Daemons
 License: OpenLDAP
@@ -92,6 +92,7 @@ Patch154: openldap-nss-certs-from-certdb-fallback-pem.patch
 Patch155: openldap-dns-ipv6-queries.patch
 Patch156: openldap-slapd-preserve-mirrormode-when-deleting-syncrepl.patch
 Patch157: openldap-rwm-slapd-segfault-modrdn.patch
+Patch158: openldap-syncprov-segfault.patch
 
 # patches for the evolution library (see README.evolution)
 Patch200: openldap-evolution-ntlm.patch
@@ -254,6 +255,7 @@ pushd openldap-%{version}
 %patch155 -p1 -b .dns-ipv6-queries
 %patch156 -p1 -b .slapd-preserve-mirrormode-when-deleting-syncrepl
 %patch157 -p1 -b .rwm-slapd-segfault-modrdn
+%patch158 -p1 -b .syncprov-segfault
 
 cp %{_datadir}/libtool/config/config.{sub,guess} build/
 
@@ -793,6 +795,9 @@ exit 0
 %attr(0644,root,root)      %{evolution_connector_libdir}/*.a
 
 %changelog
+* Tue Feb 26 2013 Jan Synáček <jsynacek@redhat.com> 2.4.23-32
+- fix: segfault in syncprov overlay (#910241)
+
 * Wed Oct 31 2012 Jan Vcelak <jvcelak@redhat.com> 2.4.23-31
 - fix update: libldap does not load PEM certificate if certdb is used as TLS_CACERTDIR (#859858)
 
