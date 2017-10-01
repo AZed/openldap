@@ -140,24 +140,6 @@ function configtest() {
 		file=${KRB5_KTNAME:-/etc/krb5.keytab}
 		echo -n $"$file is not readable by \"$user\"" ; warning ; echo
 	fi
-	# Unaccessible TLS configuration files.
-	if [ -d $configdir ]; then
-		tlsconfigs=$(LANG=C sed \
-			-e '/^olcTLS\(CertificateFile\|CertificateKeyFile\|CACertificateFile\)/!d' \
-			-e ':a;N;s/\n //;ta;P;D' "${configdir}/cn=config.ldif" | \
-			awk '{print $2}' | sort -u
-		)
-	elif [ -f $configfile ]; then
-		tlsconfigs=$(LANG=C egrep \
-			'^(TLSCACertificateFile|TLSCertificateFile|TLSCertificateKeyFile)[[:space:]]+' $configfile | \
-			awk '{print $2}' | sort -u
-		)
-	fi
-	for file in $tlsconfigs ; do
-		if ! testasuser $user -r $file ; then
-			echo -n $"$file is not readable by \"$user\"" ; warning ; echo
-		fi
-	done
 	# Check the configuration file.
 	slaptestout=`/sbin/runuser -m -s "$slaptest" -- "$user" "-u" 2>&1`
 	slaptestexit=$?
@@ -208,6 +190,8 @@ function start() {
 	else
 		ulimit=""
 	fi
+	# Release reserverd port
+	[ -x /sbin/portrelease ] && /sbin/portrelease slapd &>/dev/null || :
 	# Start daemons.
 	echo -n $"Starting $prog: "
 	daemon --pidfile=$pidfile --check=$prog $ulimit ${slapd} -h "\"$harg\"" -u ${user} $OPTIONS $SLAPD_OPTIONS 

@@ -5,7 +5,7 @@
 
 Name: openldap
 Version: 2.4.23
-Release: 20%{?dist}
+Release: 26%{?dist}
 Summary: LDAP support libraries
 Group: System Environment/Daemons
 License: OpenLDAP
@@ -15,6 +15,10 @@ Source1: ldap.init
 Source2: ldap.sysconfig
 Source3: README.evolution
 Source4: slapd.conf
+Source5: slapd.portreserve
+Source6: ldap.conf
+Source54: libexec-create-certdb.sh
+Source55: libexec-generate-server-cert.sh
 
 # patches for 2.4
 Patch0: openldap-manpages.patch
@@ -25,6 +29,9 @@ Patch4: openldap-export-ldif.patch
 Patch5: openldap-smbk5pwd-overlay.patch
 Patch6: openldap-ldaprc-currentdir.patch
 Patch7: openldap-userconfig-setgid.patch
+Patch8: openldap-constraint-count.patch
+Patch9: openldap-man-sasl-nocanon.patch
+Patch10: openldap-memberof-disallow-global.patch
 
 # already merged upstream
 Patch100: openldap-nss-ca-selfsigned.patch
@@ -61,6 +68,16 @@ Patch130: openldap-nss-init-threadsafe.patch
 Patch131: openldap-man-slapo-unique.patch
 Patch132: openldap-dns-priority.patch
 Patch133: openldap-nss-handshake-threadsafe.patch
+Patch134: openldap-clients-crash-password-args.patch
+Patch135: openldap-nss-deferred-init-copy-params.patch
+Patch136: openldap-bypass-checks-on-ops-with-managedsait.patch
+Patch137: openldap-invalid-sockets.patch
+Patch138: openldap-nss-no-certkey-segfault.patch
+Patch139: openldap-man-clients-missing-options.patch
+Patch140: openldap-memleak-referrals.patch
+Patch141: openldap-cve-relay-rwm-translucent.patch
+Patch142: openldap-nss-allow-ca-dbdir-pemfile.patch
+Patch143: openldap-memleak-def_urlpre.patch
 
 # patches for the evolution library (see README.evolution)
 Patch200: openldap-evolution-ntlm.patch
@@ -71,6 +88,7 @@ BuildRequires: cyrus-sasl-devel >= 2.1, nss-devel, krb5-devel, tcp_wrappers-deve
 BuildRequires: glibc-devel, libtool, libtool-ltdl-devel, groff, perl
 # smbk5pwd overlay:
 BuildRequires: openssl-devel
+Requires: nss-tools
 
 Obsoletes: compat-openldap < 2.4
 # used by migrationtools:
@@ -102,7 +120,7 @@ customized LDAP clients.
 %package servers
 Summary: LDAP server
 License: OpenLDAP
-Requires: openldap = %{version}-%{release}, openssl
+Requires: openldap = %{version}-%{release}, openssl, portreserve
 Requires(pre): shadow-utils, initscripts
 Requires(post): chkconfig, /sbin/runuser, make, initscripts
 Requires(preun): chkconfig, initscripts
@@ -160,6 +178,9 @@ pushd openldap-%{version}
 %patch5 -p1 -b .smbk5pwd-overlay
 %patch6 -p1 -b .ldaprc-currentdir
 %patch7 -p1 -b .userconfig-setgid
+%patch8 -p1 -b .constraint-count
+%patch9 -p1 -b .man-sasl-nocanon
+%patch10 -p1 -b .memberof-disallow-global
 
 %patch100 -p1 -b .nss-ca-selfsigned
 %patch101 -p1 -b .nss-delay-token-auth
@@ -195,6 +216,16 @@ pushd openldap-%{version}
 %patch131 -p1 -b .man-slapo-unique
 %patch132 -p1 -b .dns-priority
 %patch133 -p1 -b .nss-handshake-threadsafe
+%patch134 -p1 -b .clients-crash-password-args
+%patch135 -p1 -b .nss-deferred-init-copy-params
+%patch136 -p1 -b .bypass-checks-on-ops-with-managedsait
+%patch137 -p1 -b .invalid-sockets
+%patch138 -p1 -b .nss-no-certkey-segfault
+%patch139 -p1 -b .man-clients-missing-options
+%patch140 -p1 -b .memleak-referrals
+%patch141 -p1 -b .cve-relay-rwm-translucent
+%patch142 -p1 -b .nss-allow-ca-dbdir-pemfile
+%patch143 -p1 -b .memleak-def_urlpre
 
 cp %{_datadir}/libtool/config/config.{sub,guess} build/
 
@@ -365,8 +396,7 @@ make install DESTDIR=%{buildroot} \
 popd
 
 # setup directories for TLS certificates
-mkdir -p %{buildroot}%{_sysconfdir}/openldap/cacerts
-mkdir -p %{buildroot}%{_sysconfdir}/pki/tls/certs
+mkdir -p %{buildroot}%{_sysconfdir}/openldap/certs
 
 # setup data and runtime directories
 mkdir -p %{buildroot}/var/lib/ldap
@@ -387,6 +417,20 @@ install -m 755 %SOURCE1 %{buildroot}%{_sysconfdir}/rc.d/init.d/slapd
 # install syconfig/ldap
 mkdir -p %{buildroot}%{_sysconfdir}/sysconfig
 install -m 644 %SOURCE2 %{buildroot}%{_sysconfdir}/sysconfig/ldap
+
+# install portreserve config
+mkdir -p %{buildroot}%{_sysconfdir}/portreserve
+install -m 644 %SOURCE5 %{buildroot}%{_sysconfdir}/portreserve/slapd
+
+# install default ldap.conf (customized)
+rm -f %{buildroot}%{_sysconfdir}/openldap/ldap.conf
+install -m 0644 %SOURCE6 %{buildroot}%{_sysconfdir}/openldap/ldap.conf
+
+# setup maintainance scripts
+mkdir -p %{buildroot}%{_libexecdir}
+install -m 0755 -d %{buildroot}%{_libexecdir}/openldap
+install -m 0755 %SOURCE54 %{buildroot}%{_libexecdir}/openldap/create-certdb.sh
+install -m 0755 %SOURCE55 %{buildroot}%{_libexecdir}/openldap/generate-server-cert.sh
 
 # move slapd out of _libdir
 mv %{buildroot}/%{_libdir}/slapd %{buildroot}/%{_sbindir}/
@@ -440,7 +484,10 @@ rmdir %{buildroot}%{_localstatedir}/openldap-data
 %clean 
 rm -rf %{buildroot}
 
-%post -p /sbin/ldconfig
+%post
+/sbin/ldconfig
+# create certificate database
+%{_libexecdir}/openldap/create-certdb.sh >&/dev/null || :
 
 %postun -p /sbin/ldconfig
 
@@ -537,23 +584,8 @@ exit 0
 /sbin/ldconfig
 /sbin/chkconfig --add slapd
 
-# generate sample TLS certificates
-if [ ! -f %{_sysconfdir}/pki/tls/certs/slapd.pem ] ; then
-pushd %{_sysconfdir}/pki/tls/certs > /dev/null 2>&1
-umask 077
-cat << EOF | make slapd.pem > /dev/null 2>&1
---
-SomeState
-SomeCity
-SomeOrganization
-SomeOrganizationalUnit
-localhost.localdomain
-root@localhost.localdomain
-EOF
-chown root:ldap slapd.pem
-chmod 640 slapd.pem
-popd &>/dev/null
-fi
+# generate sample TLS certificates for server (will not replace)
+%{_libexecdir}/openldap/generate-server-cert.sh -o &>/dev/null || :
 
 # generate configuration in slapd.d
 if ! ls -d %{_sysconfdir}/openldap/slapd.d/* &>/dev/null; then
@@ -672,11 +704,12 @@ exit 0
 %doc openldap-%{version}/LICENSE
 %doc openldap-%{version}/README
 %attr(0755,root,root) %dir %{_sysconfdir}/openldap
-%attr(0755,root,root) %dir %{_sysconfdir}/openldap/cacerts
+%attr(0755,root,root) %dir %{_sysconfdir}/openldap/certs
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/openldap/ldap*.conf
 %attr(0755,root,root) /%{_lib}/libl*-2.4*.so.*
 %attr(0644,root,root) %{_mandir}/man5/ldif.5*
 %attr(0644,root,root) %{_mandir}/man5/ldap.conf.5*
+%{_libexecdir}/openldap/create-certdb.sh
 
 %files servers
 %defattr(-,root,root)
@@ -684,13 +717,13 @@ exit 0
 %doc openldap-%{version}/doc/guide/admin/*.html
 %doc openldap-%{version}/doc/guide/admin/*.png
 %doc README.schema
-%attr(0640,root,ldap) %ghost %config(noreplace) %{_sysconfdir}/pki/tls/certs/slapd.pem
 %attr(0755,root,root) %{_sysconfdir}/rc.d/init.d/slapd
 %attr(0750,ldap,ldap) %dir %config(noreplace) %{_sysconfdir}/openldap/slapd.d
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/sysconfig/ldap
 %attr(0755,root,root) %dir %config(noreplace) %{_sysconfdir}/openldap/schema
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/openldap/schema/*.schema*
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/openldap/schema/*.ldif
+%attr(0644,root,root) %{_sysconfdir}/portreserve/slapd
 %attr(0755,root,root) %{_sbindir}/sl*
 %attr(0644,root,root) %{_mandir}/man8/*
 %attr(0644,root,root) %{_mandir}/man5/slapd*.5*
@@ -704,6 +737,7 @@ exit 0
 # obsolete configuration
 %attr(0640,ldap,ldap) %ghost %config(noreplace,missingok) %{_sysconfdir}/openldap/slapd.conf
 %attr(0640,ldap,ldap) %ghost %config(noreplace,missingok) %{_sysconfdir}/openldap/slapd.conf.bak
+%{_libexecdir}/openldap/generate-server-cert.sh
 
 %files servers-sql
 %defattr(-,root,root)
@@ -731,6 +765,38 @@ exit 0
 %attr(0644,root,root)      %{evolution_connector_libdir}/*.a
 
 %changelog
+* Mon May 07 2012 Jan Vcelak <jvcelak@redhat.com> 2.4.23-26
+- fix: MozNSS CA cert dir does not work together with PEM CA cert file (#818844)
+- fix: memory leak: def_urlpre is not freed (#816168)
+- fix update: Default SSL certificate bundle is not found by openldap library (#742023)
+
+* Wed May 02 2012 Jan Vcelak <jvcelak@redhat.com> 2.4.23-25
+- fix update: Default SSL certificate bundle is not found by openldap library (#742023)
+
+* Mon Apr 30 2012 Jan Vcelak <jvcelak@redhat.com> 2.4.23-24
+- fix update: Default SSL certificate bundle is not found by openldap library (#742023)
+- fix: memberof overlay on the frontend database causes server segfault (#730745)
+
+* Fri Apr 20 2012 Jan Vcelak <jvcelak@redhat.com> 2.4.23-23
+- security fix: CVE-2012-1164: assertion failure by processing search queries
+  requesting only attributes for particular entry (#813162)
+
+* Tue Apr 10 2012 Jan Vcelak <jvcelak@redhat.com> 2.4.23-22
+- fix: libraries leak memory when following referrals (#807363)
+
+* Thu Mar 01 2012 Jan Vcelak <jvcelak@redhat.com> 2.4.23-21
+- fix: ldapsearch crashes with invalid parameters (#743781)
+- fix: replication (syncrepl) with TLS causes segfault (#783445)
+- fix: openldap server in MirrorMode sometimes fails to resync via syncrepl (#784211)
+- use portreserve to reserve LDAPS port (636/tcp+udp) (#790687)
+- fix: missing options in manual pages of client tools (#745470)
+- fix: SASL_NOCANON option missing in ldap.conf manual page (#732916)
+- fix: slapd segfaults when certificate key cannot be loaded (#796808)
+- Jan Synáček <jsynacek@redhat.com>
+  + fix: overlay constraint with count option work bad with modify operation (#742163)
+  + fix: Default SSL certificate bundle is not found by openldap library (#742023)
+  + fix: Duplicate close() calls in OpenLDAP (#784203)
+
 * Tue Oct 04 2011 Jan Vcelak <jvcelak@redhat.com> 2.4.23-20
 - new feature update: honor priority/weight with ldap_domain2hostlist (#730311)
 - fix regression: openldap built without tcp_wrappers (#742592)
