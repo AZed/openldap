@@ -1,0 +1,89 @@
+OpenLDAP segfaults when using back-sql, use proper SQL length data type
+
+Resolves: #733077
+Author: Howard Chu <hyc@openldap.org>
+Upstream ITS: #6657, #6691
+Upstream commit: 0a9f51f (modified)
+
+diff -uNPrp openldap-2.4.24/servers/slapd/back-sql/add.c openldap-2.4.24.fix/servers/slapd/back-sql/add.c
+--- openldap-2.4.24/servers/slapd/back-sql/add.c	2011-01-05 00:50:46.000000000 +0100
++++ openldap-2.4.24.fix/servers/slapd/back-sql/add.c	2011-08-24 20:27:27.441600947 +0200
+@@ -1217,7 +1217,7 @@ backsql_add( Operation *op, SlapReply *r
+ 
+ 	if ( !BACKSQL_IS_ADD( oc->bom_expect_return ) ) {
+ 		SWORD		ncols;
+-		SQLINTEGER	value_len;
++		SQLLEN		value_len;
+ 
+ 		if ( BACKSQL_CREATE_NEEDS_SELECT( bi ) ) {
+ 			SQLFreeStmt( sth, SQL_DROP );
+diff -uNPrp openldap-2.4.24/servers/slapd/back-sql/back-sql.h openldap-2.4.24.fix/servers/slapd/back-sql/back-sql.h
+--- openldap-2.4.24/servers/slapd/back-sql/back-sql.h	2011-01-05 00:50:46.000000000 +0100
++++ openldap-2.4.24.fix/servers/slapd/back-sql/back-sql.h	2011-08-24 20:27:27.442600934 +0200
+@@ -183,7 +183,7 @@ typedef struct {
+ 	UDWORD		*col_prec;
+ 	SQLSMALLINT	*col_type;
+ 	char		**cols;
+-	SQLINTEGER	*value_len;
++	SQLLEN		*value_len;
+ } BACKSQL_ROW_NTS;
+ 
+ /*
+diff -uNPrp openldap-2.4.24/servers/slapd/back-sql/proto-sql.h openldap-2.4.24.fix/servers/slapd/back-sql/proto-sql.h
+--- openldap-2.4.24/servers/slapd/back-sql/proto-sql.h	2011-01-05 00:50:47.000000000 +0100
++++ openldap-2.4.24.fix/servers/slapd/back-sql/proto-sql.h	2011-08-24 20:27:27.443600921 +0200
+@@ -189,25 +189,25 @@ RETCODE backsql_Prepare( SQLHDBC dbh, SQ
+ #define backsql_BindParamStr( sth, par_ind, io, str, maxlen ) 		\
+ 	SQLBindParameter( (sth), (SQLUSMALLINT)(par_ind), 		\
+ 			(io), SQL_C_CHAR, SQL_VARCHAR,			\
+-         		(SQLUINTEGER)(maxlen), 0, (SQLPOINTER)(str),	\
+-			(SQLUINTEGER)(maxlen), NULL )
++         		(SQLULEN)(maxlen), 0, (SQLPOINTER)(str),	\
++			(SQLLEN)(maxlen), NULL )
+ 
+ #define backsql_BindParamBerVal( sth, par_ind, io, bv ) 		\
+ 	SQLBindParameter( (sth), (SQLUSMALLINT)(par_ind), 		\
+ 			(io), SQL_C_CHAR, SQL_VARCHAR,			\
+-         		(SQLUINTEGER)(bv)->bv_len, 0,			\
++         		(SQLULEN)(bv)->bv_len, 0,			\
+ 			(SQLPOINTER)(bv)->bv_val,			\
+-			(SQLUINTEGER)(bv)->bv_len, NULL )
++			(SQLLEN)(bv)->bv_len, NULL )
+ 
+ #define backsql_BindParamInt( sth, par_ind, io, val )			\
+ 	SQLBindParameter( (sth), (SQLUSMALLINT)(par_ind),		\
+ 			(io), SQL_C_ULONG, SQL_INTEGER,			\
+-			0, 0, (SQLPOINTER)(val), 0, (SQLINTEGER*)NULL )
++			0, 0, (SQLPOINTER)(val), 0, (SQLLEN*)NULL )
+ 
+ #define backsql_BindParamNumID( sth, par_ind, io, val )			\
+ 	SQLBindParameter( (sth), (SQLUSMALLINT)(par_ind),		\
+ 			(io), BACKSQL_C_NUMID, SQL_INTEGER,		\
+-			0, 0, (SQLPOINTER)(val), 0, (SQLINTEGER*)NULL )
++			0, 0, (SQLPOINTER)(val), 0, (SQLLEN*)NULL )
+ 
+ #ifdef BACKSQL_ARBITRARY_KEY
+ #define backsql_BindParamID( sth, par_ind, io, id )			\
+diff -uNPrp openldap-2.4.24/servers/slapd/back-sql/sql-wrap.c openldap-2.4.24.fix/servers/slapd/back-sql/sql-wrap.c
+--- openldap-2.4.24/servers/slapd/back-sql/sql-wrap.c	2011-01-05 00:50:47.000000000 +0100
++++ openldap-2.4.24.fix/servers/slapd/back-sql/sql-wrap.c	2011-08-24 20:27:27.444600908 +0200
+@@ -148,7 +148,7 @@ backsql_BindRowAsStrings_x( SQLHSTMT sth
+ 	} else {
+ 		SQLCHAR		colname[ 64 ];
+ 		SQLSMALLINT	name_len, col_type, col_scale, col_null;
+-		UDWORD		col_prec;
++		SQLLEN		col_prec;
+ 		int		i;
+ 
+ #ifdef BACKSQL_TRACE
+@@ -180,8 +180,8 @@ backsql_BindRowAsStrings_x( SQLHSTMT sth
+ 			goto nomem;
+ 		}
+ 
+-		row->value_len = (SQLINTEGER *)ber_memcalloc_x( row->ncols,
+-				sizeof( SQLINTEGER ), ctx );
++		row->value_len = (SQLLEN *)ber_memcalloc_x( row->ncols,
++				sizeof( SQLLEN ), ctx );
+ 		if ( row->value_len == NULL ) {
+ 			goto nomem;
+ 		}

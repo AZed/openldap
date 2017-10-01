@@ -7,7 +7,7 @@
 
 Name: openldap
 Version: 2.4.24
-Release: 2%{?dist}
+Release: 6%{?dist}
 Summary: LDAP support libraries
 Group: System Environment/Daemons
 License: OpenLDAP
@@ -31,6 +31,26 @@ Patch8: openldap-userconfig-setgid.patch
 Patch9: openldap-nss-nofork.patch
 Patch10: openldap-nss-null-pointer.patch
 Patch11: openldap-slapadd-hang.patch
+Patch12: openldap-nss-cacertdir-soft-error.patch
+Patch13: openldap-ldapexop-double-free.patch
+Patch14: openldap-segfault-ldif-indent.patch
+Patch15: openldap-segfault-ldif-nl-end.patch
+Patch16: openldap-nss-init-threadsafe.patch
+Patch17: openldap-nss-free-peer-cert.patch
+Patch18: openldap-nss-reqcert-hostname.patch
+Patch19: openldap-nss-verifycert.patch
+Patch20: openldap-nss-memleak-free-certs.patch
+Patch21: openldap-constraint-overlay-config.patch
+Patch22: openldap-dds-overlay-tolerance.patch
+Patch23: openldap-man-slapo-unique.patch
+Patch24: openldap-nss-wildcards.patch
+Patch25: openldap-man-ldap-sync.patch
+Patch26: openldap-sasl-gssapi-options.patch
+Patch27: openldap-nss-can-ignore-expired-issuer.patch
+Patch28: openldap-sql-datatypes.patch
+Patch29: openldap-nss-handshake-threadsafe.patch
+Patch30: openldap-syncrepl-unset-tls-options.patch
+Patch31: openldap-ld_defconn-rebind.patch
 
 # patches for the evolution library (see README.evolution)
 Patch200: openldap-evolution-ntlm.patch
@@ -73,9 +93,9 @@ customized LDAP clients.
 Summary: LDAP server
 License: OpenLDAP
 Requires: openldap = %{version}-%{release}, openssl
-Requires(pre): shadow-utils
-Requires(post): chkconfig, /sbin/runuser, make
-Requires(preun): chkconfig
+Requires(pre): shadow-utils, initscripts
+Requires(post): chkconfig, /sbin/runuser, make, initscripts
+Requires(preun): chkconfig, initscripts
 BuildRequires: db4-devel >= 4.4, db4-devel < 4.9
 Group: System Environment/Daemons
 
@@ -134,6 +154,26 @@ pushd openldap-%{version}
 %patch9 -p1 -b .nss-nofork
 %patch10 -p1 -b .nss-null-pointer
 %patch11 -p1 -b .slapadd-hang
+%patch12 -p1 -b .nss-cacertdir-soft-error
+%patch13 -p1 -b .ldapexop-double-free
+%patch14 -p1 -b .segfault-ldif-indent
+%patch15 -p1 -b .segfault-ldif-nl-end
+%patch16 -p1 -b .nss-init-threadsafe
+%patch17 -p1 -b .nss-free-peer-cert
+%patch18 -p1 -b .nss-reqcert-hostname
+%patch19 -p1 -b .nss-verifycert
+%patch20 -p1 -b .nss-memleak-free-certs
+%patch21 -p1 -b .constraint-overlay-config
+%patch22 -p1 -b .dds-overlay-tolerance
+%patch23 -p1 -b .man-slapo-unique
+%patch24 -p1 -b .nss-wildcards
+%patch25 -p1 -b .man-ldap-sync
+%patch26 -p1 -b .sasl-gssapi-options
+%patch27 -p1 -b .nss-can-ignore-expired-issuer
+%patch28 -p1 -b .sql-datatypes
+%patch29 -p1 -b .nss-handshake-threadsafe
+%patch30 -p1 -b .syncrepl-unset-tls-options
+%patch31 -p1 -b .ld_defconn-rebind
 
 cp %{_datadir}/libtool/config/config.{sub,guess} build/
 
@@ -401,9 +441,9 @@ if [ $1 -eq 2 ]; then
 		pushd %{_sharedstatedir}/ldap &>/dev/null
 
 		# stop the service
-		if service slapd status &>/dev/null; then
+		if /sbin/service slapd status &>/dev/null; then
 			touch need_start
-			service slapd stop
+			/sbin/service slapd stop
 		else
 			rm -f need_start
 		fi
@@ -527,7 +567,7 @@ fi
 # restart after upgrade
 if [ $1 -ge 1 ]; then
 	if [ -f %{_sharedstatedir}/ldap/need_start ]; then
-		service slapd start
+		/sbin/service slapd start
 		rm -f %{_sharedstatedir}/ldap/need_start
 	else
 		/sbin/service slapd condrestart
@@ -561,9 +601,9 @@ if [ $2 -eq 2 ]; then
 	# we are interested in minor version changes (both versions of db4 are installed at this moment)
 	if [ "$(rpm -q --qf="%%{version}\n" db4 | sed 's/\.[0-9]*$//' | sort -u | wc -l)" != "1" ]; then
 		# stop the service
-		if service slapd status &>/dev/null; then
+		if /sbin/service slapd status &>/dev/null; then
 			touch need_start
-			service slapd stop
+			/sbin/service slapd stop
 		fi
 
 		# ensure the database is consistent
@@ -594,7 +634,7 @@ if [ -f %{_sharedstatedir}/ldap/upgrade_db4 ]; then
 
 	# start the service
 	if [ -f need_start ]; then
-		service slapd start
+		/sbin/service slapd start
 		rm -f need_start
 	fi
 
@@ -675,6 +715,34 @@ exit 0
 %attr(0644,root,root)      %{evolution_connector_libdir}/*.a
 
 %changelog
+* Mon Mar 26 2012 Jan Synáček <jsynacek@redhat.com> 2.4.26-7
+- fix: Re-binding to a failed connection can segfault (#784989)
+
+* Mon Sep 12 2011 Jan Vcelak <jvcelak@redhat.com> 2.4.24-5
+- fix: SSL_ForceHandshake function is not thread safe (#701678)
+- fix: allow unsetting of tls_* syncrepl options (#734187)
+
+* Wed Aug 24 2011 Jan Vcelak <jvcelak@redhat.com> 2.4.24-4
+- fix: NSS_Init* functions are not thread safe (#731112)
+- fix: memleak in tlsm_auth_cert_handler (#717730)
+- fix: incorrect behavior of allow/try options of VerifyCert and TLS_REQCERT (#725819)
+- fix: memleak - free the return of tlsm_find_and_verify_cert_key (#725818)
+- fix: conversion of constraint overlay settings to cn=config is incorrect (#733067)
+- fix: DDS overlay tolerance parametr doesn't function and breakes default TTL (#733069)
+- manpage fix: errors in manual page slapo-unique (#733070)
+- fix: matching wildcard hostnames in certificate Subject field does not work (#733073)
+- manpage fix: wrong ldap_sync_destroy() prototype in ldap_sync(3) manpage (#717722)
+- fix: cannot set SASL or GSSAPI options (#733056)
+- fix: TLS_REQCERT=never ignored when the issuer certificate is expired (#722961)
+- fix: OpenLDAP server segfaults when using back-sql (#733077)
+
+* Tue Jun 28 2011 Jan Vcelak <jvcelak@redhat.com> 2.4.24-3
+- fix: openldap-servers scriptlets require initscripts package (#716857)
+- fix: connection failure if TLS_CACERTDIR doesn't exist but TLS_REQCERT is set to 'never' (#716854)
+- fix: segmentation fault caused by double-free in ldapexop (#699683)
+- fix: segfault when input line in LDIF file is indented incorrectly (#716855)
+- fix: segfault when LDIF input is not terminated by newline (#716858)
+
 * Fri Mar 18 2011 Jan Vcelak <jvcelak@redhat.com> 2.4.24-2
 - new: system resource limiting for slapd using ulimit
 - fix update: openldap can't use TLS after a fork() (#636956)

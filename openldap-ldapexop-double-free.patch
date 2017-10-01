@@ -1,0 +1,28 @@
+Segmentation fault fix caused by double free in ldapexop.
+
+Resolves: #699683
+Author: Jan Vcelak <jvcelak@redhat.com>
+Upstream: ITS #6946, git 3fcf2b1
+
+diff --git a/clients/tools/ldapexop.c b/clients/tools/ldapexop.c
+index f17e085..316eca1 100644
+--- a/clients/tools/ldapexop.c
++++ b/clients/tools/ldapexop.c
+@@ -247,7 +247,7 @@ main( int argc, char *argv[] )
+ 		char		*retoid = NULL;
+ 		struct berval	*retdata = NULL;
+ 
+-		rc = ldap_parse_extended_result( ld, res, &retoid, &retdata, 1 );
++		rc = ldap_parse_extended_result( ld, res, &retoid, &retdata, 0 );
+ 
+ 		if ( rc != LDAP_SUCCESS ) {
+ 			tool_perror( "ldap_parse_extended_result", rc, NULL, NULL, NULL, NULL );
+@@ -294,7 +294,7 @@ main( int argc, char *argv[] )
+ 			printf(_("# extended operation response\n"));
+ 		}
+ 
+-		rc = ldap_parse_extended_result( ld, res, &retoid, &retdata, 1 );
++		rc = ldap_parse_extended_result( ld, res, &retoid, &retdata, 0 );
+ 		if ( rc != LDAP_SUCCESS ) {
+ 			tool_perror( "ldap_parse_extended_result", rc, NULL, NULL, NULL, NULL );
+ 			rc = EXIT_FAILURE;
