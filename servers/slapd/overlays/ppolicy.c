@@ -55,7 +55,7 @@ typedef struct pp_info {
  * used by all instances
  */
 typedef struct pw_conn {
-	int restricted;		/* TRUE if connection is restricted */
+	struct berval dn;	/* DN of restricted user */
 } pw_conn;
 
 static pw_conn *pwcons;
@@ -259,11 +259,12 @@ account_locked( Operation *op, Entry *e,
 	return 0;
 }
 
-#define PPOLICY_WARNING 0xa0L
-#define PPOLICY_ERROR 0xa1L
+/* IMPLICIT TAGS, all context-specific */
+#define PPOLICY_WARNING 0xa0L	/* constructed + 0 */
+#define PPOLICY_ERROR 0x81L	/* primitive + 1 */
  
-#define PPOLICY_EXPIRE 0xa0L
-#define PPOLICY_GRACE  0xa1L
+#define PPOLICY_EXPIRE 0x80L	/* primitive + 0 */
+#define PPOLICY_GRACE  0x81L	/* primitive + 1 */
 
 static LDAPControl *
 create_passcontrol( int exptime, int grace, LDAPPasswordPolicyError err )
@@ -325,6 +326,8 @@ ppolicy_get( Operation *op, Entry *e, PassPolicy *pp )
 
 	memset( pp, 0, sizeof(PassPolicy) );
 
+	pp->ad = slap_schema.si_ad_userPassword;
+
 	/* Users can change their own password by default */
     	pp->pwdAllowUserChange = 1;
 
@@ -353,8 +356,6 @@ ppolicy_get( Operation *op, Entry *e, PassPolicy *pp )
 #if 0	/* Only worry about userPassword for now */
 	if ((a = attr_find( pe->e_attrs, ad_pwdAttribute )))
 		slap_bv2ad( &a->a_vals[0], &pp->ad, &text );
-#else
-	pp->ad = slap_schema.si_ad_userPassword;
 #endif
 
 	if ( ( a = attr_find( pe->e_attrs, ad_pwdMinAge ) )
@@ -410,7 +411,7 @@ ppolicy_get( Operation *op, Entry *e, PassPolicy *pp )
 	return;
 
 defaultpol:
-	Debug( LDAP_DEBUG_ANY,
+	Debug( LDAP_DEBUG_TRACE,
 		"ppolicy_get: using default policy\n", 0, 0, 0 );
 	return;
 }
@@ -434,9 +435,11 @@ password_scheme( struct berval *cred, struct berval *sch )
 	if (cred->bv_val[e]) {
 		int rc;
 		rc = lutil_passwd_scheme( cred->bv_val );
-		if (rc && sch) {
-			sch->bv_val = cred->bv_val;
-			sch->bv_len = e;
+		if (rc) {
+			if (sch) {
+				sch->bv_val = cred->bv_val;
+				sch->bv_len = e;
+			}
 			return LDAP_SUCCESS;
 		}
 	}
@@ -813,7 +816,8 @@ ppolicy_bind_resp( Operation *op, SlapReply *rs )
 			 * that we are disallowed from doing anything
 			 * other than change password.
 			 */
-			pwcons[op->o_conn->c_conn_idx].restricted = 1;
+			ber_dupbv( &pwcons[op->o_conn->c_conn_idx].dn,
+				&op->o_conn->c_ndn );
 
 			ppb->pErr = PP_changeAfterReset;
 
@@ -971,7 +975,10 @@ ppolicy_bind( Operation *op, SlapReply *rs )
 	slap_overinst *on = (slap_overinst *)op->o_bd->bd_info;
 
 	/* Reset lockout status on all Bind requests */
-	pwcons[op->o_conn->c_conn_idx].restricted = 0;
+	if ( !BER_BVISEMPTY( &pwcons[op->o_conn->c_conn_idx].dn )) {
+		ch_free( pwcons[op->o_conn->c_conn_idx].dn.bv_val );
+		BER_BVZERO( &pwcons[op->o_conn->c_conn_idx].dn );
+	}
 
 	/* Root bypasses policy */
 	if ( !be_isroot_dn( op->o_bd, &op->o_req_ndn )) {
@@ -1025,11 +1032,14 @@ ppolicy_bind( Operation *op, SlapReply *rs )
 	return SLAP_CB_CONTINUE;
 }
 
-/* Reset the restricted flag for the next session on this connection */
+/* Reset the restricted info for the next session on this connection */
 static int
 ppolicy_connection_destroy( BackendDB *bd, Connection *conn )
 {
-	pwcons[conn->c_conn_idx].restricted = 0;
+	if ( !BER_BVISEMPTY( &pwcons[conn->c_conn_idx].dn )) {
+		ch_free( pwcons[conn->c_conn_idx].dn.bv_val );
+		BER_BVZERO( &pwcons[conn->c_conn_idx].dn );
+	}
 	return SLAP_CB_CONTINUE;
 }
 
@@ -1047,7 +1057,18 @@ ppolicy_restrict(
 		send_ctrl = 1;
 	}
 
-	if ( op->o_conn && pwcons[op->o_conn->c_conn_idx].restricted ) {
+	if ( op->o_conn && !BER_BVISEMPTY( &pwcons[op->o_conn->c_conn_idx].dn )) {
+		/* if the current authcDN doesn't match the one we recorded,
+		 * then an intervening Bind has succeeded and the restriction
+		 * no longer applies. (ITS#4516)
+		 */
+		if ( !dn_match( &op->o_conn->c_ndn,
+				&pwcons[op->o_conn->c_conn_idx].dn )) {
+			ch_free( pwcons[op->o_conn->c_conn_idx].dn.bv_val );
+			BER_BVZERO( &pwcons[op->o_conn->c_conn_idx].dn );
+			return SLAP_CB_CONTINUE;
+		}
+
 		Debug( LDAP_DEBUG_TRACE,
 			"connection restricted to password changing only\n", 0, 0, 0);
 		if ( send_ctrl ) {
@@ -1164,6 +1185,19 @@ ppolicy_add(
 			attr_merge_one( op->ora_e, ad_pwdChangedTime, &timestamp, &timestamp );
 		}
 	}
+	return SLAP_CB_CONTINUE;
+}
+
+static int
+ppolicy_mod_cb( Operation *op, SlapReply *rs )
+{
+	slap_callback *sc = op->o_callback;
+	op->o_callback = sc->sc_next;
+	if ( rs->sr_err == LDAP_SUCCESS ) {
+		ch_free( pwcons[op->o_conn->c_conn_idx].dn.bv_val );
+		BER_BVZERO( &pwcons[op->o_conn->c_conn_idx].dn );
+	}
+	op->o_tmpfree( sc, op->o_tmpmemctx );
 	return SLAP_CB_CONTINUE;
 }
 
@@ -1353,13 +1387,19 @@ ppolicy_modify( Operation *op, SlapReply *rs )
 		}
 	}
 	
-	if (pwcons[op->o_conn->c_conn_idx].restricted && !mod_pw_only) {
-		Debug( LDAP_DEBUG_TRACE,
-			"connection restricted to password changing only\n", 0, 0, 0 );
-		rs->sr_err = LDAP_INSUFFICIENT_ACCESS; 
-		rs->sr_text = "Operations are restricted to bind/unbind/abandon/StartTLS/modify password";
-		pErr = PP_changeAfterReset;
-		goto return_results;
+	if (!BER_BVISEMPTY( &pwcons[op->o_conn->c_conn_idx].dn ) && !mod_pw_only ) {
+		if ( dn_match( &op->o_conn->c_ndn,
+				&pwcons[op->o_conn->c_conn_idx].dn )) {
+			Debug( LDAP_DEBUG_TRACE,
+				"connection restricted to password changing only\n", 0, 0, 0 );
+			rs->sr_err = LDAP_INSUFFICIENT_ACCESS; 
+			rs->sr_text = "Operations are restricted to bind/unbind/abandon/StartTLS/modify password";
+			pErr = PP_changeAfterReset;
+			goto return_results;
+		} else {
+			ch_free( pwcons[op->o_conn->c_conn_idx].dn.bv_val );
+			BER_BVZERO( &pwcons[op->o_conn->c_conn_idx].dn );
+		}
 	}
 
 	/*
@@ -1558,7 +1598,23 @@ do_modify:
 		struct berval timestamp;
 		char timebuf[ LDAP_LUTIL_GENTIME_BUFSIZE ];
 		time_t now = slap_get_time();
-		
+
+		/* If the conn is restricted, set a callback to clear it
+		 * if the pwmod succeeds
+		 */
+		if (!BER_BVISEMPTY( &pwcons[op->o_conn->c_conn_idx].dn )) {
+			slap_callback *sc = op->o_tmpcalloc( 1, sizeof( slap_callback ),
+				op->o_tmpmemctx );
+			sc->sc_next = op->o_callback;
+			/* Must use sc_response to insure we reset on success, before
+			 * the client sees the response. Must use sc_cleanup to insure
+			 * that it gets cleaned up if sc_response is not called.
+			 */
+			sc->sc_response = ppolicy_mod_cb;
+			sc->sc_cleanup = ppolicy_mod_cb;
+			op->o_callback = sc;
+		}
+
 		/*
 		 * keep the necessary pwd.. operational attributes
 		 * up to date.
@@ -1782,11 +1838,9 @@ ppolicy_parseCtrl(
 		rs->sr_text = "passwordPolicyRequest control value not empty";
 		return LDAP_PROTOCOL_ERROR;
 	}
-	if ( ctrl->ldctl_iscritical ) {
-		rs->sr_text = "passwordPolicyRequest control invalid criticality";
-		return LDAP_PROTOCOL_ERROR;
-	}
-	op->o_ctrlflag[ppolicy_cid] = SLAP_CONTROL_NONCRITICAL;
+	op->o_ctrlflag[ppolicy_cid] = ctrl->ldctl_iscritical
+		? SLAP_CONTROL_CRITICAL
+		: SLAP_CONTROL_NONCRITICAL;
 
 	return LDAP_SUCCESS;
 }

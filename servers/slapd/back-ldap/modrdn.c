@@ -51,9 +51,25 @@ ldap_back_modrdn(
 	}
 
 	if ( op->orr_newSup ) {
-		int	version = LDAP_VERSION3;
+		/* needs LDAPv3 */
+		switch ( li->li_version ) {
+		case LDAP_VERSION3:
+			break;
+
+		case 0:
+			if ( op->o_protocol == 0 || op->o_protocol == LDAP_VERSION3 ) {
+				break;
+			}
+			/* fall thru */
+
+		default:
+			/* op->o_protocol cannot be anything but LDAPv3,
+			 * otherwise wouldn't be here */
+			rs->sr_err = LDAP_UNWILLING_TO_PERFORM;
+			send_ldap_result( op, rs );
+			goto cleanup;
+		}
 		
-		ldap_set_option( lc->lc_ld, LDAP_OPT_PROTOCOL_VERSION, &version );
 		newSup = op->orr_newSup->bv_val;
 	}
 
@@ -66,7 +82,7 @@ ldap_back_modrdn(
 	}
 
 retry:
-	rs->sr_err = ldap_rename( lc->lc_ld, op->o_req_ndn.bv_val,
+	rs->sr_err = ldap_rename( lc->lc_ld, op->o_req_dn.bv_val,
 			op->orr_newrdn.bv_val, newSup,
 			op->orr_deleteoldrdn, ctrls, NULL, &msgid );
 	rc = ldap_back_op_result( lc, op, rs, msgid,

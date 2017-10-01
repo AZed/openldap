@@ -78,11 +78,13 @@ glue_back_select (
 
 
 typedef struct glue_state {
+	char *matched;
+	BerVarray refs;
+	LDAPControl **ctrls;
 	int err;
 	int matchlen;
-	char *matched;
 	int nrefs;
-	BerVarray refs;
+	int nctrls;
 } glue_state;
 
 static int
@@ -93,6 +95,7 @@ glue_op_response ( Operation *op, SlapReply *rs )
 	switch(rs->sr_type) {
 	case REP_SEARCH:
 	case REP_SEARCHREF:
+	case REP_INTERMEDIATE:
 		return SLAP_CB_CONTINUE;
 
 	default:
@@ -138,6 +141,30 @@ glue_op_response ( Operation *op, SlapReply *rs )
 			gs->nrefs = j;
 			gs->refs = new;
 		}
+		if (rs->sr_ctrls) {
+			int i, j, k;
+			LDAPControl **newctrls;
+
+			for (i=0; rs->sr_ctrls[i]; i++);
+
+			j = gs->nctrls;
+			if (!j) {
+				newctrls = ch_malloc((i+1)*sizeof(LDAPControl *));
+			} else {
+				newctrls = ch_realloc(gs->ctrls,
+					(j+i+1)*sizeof(LDAPControl *));
+			}
+			for (k=0; k<i; j++,k++) {
+				newctrls[j] = ch_malloc(sizeof(LDAPControl));
+				*newctrls[j] = *rs->sr_ctrls[k];
+				if ( !BER_BVISNULL( &rs->sr_ctrls[k]->ldctl_value ))
+					ber_dupbv( &newctrls[j]->ldctl_value,
+						&rs->sr_ctrls[k]->ldctl_value );
+			}
+			newctrls[j] = NULL;
+			gs->nctrls = j;
+			gs->ctrls = newctrls;
+		}
 	}
 	return 0;
 }
@@ -153,6 +180,11 @@ glue_op_func ( Operation *op, SlapReply *rs )
 	int rc;
 
 	op->o_bd = glue_back_select (b0, &op->o_req_ndn);
+
+	/* If we're on the master backend, let overlay framework handle it */
+	if ( op->o_bd == b0 )
+		return SLAP_CB_CONTINUE;
+
 	b0->bd_info = on->on_info->oi_orig;
 
 	switch(op->o_tag) {
@@ -183,6 +215,9 @@ glue_chk_referrals ( Operation *op, SlapReply *rs )
 	int rc;
 
 	op->o_bd = glue_back_select (b0, &op->o_req_ndn);
+	if ( op->o_bd == b0 )
+		return SLAP_CB_CONTINUE;
+
 	b0->bd_info = on->on_info->oi_orig;
 
 	if ( op->o_bd->bd_info->bi_chk_referrals )
@@ -204,6 +239,9 @@ glue_chk_controls ( Operation *op, SlapReply *rs )
 	int rc = SLAP_CB_CONTINUE;
 
 	op->o_bd = glue_back_select (b0, &op->o_req_ndn);
+	if ( op->o_bd == b0 )
+		return SLAP_CB_CONTINUE;
+
 	b0->bd_info = on->on_info->oi_orig;
 
 	/* if the subordinate database has overlays, the bi_chk_controls()
@@ -224,6 +262,36 @@ glue_chk_controls ( Operation *op, SlapReply *rs )
 	return rc;
 }
 
+/* ITS#4615 - overlays configured above the glue overlay should be
+ * invoked for the entire glued tree. Overlays configured below the
+ * glue overlay should only be invoked on the master backend.
+ * So, if we're searching on any subordinates, we need to force the
+ * current overlay chain to stop processing, without stopping the
+ * overall callback flow.
+ */
+static int
+glue_sub_search( Operation *op, SlapReply *rs, BackendDB *b0,
+	slap_overinst *on )
+{
+	/* Process any overlays on the master backend */
+	if ( op->o_bd == b0 && on->on_next ) {
+		BackendInfo *bi = op->o_bd->bd_info;
+		int rc = SLAP_CB_CONTINUE;
+		for ( on=on->on_next; on; on=on->on_next ) {
+			op->o_bd->bd_info = (BackendInfo *)on;
+			if ( on->on_bi.bi_op_search ) {
+				rc = on->on_bi.bi_op_search( op, rs );
+				if ( rc != SLAP_CB_CONTINUE )
+					break;
+			}
+		}
+		op->o_bd->bd_info = bi;
+		if ( rc != SLAP_CB_CONTINUE )
+			return rc;
+	}
+	return op->o_bd->be_search( op, rs );
+}
+
 static int
 glue_op_search ( Operation *op, SlapReply *rs )
 {
@@ -233,8 +301,8 @@ glue_op_search ( Operation *op, SlapReply *rs )
 	BackendDB *b1 = NULL, *btmp;
 	BackendInfo *bi0 = op->o_bd->bd_info;
 	int i;
-	long stoptime = 0;
-	glue_state gs = {0, 0, NULL, 0, NULL};
+	long stoptime = 0, starttime;
+	glue_state gs = {NULL, NULL, NULL, 0, 0, 0, 0};
 	slap_callback cb = { NULL, glue_op_response, NULL, NULL };
 	int scope0, tlimit0;
 	struct berval dn, ndn, *pdn;
@@ -243,6 +311,7 @@ glue_op_search ( Operation *op, SlapReply *rs )
 
 	cb.sc_next = op->o_callback;
 
+	starttime = op->o_time;
 	stoptime = slap_get_time () + op->ors_tlimit;
 
 	op->o_bd = glue_back_select (b0, &op->o_req_ndn);
@@ -250,6 +319,9 @@ glue_op_search ( Operation *op, SlapReply *rs )
 
 	switch (op->ors_scope) {
 	case LDAP_SCOPE_BASE:
+		if ( op->o_bd == b0 )
+			return SLAP_CB_CONTINUE;
+
 		rs->sr_err = LDAP_UNWILLING_TO_PERFORM;
 		if (op->o_bd && op->o_bd->be_search) {
 			rs->sr_err = op->o_bd->be_search( op, rs );
@@ -259,19 +331,6 @@ glue_op_search ( Operation *op, SlapReply *rs )
 	case LDAP_SCOPE_ONELEVEL:
 	case LDAP_SCOPE_SUBTREE:
 	case LDAP_SCOPE_SUBORDINATE: /* FIXME */
-
-#if 0
-		if ( op->o_sync ) {
-			if (op->o_bd && op->o_bd->be_search) {
-				rs->sr_err = op->o_bd->be_search( op, rs );
-			} else {
-				send_ldap_error(op, rs, LDAP_UNWILLING_TO_PERFORM,
-						"No search target found");
-			}
-			return rs->sr_err;
-		}
-#endif
-
 		op->o_callback = &cb;
 		rs->sr_err = gs.err = LDAP_UNWILLING_TO_PERFORM;
 		scope0 = op->ors_scope;
@@ -296,7 +355,8 @@ glue_op_search ( Operation *op, SlapReply *rs )
 			if (!dnIsSuffix(&btmp->be_nsuffix[0], &b1->be_nsuffix[0]))
 				continue;
 			if (tlimit0 != SLAP_NO_LIMIT) {
-				op->ors_tlimit = stoptime - slap_get_time ();
+				op->o_time = slap_get_time();
+				op->ors_tlimit = stoptime - op->o_time;
 				if (op->ors_tlimit <= 0) {
 					rs->sr_err = gs.err = LDAP_TIMELIMIT_EXCEEDED;
 					break;
@@ -328,14 +388,14 @@ glue_op_search ( Operation *op, SlapReply *rs )
 			} else if (scope0 == LDAP_SCOPE_SUBTREE &&
 				dn_match(&op->o_bd->be_nsuffix[0], &ndn))
 			{
-				rs->sr_err = op->o_bd->be_search( op, rs );
+				rs->sr_err = glue_sub_search( op, rs, b0, on );
 
 			} else if (scope0 == LDAP_SCOPE_SUBTREE &&
 				dnIsSuffix(&op->o_bd->be_nsuffix[0], &ndn))
 			{
 				op->o_req_dn = op->o_bd->be_suffix[0];
 				op->o_req_ndn = op->o_bd->be_nsuffix[0];
-				rs->sr_err = op->o_bd->be_search( op, rs );
+				rs->sr_err = glue_sub_search( op, rs, b0, on );
 				if ( rs->sr_err == LDAP_NO_SUCH_OBJECT ) {
 					gs.err = LDAP_SUCCESS;
 				}
@@ -343,7 +403,7 @@ glue_op_search ( Operation *op, SlapReply *rs )
 				op->o_req_ndn = ndn;
 
 			} else if (dnIsSuffix(&ndn, &op->o_bd->be_nsuffix[0])) {
-				rs->sr_err = op->o_bd->be_search( op, rs );
+				rs->sr_err = glue_sub_search( op, rs, b0, on );
 			}
 
 			switch ( gs.err ) {
@@ -368,6 +428,7 @@ glue_op_search ( Operation *op, SlapReply *rs )
 end_of_loop:;
 		op->ors_scope = scope0;
 		op->ors_tlimit = tlimit0;
+		op->o_time = starttime;
 		op->o_req_dn = dn;
 		op->o_req_ndn = ndn;
 
@@ -380,6 +441,7 @@ end_of_loop:;
 		rs->sr_err = gs.err;
 		rs->sr_matched = gs.matched;
 		rs->sr_ref = gs.refs;
+		rs->sr_ctrls = gs.ctrls;
 
 		send_ldap_result( op, rs );
 	}
@@ -390,6 +452,14 @@ end_of_loop:;
 		free (gs.matched);
 	if (gs.refs)
 		ber_bvarray_free(gs.refs);
+	if (gs.ctrls) {
+		for (i = gs.nctrls; --i >= 0; ) {
+			if (!BER_BVISNULL( &gs.ctrls[i]->ldctl_value ))
+				free(gs.ctrls[i]->ldctl_value.bv_val);
+			free(gs.ctrls[i]);
+		}
+		free(gs.ctrls);
+	}
 	return rs->sr_err;
 }
 
@@ -706,6 +776,13 @@ glue_db_init(
 	BackendInfo	*bi = oi->oi_orig;
 	glueinfo *gi;
 
+	if ( SLAP_GLUE_SUBORDINATE( be )) {
+		Debug( LDAP_DEBUG_ANY, "glue: backend %s is already subordinate, "
+			"cannot have glue overlay!\n",
+			be->be_suffix[0].bv_val, 0, 0 );
+		return LDAP_OTHER;
+	}
+
 	gi = ch_calloc( 1, sizeof(glueinfo));
 	on->on_bi.bi_private = gi;
 	dnParent( be->be_nsuffix, &gi->gi_pdn );
@@ -765,7 +842,7 @@ glue_db_close(
 {
 	slap_overinst	*on = (slap_overinst *)be->bd_info;
 
-	on->on_info->oi_bi.bi_db_close = NULL;
+	on->on_info->oi_bi.bi_db_close = 0;
 	return 0;
 }
 
@@ -891,6 +968,12 @@ glue_sub_add( BackendDB *be, int advert, int online )
 	glue_Addrec *ga;
 	int rc = 0;
 
+	if ( overlay_is_inst( be, "glue" )) {
+		Debug( LDAP_DEBUG_ANY, "glue: backend %s already has glue overlay, "
+			"cannot be a subordinate!\n",
+			be->be_suffix[0].bv_val, 0, 0 );
+		return LDAP_OTHER;
+	}
 	SLAP_DBFLAGS( be ) |= SLAP_DBFLAG_GLUE_SUBORDINATE;
 	if ( advert )
 		SLAP_DBFLAGS( be ) |= SLAP_DBFLAG_GLUE_ADVERTISE;

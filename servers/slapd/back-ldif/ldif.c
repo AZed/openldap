@@ -43,7 +43,7 @@ struct ldif_info {
 	struct berval li_base_path;
 	enumCookie li_tool_cookie;
 	ID li_tool_current;
-	ldap_pvt_thread_mutex_t  li_mutex;
+	ldap_pvt_thread_rdwr_t  li_rdwr;
 };
 
 #ifdef _WIN32
@@ -82,17 +82,23 @@ static ConfigOCs ldifocs[] = {
 };
 
 static void
-dn2path(struct berval * dn, struct berval * rootdn, struct berval * base_path,
+dn2path(struct berval * dn, struct berval * suffixdn, struct berval * base_path,
 	struct berval *res)
 {
 	char *ptr, *sep, *end;
+
+	assert( dn != NULL );
+	assert( !BER_BVISNULL( dn ) );
+	assert( suffixdn != NULL );
+	assert( !BER_BVISNULL( suffixdn ) );
+	assert( dnIsSuffix( dn, suffixdn ) );
 
 	res->bv_len = dn->bv_len + base_path->bv_len + 1 + STRLENOF( LDIF );
 	res->bv_val = ch_malloc( res->bv_len + 1 );
 	ptr = lutil_strcopy( res->bv_val, base_path->bv_val );
 	*ptr++ = LDAP_DIRSEP[0];
-	ptr = lutil_strcopy( ptr, rootdn->bv_val );
-	end = dn->bv_val + dn->bv_len - rootdn->bv_len - 1;
+	ptr = lutil_strcopy( ptr, suffixdn->bv_val );
+	end = dn->bv_val + dn->bv_len - suffixdn->bv_len - 1;
 	while ( end > dn->bv_val ) {
 		for (sep = end-1; sep >=dn->bv_val && !DN_SEPARATOR( *sep ); sep--);
 		*ptr++ = LDAP_DIRSEP[0];
@@ -150,7 +156,8 @@ static int spew_file(int fd, char * spew, int len) {
 	while(len > 0) {
 		writeres = write(fd, spew, len);
 		if(writeres == -1) {
-			perror("could not spew write");
+			Debug( LDAP_DEBUG_ANY, "could not spew write: %s\n",
+				STRERROR( errno ), 0, 0 );
 			return -1;
 		}
 		else {
@@ -174,6 +181,8 @@ static int spew_entry(Entry * e, struct berval * path) {
 			rs = LDAP_NO_SUCH_OBJECT;
 		else
 			rs = LDAP_UNWILLING_TO_PERFORM;
+		Debug( LDAP_DEBUG_ANY, "could not open \"%s\": %s\n",
+			path->bv_val, STRERROR( errno ), 0 );
 	}
 	else {
 		struct berval rdn;
@@ -255,8 +264,9 @@ static Entry * get_entry(Operation *op, struct berval *base_path) {
 	dn2path(&op->o_req_ndn, op->o_bd->be_nsuffix, base_path, &path);
 	fd = open(path.bv_val, O_RDONLY);
 	/* error opening file (mebbe should log error) */
-	if(fd == -1) {
-		perror("failed to open file");
+	if ( fd == -1 && ( errno != ENOENT || op->o_tag != LDAP_REQ_ADD ) ) {
+		Debug( LDAP_DEBUG_ANY, "failed to open file \"%s\": %s\n",
+			path.bv_val, STRERROR(errno), 0 );
 	}
 
 	if(path.bv_val != NULL)
@@ -296,9 +306,9 @@ static int r_enum_tree(enumCookie *ck, struct berval *path,
 
 	fd = open( path->bv_val, O_RDONLY );
 	if ( fd < 0 ) {
-		Debug( LDAP_DEBUG_TRACE,
-			"=> ldif_enum_tree: failed to open %s\n",
-			path->bv_val, 0, 0 );
+		Debug( LDAP_DEBUG_ANY,
+			"=> ldif_enum_tree: failed to open %s: %s\n",
+			path->bv_val, STRERROR(errno), 0 );
 		return LDAP_NO_SUCH_OBJECT;
 	}
 
@@ -350,11 +360,11 @@ static int r_enum_tree(enumCookie *ck, struct berval *path,
 		} else {
 		/* Queueing up for tool mode */
 			if(ck->entries == NULL) {
-				ck->entries = (Entry **) SLAP_MALLOC(sizeof(Entry *) * ENTRY_BUFF_INCREMENT);
+				ck->entries = (Entry **) ch_malloc(sizeof(Entry *) * ENTRY_BUFF_INCREMENT);
 				ck->elen = ENTRY_BUFF_INCREMENT;
 			}
 			if(ck->eind >= ck->elen) { /* grow entries if necessary */	
-				ck->entries = (Entry **) SLAP_REALLOC(ck->entries, sizeof(Entry *) * (ck->elen) * 2);
+				ck->entries = (Entry **) ch_realloc(ck->entries, sizeof(Entry *) * (ck->elen) * 2);
 				ck->elen *= 2;
 			}
 
@@ -378,7 +388,7 @@ static int r_enum_tree(enumCookie *ck, struct berval *path,
 				/* it shouldn't be treated as an error
 				 * only if the directory doesn't exist */
 				rc = LDAP_BUSY;
-				Debug( LDAP_DEBUG_TRACE,
+				Debug( LDAP_DEBUG_ANY,
 					"=> ldif_enum_tree: failed to opendir %s (%d)\n",
 					path->bv_val, errno, 0 );
 			}
@@ -410,7 +420,7 @@ static int r_enum_tree(enumCookie *ck, struct berval *path,
 				if ( ptr ) {
 					itmp.bv_len = ptr - itmp.bv_val;
 					ber_dupbv( &bvl->num, &itmp );
-					bvl->inum = strtoul( itmp.bv_val, NULL, 0 );
+					bvl->inum = strtol( itmp.bv_val, NULL, 0 );
 					itmp.bv_val[0] = '\0';
 					bvl->off = itmp.bv_val - bvl->bv.bv_val;
 				}
@@ -497,7 +507,8 @@ static int apply_modify_to_entry(Entry * entry,
 				SlapReply * rs)
 {
 	char textbuf[SLAP_TEXT_BUFLEN];
-	int rc = LDAP_UNWILLING_TO_PERFORM;
+	int rc = modlist ? LDAP_UNWILLING_TO_PERFORM : LDAP_SUCCESS;
+	int is_oc = 0;
 	Modification *mods = NULL;
 
 	if (!acl_check_modlist(op, entry, modlist)) {
@@ -507,6 +518,9 @@ static int apply_modify_to_entry(Entry * entry,
 	for (; modlist != NULL; modlist = modlist->sml_next) {
 		mods = &modlist->sml_mod;
 
+		if ( mods->sm_desc == slap_schema.si_ad_objectClass ) {
+			is_oc = 1;
+		}
 		switch (mods->sm_op) {
 		case LDAP_MOD_ADD:
 			rc = modify_add_values(entry, mods,
@@ -556,13 +570,14 @@ static int apply_modify_to_entry(Entry * entry,
 	}
 	
 	if(rc == LDAP_SUCCESS) {
-		if ( mods->sm_desc == slap_schema.si_ad_objectClass ) {
+		if ( is_oc ) {
 			entry->e_ocflags = 0;
 		}
 		/* check that the entry still obeys the schema */
-		rc = entry_schema_check(op, entry, NULL, 0,
+		rc = entry_schema_check( op, entry, NULL, 0,
 			  &rs->sr_text, textbuf, sizeof( textbuf ) );
 	}
+
 	return rc;
 }
 
@@ -586,7 +601,7 @@ ldif_back_referrals( Operation *op, SlapReply *rs )
 	}
 
 	ni = (struct ldif_info *)op->o_bd->be_private;
-	ldap_pvt_thread_mutex_lock( &ni->li_mutex );
+	ldap_pvt_thread_rdwr_rlock( &ni->li_rdwr );
 	entry = (Entry *)get_entry( op, &ni->li_base_path );
 
 	/* no object is found for them */
@@ -609,7 +624,7 @@ ldif_back_referrals( Operation *op, SlapReply *rs )
 			entry = (Entry *)get_entry( op, &ni->li_base_path );
 		}
 
-		ldap_pvt_thread_mutex_unlock( &ni->li_mutex );
+		ldap_pvt_thread_rdwr_runlock( &ni->li_rdwr );
 
 		op->o_req_dn = odn;
 		op->o_req_ndn = ondn;
@@ -659,7 +674,7 @@ ldif_back_referrals( Operation *op, SlapReply *rs )
 		return rc;
 	}
 
-	ldap_pvt_thread_mutex_unlock( &ni->li_mutex );
+	ldap_pvt_thread_rdwr_runlock( &ni->li_rdwr );
 
 	if ( is_entry_referral( entry ) ) {
 		/* entry is a referral */
@@ -702,7 +717,7 @@ ldif_back_bind( Operation *op, SlapReply *rs )
 	Entry * entry = NULL;
 
 	ni = (struct ldif_info *) op->o_bd->be_private;
-	ldap_pvt_thread_mutex_lock(&ni->li_mutex);
+	ldap_pvt_thread_rdwr_rlock(&ni->li_rdwr);
 	entry = (Entry *) get_entry(op, &ni->li_base_path);
 
 	/* no object is found for them */
@@ -735,7 +750,7 @@ ldif_back_bind( Operation *op, SlapReply *rs )
 	goto return_result;
 
  return_result:
-	ldap_pvt_thread_mutex_unlock(&ni->li_mutex);
+	ldap_pvt_thread_rdwr_runlock(&ni->li_rdwr);
 	if(return_val != 0)
 		send_ldap_result( op, rs );
 	if(entry != NULL)
@@ -750,9 +765,9 @@ static int ldif_back_search(Operation *op, SlapReply *rs)
 
 	ck.op = op;
 	ck.rs = rs;
-	ldap_pvt_thread_mutex_lock(&ni->li_mutex);
+	ldap_pvt_thread_rdwr_rlock(&ni->li_rdwr);
 	rs->sr_err = enum_tree( &ck );
-	ldap_pvt_thread_mutex_unlock(&ni->li_mutex);
+	ldap_pvt_thread_rdwr_runlock(&ni->li_rdwr);
 	send_ldap_result(op, rs);
 
 	return rs->sr_err;
@@ -767,13 +782,14 @@ static int ldif_back_add(Operation *op, SlapReply *rs) {
 	int statres;
 	char textbuf[SLAP_TEXT_BUFLEN];
 
+	Debug( LDAP_DEBUG_TRACE, "ldif_back_add: \"%s\"\n", dn.bv_val, 0, 0);
 	slap_add_opattrs( op, &rs->sr_text, textbuf, sizeof( textbuf ), 1 );
 
 	rs->sr_err = entry_schema_check(op, e, NULL, 0,
 		&rs->sr_text, textbuf, sizeof( textbuf ) );
 	if ( rs->sr_err != LDAP_SUCCESS ) goto send_res;
 				
-	ldap_pvt_thread_mutex_lock(&ni->li_mutex);
+	ldap_pvt_thread_rdwr_wlock(&ni->li_rdwr);
 
 	dn2path(&dn, &op->o_bd->be_nsuffix[0], &ni->li_base_path, &leaf_path);
 
@@ -789,11 +805,15 @@ static int ldif_back_add(Operation *op, SlapReply *rs) {
 			base.bv_val[base.bv_len] = '\0';
 			if(statres == -1 && errno == ENOENT) {
 				rs->sr_err = LDAP_NO_SUCH_OBJECT; /* parent doesn't exist */
+				rs->sr_text = "Parent does not exist";
 			}
 			else if(statres != -1) { /* create parent */
 				int mkdirres = mkdir(base.bv_val, 0750);
 				if(mkdirres == -1) {
 					rs->sr_err = LDAP_UNWILLING_TO_PERFORM;
+					rs->sr_text = "Could not create parent folder";
+					Debug( LDAP_DEBUG_ANY, "could not create folder \"%s\": %s\n",
+						base.bv_val, STRERROR( errno ), 0 );
 				}
 			}
 			else
@@ -806,6 +826,11 @@ static int ldif_back_add(Operation *op, SlapReply *rs) {
 				rs->sr_err = (int) spew_entry(e, &leaf_path);
 				ldap_pvt_thread_mutex_unlock(&entry2str_mutex);
 			}
+			else if ( statres == -1 ) {
+				rs->sr_err = LDAP_UNWILLING_TO_PERFORM;
+				Debug( LDAP_DEBUG_ANY, "could not stat file \"%s\": %s\n",
+					leaf_path.bv_val, STRERROR( errno ), 0 );
+			}
 			else /* it already exists */
 				rs->sr_err = LDAP_ALREADY_EXISTS;
 		}
@@ -813,12 +838,14 @@ static int ldif_back_add(Operation *op, SlapReply *rs) {
 		SLAP_FREE(leaf_path.bv_val);
 	}
 
-	ldap_pvt_thread_mutex_unlock(&ni->li_mutex);
+	ldap_pvt_thread_rdwr_wunlock(&ni->li_rdwr);
 
 send_res:
+	Debug( LDAP_DEBUG_TRACE, 
+			"ldif_back_add: err: %d text: %s\n", rs->sr_err, rs->sr_text ?
+				rs->sr_text : "", 0);
 	send_ldap_result(op, rs);
-	if ( !SLAP_SHADOW( op->o_bd ))
-		slap_graduate_commit_csn( op );
+	slap_graduate_commit_csn( op );
 	return 0;
 }
 
@@ -829,10 +856,9 @@ static int ldif_back_modify(Operation *op, SlapReply *rs) {
 	Entry * entry = NULL;
 	int spew_res;
 
-	if ( !SLAP_SHADOW( op->o_bd ))
-		slap_mods_opattrs( op, &op->orm_modlist, 1 );
+	slap_mods_opattrs( op, &op->orm_modlist, 1 );
 
-	ldap_pvt_thread_mutex_lock(&ni->li_mutex);
+	ldap_pvt_thread_rdwr_wlock(&ni->li_rdwr);
 	dn2path(&op->o_req_ndn, &op->o_bd->be_nsuffix[0], &ni->li_base_path,
 		&path);
 	entry = (Entry *) get_entry(op, &ni->li_base_path);
@@ -840,11 +866,15 @@ static int ldif_back_modify(Operation *op, SlapReply *rs) {
 	if(entry != NULL) {
 		rs->sr_err = apply_modify_to_entry(entry, modlst, op, rs);
 		if(rs->sr_err == LDAP_SUCCESS) {
+			int save_errno;
 			ldap_pvt_thread_mutex_lock(&entry2str_mutex);
 			spew_res = spew_entry(entry, &path);
+			save_errno = errno;
 			ldap_pvt_thread_mutex_unlock(&entry2str_mutex);
 			if(spew_res == -1) {
-				perror("could not output entry");
+				Debug( LDAP_DEBUG_ANY,
+					"%s ldif_back_modify: could not output entry \"%s\": %s\n",
+					op->o_log_prefix, entry->e_name.bv_val, STRERROR( save_errno ) );
 				rs->sr_err = LDAP_UNWILLING_TO_PERFORM;
 			}
 		}
@@ -858,10 +888,9 @@ static int ldif_back_modify(Operation *op, SlapReply *rs) {
 	if(path.bv_val != NULL)
 		SLAP_FREE(path.bv_val);
 	rs->sr_text = NULL;
-	ldap_pvt_thread_mutex_unlock(&ni->li_mutex);
+	ldap_pvt_thread_rdwr_wunlock(&ni->li_rdwr);
 	send_ldap_result(op, rs);
-	if ( !SLAP_SHADOW( op->o_bd ))
-		slap_graduate_commit_csn( op );
+	slap_graduate_commit_csn( op );
 	return 0;
 }
 
@@ -870,7 +899,7 @@ static int ldif_back_delete(Operation *op, SlapReply *rs) {
 	struct berval path = BER_BVNULL;
 	int res = 0;
 
-	if ( !SLAP_SHADOW( op->o_bd )) {
+	if ( BER_BVISEMPTY( &op->o_csn )) {
 		struct berval csn;
 		char csnbuf[LDAP_LUTIL_CSNSTR_BUFSIZE];
 
@@ -879,7 +908,7 @@ static int ldif_back_delete(Operation *op, SlapReply *rs) {
 		slap_get_csn( op, &csn, 1 );
 	}
 
-	ldap_pvt_thread_mutex_lock(&ni->li_mutex);
+	ldap_pvt_thread_rdwr_wlock(&ni->li_rdwr);
 	dn2path(&op->o_req_ndn, &op->o_bd->be_nsuffix[0], &ni->li_base_path, &path);
 
 	path.bv_val[path.bv_len - STRLENOF(LDIF)] = '\0';
@@ -901,24 +930,23 @@ static int ldif_back_delete(Operation *op, SlapReply *rs) {
 		rs->sr_err = LDAP_SUCCESS;
 
 	SLAP_FREE(path.bv_val);
-	ldap_pvt_thread_mutex_unlock(&ni->li_mutex);
+	ldap_pvt_thread_rdwr_wunlock(&ni->li_rdwr);
 	send_ldap_result(op, rs);
-	if ( !SLAP_SHADOW( op->o_bd ))
-		slap_graduate_commit_csn( op );
+	slap_graduate_commit_csn( op );
 	return 0;
 }
 
 
 static int move_entry(Entry * entry, struct berval * ndn,
-			   struct berval * newndn, struct berval * rootdn,
+			   struct berval * newndn, struct berval * suffixdn,
 			   struct berval * base_path) {
 	int res;
 	int exists_res;
 	struct berval path;
 	struct berval newpath;
 
-	dn2path(ndn, rootdn, base_path, &path);
-	dn2path(newndn, rootdn, base_path, &newpath);
+	dn2path(ndn, suffixdn, base_path, &path);
+	dn2path(newndn, suffixdn, base_path, &newpath);
 
 	if((entry == NULL || path.bv_val == NULL) || newpath.bv_val == NULL) {
 		/* some object doesn't exist */
@@ -927,6 +955,7 @@ static int move_entry(Entry * entry, struct berval * ndn,
 	else { /* do the modrdn */
 		exists_res = open(newpath.bv_val, O_RDONLY);
 		if(exists_res == -1 && errno == ENOENT) {
+			ldap_pvt_thread_mutex_lock( &entry2str_mutex );
 			res = spew_entry(entry, &newpath);
 			if(res != -1) {
 				/* if this fails we should log something bad */
@@ -940,6 +969,7 @@ static int move_entry(Entry * entry, struct berval * ndn,
 					res = LDAP_UNWILLING_TO_PERFORM;
 				unlink(newpath.bv_val); /* in case file was created */
 			}
+			ldap_pvt_thread_mutex_unlock( &entry2str_mutex );
 		}
 		else if(exists_res) {
 			int close_res = close(exists_res);
@@ -970,8 +1000,7 @@ static int ldif_back_modrdn(Operation *op, SlapReply *rs) {
 	Modifications * mods = NULL;
 	int res;
 
-	ldap_pvt_thread_mutex_lock(&ni->li_mutex);
-	ldap_pvt_thread_mutex_lock(&entry2str_mutex);
+	ldap_pvt_thread_rdwr_wlock( &ni->li_rdwr );
 	entry = (Entry *) get_entry(op, &ni->li_base_path);
 
 	/* build the mods to the entry */
@@ -993,11 +1022,25 @@ static int ldif_back_modrdn(Operation *op, SlapReply *rs) {
 			else { /* built mods successfully */
 
 				/* build new dn, and new ndn for the entry */
-				if(op->oq_modrdn.rs_newSup != NULL) /* new superior */
+				if(op->oq_modrdn.rs_newSup != NULL) {
+					struct berval	op_dn = op->o_req_dn,
+							op_ndn = op->o_req_ndn;
+					Entry		*np;
+
+					/* new superior */
 					p_dn = *op->oq_modrdn.rs_newSup;
-				else
-					p_dn = slap_empty_bv;
-				dnParent(&entry->e_name, &p_dn);
+					op->o_req_dn = *op->oq_modrdn.rs_newSup;
+					op->o_req_ndn = *op->oq_modrdn.rs_nnewSup;
+					np = (Entry *)get_entry( op, &ni->li_base_path );
+					op->o_req_dn = op_dn;
+					op->o_req_ndn = op_ndn;
+					if ( np == NULL ) {
+						goto no_such_object;
+					}
+					entry_free( np );
+				} else {
+					dnParent(&entry->e_name, &p_dn);
+				}
 				build_new_dn(&new_dn, &p_dn, &op->oq_modrdn.rs_newrdn, NULL); 
 				dnNormalize( 0, NULL, NULL, &new_dn, &bv, op->o_tmpmemctx );
 				ber_dupbv( &new_ndn, &bv );
@@ -1011,21 +1054,24 @@ static int ldif_back_modrdn(Operation *op, SlapReply *rs) {
 								&new_ndn,
 								&op->o_bd->be_nsuffix[0],
 								&ni->li_base_path);
-				}
-				else
+				} else {
 					rs->sr_err = res;
+				}
 			}
 		}
-	}
-	else /* entry was null */
+	} else {
+no_such_object:;
+	/* entry was null */
 		rs->sr_err = LDAP_NO_SUCH_OBJECT;
+	}
 
-	if(entry != NULL)
+	if ( entry != NULL ) {
 		entry_free(entry);
+	}
 	rs->sr_text = "";
-	ldap_pvt_thread_mutex_unlock(&ni->li_mutex);
-	ldap_pvt_thread_mutex_unlock(&entry2str_mutex);
+	ldap_pvt_thread_rdwr_wunlock( &ni->li_rdwr );
 	send_ldap_result(op, rs);
+	slap_graduate_commit_csn( op );
 	return 0;
 }
 
@@ -1040,12 +1086,23 @@ int ldif_back_entry_get(
 	Entry **ent )
 {
 	struct ldif_info *ni = (struct ldif_info *) op->o_bd->be_private;
+	struct berval op_dn = op->o_req_dn, op_ndn = op->o_req_ndn;
 
-	ldap_pvt_thread_mutex_lock( &ni->li_mutex );
+	assert( ndn != NULL );
+	assert( !BER_BVISNULL( ndn ) );
 
+	ldap_pvt_thread_rdwr_rlock( &ni->li_rdwr );
+	op->o_req_dn = *ndn;
+	op->o_req_ndn = *ndn;
 	*ent = (Entry *) get_entry( op, &ni->li_base_path );
+	op->o_req_dn = op_dn;
+	op->o_req_ndn = op_ndn;
+	ldap_pvt_thread_rdwr_runlock( &ni->li_rdwr );
 
-	ldap_pvt_thread_mutex_unlock( &ni->li_mutex );
+	if ( *ent && oc && !is_entry_objectclass_or_sub( *ent, oc ) ) {
+		entry_free( *ent );
+		*ent = NULL;
+	}
 
 	return ( *ent == NULL ? 1 : 0 );
 }
@@ -1166,7 +1223,7 @@ ldif_back_db_init( BackendDB *be )
 	ni = ch_calloc( 1, sizeof(struct ldif_info) );
 	be->be_private = ni;
 	be->be_cf_ocs = ldifocs;
-	ldap_pvt_thread_mutex_init(&ni->li_mutex);
+	ldap_pvt_thread_rdwr_init(&ni->li_rdwr);
 	return 0;
 }
 
@@ -1178,7 +1235,7 @@ ldif_back_db_destroy(
 	struct ldif_info *ni = be->be_private;
 
 	ch_free(ni->li_base_path.bv_val);
-	ldap_pvt_thread_mutex_destroy(&ni->li_mutex);
+	ldap_pvt_thread_rdwr_destroy(&ni->li_rdwr);
 	free( be->be_private );
 	return 0;
 }
@@ -1190,7 +1247,7 @@ ldif_back_db_open(
 {
 	struct ldif_info *ni = (struct ldif_info *) be->be_private;
 	if( BER_BVISEMPTY(&ni->li_base_path)) {/* missing base path */
-		fprintf(stderr, "missing base path for back-ldif\n");
+		Debug( LDAP_DEBUG_ANY, "missing base path for back-ldif\n", 0, 0, 0);
 		return 1;
 	}
 	return 0;

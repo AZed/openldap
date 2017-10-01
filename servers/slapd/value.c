@@ -65,7 +65,7 @@ value_add(
 		for ( n = 0; !BER_BVISNULL( &(*vals)[n] ); n++ ) {
 			;	/* Empty */
 		}
-		*vals = (BerVarray) SLAP_REALLOC( (char *) *vals,
+		*vals = (BerVarray) ch_realloc( (char *) *vals,
 		    (n + nn + 1) * sizeof(struct berval) );
 		if( *vals == NULL ) {
 			Debug(LDAP_DEBUG_TRACE,
@@ -105,7 +105,7 @@ value_add_one(
 		for ( n = 0; !BER_BVISNULL( &(*vals)[n] ); n++ ) {
 			;	/* Empty */
 		}
-		*vals = (BerVarray) SLAP_REALLOC( (char *) *vals,
+		*vals = (BerVarray) ch_realloc( (char *) *vals,
 		    (n + 2) * sizeof(struct berval) );
 		if( *vals == NULL ) {
 			Debug(LDAP_DEBUG_TRACE,
@@ -153,8 +153,12 @@ int asserted_value_validate_normalize(
 		rc = (mr->smr_syntax->ssyn_pretty)( mr->smr_syntax, in, &pval, ctx );
 		in = &pval;
 
-	} else {
+	} else if ( mr->smr_syntax->ssyn_validate ) {
 		rc = (mr->smr_syntax->ssyn_validate)( mr->smr_syntax, in );
+
+	} else {
+		*text = "inappropriate matching request";
+		return LDAP_INAPPROPRIATE_MATCHING;
 	}
 
 	if( rc != LDAP_SUCCESS ) {

@@ -46,10 +46,7 @@ ldbm_back_compare(
 	e = dn2entry_r( op->o_bd, &op->o_req_ndn, &matched );
 	if ( e == NULL ) {
 		if ( matched != NULL ) {
-			struct berval	bv;
-
-			ber_str2bv_x( matched, 0, 1, &bv, op->o_tmpmemctx );
-			rs->sr_matched = bv.bv_val;
+			rs->sr_matched = ch_strdup( matched->e_dn );
 			rs->sr_ref = is_entry_referral( matched )
 				? get_entry_referrals( op, matched )
 				: NULL;
@@ -110,7 +107,7 @@ ldbm_back_compare(
 	}
 
 return_results:;
-	cache_return_entry_r( &li->li_cache, e );
+	if ( e ) cache_return_entry_r( &li->li_cache, e );
 	ldap_pvt_thread_rdwr_runlock(&li->li_giant_rwlock);
 
 	send_ldap_result( op, rs );

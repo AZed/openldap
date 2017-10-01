@@ -602,23 +602,31 @@ ldap_int_sasl_bind(
 		return ld->ld_errno;
 	}
 
+	rc = 0;
+#ifdef LDAP_R_COMPILE
+	ldap_pvt_thread_mutex_lock( &ld->ld_req_mutex );
+#endif
 	ber_sockbuf_ctrl( ld->ld_sb, LBER_SB_OPT_GET_FD, &sd );
 
 	if ( sd == AC_SOCKET_INVALID ) {
  		/* not connected yet */
- 		int rc;
 
 		rc = ldap_open_defconn( ld );
-		if( rc < 0 ) return ld->ld_errno;
 
-		ber_sockbuf_ctrl( ld->ld_defconn->lconn_sb,
-			LBER_SB_OPT_GET_FD, &sd );
+		if ( rc == 0 ) {
+			ber_sockbuf_ctrl( ld->ld_defconn->lconn_sb,
+				LBER_SB_OPT_GET_FD, &sd );
 
-		if( sd == AC_SOCKET_INVALID ) {
-			ld->ld_errno = LDAP_LOCAL_ERROR;
-			return ld->ld_errno;
+			if( sd == AC_SOCKET_INVALID ) {
+				ld->ld_errno = LDAP_LOCAL_ERROR;
+				rc = ld->ld_errno;
+			}
 		}
 	}   
+#ifdef LDAP_R_COMPILE
+	ldap_pvt_thread_mutex_unlock( &ld->ld_req_mutex );
+#endif
+	if( rc != 0 ) return ld->ld_errno;
 
 	oldctx = ld->ld_defconn->lconn_sasl_authctx;
 
@@ -753,13 +761,31 @@ ldap_int_sasl_bind(
 			/* we're done, no need to step */
 			if( scred ) {
 				/* but we got additional data? */
-				Debug( LDAP_DEBUG_TRACE,
-					"ldap_int_sasl_bind: rc=%d sasl=%d len=%ld\n",
-					rc, saslrc, scred ? scred->bv_len : -1 );
-
-				ber_bvfree( scred );
-				rc = ld->ld_errno = LDAP_LOCAL_ERROR;
-				goto done;
+#define KLUDGE_FOR_MSAD
+#ifdef 	KLUDGE_FOR_MSAD
+				/*
+				 * MSAD provides empty additional data in violation of LDAP
+				 * technical specifications.  As no existing SASL mechanism
+				 * allows empty data with an outcome message, just ignore it
+				 * for now.  Hopefully MS will fix their bug before someone
+				 * defines a mechanism with possibly empty additional data.
+				 */
+				if( scred->bv_len == 0 ) {
+					Debug( LDAP_DEBUG_ANY,
+						"ldap_int_sasl_bind: ignoring "
+							" bogus empty data provided with SASL outcome message.\n",
+						rc, saslrc, scred->bv_len );
+					ber_bvfree( scred );
+				} else
+#endif
+				{
+					Debug( LDAP_DEBUG_TRACE,
+						"ldap_int_sasl_bind: rc=%d sasl=%d len=%ld\n",
+						rc, saslrc, scred->bv_len );
+					rc = ld->ld_errno = LDAP_LOCAL_ERROR;
+					ber_bvfree( scred );
+					goto done;
+				}
 			}
 			break;
 		}
@@ -1005,7 +1031,7 @@ int ldap_pvt_sasl_secprops(
 	sasl_security_properties_t *secprops )
 {
 	int i, j, l;
-	char **props = ldap_str2charray( in, "," );
+	char **props;
 	unsigned sflags = 0;
 	int got_sflags = 0;
 	sasl_ssf_t max_ssf = 0;
@@ -1015,7 +1041,11 @@ int ldap_pvt_sasl_secprops(
 	unsigned maxbufsize = 0;
 	int got_maxbufsize = 0;
 
-	if( props == NULL || secprops == NULL ) {
+	if( secprops == NULL ) {
+		return LDAP_PARAM_ERROR;
+	}
+	props = ldap_str2charray( in, "," );
+	if( props == NULL ) {
 		return LDAP_PARAM_ERROR;
 	}
 
@@ -1028,7 +1058,8 @@ int ldap_pvt_sasl_secprops(
 			if ( sprops[j].ival ) {
 				unsigned v;
 				char *next = NULL;
-				if ( !isdigit( props[i][sprops[j].key.bv_len] )) continue;
+				if ( !isdigit( (unsigned char)props[i][sprops[j].key.bv_len] ))
+					continue;
 				v = strtoul( &props[i][sprops[j].key.bv_len], &next, 10 );
 				if ( next == &props[i][sprops[j].key.bv_len] || next[0] != '\0' ) continue;
 				switch( sprops[j].ival ) {
@@ -1050,6 +1081,7 @@ int ldap_pvt_sasl_secprops(
 			break;
 		}
 		if ( BER_BVISNULL( &sprops[j].key )) {
+			ldap_charray_free( props );
 			return LDAP_NOT_SUPPORTED;
 		}
 	}

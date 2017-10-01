@@ -61,10 +61,21 @@ int
 meta_back_is_candidate(
 	struct berval	*nsuffix,
 	int		suffixscope,
+	BerVarray	subtree_exclude,
 	struct berval	*ndn,
 	int		scope )
 {
 	if ( dnIsSuffix( ndn, nsuffix ) ) {
+		if ( subtree_exclude ) {
+			int	i;
+
+			for ( i = 0; !BER_BVISNULL( &subtree_exclude[ i ] ); i++ ) {
+				if ( dnIsSuffix( ndn, &subtree_exclude[ i ] ) ) {
+					return META_NOT_CANDIDATE;
+				}
+			}
+		}
+
 		switch ( suffixscope ) {
 		case LDAP_SCOPE_SUBTREE:
 		default:
@@ -128,6 +139,7 @@ meta_back_select_unique_candidate(
 	for ( i = 0; i < mi->mi_ntargets; ++i ) {
 		if ( meta_back_is_candidate( &mi->mi_targets[ i ].mt_nsuffix,
 				mi->mi_targets[ i ].mt_scope,
+				mi->mi_targets[ i ].mt_subtree_exclude,
 				ndn, LDAP_SCOPE_BASE ) )
 		{
 			if ( candidate == META_TARGET_NONE ) {
@@ -194,3 +206,22 @@ meta_clear_one_candidate(
 	return 0;
 }
 
+/*
+ * meta_clear_candidates
+ *
+ * clears all candidates
+ */
+int
+meta_clear_candidates( Operation *op, metaconn_t *mc )
+{
+	metainfo_t	*mi = ( metainfo_t * )op->o_bd->be_private;
+	int		c;
+
+	for ( c = 0; c < mi->mi_ntargets; c++ ) {
+		if ( mc->mc_conns[ c ].msc_ld != NULL ) {
+			meta_clear_one_candidate( &mc->mc_conns[ c ] );
+		}
+	}
+
+	return 0;
+}

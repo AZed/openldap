@@ -520,8 +520,6 @@ done:;
 	}
 #endif /* SLAP_ACL_HONOR_DISCLOSE */
 
-	send_ldap_result( op, rs );
-
 	/*
 	 * Commit only if all operations succeed
 	 */
@@ -534,6 +532,13 @@ done:;
 
 		SQLTransact( SQL_NULL_HENV, dbh, CompletionType );
 	}
+
+	if ( op->o_noop && rs->sr_err == LDAP_SUCCESS ) {
+		rs->sr_err = LDAP_X_NO_OPERATION;
+	}
+
+	send_ldap_result( op, rs );
+	slap_graduate_commit_csn( op );
 
 	if ( !BER_BVISNULL( &realnew_dn ) && realnew_dn.bv_val != new_dn.bv_val ) {
 		ch_free( realnew_dn.bv_val );
@@ -580,6 +585,11 @@ done:;
 
 	if ( !BER_BVISNULL( &n.e_nname ) ) {
 		backsql_entry_clean( op, &n );
+	}
+
+	if ( rs->sr_ref ) {
+		ber_bvarray_free( rs->sr_ref );
+		rs->sr_ref = NULL;
 	}
 
 	Debug( LDAP_DEBUG_TRACE, "<==backsql_modrdn()\n", 0, 0, 0 );

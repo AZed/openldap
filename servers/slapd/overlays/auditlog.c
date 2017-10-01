@@ -36,7 +36,7 @@ typedef struct auditlog_data {
 	char *ad_logfile;
 } auditlog_data;
 
-int fprint_ldif(FILE *f, char *name, char *val, ber_len_t len) {
+static int fprint_ldif(FILE *f, char *name, char *val, ber_len_t len) {
 	char *s;
 	if((s = ldif_put(LDIF_PUT_VALUE, name, val, len)) == NULL)
 		return(-1);
@@ -45,7 +45,7 @@ int fprint_ldif(FILE *f, char *name, char *val, ber_len_t len) {
 	return(0);
 }
 
-int auditlog_response(Operation *op, SlapReply *rs) {
+static int auditlog_response(Operation *op, SlapReply *rs) {
 	slap_overinst *on = (slap_overinst *)op->o_bd->bd_info;
 	auditlog_data *ad = on->on_bi.bi_private;
 	FILE *f;
@@ -78,7 +78,9 @@ int auditlog_response(Operation *op, SlapReply *rs) {
 		case LDAP_REQ_MODIFY:
 			what = "modify";
 			for(m = op->orm_modlist; m; m = m->sml_next)
-				if( m->sml_desc == slap_schema.si_ad_modifiersName ) {
+				if( m->sml_desc == slap_schema.si_ad_modifiersName &&
+					( m->sml_op == LDAP_MOD_ADD ||
+					m->sml_op == LDAP_MOD_REPLACE )) {
 					who = m->sml_values[0].bv_val;
 					break;
 				}
@@ -158,7 +160,7 @@ auditlog_db_init(
 )
 {
 	slap_overinst *on = (slap_overinst *)be->bd_info;
-	auditlog_data *ad = ch_malloc(sizeof(auditlog_data));
+	auditlog_data *ad = ch_calloc(1, sizeof(auditlog_data));
 
 	on->on_bi.bi_private = ad;
 	ldap_pvt_thread_mutex_init( &ad->ad_mutex );
@@ -175,6 +177,7 @@ auditlog_db_close(
 
 	free( ad->ad_logfile );
 	ad->ad_logfile = NULL;
+	return 0;
 }
 
 static int
@@ -187,6 +190,7 @@ auditlog_db_destroy(
 
 	ldap_pvt_thread_mutex_destroy( &ad->ad_mutex );
 	free( ad );
+	return 0;
 }
 
 static int

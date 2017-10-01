@@ -150,7 +150,6 @@ meta_back_conn_free(
 		(void)meta_clear_one_candidate( &mc->mc_conns[ i ] );
 	}
 
-	ldap_pvt_thread_mutex_destroy( &mc->mc_mutex );
 	free( mc );
 }
 
@@ -181,6 +180,9 @@ target_free(
 {
 	if ( mt->mt_uri ) {
 		free( mt->mt_uri );
+	}
+	if ( mt->mt_subtree_exclude ) {
+		ber_bvarray_free( mt->mt_subtree_exclude );
 	}
 	if ( !BER_BVISNULL( &mt->mt_psuffix ) ) {
 		free( mt->mt_psuffix.bv_val );

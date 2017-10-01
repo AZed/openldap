@@ -111,6 +111,11 @@ illustrated for the
 directive.
 
 .TP
+.B conn-ttl <time>
+This directive causes a cached connection to be dropped an recreated
+after a given ttl, regardless of being idle or not.
+
+.TP
 .B onerr {CONTINUE|stop}
 This directive allows to select the behavior in case an error is returned
 by one target during a search.
@@ -119,6 +124,17 @@ trying to return as much data as possible.
 If this statement is set to \fBstop\fP, the search is terminated as soon 
 as an error is returned by one target, and the error is immediately 
 propagated to the client.
+
+.TP
+.B protocol\-version {0,2,3}
+This directive indicates what protocol version must be used to contact
+the remote server.
+If set to 0 (the default), the proxy uses the same protocol version 
+used by the client, otherwise the requested protocol is used.
+The proxy returns \fIunwillingToPerform\fP if an operation that is 
+incompatible with the requested protocol is attempted.
+If set before any target specification, it affects all targets, unless
+overridden by any per-target directive.
 
 .TP
 .B pseudoroot-bind-defer {NO|yes}
@@ -274,6 +290,15 @@ using the pseudorootdn/pseudorootpw directives is inherently unsafe.
 .TP
 .B rewrite* ...
 The rewrite options are described in the "REWRITING" section.
+
+.TP
+.B subtree-exclude "<DN>"
+This directive instructs back-meta to ignore the current target
+for operations whose requestDN is subordinate to
+.BR DN .
+There may be multiple occurrences of the
+.B subtree-exclude
+directive for each of the targets.
 
 .TP
 .B suffixmassage "<virtual naming context>" "<real naming context>"

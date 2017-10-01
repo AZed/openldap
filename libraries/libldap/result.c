@@ -73,7 +73,7 @@ static int ldap_mark_abandoned LDAP_P(( LDAP *ld, ber_int_t msgid ));
 static int wait4msg LDAP_P(( LDAP *ld, ber_int_t msgid, int all, struct timeval *timeout,
 	LDAPMessage **result ));
 static ber_tag_t try_read1msg LDAP_P(( LDAP *ld, ber_int_t msgid,
-	int all, Sockbuf *sb, LDAPConn **lc, LDAPMessage **result ));
+	int all, LDAPConn **lc, LDAPMessage **result ));
 static ber_tag_t build_result_ber LDAP_P(( LDAP *ld, BerElement **bp, LDAPRequest *lr ));
 static void merge_error_info LDAP_P(( LDAP *ld, LDAPRequest *parentr, LDAPRequest *lr ));
 static LDAPMessage * chkResponseList LDAP_P(( LDAP *ld, int msgid, int all));
@@ -233,7 +233,7 @@ wait4msg(
 			*tvp;
 	time_t		start_time = 0;
 	time_t		tmp_time;
-	LDAPConn	*lc, *nextlc;
+	LDAPConn	*lc;
 
 	assert( ld != NULL );
 	assert( result != NULL );
@@ -277,15 +277,13 @@ wait4msg(
 #ifdef LDAP_R_COMPILE
 			ldap_pvt_thread_mutex_lock( &ld->ld_conn_mutex );
 #endif
-			for ( lc = ld->ld_conns; lc != NULL; lc = nextlc ) {
-				nextlc = lc->lconn_next;
+			for ( lc = ld->ld_conns; lc != NULL; lc = lc->lconn_next ) {
 				if ( ber_sockbuf_ctrl( lc->lconn_sb,
 						LBER_SB_OPT_DATA_READY, NULL ) ) {
 #ifdef LDAP_R_COMPILE
 					ldap_pvt_thread_mutex_unlock( &ld->ld_conn_mutex );
 #endif
-					rc = try_read1msg( ld, msgid, all, lc->lconn_sb,
-						&lc, result );
+					rc = try_read1msg( ld, msgid, all, &lc, result );
 #ifdef LDAP_R_COMPILE
 					ldap_pvt_thread_mutex_lock( &ld->ld_conn_mutex );
 #endif
@@ -334,23 +332,34 @@ wait4msg(
 					ldap_pvt_thread_mutex_unlock( &ld->ld_req_mutex );
 					ldap_pvt_thread_mutex_lock( &ld->ld_conn_mutex );
 #endif
-					for ( lc = ld->ld_conns; rc == LDAP_MSG_X_KEEP_LOOKING && lc != NULL;
-						lc = nextlc )
+					for ( lc = ld->ld_conns;
+						rc == LDAP_MSG_X_KEEP_LOOKING && lc != NULL; )
 					{
-						nextlc = lc->lconn_next;
 						if ( lc->lconn_status == LDAP_CONNST_CONNECTED &&
 							ldap_is_read_ready( ld, lc->lconn_sb ))
 						{
 #ifdef LDAP_R_COMPILE
 							ldap_pvt_thread_mutex_unlock( &ld->ld_conn_mutex );
 #endif
-							rc = try_read1msg( ld, msgid, all,
-								lc->lconn_sb, &lc, result );
-								if ( lc == NULL ) lc = nextlc;
+							rc = try_read1msg( ld, msgid, all, &lc, result );
 #ifdef LDAP_R_COMPILE
 							ldap_pvt_thread_mutex_lock( &ld->ld_conn_mutex );
 #endif
+							if ( lc == NULL ) {
+								/* if lc gets free()'d,
+								 * there's no guarantee
+								 * lc->lconn_next is still
+								 * sane; better restart
+								 * (ITS#4405) */
+								lc = ld->ld_conns;
+
+								/* don't get to next conn! */
+								break;
+							}
 						}
+
+						/* next conn */
+						lc = lc->lconn_next;
 					}
 #ifdef LDAP_R_COMPILE
 					ldap_pvt_thread_mutex_unlock( &ld->ld_conn_mutex );
@@ -384,7 +393,6 @@ try_read1msg(
 	LDAP *ld,
 	ber_int_t msgid,
 	int all,
-	Sockbuf *sb,
 	LDAPConn **lcp,
 	LDAPMessage **result )
 {
@@ -441,12 +449,12 @@ retry:
 #ifdef LDAP_CONNECTIONLESS
 	if ( LDAP_IS_UDP(ld) ) {
 		struct sockaddr from;
-		ber_int_sb_read(sb, &from, sizeof(struct sockaddr));
+		ber_int_sb_read( lc->lconn_sb, &from, sizeof(struct sockaddr) );
 		if (ld->ld_options.ldo_version == LDAP_VERSION2) isv2=1;
 	}
 nextresp3:
 #endif
-	tag = ber_get_next( sb, &len, ber );
+	tag = ber_get_next( lc->lconn_sb, &len, ber );
 	if ( tag == LDAP_TAG_MESSAGE ) {
 		/*
 	 	 * We read a complete message.
@@ -486,7 +494,7 @@ nextresp3:
 			(void *)ld, (long) id, 0);
 retry_ber:
 		ber_free( ber, 1 );
-		if ( ber_sockbuf_ctrl( sb, LBER_SB_OPT_DATA_READY, NULL ) ) {
+		if ( ber_sockbuf_ctrl( lc->lconn_sb, LBER_SB_OPT_DATA_READY, NULL ) ) {
 			goto retry;
 		}
 		return( LDAP_MSG_X_KEEP_LOOKING );	/* continue looking */
@@ -827,7 +835,7 @@ lr->lr_res_matched ? lr->lr_res_matched : "" );
 #ifdef LDAP_R_COMPILE
 				ldap_pvt_thread_mutex_unlock( &ld->ld_req_mutex );
 #endif
-				*lcp = NULL;
+				lc = *lcp = NULL;
 			}
 		}
 	}
@@ -888,8 +896,8 @@ lr->lr_res_matched ? lr->lr_res_matched : "" );
 				 * datagram, if the sockbuf is readable we still have data
 				 * to parse.
 				 */
-				ber = ldap_alloc_ber_with_options(ld);
-				if (ber_sockbuf_ctrl(sb, LBER_SB_OPT_DATA_READY, NULL)) ok=1;
+				ber = ldap_alloc_ber_with_options( ld );
+				if ( ber_sockbuf_ctrl( lc->lconn_sb, LBER_SB_OPT_DATA_READY, NULL ) ) ok = 1;
 			}
 			/* set up response chain */
 			if ( tmp == NULL ) {
@@ -988,7 +996,7 @@ exit:
 		ld->ld_errno = LDAP_SUCCESS;
 		return( tag );
 	}
-	if ( ber_sockbuf_ctrl( sb, LBER_SB_OPT_DATA_READY, NULL ) ) {
+	if ( lc && ber_sockbuf_ctrl( lc->lconn_sb, LBER_SB_OPT_DATA_READY, NULL ) ) {
 		goto retry;
 	}
 	return( LDAP_MSG_X_KEEP_LOOKING );	/* continue looking */

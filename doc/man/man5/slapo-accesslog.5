@@ -21,16 +21,15 @@ These
 options apply to the Access Logging overlay.
 They should appear after the
 .B overlay
-directive and before any subsequent
-.B database
 directive.
 .TP
 .B logdb <suffix>
 Specify the suffix of a database to be used for storing the log records.
 The specified database must have already been configured in a prior section
-of the config file. The suffix entry of the log database will be created
-automatically by this overlay. The log entries will be generated as the
-immediate children of the suffix entry.
+of the config file, and it must have a rootDN configured. The access controls
+on the log database should prevent general write access. The suffix entry
+of the log database will be created automatically by this overlay. The log
+entries will be generated as the immediate children of the suffix entry.
 .TP
 .B logops <operations>
 Specify which types of operations to log. The valid operation types are
@@ -50,6 +49,11 @@ abandon, bind, unbind
 .B all
 all operations
 .RE
+.TP
+.B logold <filter>
+Specify a filter for matching against Deleted and Modified entries. If
+the entry matches the filter, the old contents of the entry will be
+logged along with the current request.
 .TP
 .B logpurge <age> <interval>
 Specify the maximum age for log entries to be retained in the database,
@@ -96,6 +100,7 @@ succeed or not. The default is FALSE.
 	overlay accesslog
 	logdb cn=log
 	logops writes reads
+	logold (objectclass=person)
 .fi
 
 .SH SCHEMA
@@ -312,7 +317,12 @@ to its deletion. The values are formatted as
 attribute: value
 .RE
 .PD
-This option is not yet implemented.
+The
+.B reqOld
+attribute is only populated if the entry being deleted matches the
+configured
+.B logold
+filter.
 
 .LP
 .RS 4
@@ -331,7 +341,12 @@ attribute, which was already described above in the Add operation. It may
 optionally contain the previous contents of any modified attributes in the
 .B reqOld
 attribute, using the same format as described above for the Delete operation.
-This option is not yet implemented.
+The
+.B reqOld
+attribute is only populated if the entry being modified matches the
+configured
+.B logold
+filter.
 
 .LP
 .RS 4

@@ -241,8 +241,7 @@ ldbm_back_modify(
 
 	Debug(LDAP_DEBUG_ARGS, "ldbm_back_modify:\n", 0, 0, 0);
 
-	if ( !SLAP_SHADOW( op->o_bd ))
-		slap_mods_opattrs( op, &op->orm_modlist, 1 );
+	slap_mods_opattrs( op, &op->orm_modlist, 1 );
 
 	/* grab giant lock for writing */
 	ldap_pvt_thread_rdwr_wlock(&li->li_giant_rwlock);
@@ -260,7 +259,7 @@ ldbm_back_modify(
 			cache_return_entry_r( &li->li_cache, matched );
 		} else {
 			rs->sr_ref = referral_rewrite( default_referral, NULL,
-						&op->o_req_dn, LDAP_SCOPE_DEFAULT );
+				&op->o_req_dn, LDAP_SCOPE_DEFAULT );
 		}
 
 		rs->sr_err = LDAP_REFERRAL;
@@ -268,8 +267,7 @@ ldbm_back_modify(
 		goto return_results;
 	}
 
-	if ( !manageDSAit && is_entry_referral( e ) )
-	{
+	if ( !manageDSAit && is_entry_referral( e ) ) {
 		/* parent is a referral, don't allow add */
 		/* parent is an alias, don't allow add */
 		rs->sr_ref = get_entry_referrals( op, e );
@@ -296,12 +294,11 @@ ldbm_back_modify(
 	}
 
 return_results:;
-	cache_return_entry_w( &li->li_cache, e );
+	if( e != NULL ) cache_return_entry_w( &li->li_cache, e );
 	ldap_pvt_thread_rdwr_wunlock(&li->li_giant_rwlock);
 
 	send_ldap_result( op, rs );
-	if ( !SLAP_SHADOW( op->o_bd ))
-		slap_graduate_commit_csn( op );
+	slap_graduate_commit_csn( op );
 
 	rs->sr_text = NULL;
 	return rs->sr_err;

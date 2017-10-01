@@ -209,7 +209,7 @@ ldap_back_search(
 	/* deal with <draft-zeilenga-ldap-t-f> filters */
 	filter = op->ors_filterstr;
 retry:
-	rs->sr_err = ldap_search_ext( lc->lc_ld, op->o_req_ndn.bv_val,
+	rs->sr_err = ldap_search_ext( lc->lc_ld, op->o_req_dn.bv_val,
 			op->ors_scope, filter.bv_val,
 			attrs, op->ors_attrsonly, ctrls, NULL,
 			tv.tv_sec ? &tv : NULL,
@@ -224,14 +224,13 @@ retry:
 					goto retry;
 				}
 			}
+
 			if ( lc == NULL ) {
 				/* reset by ldap_back_retry ... */
 				rs->sr_err = slap_map_api2result( rs );
 
 			} else {
 				rc = ldap_back_op_result( lc, op, rs, msgid, 0, LDAP_BACK_DONTSEND );
-				ldap_back_freeconn( op, lc, 0 );
-				lc = NULL;
 			}
 				
 			goto finish;
@@ -303,6 +302,7 @@ retry:
 				rs->sr_attrs = op->ors_attrs;
 				rs->sr_operational_attrs = NULL;
 				rs->sr_flags = 0;
+				rs->sr_err = LDAP_SUCCESS;
 				rc = rs->sr_err = send_search_entry( op, rs );
 				if ( !BER_BVISNULL( &ent.e_name ) ) {
 					assert( ent.e_name.bv_val != bdn.bv_val );
@@ -375,16 +375,19 @@ retry:
 			}
 
 		} else {
-			char		**references = NULL;
+			char		**references = NULL, *err = NULL;
 
 			rc = ldap_parse_result( lc->lc_ld, res, &rs->sr_err,
-					&match.bv_val, (char **)&rs->sr_text,
+					&match.bv_val, &err,
 					&references, &rs->sr_ctrls, 1 );
-			freetext = 1;
 			if ( rc != LDAP_SUCCESS ) {
 				rs->sr_err = rc;
 			}
 			rs->sr_err = slap_map_api2result( rs );
+			if ( err ) {
+				rs->sr_text = err;
+				freetext = 1;
+			}
 
 			if ( references && references[ 0 ] && references[ 0 ][ 0 ] ) {
 				int	cnt;
@@ -720,11 +723,13 @@ ldap_back_entry_get(
 	struct berval	bdn;
 	LDAPMessage	*result = NULL,
 			*e = NULL;
-	char		*gattr[3];
+	char		*attr[3], **attrp = NULL;
 	char		*filter = NULL;
 	SlapReply	rs;
 	int		do_retry = 1;
 	LDAPControl	**ctrls = NULL;
+
+	*ent = NULL;
 
 	/* Tell getconn this is a privileged op */
 	do_not_cache = op->o_do_not_cache;
@@ -737,14 +742,15 @@ ldap_back_entry_get(
 	op->o_do_not_cache = do_not_cache;
 
 	if ( at ) {
+		attrp = attr;
 		if ( oc && at != slap_schema.si_ad_objectClass ) {
-			gattr[0] = slap_schema.si_ad_objectClass->ad_cname.bv_val;
-			gattr[1] = at->ad_cname.bv_val;
-			gattr[2] = NULL;
+			attr[0] = slap_schema.si_ad_objectClass->ad_cname.bv_val;
+			attr[1] = at->ad_cname.bv_val;
+			attr[2] = NULL;
 
 		} else {
-			gattr[0] = at->ad_cname.bv_val;
-			gattr[1] = NULL;
+			attr[0] = at->ad_cname.bv_val;
+			attr[1] = NULL;
 		}
 	}
 
@@ -767,8 +773,8 @@ ldap_back_entry_get(
 	
 retry:
 	rc = ldap_search_ext_s( lc->lc_ld, ndn->bv_val, LDAP_SCOPE_BASE, filter,
-				at ? gattr : NULL, 0, ctrls, NULL,
-				LDAP_NO_LIMIT, LDAP_NO_LIMIT, &result );
+				attrp, 0, ctrls, NULL,
+				NULL, LDAP_NO_LIMIT, &result );
 	if ( rc != LDAP_SUCCESS ) {
 		if ( rc == LDAP_SERVER_DOWN && do_retry ) {
 			do_retry = 0;
@@ -781,10 +787,15 @@ retry:
 
 	e = ldap_first_entry( lc->lc_ld, result );
 	if ( e == NULL ) {
+		/* the entry exists, but it doesn't match the filter? */
 		goto cleanup;
 	}
 
 	*ent = ch_calloc( 1, sizeof( Entry ) );
+	if ( *ent == NULL ) {
+		rc = LDAP_NO_MEMORY;
+		goto cleanup;
+	}
 
 	rc = ldap_build_entry( op, e, *ent, &bdn );
 

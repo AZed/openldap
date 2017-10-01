@@ -57,6 +57,8 @@ typedef struct log_info {
 	int li_age;
 	int li_cycle;
 	struct re_s *li_task;
+	Filter *li_oldf;
+	Entry *li_old;
 	int li_success;
 	ldap_pvt_thread_mutex_t li_op_mutex;
 	ldap_pvt_thread_mutex_t li_log_mutex;
@@ -68,7 +70,8 @@ enum {
 	LOG_DB = 1,
 	LOG_OPS,
 	LOG_PURGE,
-	LOG_SUCCESS
+	LOG_SUCCESS,
+	LOG_OLD
 };
 
 static ConfigTable log_cfats[] = {
@@ -90,6 +93,10 @@ static ConfigTable log_cfats[] = {
 		log_cf_gen, "( OLcfgOvAt:4.4 NAME 'olcAccessLogSuccess' "
 			"DESC 'Log successful ops only' "
 			"SYNTAX OMsBoolean SINGLE-VALUE )", NULL, NULL },
+	{ "logold", "filter", 2, 2, 0, ARG_MAGIC|LOG_OLD,
+		log_cf_gen, "( OLcfgOvAt:4.5 NAME 'olcAccessLogOld' "
+			"DESC 'Log old values when modifying entries matching the filter' "
+			"SYNTAX OMsDirectoryString SINGLE-VALUE )", NULL, NULL },
 	{ NULL }
 };
 
@@ -99,7 +106,8 @@ static ConfigOCs log_cfocs[] = {
 		"DESC 'Access log configuration' "
 		"SUP olcOverlayConfig "
 		"MUST olcAccessLogDB "
-		"MAY ( olcAccessLogOps $ olcAccessLogPurge $ olcAccessLogSuccess ) )",
+		"MAY ( olcAccessLogOps $ olcAccessLogPurge $ olcAccessLogSuccess $ "
+			"olcAccessLogOld ) )",
 			Cft_Overlay, log_cfats },
 	{ NULL }
 };
@@ -396,29 +404,29 @@ log_age_parse(char *agestr)
 			return -1;
 		t1 *= 24;
 		gotdays = 1;
-	} else if ( *endptr != ':' ) {
-	/* No valid delimiter found, fail */
-		return -1;
+		agestr = endptr + 1;
+	} else {
+		if ( agestr[2] != ':' ) {
+			/* No valid delimiter found, fail */
+			return -1;
+		}
+		t1 *= 60;
+		agestr += 3;
 	}
 
-	agestr += 3;
 	t2 = atoi( agestr );
-
-	/* if there's a delimiter, it can only be a colon */
-	if ( agestr[2] && agestr[2] != ':' )
-		return -1;
-
-	/* If we're at the end of the string, and we started with days,
-	 * fail because we expected to find minutes too.
-	 */
-	if ( gotdays && !agestr[2] )
-		return -1;
-
-	t1 *= 60;
 	t1 += t2;
 
-	if ( !agestr[2] )
-		return t1 * 60;
+	if ( agestr[2] ) {
+		/* if there's a delimiter, it can only be a colon */
+		if ( agestr[2] != ':' )
+			return -1;
+	} else {
+		/* If we're at the end of the string, and we started with days,
+		 * fail because we expected to find minutes too.
+		 */
+		return gotdays ? -1 : t1 * 60;
+	}
 
 	agestr += 3;
 	t2 = atoi( agestr );
@@ -429,12 +437,15 @@ log_age_parse(char *agestr)
 	t1 *= 60;
 	t1 += t2;
 
-	t1 *= 60;
 	if ( agestr[2] ) {
 		agestr += 3;
 		if ( agestr[2] )
 			return -1;
+		t1 *= 60;
 		t1 += atoi( agestr );
+	} else if ( gotdays ) {
+		/* only got days+hh:mm */
+		t1 *= 60;
 	}
 	return t1;
 }
@@ -449,7 +460,7 @@ log_age_unparse( int age, struct berval *agebv )
 	age /= 60;
 	mm = age % 60;
 	age /= 60;
-	hh = age % 60;
+	hh = age % 24;
 	age /= 24;
 	dd = age;
 
@@ -481,6 +492,8 @@ log_old_lookup( Operation *op, SlapReply *rs )
 	purge_data *pd = op->o_callback->sc_private;
 
 	if ( rs->sr_type != REP_SEARCH) return 0;
+
+	if ( slapd_shutdown ) return 0;
 
 	if ( pd->used >= pd->slots ) {
 		pd->slots += PURGE_INCREMENT;
@@ -554,7 +567,8 @@ accesslog_purge( void *ctx, void *arg )
 		for (i=0; i<pd.used; i++) {
 			op->o_req_dn = pd.dn[i];
 			op->o_req_ndn = pd.ndn[i];
-			op->o_bd->be_delete( op, &rs );
+			if ( !slapd_shutdown )
+				op->o_bd->be_delete( op, &rs );
 			ch_free( pd.ndn[i].bv_val );
 			ch_free( pd.dn[i].bv_val );
 		}
@@ -590,6 +604,10 @@ log_cf_gen(ConfigArgs *c)
 			rc = mask_to_verbs( logops, li->li_ops, &c->rvalue_vals );
 			break;
 		case LOG_PURGE:
+			if ( !li->li_age ) {
+				rc = 1;
+				break;
+			}
 			agebv.bv_val = agebuf;
 			log_age_unparse( li->li_age, &agebv );
 			agebv.bv_val[agebv.bv_len] = ' ';
@@ -602,6 +620,14 @@ log_cf_gen(ConfigArgs *c)
 		case LOG_SUCCESS:
 			if ( li->li_success )
 				c->value_int = li->li_success;
+			else
+				rc = 1;
+			break;
+		case LOG_OLD:
+			if ( li->li_oldf ) {
+				filter2bv( li->li_oldf, &agebv );
+				value_add_one( &c->rvalue_vals, &agebv );
+			}
 			else
 				rc = 1;
 			break;
@@ -635,6 +661,12 @@ log_cf_gen(ConfigArgs *c)
 		case LOG_SUCCESS:
 			li->li_success = 0;
 			break;
+		case LOG_OLD:
+			if ( li->li_oldf ) {
+				filter_free( li->li_oldf );
+				li->li_oldf = NULL;
+			}
+			break;
 		}
 		break;
 	default:
@@ -647,6 +679,13 @@ log_cf_gen(ConfigArgs *c)
 				Debug( LDAP_DEBUG_ANY, "%s: %s \"%s\"\n",
 					c->log, c->msg, c->value_dn.bv_val );
 				rc = 1;
+			} else if ( BER_BVISEMPTY( &li->li_db->be_rootdn )) {
+				snprintf( c->msg, sizeof( c->msg ),
+						"<%s> no rootDN was configured for suffix",
+						c->argv[0] );
+				Debug( LDAP_DEBUG_ANY, "%s: %s \"%s\"\n",
+						c->log, c->msg, c->value_dn.bv_val );
+				rc = 1;
 			}
 			ch_free( c->value_dn.bv_val );
 			ch_free( c->value_ndn.bv_val );
@@ -658,11 +697,11 @@ log_cf_gen(ConfigArgs *c)
 			break;
 		case LOG_PURGE:
 			li->li_age = log_age_parse( c->argv[1] );
-			if ( li->li_age == -1 ) {
+			if ( li->li_age < 1 ) {
 				rc = 1;
 			} else {
 				li->li_cycle = log_age_parse( c->argv[2] );
-				if ( li->li_cycle == -1 ) {
+				if ( li->li_cycle < 1 ) {
 					rc = 1;
 				} else if ( slapMode & SLAP_SERVER_MODE ) {
 					struct re_s *re = li->li_task;
@@ -680,6 +719,12 @@ log_cf_gen(ConfigArgs *c)
 		case LOG_SUCCESS:
 			li->li_success = c->value_int;
 			break;
+		case LOG_OLD:
+			li->li_oldf = str2filter( c->argv[1] );
+			if ( !li->li_oldf ) {
+				sprintf( c->msg, "bad filter!" );
+				rc = 1;
+			}
 		}
 		break;
 	}
@@ -782,6 +827,24 @@ static struct berval derefs[] = {
 
 static struct berval simple = BER_BVC("SIMPLE");
 
+static void accesslog_val2val(AttributeDescription *ad, struct berval *val,
+	char c_op, struct berval *dst) {
+	char *ptr;
+
+	dst->bv_len = ad->ad_cname.bv_len + val->bv_len + 2;
+	if ( c_op ) dst->bv_len++;
+
+	dst->bv_val = ch_malloc( dst->bv_len+1 );
+
+	ptr = lutil_strcopy( dst->bv_val, ad->ad_cname.bv_val );
+	*ptr++ = ':';
+	if ( c_op )
+		*ptr++ = c_op;
+	*ptr++ = ' ';
+	AC_MEMCPY( ptr, val->bv_val, val->bv_len );
+	dst->bv_val[dst->bv_len] = '\0';
+}
+
 static int accesslog_response(Operation *op, SlapReply *rs) {
 	slap_overinst *on = (slap_overinst *)op->o_bd->bd_info;
 	log_info *li = on->on_bi.bi_private;
@@ -791,7 +854,7 @@ static int accesslog_response(Operation *op, SlapReply *rs) {
 	int i;
 	int logop;
 	slap_verbmasks *lo;
-	Entry *e;
+	Entry *e = NULL, *old = NULL;
 	char timebuf[LDAP_LUTIL_GENTIME_BUFSIZE+8];
 	struct berval bv;
 	char *ptr;
@@ -821,6 +884,8 @@ static int accesslog_response(Operation *op, SlapReply *rs) {
 
 	if ( lo->mask & LOG_OP_WRITES ) {
 		ldap_pvt_thread_mutex_lock( &li->li_log_mutex );
+		old = li->li_old;
+		li->li_old = NULL;
 		ldap_pvt_thread_mutex_unlock( &li->li_op_mutex );
 	}
 
@@ -844,9 +909,22 @@ static int accesslog_response(Operation *op, SlapReply *rs) {
 
 	switch( logop ) {
 	case LOG_EN_ADD:
+	case LOG_EN_DELETE: {
+		char c_op;
+		Entry *e2;
+
+		if ( logop == LOG_EN_ADD ) {
+			e2 = op->ora_e;
+			c_op = '+';
+		} else {
+			if ( !old )
+				break;
+			e2 = old;
+			c_op = 0;
+		}
 		/* count all the vals */
 		i = 0;
-		for ( a=op->ora_e->e_attrs; a; a=a->a_next ) {
+		for ( a=e2->e_attrs; a; a=a->a_next ) {
 			if ( a->a_vals ) {
 				for (b=a->a_vals; !BER_BVISNULL( b ); b++) {
 					i++;
@@ -855,32 +933,21 @@ static int accesslog_response(Operation *op, SlapReply *rs) {
 		}
 		vals = ch_malloc( (i+1) * sizeof( struct berval ));
 		i = 0;
-		for ( a=op->ora_e->e_attrs; a; a=a->a_next ) {
+		for ( a=e2->e_attrs; a; a=a->a_next ) {
 			if ( a->a_vals ) {
 				for (b=a->a_vals; !BER_BVISNULL( b ); b++,i++) {
-					vals[i].bv_len = a->a_desc->ad_cname.bv_len + b->bv_len +3;
-					vals[i].bv_val = ch_malloc( vals[i].bv_len+1 );
-					ptr = lutil_strcopy( vals[i].bv_val,
-						a->a_desc->ad_cname.bv_val );
-					*ptr++ = ':';
-					*ptr++ = '+';
-					*ptr++ = ' ';
-					AC_MEMCPY( ptr, b->bv_val, b->bv_len );
-					vals[i].bv_val[vals[i].bv_len] = '\0';
+					accesslog_val2val( a->a_desc, b, c_op, &vals[i] );
 				}
 			}
 		}
 		vals[i].bv_val = NULL;
 		vals[i].bv_len = 0;
-		a = attr_alloc( ad_reqMod );
+		a = attr_alloc( logop == LOG_EN_ADD ? ad_reqMod : ad_reqOld );
 		a->a_vals = vals;
 		a->a_nvals = vals;
 		last_attr->a_next = a;
 		break;
-
-	case LOG_EN_DELETE:
-		/* needs nothing else */
-		break;
+	}
 
 	case LOG_EN_MODIFY:
 		/* count all the mods */
@@ -896,15 +963,24 @@ static int accesslog_response(Operation *op, SlapReply *rs) {
 		}
 		vals = ch_malloc( (i+1) * sizeof( struct berval ));
 		i = 0;
+
+		/* Zero flags on old entry */
+		if ( old ) {
+			for ( a=old->e_attrs; a; a=a->a_next )
+				a->a_flags = 0;
+		}
+
 		for ( m=op->orm_modlist; m; m=m->sml_next ) {
+			/* Mark this attribute as modified */
+			if ( old ) {
+				a = attr_find( old->e_attrs, m->sml_desc );
+				if ( a )
+					a->a_flags = 1;
+			}
 			if ( m->sml_values ) {
 				for (b=m->sml_values; !BER_BVISNULL( b ); b++,i++) {
 					char c_op;
-					vals[i].bv_len = m->sml_desc->ad_cname.bv_len + b->bv_len +3;
-					vals[i].bv_val = ch_malloc( vals[i].bv_len+1 );
-					ptr = lutil_strcopy( vals[i].bv_val,
-						m->sml_desc->ad_cname.bv_val );
-					*ptr++ = ':';
+
 					switch( m->sml_op ) {
 					case LDAP_MOD_ADD: c_op = '+'; break;
 					case LDAP_MOD_DELETE:	c_op = '-'; break;
@@ -917,10 +993,7 @@ static int accesslog_response(Operation *op, SlapReply *rs) {
 					 */
 					default: c_op = '?'; break;
 					}
-					*ptr++ = c_op;
-					*ptr++ = ' ';
-					AC_MEMCPY( ptr, b->bv_val, b->bv_len );
-					vals[i].bv_val[vals[i].bv_len] = '\0';
+					accesslog_val2val( m->sml_desc, b, c_op, &vals[i] );
 				}
 			} else if ( m->sml_op == LDAP_MOD_DELETE ) {
 				vals[i].bv_len = m->sml_desc->ad_cname.bv_len + 2;
@@ -939,6 +1012,34 @@ static int accesslog_response(Operation *op, SlapReply *rs) {
 		a->a_vals = vals;
 		a->a_nvals = vals;
 		last_attr->a_next = a;
+
+		if ( old ) {
+			last_attr = a;
+			/* count all the vals */
+			i = 0;
+			for ( a=old->e_attrs; a; a=a->a_next ) {
+				if ( a->a_vals && a->a_flags ) {
+					for (b=a->a_vals; !BER_BVISNULL( b ); b++) {
+					i++;
+					}
+				}
+			}
+			vals = ch_malloc( (i+1) * sizeof( struct berval ));
+			i = 0;
+			for ( a=old->e_attrs; a; a=a->a_next ) {
+				if ( a->a_vals && a->a_flags ) {
+					for (b=a->a_vals; !BER_BVISNULL( b ); b++,i++) {
+						accesslog_val2val( a->a_desc, b, 0, &vals[i] );
+					}
+				}
+			}
+			vals[i].bv_val = NULL;
+			vals[i].bv_len = 0;
+			a = attr_alloc( ad_reqOld );
+			a->a_vals = vals;
+			a->a_nvals = vals;
+			last_attr->a_next = a;
+		}
 		break;
 
 	case LOG_EN_MODRDN:
@@ -1040,10 +1141,12 @@ static int accesslog_response(Operation *op, SlapReply *rs) {
 	}
 
 	op2.o_bd->be_add( &op2, &rs2 );
-	entry_free( e );
 
 done:
-	ldap_pvt_thread_mutex_unlock( &li->li_log_mutex );
+	if ( lo->mask & LOG_OP_WRITES )
+		ldap_pvt_thread_mutex_unlock( &li->li_log_mutex );
+	if ( e ) entry_free( e );
+	if ( old ) entry_free( old );
 	return SLAP_CB_CONTINUE;
 }
 
@@ -1099,6 +1202,20 @@ accesslog_op_mod( Operation *op, SlapReply *rs )
 		 * overlays like refint to keep working.
 		 */
 		ldap_pvt_thread_mutex_lock( &li->li_op_mutex );
+		if ( li->li_oldf && ( op->o_tag == LDAP_REQ_DELETE ||
+			op->o_tag == LDAP_REQ_MODIFY )) {
+			int rc;
+			Entry *e;
+
+			op->o_bd->bd_info = on->on_info->oi_orig;
+			rc = be_entry_get_rw( op, &op->o_req_ndn, NULL, NULL, 0, &e );
+			if ( e ) {
+				if ( test_filter( op, e, li->li_oldf ) == LDAP_COMPARE_TRUE )
+					li->li_old = entry_dup( e );
+				be_entry_release_rw( op, e, 0 );
+			}
+			op->o_bd->bd_info = (BackendInfo *)on;
+		}
 	}
 	return SLAP_CB_CONTINUE;
 }
@@ -1112,7 +1229,7 @@ accesslog_unbind( Operation *op, SlapReply *rs )
 	slap_overinst *on = (slap_overinst *)op->o_bd->bd_info;
 	if ( op->o_conn->c_authz_backend == on->on_info->oi_origdb ) {
 		log_info *li = on->on_bi.bi_private;
-		Operation op2;
+		Operation op2 = {0};
 		void *cids[SLAP_MAX_CIDS];
 		SlapReply rs2 = {REP_RESULT};
 		Entry *e;
@@ -1132,7 +1249,6 @@ accesslog_unbind( Operation *op, SlapReply *rs )
 		op2.o_callback = &nullsc;
 		op2.o_controls = cids;
 		memset(cids, 0, sizeof( cids ));
-		memset(op2.o_ctrlflag, 0, sizeof( op2.o_ctrlflag ));
 
 		op2.o_bd->be_add( &op2, &rs2 );
 		entry_free( e );
@@ -1145,7 +1261,7 @@ accesslog_abandon( Operation *op, SlapReply *rs )
 {
 	slap_overinst *on = (slap_overinst *)op->o_bd->bd_info;
 	log_info *li = on->on_bi.bi_private;
-	Operation op2;
+	Operation op2 = {0};
 	void *cids[SLAP_MAX_CIDS];
 	SlapReply rs2 = {REP_RESULT};
 	Entry *e;
@@ -1171,7 +1287,6 @@ accesslog_abandon( Operation *op, SlapReply *rs )
 	op2.o_callback = &nullsc;
 	op2.o_controls = cids;
 	memset(cids, 0, sizeof( cids ));
-	memset(op2.o_ctrlflag, 0, sizeof( op2.o_ctrlflag ));
 
 	op2.o_bd->be_add( &op2, &rs2 );
 	entry_free( e );
