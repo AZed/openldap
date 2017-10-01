@@ -5,8 +5,7 @@ This patch is *not* correct, as the problem only happens when using
 NSS. Either the code in tls_m.c is broken, or the nspr library call
 (PR_CallOnce) doesn't work as expected.
 
-Resolves: #1294385
-Backported-From: #1144294
+Resolves: #1144294
 
 --- a/libraries/libldap/tls2.c    2014-09-19 03:48:49.000000000 +0200
 +++ b/libraries/libldap/tls2.c    2015-05-21 09:32:21.034395985 +0200
