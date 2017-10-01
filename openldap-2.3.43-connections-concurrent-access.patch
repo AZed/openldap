@@ -1,7 +1,7 @@
 [REGRESSION] slapd 2.3.43-12 "silently" dies
 slapd concurrent access to connections
 
-Resolves: #641953 (z-stream: #677611)
+Resolves: #641953
 Upstream ITS: #5814
 Upstream CVS: 1.417..1.418 (github: c6279a0)
 

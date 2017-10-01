@@ -13,10 +13,21 @@
 # file for update logging
 %define logfile /var/lib/ldap/openldap-severs-update.log
 
+# disable static libraries stripping
+# (redefine /usr/lib/rpm/redhat/macros)
+%global __os_install_post    \
+    /usr/lib/rpm/redhat/brp-compress \
+    %{!?__debug_package:/usr/lib/rpm/redhat/brp-strip %{__strip}} \
+   #/usr/lib/rpm/redhat/brp-strip-static-archive %{__strip} \
+    /usr/lib/rpm/redhat/brp-strip-comment-note %{__strip} %{__objdump} \
+    /usr/lib/rpm/brp-python-bytecompile \
+    /usr/lib/rpm/redhat/brp-java-repack-jars \
+%{nil}
+
 Summary: The configuration files, libraries, and documentation for OpenLDAP.
 Name: openldap
 Version: %{version_23}
-Release: 12%{?dist}.10
+Release: 25%{?dist}
 License: OpenLDAP
 Group: System Environment/Daemons
 Source0: ftp://ftp.OpenLDAP.org/pub/OpenLDAP/openldap-release/openldap-%{version_23}.tgz
@@ -62,8 +73,10 @@ Patch23: openldap-2.3.43-allow-delete-userpassword.patch
 Patch24: openldap-2.3.43-add-ldap_init_fd.patch
 Patch25: openldap-2.3.43-connections-concurrent-access.patch
 Patch26: openldap-2.3.43-cve-ppolicy-forward-updates.patch
-Patch27: openldap-2.3.43-dns-priority.patch
-Patch28: openldap-2.3.43-leak-slfree-syncprov.patch
+Patch27: openldap-2.3.43-man-tls-preferred.patch
+Patch28: openldap-2.3.43-tls-cacertdir-soft-error.patch
+Patch29: openldap-2.3.43-dns-priority.patch
+Patch30: openldap-2.3.43-leak-slfree-syncprov.patch
 
 # Patches for 2.2.29 for the compat-openldap package.
 Patch100: openldap-2.2.13-tls-fix-connection-test.patch
@@ -71,6 +84,7 @@ Patch101: openldap-2.2.23-resolv.patch
 Patch102: openldap-2.2.29-ads.patch
 Patch103: openldap-2.3.43-compat-linking.patch
 Patch104: openldap-2.2.29-tls-null-char.patch
+Patch105: openldap-2.2.29-tls-cacertdir-soft-error.patch
 
 # Patches for the evolution library
 Patch200: openldap-ntlm.diff
@@ -85,6 +99,7 @@ Patch305: MigrationTools-45-noaliases.patch
 Patch306: MigrationTools-46-autofs.patch
 Patch307: MigrationTools-46-gen-one-domain.patch
 Patch308: MigrationTools-46-shadow-numbers.patch
+Patch309: MigrationTools-46-migrate-duplicates.patch
 
 Patch400: db-4.4.20-1.patch
 Patch401: db-4.4.20-2.patch
@@ -239,8 +254,10 @@ pushd openldap-%{version_23}
 %patch24 -p1 -b .add-ldap_init_fd
 %patch25 -p1 -b .connections-concurrent-access
 %patch26 -p1 -b .cve-ppolicy-forward-updates
-%patch27 -p1 -b .dns-priority
-%patch28 -p1 -b .leak-slfree-syncprov
+%patch27 -p1 -b .man-tls-preferred
+%patch28 -p1 -b .tls-cacertdir-soft-error
+%patch29 -p1 -b .dns-priority
+%patch30 -p1 -b .leak-slfree-syncprov
 
 cp %{_datadir}/libtool/config.{sub,guess} build/
 popd
@@ -267,6 +284,7 @@ pushd MigrationTools-%{migtools_version}
 %patch306 -p1 -b .autofs
 %patch307 -p1 -b .one-domain
 %patch308 -p1 -b .shadow-numbers
+%patch309 -p1 -b .migrate-duplicates
 popd
 
 autodir=`pwd`/auto-instroot
@@ -285,6 +303,7 @@ pushd openldap-%{version_22}
 %patch102 -p1 -b .ads
 %patch103 -p1 -b .compat-linking
 %patch104 -p1 -b .tls-null-char
+%patch105 -p1 -b .tls-cacertdir-soft-error
         for subdir in build-servers build-compat ; do
                 mkdir $subdir
                 ln -s ../configure $subdir
@@ -601,7 +620,7 @@ chmod 755 $RPM_BUILD_ROOT/%{_libdir}/lib*.so*
 chmod 644 $RPM_BUILD_ROOT/%{_libdir}/lib*.*a
 
 # Remove files which we don't want packaged.
-rm -f $RPM_BUILD_ROOT/%{_datadir}/openldap/migration/*.{instdir,simple,schema,mktemp,suffix,noaliases,autofs,one-domain,shadow-numbers}
+rm -f $RPM_BUILD_ROOT/%{_datadir}/openldap/migration/*.{sh,pl,ph}.*
 rm -f $RPM_BUILD_ROOT/%{_libdir}/*.la
 rm -f $RPM_BUILD_ROOT/%{evolution_connector_libdir}/*.la
 rm -f $RPM_BUILD_ROOT/%{evolution_connector_libdir}/*.so*
@@ -836,7 +855,7 @@ exec > /dev/null 2> /dev/null
 %doc TOOLS.migration
 %doc $RPM_SOURCE_DIR/README.upgrading $RPM_SOURCE_DIR/guide.html
 %ghost %config %{_sysconfdir}/pki/tls/certs/slapd.pem
-%attr(0755,root,root) %config %{_sysconfdir}/rc.d/init.d/ldap
+%attr(0755,root,root) %{_sysconfdir}/rc.d/init.d/ldap
 %attr(0640,root,ldap) %config(noreplace) %{_sysconfdir}/openldap/slapd.conf
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/sysconfig/ldap
 %attr(0640,root,ldap) %{_sysconfdir}/openldap/DB_CONFIG.example
@@ -902,36 +921,48 @@ exec > /dev/null 2> /dev/null
 %attr(0644,root,root)      %{evolution_connector_libdir}/*.a
 
 %changelog
-* Tue Nov 01 2011 Jan Vcelak <jvcelak@redhat.com> 2.3.43-12.10
-- fix: memory leaks in syncrepl and slap_sl_free (#750538)
+* Wed Jan 11 2012 Jan Vcelak <jvcelak@redhat.com> 2.3.43-25
+- fix: disable static libraries stripping (#684630)
 
-* Tue Sep 20 2011 Jan Vcelak <jvcelak@redhat.com> 2.3.43-12.9
-- new feature update: honor priority/weight with ldap_domain2hostlist (#734143)
+* Tue Nov 01 2011 Jan Vcelak <jvcelak@redhat.com> 2.3.43-24
+- fix: memory leaks in syncrepl and slap_sl_free (#741184)
 
-* Mon Aug 29 2011 Jan Vcelak <jvcelak@redhat.com> 2.3.43-12.8
-- new feature: honor priority/weight with ldap_domain2hostlist (#734143)
-- fix: strict aliasing warnings during package build (#734145)
-- fix: OpenLDAP packages lack debug data (#734144)
+* Wed Sep 21 2011 Jan Vcelak <jvcelak@redhat.com> 2.3.43-23
+- new feature update: honor priority/weight with ldap_domain2hostlist (#733435)
+- fix: initscript marked as %config incorrectly (#738768)
 
-* Mon Feb 28 2011 Jan Vcelak <jvcelak@redhat.com> 2.3.43-12.7
-- fix: CVE-2011-1024 ppolicy forwarded bind failure messages cause success (#680484)
+* Mon Aug 29 2011 Jan Vcelak <jvcelak@redhat.com> 2.3.43-22
+- new feature: honor priority/weight with ldap_domain2hostlist (#733435)
 
-* Tue Feb 15 2011 Jan Vcelak <jvcelak@redhat.com> 2.3.43-12.6
-- fix: slapd concurrent access to connections causes slapd to silently die (#677611)
+* Mon Aug 22 2011 Jan Vcelak <jvcelak@redhat.com> 2.3.43-21
+- fix: strict aliasing warnings during package build (#732381)
 
-* Fri Jan 21 2011 Jan Vcelak <jvcelak@redhat.com> 2.3.43-12.5
-- backport: ldap_init_fd() API function (#671341)
+* Thu Aug 18 2011 Jan Vcelak <jvcelak@redhat.com> 2.3.43-20
+- fix: OpenLDAP packages lack debug data (#684630)
+- doc: Document preferred use of TLS_CACERT instead of TLS_CACERTDIR to specify Certificate Authorities (#699652)
+- fix: libldap ignores a directory of CA certificates if any of them can't be read (#609722)
+- fix: Migration: migrate_all_offline.sh can't handle duplicate entries (#563148)
+- fix: Init script is working wrong if database recovery is needed (#604092)
 
-* Thu Jan 13 2011 Jan Vcelak <jvcelak@redhat.com> 2.3.43-12.4
-- fix: ppolicy crash while replace-deleting userPassword attribute (#669043)
+* Mon Feb 28 2011 Jan Vcelak <jvcelak@redhat.com> 2.3.43-19
+- fix: CVE-2011-1024 ppolicy forwarded bind failure messages cause success (#680486)
 
-* Tue Nov 16 2010 Jan Vcelak <jvcelak@redhat.com> 2.3.43-12.3
-- fix: connection freeze when using TLS (#653910)
+* Tue Feb 15 2011 Jan Vcelak <jvcelak@redhat.com> 2.3.43-18
+- fix: slapd concurrent access to connections causes slapd to silently die (#641953)
 
-* Fri Aug 06 2010 Adam Tkac <atkac redhat com> - 2.3.43-12.2
+* Thu Jan 20 2011 Jan Vcelak <jvcelak@redhat.com> 2.3.43-17
+- backport: ldap_init_fd() API function
+
+* Wed Jan 12 2011 Jan Vcelak <jvcelak@redhat.com> 2.3.43-16
+- fix: ppolicy crash while replace-deleting userPassword attribute (#665951)
+
+* Tue Nov 16 2010 Jan Vcelak <jvcelak@redhat.com> 2.3.43-15
+- fix: connection freeze when using TLS (#591419)
+
+* Fri Aug 06 2010 Adam Tkac <atkac redhat com> - 2.3.43-14
 - don't remove task twice during replication
 
-* Tue Jun 22 2010 Jan Zeleny <jzeleny@redhat.com> - 2.3.43-12.1
+* Tue Jun 22 2010 Jan Zeleny <jzeleny@redhat.com> - 2.3.43-13
 - fixed segfault issues in modrdn (#606375)
 - added patch handling null char in TLS to compat package
   (#606375, patch backported by Jan Vcelak <jvcelak@redhat.com>)

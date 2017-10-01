@@ -1,0 +1,17 @@
+Migration: migrate_all_offline.sh can't handle duplicate entries
+
+Author: Ondrej Moris <omoris@redhat.com>
+Resolves: #563148
+
+diff -uNPrp MigrationTools-46/migrate_all_offline.sh MigrationTools-46.fix/migrate_all_offline.sh
+--- MigrationTools-46/migrate_all_offline.sh	2011-08-18 13:04:31.086742947 +0200
++++ MigrationTools-46.fix/migrate_all_offline.sh	2011-08-18 13:08:43.747584250 +0200
+@@ -139,7 +139,7 @@ echo "Preparing LDAP database..."
+ if [ "X$SLAPADD" = "X" ]; then
+ 	$LDIF2LDBM -i $DB "$@"
+ else
+-	$SLAPADD -l $DB "$@"
++	$SLAPADD -c -l $DB "$@"
+ fi
+ EXITCODE=$?
+ 

@@ -95,18 +95,10 @@ function configtest() {
 	prog=`basename ${slapd}`
 	ldapuid=`id -u $user`
 	# Unaccessible database files.
-	slaptestflags=
 	for dbdir in `LANG=C egrep '^directory[[:space:]]+[[:print:]]+$' /etc/openldap/slapd.conf | sed s,^directory,,` ; do
 		for file in `find ${dbdir}/ -not -uid $ldapuid -and \( -name "*.dbb" -or -name "*.gdbm" -or -name "*.bdb" -or -name "__db.*" \)` ; do
 			echo -n $"$file is not owned by \"$user\"" ; warning ; echo
 		done
-		if ! test -s ${dbdir}/id2entry.dbb ; then
-			if ! test -s ${dbdir}/id2entry.gdbm ; then
-				if ! test -s ${dbdir}/id2entry.bdb ; then
-					slaptestflags=-u
-				fi
-			fi
-		fi
 	done
 	# Unaccessible keytab with an "ldap" key.
 	if checkkeytab $user ldap ; then
@@ -121,10 +113,18 @@ function configtest() {
 		fi
 	done
 	# Check the configuration file.
-	if ! action $"Checking configuration files for $prog: " /sbin/runuser -m -s "$slaptest" -- "$user" $slaptestflags; then
-		if /sbin/runuser -m -s "$slaptest" -- "$user" "-u" > /dev/null 2> /dev/null ; then
-			dirs=`LANG=C egrep '^directory[[:space:]]+[[:print:]]+$' /etc/openldap/slapd.conf | awk '{print $2}'`
-			for directory in $dirs ; do
+	slaptestout=`/sbin/runuser -m -s "$slaptest" -- "$user" "-u" 2>&1`
+	slaptestexit=$?
+	if test $slaptestexit == 0 ; then
+		if echo "$slaptestout" | grep -v "config file testing succeeded" >/dev/null ; then
+			echo -n $"Checking configuration files for $prog: " ; warning ; echo
+			echo "$slaptestout"
+		fi
+	else
+		echo -n $"Checking configuration files for $prog: " ; failure ; echo
+		echo "$slaptestout"
+		if /sbin/runuser -m -s "$slaptest" -- "$user" "-u" &>/dev/null ; then
+			for directory in `LANG=C egrep '^directory[[:space:]]+[[:print:]]+$' /etc/openldap/slapd.conf | sed s,^directory,,` ; do
 				if test -r $directory/__db.001 ; then
 					echo -n $"stale lock files may be present in $directory" ; warning ; echo
 				fi

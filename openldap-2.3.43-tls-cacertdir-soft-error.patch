@@ -1,0 +1,55 @@
+libldap ignores a directory of CA certificates if any of them can't be read
+
+Resolves: #609722
+Bacported from: openldap-2.4.19
+
+diff -ruNP openldap-2.3.43.old/libraries/libldap/tls.c openldap-2.3.43.new/libraries/libldap/tls.c
+--- openldap-2.3.43.old/libraries/libldap/tls.c	2008-02-12 00:24:12.000000000 +0100
++++ openldap-2.3.43.new/libraries/libldap/tls.c	2010-07-15 18:16:32.847549395 +0200
+@@ -266,8 +266,10 @@
+ 			goto error_exit;
+ 		}
+ 
+-		SSL_CTX_set_session_id_context( tls_def_ctx,
+-			(const unsigned char *) "OpenLDAP", sizeof("OpenLDAP")-1 );
++		if ( is_server ) {
++			SSL_CTX_set_session_id_context( tls_def_ctx,
++				(const unsigned char *) "OpenLDAP", sizeof("OpenLDAP")-1 );
++		}
+ 
+ 		if ( tls_opt_ciphersuite &&
+ 			!SSL_CTX_set_cipher_list( tls_def_ctx, ciphersuite ) )
+@@ -295,19 +297,21 @@
+ 				goto error_exit;
+ 			}
+ 
+-			calist = get_ca_list( cacertfile, cacertdir );
+-			if ( !calist ) {
+-				Debug( LDAP_DEBUG_ANY, "TLS: "
+-					"could not load client CA list (file:`%s',dir:`%s').\n",
+-					tls_opt_cacertfile ? tls_opt_cacertfile : "",
+-					tls_opt_cacertdir ? tls_opt_cacertdir : "",
+-					0 );
+-				tls_report_error();
+-				rc = -1;
+-				goto error_exit;
+-			}
++			if ( is_server ) {
++				calist = get_ca_list( cacertfile, cacertdir );
++				if ( !calist ) {
++					Debug( LDAP_DEBUG_ANY, "TLS: "
++						"could not load client CA list (file:`%s',dir:`%s').\n",
++						tls_opt_cacertfile ? tls_opt_cacertfile : "",
++						tls_opt_cacertdir ? tls_opt_cacertdir : "",
++						0 );
++					tls_report_error();
++					rc = -1;
++					goto error_exit;
++				}
+ 
+-			SSL_CTX_set_client_CA_list( tls_def_ctx, calist );
++				SSL_CTX_set_client_CA_list( tls_def_ctx, calist );
++			}
+ 		}
+ 
+ 		if ( tls_opt_keyfile &&

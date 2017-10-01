@@ -1,0 +1,31 @@
+Document preferred use of TLS_CACERT instead of TLS_CACERTDIR to specify Certificate Authorities
+
+Author: Bryan Mason <bmason@redhat.com>
+Resolves: #699652
+
+diff -Naur openldap-2.3.43.old/openldap-2.3.43/doc/man/man5/ldap.conf.5 openldap-2.3.43.new/openldap-2.3.43/doc/man/man5/ldap.conf.5
+--- openldap-2.3.43.old/doc/man/man5/ldap.conf.5	2010-11-02 12:14:17.612285000 -0700
++++ openldap-2.3.43.new/doc/man/man5/ldap.conf.5	2010-11-02 12:35:19.080505000 -0700
+@@ -215,6 +215,8 @@
+ .B TLS_CACERT <filename>
+ Specifies the file that contains certificates for all of the Certificate
+ Authorities the client will recognize.
++This is the preferred method for specifying the list of 
++Certificate Authority certificates. 
+ .TP
+ .B TLS_CACERTDIR <path>
+ Specifies the path of a directory that contains Certificate Authority
+@@ -222,6 +224,13 @@
+ .B TLS_CACERT
+ is always used before
+ .B TLS_CACERTDIR.
++The use of 
++.B TLS_CACERTDIR 
++is discouraged. Instead, 
++bundle all Certificate Authority certificates into a 
++single file and use the
++.B TLS_CACERT 
++option to specify that file. 
+ .TP
+ .B TLS_CERT <filename>
+ Specifies the file that contains the client certificate.

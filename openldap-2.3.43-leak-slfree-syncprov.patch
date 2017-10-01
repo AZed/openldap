@@ -4,7 +4,7 @@ If slap_sl_malloc does not have enough free memory to allocate, it fallbacks
 to ch_alloc. Using ch_free in slap_sl_free solves the problem. However this
 patch fixes the consequence, not the cause.
 
-Resolves: #750538
+Resolves: #741184
 Author: proposed by the customer
 
 diff --git a/servers/slapd/overlays/syncprov.c b/servers/slapd/overlays/syncprov.c
