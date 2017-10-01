@@ -1,0 +1,64 @@
+[REGRESSION] slapd 2.3.43-12 "silently" dies
+slapd concurrent access to connections
+
+Resolves: #641953 (z-stream: #677611)
+Upstream ITS: #5814
+Upstream CVS: 1.417..1.418 (github: c6279a0)
+
+diff -uNPrp openldap-2.3.43.original/servers/slapd/connection.c openldap-2.3.43/servers/slapd/connection.c
+--- openldap-2.3.43.original/servers/slapd/connection.c	2010-10-26 16:05:55.121247893 +0200
++++ openldap-2.3.43/servers/slapd/connection.c	2010-10-27 15:05:50.189247866 +0200
+@@ -526,8 +526,10 @@ long connection_init(
+ 	c->c_listener = listener;
+ 
+ 	if ( flags == CONN_IS_CLIENT ) {
++		ldap_pvt_thread_mutex_lock( &connections_mutex );
+ 		c->c_conn_state = SLAP_C_CLIENT;
+ 		c->c_struct_state = SLAP_C_USED;
++		ldap_pvt_thread_mutex_unlock( &connections_mutex );
+ 		c->c_close_reason = "?";			/* should never be needed */
+ 		ber_sockbuf_ctrl( c->c_sb, LBER_SB_OPT_SET_FD, &s );
+ 		ldap_pvt_thread_mutex_unlock( &c->c_mutex );
+@@ -597,8 +599,10 @@ long connection_init(
+ 	id = c->c_connid = conn_nextid++;
+ 	ldap_pvt_thread_mutex_unlock( &conn_nextid_mutex );
+ 
++	ldap_pvt_thread_mutex_lock( &connections_mutex );
+ 	c->c_conn_state = SLAP_C_INACTIVE;
+ 	c->c_struct_state = SLAP_C_USED;
++	ldap_pvt_thread_mutex_unlock( &connections_mutex );
+ 	c->c_close_reason = "?";			/* should never be needed */
+ 
+ 	c->c_ssf = c->c_transport_ssf = ssf;
+@@ -944,6 +948,7 @@ Connection* connection_next( Connection 
+ 	for(; *index < dtblsize; (*index)++) {
+ 		int c_struct;
+ 		if( connections[*index].c_struct_state == SLAP_C_UNINITIALIZED ) {
++			/* FIXME: accessing c_conn_state without locking c_mutex */
+ 			assert( connections[*index].c_conn_state == SLAP_C_INVALID );
+ #ifdef HAVE_WINSOCK
+ 			break;
+@@ -953,7 +958,6 @@ Connection* connection_next( Connection 
+ 		}
+ 
+ 		if( connections[*index].c_struct_state == SLAP_C_USED ) {
+-			assert( connections[*index].c_conn_state != SLAP_C_INVALID );
+ 			c = &connections[(*index)++];
+ 			if ( ldap_pvt_thread_mutex_trylock( &c->c_mutex )) {
+ 				/* avoid deadlock */
+@@ -966,6 +970,7 @@ Connection* connection_next( Connection 
+ 					continue;
+ 				}
+ 			}
++			assert( c->c_conn_state != SLAP_C_INVALID );
+ 			break;
+ 		}
+ 
+@@ -973,6 +978,7 @@ Connection* connection_next( Connection 
+ 		if ( c_struct == SLAP_C_PENDING )
+ 			continue;
+ 		assert( c_struct == SLAP_C_UNUSED );
++		/* FIXME: accessing c_conn_state without locking c_mutex */
+ 		assert( connections[*index].c_conn_state == SLAP_C_INVALID );
+ 	}
+ 

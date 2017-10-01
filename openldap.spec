@@ -16,7 +16,7 @@
 Summary: The configuration files, libraries, and documentation for OpenLDAP.
 Name: openldap
 Version: %{version_23}
-Release: 12%{?dist}.5
+Release: 12%{?dist}.7
 License: OpenLDAP
 Group: System Environment/Daemons
 Source0: ftp://ftp.OpenLDAP.org/pub/OpenLDAP/openldap-release/openldap-%{version_23}.tgz
@@ -60,6 +60,8 @@ Patch21: openldap-2.3.43-modrdn-segfault.patch
 Patch22: openldap-2.3.43-rh620621.patch
 Patch23: openldap-2.3.43-allow-delete-userpassword.patch
 Patch24: openldap-2.3.43-add-ldap_init_fd.patch
+Patch25: openldap-2.3.43-connections-concurrent-access.patch
+Patch26: openldap-2.3.43-cve-ppolicy-forward-updates.patch
 
 # Patches for 2.2.29 for the compat-openldap package.
 Patch100: openldap-2.2.13-tls-fix-connection-test.patch
@@ -233,6 +235,8 @@ pushd openldap-%{version_23}
 %patch22 -p1 -b .rh620621
 %patch23 -p1 -b .allow-delete-userpassword
 %patch24 -p1 -b .add-ldap_init_fd
+%patch25 -p1 -b .connections-concurrent-access
+%patch26 -p1 -b .cve-ppolicy-forward-updates
 
 cp %{_datadir}/libtool/config.{sub,guess} build/
 popd
@@ -893,6 +897,12 @@ exec > /dev/null 2> /dev/null
 %attr(0644,root,root)      %{evolution_connector_libdir}/*.a
 
 %changelog
+* Mon Feb 28 2011 Jan Vcelak <jvcelak@redhat.com> 2.3.43-12.7
+- fix: CVE-2011-1024 ppolicy forwarded bind failure messages cause success (#680484)
+
+* Tue Feb 15 2011 Jan Vcelak <jvcelak@redhat.com> 2.3.43-12.6
+- fix: slapd concurrent access to connections causes slapd to silently die (#677611)
+
 * Fri Jan 21 2011 Jan Vcelak <jvcelak@redhat.com> 2.3.43-12.5
 - backport: ldap_init_fd() API function (#671341)
 
