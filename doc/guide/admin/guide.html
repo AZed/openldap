@@ -23,7 +23,7 @@
 <DIV CLASS="title">
 <H1 CLASS="doc-title">OpenLDAP Software 2.4 Administrator's Guide</H1>
 <ADDRESS CLASS="doc-author">The OpenLDAP Project &lt;<A HREF="http://www.openldap.org/">http://www.openldap.org/</A>&gt;</ADDRESS>
-<ADDRESS CLASS="doc-modified">10 October 2012</ADDRESS>
+<ADDRESS CLASS="doc-modified">28 March 2013</ADDRESS>
 <BR CLEAR="All">
 </DIV>
 <DIV CLASS="contents">
@@ -2244,12 +2244,12 @@ olcDbIndex: objectClass eq
  31.    objectClass: olcDatabaseConfig
  32.    objectClass: olcBdbConfig
  33.    olcDatabase: bdb
- 34.    olcSuffix: &quot;dc=example,dc=com&quot;
+ 34.    olcSuffix: dc=example,dc=com
  35.    olcDbDirectory: /usr/local/var/openldap-data
- 36.    olcRootDN: &quot;cn=Manager,dc=example,dc=com&quot;
+ 36.    olcRootDN: cn=Manager,dc=example,dc=com
  37.    olcRootPW: secret
  38.    olcDbIndex: uid pres,eq
- 39.    olcDbIndex: cn,sn,uid pres,eq,approx,sub
+ 39.    olcDbIndex: cn,sn pres,eq,approx,sub
  40.    olcDbIndex: objectClass eq
  41.    olcAccess: to attrs=userPassword
  42.      by self write
@@ -2834,7 +2834,7 @@ SQL Programmable backend
  10.    rootpw secret
  11.    # indexed attribute definitions
  12.    index uid pres,eq
- 13.    index cn,sn,uid pres,eq,approx,sub
+ 13.    index cn,sn pres,eq,approx,sub
  14.    index objectClass eq
  15.    # database access control definitions
  16.    access to attrs=userPassword
@@ -5447,7 +5447,7 @@ Members of a group
         rootdn          &quot;dc=example,dc=com&quot;
         uri             ldap://ldap.example.com/
         overlay pcache
-        pcache         bdb 100000 1 1000 100
+        pcache         hdb 100000 1 1000 100
         pcacheAttrset  0 mail postaladdress telephonenumber
         pcacheTemplate (sn=) 0 3600
         pcacheTemplate (&amp;(sn=)(givenName=)) 0 3600
@@ -5461,7 +5461,7 @@ Members of a group
 <H4><A NAME="Example for slapd-config">12.9.2.5. Example for slapd-config</A></H4>
 <P>The same example as a LDIF file for back-config for a caching server which proxies for the <TT>&quot;dc=example,dc=com&quot;</TT> subtree held at server <TT>ldap.example.com</TT>.</P>
 <PRE>
-   dn: olcDatabase={2}ldap
+   dn: olcDatabase={2}ldap,cn=config
    objectClass: olcDatabaseConfig
    objectClass: olcLDAPConfig
    olcDatabase: {2}ldap
@@ -5469,17 +5469,17 @@ Members of a group
    olcRootDN: dc=example,dc=com
    olcDbURI: &quot;ldap://ldap.example.com&quot;
 
-   dn: olcOverlay={0}pcache
+   dn: olcOverlay={0}pcache,olcDatabase={2}ldap,cn=config
    objectClass: olcOverlayConfig
    objectClass: olcPcacheConfig
    olcOverlay: {0}pcache
-   olcPcache: bdb 100000 1 1000 100
+   olcPcache: hdb 100000 1 1000 100
    olcPcacheAttrset: 0 mail postalAddress telephoneNumber
    olcPcacheTemplate: &quot;(sn=)&quot; 0 3600 0 0 0
    olcPcacheTemplate: &quot;(&amp;(sn=)(givenName=))&quot; 0 3600 0 0 0
    olcPcacheTemplate: &quot;(&amp;(departmentNumber=)(secretary=))&quot; 0 3600
 
-   dn: olcDatabase={0}hdb
+   dn: olcDatabase={0}hdb,olcOverlay={0}pcache,olcDatabase={2}ldap,cn=config
    objectClass: olcHdbConfig
    objectClass: olcPcacheDatabase
    olcDatabase: {0}hdb
