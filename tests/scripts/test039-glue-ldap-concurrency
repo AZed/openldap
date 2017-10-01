@@ -1,5 +1,5 @@
 #! /bin/sh
-# $OpenLDAP: pkg/ldap/tests/scripts/test039-glue-ldap-concurrency,v 1.10.2.5 2008/09/02 23:13:18 quanah Exp $
+# $OpenLDAP: pkg/ldap/tests/scripts/test039-glue-ldap-concurrency,v 1.10.2.7 2009/02/10 17:13:05 quanah Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 1998-2009 The OpenLDAP Foundation.

@@ -1,5 +1,5 @@
 /* delete.c - ldap backend delete function */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/delete.c,v 1.46.2.5 2008/02/11 23:26:46 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/delete.c,v 1.46.2.6 2009/01/22 00:01:06 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2003-2009 The OpenLDAP Foundation.

@@ -1,4 +1,4 @@
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/slapacl.c,v 1.24.2.9 2009/01/22 00:01:03 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2004-2009 The OpenLDAP Foundation.

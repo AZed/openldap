@@ -1,5 +1,5 @@
 #! /bin/sh
-# $OpenLDAP: pkg/ldap/tests/scripts/test019-syncreplication-cascade,v 1.19.2.4 2008/09/02 23:13:18 quanah Exp $
+# $OpenLDAP: pkg/ldap/tests/scripts/test019-syncreplication-cascade,v 1.19.2.7 2009/01/27 23:53:16 hyc Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 1998-2009 The OpenLDAP Foundation.

@@ -1,5 +1,5 @@
 /* log.c - deal with log subsystem */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/log.c,v 1.56.2.4 2008/02/11 23:26:47 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/log.c,v 1.56.2.6 2009/02/05 19:35:54 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2001-2009 The OpenLDAP Foundation.

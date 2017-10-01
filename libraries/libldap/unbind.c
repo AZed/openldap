@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/unbind.c,v 1.56.2.5 2008/09/03 21:11:06 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/unbind.c,v 1.56.2.6 2009/01/22 00:00:56 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2009 The OpenLDAP Foundation.

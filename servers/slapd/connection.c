@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/connection.c,v 1.358.2.17 2008/10/06 17:49:55 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/connection.c,v 1.358.2.24 2009/01/30 18:51:16 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2009 The OpenLDAP Foundation.

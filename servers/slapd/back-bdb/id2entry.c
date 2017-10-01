@@ -1,5 +1,5 @@
 /* id2entry.c - routines to deal with the id2entry database */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/id2entry.c,v 1.72.2.10 2008/10/06 22:44:14 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/id2entry.c,v 1.72.2.13 2009/01/22 00:01:05 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2009 The OpenLDAP Foundation.

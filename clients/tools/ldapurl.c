@@ -1,5 +1,5 @@
 /* ldapurl -- a tool for generating LDAP URLs */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/clients/tools/ldapurl.c,v 1.1.2.2 2009/01/22 00:00:43 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2008-2009 The OpenLDAP Foundation.

@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/compare.c,v 1.50.2.7 2008/02/12 00:25:47 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/compare.c,v 1.50.2.9 2009/01/22 00:01:07 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2009 The OpenLDAP Foundation.

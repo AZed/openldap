@@ -1,5 +1,5 @@
 /* search.c */
-/* $OpenLDAP: pkg/ldap/libraries/libldap/filter.c,v 1.29.2.6 2008/02/11 23:26:41 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/filter.c,v 1.29.2.7 2009/01/22 00:00:54 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2009 The OpenLDAP Foundation.

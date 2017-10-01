@@ -1,5 +1,5 @@
 /* modify.cpp - ndb backend modify routine */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ndb/modify.cpp,v 1.3.2.1 2008/09/03 20:58:06 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ndb/modify.cpp,v 1.3.2.3 2009/02/05 19:35:54 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2008-2009 The OpenLDAP Foundation.

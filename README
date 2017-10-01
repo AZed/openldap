@@ -75,7 +75,7 @@ CONTRIBUTING
     <http://www.openldap.org/its/> to be considered.
 
 ---
-$OpenLDAP: pkg/ldap/README,v 1.40.2.8 2008/09/08 19:15:41 quanah Exp $
+$OpenLDAP: pkg/ldap/README,v 1.40.2.11 2009/02/18 00:54:29 hyc Exp $
 
 This work is part of OpenLDAP Software <http://www.openldap.org/>.
 

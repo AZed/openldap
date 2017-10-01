@@ -1,5 +1,5 @@
 /* modrdn.c - ldap backend modrdn function */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/modrdn.c,v 1.47.2.7 2008/04/14 18:57:13 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/modrdn.c,v 1.47.2.8 2009/01/22 00:01:06 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2009 The OpenLDAP Foundation.

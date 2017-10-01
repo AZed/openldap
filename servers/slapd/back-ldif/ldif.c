@@ -1,5 +1,5 @@
 /* ldif.c - the ldif backend */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldif/ldif.c,v 1.48.2.14 2008/04/21 18:53:52 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldif/ldif.c,v 1.48.2.19 2009/02/05 19:35:54 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2005-2009 The OpenLDAP Foundation.

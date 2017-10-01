@@ -1,4 +1,4 @@
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/passwd/sha2/slapd-sha2.c,v 1.1.2.1 2009/01/26 21:07:06 quanah Exp $ */
 #include <lber.h>
 #include <lber_pvt.h> // Required for BER_BVC
 #include <ac/string.h> // Required for BER_BVC dep

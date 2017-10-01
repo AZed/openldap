@@ -1,5 +1,5 @@
 /* ndbio.cpp - get/set/del data for NDB */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ndb/ndbio.cpp,v 1.3.2.1 2008/09/03 20:58:06 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ndb/ndbio.cpp,v 1.3.2.2 2009/01/22 00:01:09 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2008-2009 The OpenLDAP Foundation.

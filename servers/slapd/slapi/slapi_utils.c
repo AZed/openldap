@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/slapi/slapi_utils.c,v 1.189.2.9 2008/02/11 23:26:50 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/slapi/slapi_utils.c,v 1.189.2.13 2009/02/05 19:35:55 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2002-2009 The OpenLDAP Foundation.

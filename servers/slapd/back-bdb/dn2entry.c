@@ -1,5 +1,5 @@
 /* dn2entry.c - routines to deal with the dn2id / id2entry glue */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/dn2entry.c,v 1.28.2.8 2008/09/03 21:37:31 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/dn2entry.c,v 1.28.2.9 2009/01/22 00:01:05 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2009 The OpenLDAP Foundation.

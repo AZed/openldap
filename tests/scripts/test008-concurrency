@@ -1,5 +1,5 @@
 #! /bin/sh
-# $OpenLDAP: pkg/ldap/tests/scripts/test008-concurrency,v 1.40.2.5 2008/10/06 17:57:40 quanah Exp $
+# $OpenLDAP: pkg/ldap/tests/scripts/test008-concurrency,v 1.40.2.6 2009/01/22 00:01:18 kurt Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 1998-2009 The OpenLDAP Foundation.

@@ -1,5 +1,5 @@
 /* globals.c - various global variables */
-/* $OpenLDAP: pkg/ldap/servers/slapd/globals.c,v 1.15.2.3 2008/02/11 23:26:44 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/globals.c,v 1.15.2.4 2009/01/22 00:01:01 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2009 The OpenLDAP Foundation.

@@ -1,5 +1,5 @@
 /* unbind.c - sock backend unbind function */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-sock/unbind.c,v 1.3.2.1 2008/02/09 00:46:09 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-sock/unbind.c,v 1.3.2.2 2009/01/22 00:01:10 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2007-2009 The OpenLDAP Foundation.

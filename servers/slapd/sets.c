@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/sets.c,v 1.28.2.12 2008/09/26 22:33:11 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/sets.c,v 1.28.2.13 2009/01/22 00:01:03 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2009 The OpenLDAP Foundation.

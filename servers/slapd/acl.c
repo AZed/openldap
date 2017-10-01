@@ -1,5 +1,5 @@
 /* acl.c - routines to parse and check acl's */
-/* $OpenLDAP: pkg/ldap/servers/slapd/acl.c,v 1.303.2.17 2008/09/03 00:46:09 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/acl.c,v 1.303.2.22 2009/01/22 00:00:59 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2009 The OpenLDAP Foundation.

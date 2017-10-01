@@ -1,5 +1,5 @@
 /* ldapmodrdn.c - generic program to modify an entry's RDN using LDAP */
-/* $OpenLDAP: pkg/ldap/clients/tools/ldapmodrdn.c,v 1.116.2.4 2008/02/11 23:26:38 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/clients/tools/ldapmodrdn.c,v 1.116.2.6 2009/01/22 00:00:42 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2009 The OpenLDAP Foundation.

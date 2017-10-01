@@ -1,5 +1,5 @@
 /* tls_m.c - Handle tls/ssl using Mozilla NSS. */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/tls_m.c,v 1.3.2.2 2009/02/10 16:41:01 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2008-2009 The OpenLDAP Foundation.

@@ -1,5 +1,5 @@
 /* ava.c - routines for dealing with attribute value assertions */
-/* $OpenLDAP: pkg/ldap/servers/slapd/ava.c,v 1.45.2.4 2008/09/06 01:01:02 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/ava.c,v 1.45.2.5 2009/01/22 00:01:00 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2009 The OpenLDAP Foundation.

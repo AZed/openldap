@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/liblber/lber-int.h,v 1.68.2.3 2008/02/11 23:26:41 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/liblber/lber-int.h,v 1.68.2.4 2009/01/22 00:00:53 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2009 The OpenLDAP Foundation.

@@ -1,5 +1,5 @@
 #! /bin/sh
-# $OpenLDAP: pkg/ldap/tests/scripts/conf.sh,v 1.49.2.8 2008/02/11 23:26:50 kurt Exp $
+# $OpenLDAP: pkg/ldap/tests/scripts/conf.sh,v 1.49.2.9 2009/01/22 00:01:18 kurt Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 1998-2009 The OpenLDAP Foundation.

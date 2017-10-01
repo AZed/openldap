@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/init.c,v 1.58.2.10 2008/07/09 23:48:40 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/init.c,v 1.58.2.13 2009/02/17 19:14:41 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2009 The OpenLDAP Foundation.

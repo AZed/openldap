@@ -1,5 +1,5 @@
 /* init.c - initialize bdb backend */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/init.c,v 1.247.2.12 2008/09/03 21:37:31 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/init.c,v 1.247.2.19 2009/02/19 22:19:15 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2009 The OpenLDAP Foundation.

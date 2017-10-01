@@ -1,5 +1,5 @@
 /* passwd.c - password lookup routines */
-/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/nssov/passwd.c,v 1.1.2.1 2008/07/08 18:53:57 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/nssov/passwd.c,v 1.1.2.3 2008/11/10 22:41:45 quanah Exp $ */
 /*
  * Copyright 2008 by Howard Chu, Symas Corp.
  * All rights reserved.

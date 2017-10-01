@@ -1,5 +1,5 @@
 /* memberof.c - back-reference for group membership */
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/memberof.c,v 1.2.2.16 2008/09/02 22:55:58 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/memberof.c,v 1.2.2.18 2009/02/03 19:06:20 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2005-2007 Pierangelo Masarati <ando@sys-net.it>

@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/constraint.c,v 1.2.2.10 2008/09/02 22:41:10 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/constraint.c,v 1.2.2.17 2008/11/10 18:24:27 quanah Exp $ */
 /* constraint.c - Overlay to constrain attributes to certain values */
 /* 
  * Copyright 2003-2004 Hewlett-Packard Company

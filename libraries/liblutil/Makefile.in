@@ -1,5 +1,5 @@
 # Makefile for -llutil
-# $OpenLDAP: pkg/ldap/libraries/liblutil/Makefile.in,v 1.38.2.3 2008/02/11 23:26:42 kurt Exp $
+# $OpenLDAP: pkg/ldap/libraries/liblutil/Makefile.in,v 1.38.2.5 2009/02/05 20:10:59 quanah Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ## 
 ## Copyright 1998-2009 The OpenLDAP Foundation.

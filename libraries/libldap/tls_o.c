@@ -1,5 +1,5 @@
 /* tls_o.c - Handle tls/ssl using SSLeay or OpenSSL */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/tls_o.c,v 1.5.2.2 2009/02/10 16:41:01 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2008-2009 The OpenLDAP Foundation.

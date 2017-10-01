@@ -1,5 +1,5 @@
 /* thr_stub.c - stubs for the threads */
-/* $OpenLDAP: pkg/ldap/libraries/libldap_r/thr_stub.c,v 1.27.2.8 2008/05/27 20:07:31 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap_r/thr_stub.c,v 1.27.2.9 2009/01/22 00:00:56 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2009 The OpenLDAP Foundation.

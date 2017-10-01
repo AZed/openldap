@@ -1,5 +1,5 @@
 #! /bin/sh
-# $OpenLDAP: pkg/ldap/tests/scripts/monitor_data.sh,v 1.2.2.1 2008/09/02 23:13:18 quanah Exp $
+# $OpenLDAP: pkg/ldap/tests/scripts/monitor_data.sh,v 1.2.2.2 2009/01/22 00:01:18 kurt Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 1998-2009 The OpenLDAP Foundation.

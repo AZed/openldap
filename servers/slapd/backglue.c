@@ -1,5 +1,5 @@
 /* backglue.c - backend glue */
-/* $OpenLDAP: pkg/ldap/servers/slapd/backglue.c,v 1.112.2.13 2008/09/06 19:23:42 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/backglue.c,v 1.112.2.17 2009/02/11 00:49:55 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2001-2009 The OpenLDAP Foundation.

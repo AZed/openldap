@@ -1,5 +1,5 @@
 /* result.c - wait for an ldap result */
-/* $OpenLDAP: pkg/ldap/libraries/libldap/result.c,v 1.124.2.13 2008/09/26 22:23:05 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/result.c,v 1.124.2.18 2009/02/17 21:02:51 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2009 The OpenLDAP Foundation.

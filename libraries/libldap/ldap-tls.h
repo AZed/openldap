@@ -1,5 +1,5 @@
 /*  ldap-tls.h - TLS defines & prototypes internal to the LDAP library */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/ldap-tls.h,v 1.3.2.1 2009/01/26 23:29:53 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2008-2009 The OpenLDAP Foundation.

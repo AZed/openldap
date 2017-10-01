@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/modify.c,v 1.276.2.9 2008/04/14 22:05:06 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/modify.c,v 1.276.2.11 2009/01/30 19:07:40 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2009 The OpenLDAP Foundation.

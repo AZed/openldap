@@ -1,5 +1,5 @@
 /* abandon.c */
-/* $OpenLDAP: pkg/ldap/libraries/libldap/abandon.c,v 1.41.2.7 2008/02/11 23:26:41 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/abandon.c,v 1.41.2.11 2009/02/17 21:02:51 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2009 The OpenLDAP Foundation.

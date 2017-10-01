@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/t61.c,v 1.9.2.4 2008/06/02 17:20:13 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/t61.c,v 1.9.2.5 2009/01/22 00:00:56 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2002-2009 The OpenLDAP Foundation.

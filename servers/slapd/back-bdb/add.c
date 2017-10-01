@@ -1,5 +1,5 @@
 /* add.c - ldap BerkeleyDB back-end add routine */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/add.c,v 1.152.2.11 2008/09/03 21:37:31 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/add.c,v 1.152.2.16 2009/02/05 19:35:54 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2009 The OpenLDAP Foundation.

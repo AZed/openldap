@@ -1,5 +1,5 @@
 /* schema_prep.c - load builtin schema */
-/* $OpenLDAP: pkg/ldap/servers/slapd/schema_prep.c,v 1.169.2.10 2008/09/03 21:46:56 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/schema_prep.c,v 1.169.2.12 2009/02/22 05:51:52 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2009 The OpenLDAP Foundation.

@@ -1,5 +1,5 @@
 /* rwm.c - rewrite/remap operations */
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/rwm.c,v 1.70.2.14 2008/10/07 00:05:27 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/rwm.c,v 1.70.2.24 2009/02/20 00:14:30 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2003-2009 The OpenLDAP Foundation.
