@@ -1,5 +1,5 @@
 /* alock.h - access lock header */
-/* $OpenLDAP: pkg/ldap/servers/slapd/alock.h,v 1.3.2.5 2009/01/22 00:00:59 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/alock.h,v 1.3.2.6 2010/04/13 20:23:10 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2005-2010 The OpenLDAP Foundation.

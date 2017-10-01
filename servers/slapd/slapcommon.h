@@ -1,5 +1,5 @@
 /* slapcommon.h - common definitions for the slap tools */
-/* $OpenLDAP: pkg/ldap/servers/slapd/slapcommon.h,v 1.14.2.8 2009/06/02 22:36:18 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/slapcommon.h,v 1.14.2.10 2010/04/14 22:59:10 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2010 The OpenLDAP Foundation.

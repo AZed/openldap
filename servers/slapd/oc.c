@@ -1,5 +1,5 @@
 /* oc.c - object class routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/oc.c,v 1.77.2.11 2009/10/30 18:06:26 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/oc.c,v 1.77.2.12 2010/04/13 20:23:17 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2010 The OpenLDAP Foundation.

@@ -1,5 +1,5 @@
 /* config.h - configuration abstraction structure */
-/* $OpenLDAP: pkg/ldap/servers/slapd/config.h,v 1.34.2.19 2009/08/25 22:44:25 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/config.h,v 1.34.2.20 2010/04/13 20:23:13 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2010 The OpenLDAP Foundation.

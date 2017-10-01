@@ -1,4 +1,4 @@
-// $OpenLDAP$
+// $OpenLDAP: pkg/ldap/contrib/ldapc++/src/TlsOptions.cpp,v 1.5.2.2 2010/04/14 23:50:44 quanah Exp $
 /*
  * Copyright 2010, OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file

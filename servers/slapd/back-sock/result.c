@@ -1,5 +1,5 @@
 /* result.c - sock backend result reading function */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-sock/result.c,v 1.3.2.3 2009/01/22 00:01:10 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-sock/result.c,v 1.3.2.4 2010/04/13 20:23:41 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2007-2010 The OpenLDAP Foundation.

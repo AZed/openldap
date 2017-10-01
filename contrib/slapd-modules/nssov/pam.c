@@ -1,5 +1,5 @@
 /* pam.c - pam processing routines */
-/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/nssov/pam.c,v 1.13.2.5 2009/10/03 19:40:03 hyc Exp $ */
+/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/nssov/pam.c,v 1.13.2.8 2010/04/15 21:32:56 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>. 
  *
  * Copyright 2008-2010 The OpenLDAP Foundation.

@@ -1,5 +1,5 @@
 /* Generic string.h */
-/* $OpenLDAP: pkg/ldap/include/ac/string.h,v 1.51.2.6 2009/11/20 22:13:43 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/include/ac/string.h,v 1.51.2.7 2010/04/13 20:22:52 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2010 The OpenLDAP Foundation.

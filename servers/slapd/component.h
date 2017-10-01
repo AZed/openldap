@@ -1,5 +1,5 @@
 /* component.h */
-/* $OpenLDAP: pkg/ldap/servers/slapd/component.h,v 1.4.2.4 2009/01/22 00:01:00 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/component.h,v 1.4.2.5 2010/04/13 20:23:13 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2004-2010 The OpenLDAP Foundation.

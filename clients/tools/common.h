@@ -1,5 +1,5 @@
 /* common.h - common definitions for the ldap client tools */
-/* $OpenLDAP: pkg/ldap/clients/tools/common.h,v 1.24.2.5 2009/07/22 20:02:20 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/clients/tools/common.h,v 1.24.2.6 2010/04/13 20:22:22 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2010 The OpenLDAP Foundation.

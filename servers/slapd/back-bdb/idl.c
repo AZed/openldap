@@ -1,5 +1,5 @@
 /* idl.c - ldap id list handling routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/idl.c,v 1.124.2.11 2009/12/02 19:22:09 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/idl.c,v 1.124.2.12 2010/04/13 20:23:24 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2010 The OpenLDAP Foundation.

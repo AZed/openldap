@@ -1,5 +1,5 @@
 /* rpc.c - rpc lookup routines */
-/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/nssov/rpc.c,v 1.1.2.4 2009/08/24 17:35:29 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/nssov/rpc.c,v 1.1.2.6 2010/04/15 21:32:57 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>. 
  *
  * Copyright 2008-2010 The OpenLDAP Foundation.

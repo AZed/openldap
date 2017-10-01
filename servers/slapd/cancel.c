@@ -1,5 +1,5 @@
 /* cancel.c - LDAP cancel extended operation */
-/* $OpenLDAP: pkg/ldap/servers/slapd/cancel.c,v 1.23.2.9 2009/06/05 22:59:03 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/cancel.c,v 1.23.2.10 2010/04/13 20:23:12 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2010 The OpenLDAP Foundation.

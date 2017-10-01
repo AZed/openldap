@@ -1,5 +1,5 @@
 /* delete.cpp - ndb backend delete routine */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ndb/delete.cpp,v 1.3.2.2 2009/01/22 00:01:09 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ndb/delete.cpp,v 1.3.2.4 2010/04/19 16:53:03 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2008-2010 The OpenLDAP Foundation.

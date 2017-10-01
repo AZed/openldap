@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/include/ldap.h,v 1.312.2.23 2009/08/25 22:52:17 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/include/ldap.h,v 1.312.2.24 2010/04/13 20:22:47 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  * 
  * Copyright 1998-2010 The OpenLDAP Foundation.

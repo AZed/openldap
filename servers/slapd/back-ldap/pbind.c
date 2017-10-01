@@ -1,5 +1,5 @@
 /* pbind.c - passthru Bind overlay */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/pbind.c,v 1.1.2.2 2010/04/14 22:31:48 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2003-2010 The OpenLDAP Foundation.

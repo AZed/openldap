@@ -1,5 +1,5 @@
 /* ether.c - ethernet address lookup routines */
-/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/nssov/ether.c,v 1.1.2.3 2009/08/17 21:48:57 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/nssov/ether.c,v 1.1.2.5 2010/04/15 21:32:56 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2008-2010 The OpenLDAP Foundation.

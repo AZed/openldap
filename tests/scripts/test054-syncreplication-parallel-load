@@ -1,5 +1,5 @@
 #! /bin/sh
-# $OpenLDAP: pkg/ldap/tests/scripts/test054-syncreplication-parallel-load,v 1.1.2.3 2009/03/05 22:19:39 quanah Exp $
+# $OpenLDAP: pkg/ldap/tests/scripts/test054-syncreplication-parallel-load,v 1.1.2.5 2010/04/19 19:14:36 quanah Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 1998-2010 The OpenLDAP Foundation.

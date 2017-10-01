@@ -1,5 +1,5 @@
 #! /bin/sh
-# $OpenLDAP: pkg/ldap/tests/scripts/test017-syncreplication-refresh,v 1.33.2.9 2009/11/18 01:29:50 quanah Exp $
+# $OpenLDAP: pkg/ldap/tests/scripts/test017-syncreplication-refresh,v 1.33.2.11 2010/04/19 19:14:33 quanah Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 1998-2010 The OpenLDAP Foundation.

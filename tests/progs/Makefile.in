@@ -1,5 +1,5 @@
 ## Makefile.in for test programs
-# $OpenLDAP: pkg/ldap/tests/progs/Makefile.in,v 1.22.2.5 2009/02/17 23:47:04 quanah Exp $
+# $OpenLDAP: pkg/ldap/tests/progs/Makefile.in,v 1.22.2.7 2010/04/19 19:14:31 quanah Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 1998-2010 The OpenLDAP Foundation.

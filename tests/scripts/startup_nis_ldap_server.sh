@@ -1,5 +1,5 @@
 #! /bin/sh
-# $OpenLDAP: pkg/ldap/tests/scripts/startup_nis_ldap_server.sh,v 1.14.2.4 2009/01/22 00:01:18 kurt Exp $
+# $OpenLDAP: pkg/ldap/tests/scripts/startup_nis_ldap_server.sh,v 1.14.2.5 2010/04/13 20:24:00 kurt Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 1998-2010 The OpenLDAP Foundation.

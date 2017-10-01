@@ -1,5 +1,5 @@
 /* lastmod.c - returns last modification info */
-/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/lastmod/lastmod.c,v 1.2.2.4 2009/01/22 00:00:45 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/lastmod/lastmod.c,v 1.2.2.6 2010/04/19 16:53:00 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2004-2010 The OpenLDAP Foundation.

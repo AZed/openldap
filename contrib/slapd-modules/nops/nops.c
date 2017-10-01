@@ -1,5 +1,5 @@
 /* nops.c - Overlay to filter idempotent operations */
-/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/nops/nops.c,v 1.1.2.4 2009/08/17 21:48:57 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/nops/nops.c,v 1.1.2.5 2010/04/13 20:22:27 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>. 
  *
  * Copyright 2008-2010 The OpenLDAP Foundation.

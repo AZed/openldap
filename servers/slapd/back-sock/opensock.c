@@ -1,5 +1,5 @@
 /* opensock.c - open a unix domain socket */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-sock/opensock.c,v 1.3.2.3 2009/02/10 23:44:04 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-sock/opensock.c,v 1.3.2.4 2010/04/13 20:23:41 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2007-2010 The OpenLDAP Foundation.

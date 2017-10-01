@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/liblutil/memcmp.c,v 1.9.2.4 2009/01/22 00:00:58 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/liblutil/memcmp.c,v 1.9.2.5 2010/04/13 20:23:06 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2010 The OpenLDAP Foundation.

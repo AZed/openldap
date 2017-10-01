@@ -1,5 +1,5 @@
 /* slapi_overlay.c - SLAPI overlay */
-/* $OpenLDAP: pkg/ldap/servers/slapd/slapi/slapi_overlay.c,v 1.40.2.8 2009/01/22 00:01:15 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/slapi/slapi_overlay.c,v 1.40.2.9 2010/04/13 20:23:50 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2001-2010 The OpenLDAP Foundation.

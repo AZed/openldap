@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/dds.c,v 1.7.2.14 2009/11/18 01:25:49 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/dds.c,v 1.7.2.16 2010/04/15 19:59:56 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2005-2010 The OpenLDAP Foundation.

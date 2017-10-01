@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/dnssrv.c,v 1.39.2.5 2009/01/22 00:00:54 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/dnssrv.c,v 1.39.2.6 2010/04/13 20:22:56 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2010 The OpenLDAP Foundation.

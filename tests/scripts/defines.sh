@@ -1,5 +1,5 @@
 #! /bin/sh
-# $OpenLDAP: pkg/ldap/tests/scripts/defines.sh,v 1.141.2.23 2009/12/04 18:38:02 quanah Exp $
+# $OpenLDAP: pkg/ldap/tests/scripts/defines.sh,v 1.141.2.25 2010/04/19 19:14:31 quanah Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 1998-2010 The OpenLDAP Foundation.

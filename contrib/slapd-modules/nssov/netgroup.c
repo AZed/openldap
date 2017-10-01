@@ -1,5 +1,5 @@
 /* netgroup.c - netgroup lookup routines */
-/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/nssov/netgroup.c,v 1.1.2.3 2009/08/17 21:48:58 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/nssov/netgroup.c,v 1.1.2.5 2010/04/15 21:32:56 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>. 
  *
  * Copyright 2008-2010 The OpenLDAP Foundation.

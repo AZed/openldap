@@ -1,5 +1,5 @@
 /* sssvlv.c - server side sort / virtual list view */
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/sssvlv.c,v 1.9.2.4 2009/09/29 19:07:07 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/sssvlv.c,v 1.9.2.6 2010/04/14 17:56:50 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2009-2010 The OpenLDAP Foundation.

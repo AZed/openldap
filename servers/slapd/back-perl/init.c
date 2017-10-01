@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-perl/init.c,v 1.44.2.6 2009/06/27 18:02:10 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-perl/init.c,v 1.44.2.7 2010/04/13 20:23:37 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2010 The OpenLDAP Foundation.

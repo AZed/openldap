@@ -1,5 +1,5 @@
 /* Generic dirent.h */
-/* $OpenLDAP: pkg/ldap/include/ac/dirent.h,v 1.14.2.6 2009/04/29 01:48:30 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/include/ac/dirent.h,v 1.14.2.7 2010/04/13 20:22:51 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2010 The OpenLDAP Foundation.

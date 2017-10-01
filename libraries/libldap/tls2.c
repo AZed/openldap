@@ -1,5 +1,5 @@
 /* tls.c - Handle tls/ssl. */
-/* $OpenLDAP: pkg/ldap/libraries/libldap/tls2.c,v 1.4.2.9 2009/10/30 17:48:16 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/tls2.c,v 1.4.2.10 2010/04/13 20:23:00 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2010 The OpenLDAP Foundation.

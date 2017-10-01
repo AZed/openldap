@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/tests/progs/slapd-read.c,v 1.37.2.9 2009/02/10 17:13:05 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/tests/progs/slapd-read.c,v 1.37.2.10 2010/04/13 20:23:58 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2010 The OpenLDAP Foundation.

@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/error.c,v 1.76.2.6 2009/08/12 23:54:21 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/error.c,v 1.76.2.8 2010/04/15 20:03:50 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2010 The OpenLDAP Foundation.
