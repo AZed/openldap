@@ -13,7 +13,7 @@ diff -up openldap-2.3.42/doc/man/man8/slurpd.8.config openldap-2.3.42/doc/man/ma
 diff -up openldap-2.3.42/servers/slapd/slapd.conf.config openldap-2.3.42/servers/slapd/slapd.conf
 --- openldap-2.3.42/servers/slapd/slapd.conf.config	2004-06-18 04:49:08.000000000 +0200
 +++ openldap-2.3.42/servers/slapd/slapd.conf	2008-08-11 14:50:32.000000000 +0200
-@@ -3,23 +3,52 @@
+@@ -3,23 +3,53 @@
  # This file should NOT be world readable.
  #
  include		%SYSCONFDIR%/schema/core.schema
@@ -42,7 +42,9 @@ diff -up openldap-2.3.42/servers/slapd/slapd.conf.config openldap-2.3.42/servers
 -# moduleload	back_passwd.la
 -# moduleload	back_shell.la
 +
-+# modules available in openldap-servers-overlays RPM package:
++# Modules available in openldap-servers-overlays RPM package
++# Module syncprov.la is now statically linked with slapd and there
++# is no need to load it here
 +# moduleload accesslog.la
 +# moduleload auditlog.la
 +# moduleload denyop.la
@@ -55,7 +57,6 @@ diff -up openldap-2.3.42/servers/slapd/slapd.conf.config openldap-2.3.42/servers
 +# moduleload retcode.la
 +# moduleload rwm.la
 +# moduleload smbk5pwd.la
-+# moduleload syncprov.la
 +# moduleload translucent.la
 +# moduleload unique.la
 +# moduleload valsort.la
@@ -74,7 +75,7 @@ diff -up openldap-2.3.42/servers/slapd/slapd.conf.config openldap-2.3.42/servers
  
  # Sample security restrictions
  #	Require integrity protection (prevent hijacking)
-@@ -49,19 +78,32 @@ argsfile	%LOCALSTATEDIR%/run/slapd.args
+@@ -49,19 +79,32 @@ argsfile	%LOCALSTATEDIR%/run/slapd.args
  # rootdn can always read and write EVERYTHING!
  
  #######################################################################

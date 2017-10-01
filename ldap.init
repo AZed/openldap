@@ -139,28 +139,19 @@ function start() {
 	# Define a couple of local variables which we'll need. Maybe.
 	user=ldap
 	prog=`basename ${slapd}`
-	# Build a wrapper script to exec slapd with the right arguments, to
-	# avoid being tripped out by changes or weirdness in how daemon()
-	# handles quoted arguments.
-	wrapper=`mktemp ${TMP:-/tmp}/start-slapd.XXXXXX`
-	harg="ldap:///"
+	if test x$SLAPD_LDAP = xyes ; then
+	    harg="ldap:///"
+    fi
 	if grep -q ^TLS /etc/openldap/slapd.conf || test x$SLAPD_LDAPS = xyes ; then
 	    harg="$harg ldaps:///"
 	fi
 	if test x$SLAPD_LDAPI = xyes ; then
 	    harg="$harg ldapi:///"
 	fi
-	if test -z "$wrapper" ; then
-	    return 1
-	fi
-	cat >> $wrapper <<- EOF
-	exec ${slapd} -h "$harg" -u ${user} $OPTIONS $SLAPD_OPTIONS
-	EOF
-	chmod u+x $wrapper
-	trap "rm -f $wrapper" EXIT
 	# Start daemons.
 	echo -n $"Starting $prog: "
-	daemon --check=$prog $wrapper
+	ulimit $ULIMIT_SETTINGS > /dev/null 2>&1
+	daemon --check=$prog ${slapd} -h \"$harg\" -u ${user} $OPTIONS $SLAPD_OPTIONS
 	RETVAL=$?
 	echo
 	if [ $RETVAL -eq 0 ]; then
@@ -183,7 +174,7 @@ function stop() {
 	# Stop daemons.
 	prog=`basename ${slapd}`
 	echo -n $"Stopping $prog: "
-	killproc ${slapd}
+	killproc -d $STOP_DELAY ${slapd}
 	RETVAL=$?
 	echo
 	if [ $RETVAL -eq 0 ]; then

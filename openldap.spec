@@ -16,7 +16,7 @@
 Summary: The configuration files, libraries, and documentation for OpenLDAP.
 Name: openldap
 Version: %{version_23}
-Release: 3%{?dist}
+Release: 12%{?dist}
 License: OpenLDAP
 Group: System Environment/Daemons
 Source0: ftp://ftp.OpenLDAP.org/pub/OpenLDAP/openldap-release/openldap-%{version_23}.tgz
@@ -32,6 +32,7 @@ Source9: README.upgrading
 Source10: http://www.OpenLDAP.org/doc/admin/guide.html
 Source11: nptl-abi-note.S
 Source12: README.evolution
+Source13: ldap.sysconf
 
 # Patches that are still valid for 2.3
 Patch0: openldap-2.3.42-config.patch
@@ -47,12 +48,20 @@ Patch9: openldap-2.3.27-timeout-option.patch
 Patch10: openldap-2.3.27-syncrepl-timelimit.patch
 Patch11: openldap-2.3.37-smbk5pwd.patch
 Patch12: openldap-2.3.42-network-timeout.patch
+Patch13: openldap-2.3.43-lw-dispatcher.patch
+Patch14: openldap-2.3.43-timeout-failed-result.patch
+Patch15: openldap-2.3.43-slapd-man.patch
+Patch16: openldap-2.3.43-slapcat-usage.patch
+Patch17: openldap-2.3.43-rwm-cleanup.patch
+Patch18: openldap-2.3.43-chase-referral.patch
+Patch19: openldap-2.3.43-tls-connection.patch
+Patch20: openldap-2.3.43-tls-null-char.patch
 
 # Patches for 2.2.29 for the compat-openldap package.
 Patch100: openldap-2.2.13-tls-fix-connection-test.patch
 Patch101: openldap-2.2.23-resolv.patch
 Patch102: openldap-2.2.29-ads.patch
-#Patch103: openldap-2.2.29-nostrip.patch
+Patch103: openldap-2.3.43-compat-linking.patch
 
 # Patches for the evolution library
 Patch200: openldap-ntlm.diff
@@ -64,6 +73,9 @@ Patch302: MigrationTools-27-simple.patch
 Patch303: MigrationTools-26-suffix.patch
 Patch304: MigrationTools-46-schema.patch
 Patch305: MigrationTools-45-noaliases.patch
+Patch306: MigrationTools-46-autofs.patch
+Patch307: MigrationTools-46-gen-one-domain.patch
+Patch308: MigrationTools-46-shadow-numbers.patch
 
 Patch400: db-4.4.20-1.patch
 Patch401: db-4.4.20-2.patch
@@ -204,6 +216,14 @@ pushd openldap-%{version_23}
 %patch10 -p0 -b .syncrepl-timeout
 %patch11 -p1 -b .smbk5pwd
 %patch12 -p1 -b .network-timeout
+%patch13 -p1 -b .lw-dispatcher
+%patch14 -p1 -b .timeout-bad-res
+%patch15 -p1 -b .slapd-man
+%patch16 -p1 -b .slapcat-usage
+%patch17 -p1 -b .rwm-cleanup
+%patch18 -p1 -b .chase-referral
+%patch19 -p1 -b .tls-connection
+%patch20 -p1 -b .tls-null-char
 
 cp %{_datadir}/libtool/config.{sub,guess} build/
 popd
@@ -227,6 +247,9 @@ pushd MigrationTools-%{migtools_version}
 %patch303 -p1 -b .suffix
 %patch304 -p1 -b .schema
 %patch305 -p1 -b .noaliases
+%patch306 -p1 -b .autofs
+%patch307 -p1 -b .one-domain
+%patch308 -p1 -b .shadow-numbers
 popd
 
 autodir=`pwd`/auto-instroot
@@ -243,7 +266,7 @@ pushd openldap-%{version_22}
 %patch100 -p1 -b .resolv
 %patch101 -p1 -b .CAN-2005-2069
 %patch102 -p1 -b .ads
-#%patch103 -p1 -b .nostrip
+%patch103 -p1 -b .compat-linking
         for subdir in build-servers build-compat ; do
                 mkdir $subdir
                 ln -s ../configure $subdir
@@ -539,6 +562,8 @@ rm -f $RPM_BUILD_ROOT/%{_sysconfdir}/openldap/schema/*.default
 # Install an init script for the servers.
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d
 install -m 755 $RPM_SOURCE_DIR/ldap.init $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d/ldap
+mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig
+install -m 644 %SOURCE13 $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/ldap
 
 # Add some more schema for the sake of migration scripts.
 install -d -m755 $RPM_BUILD_ROOT%{_sysconfdir}/openldap/schema/redhat
@@ -557,7 +582,7 @@ chmod 755 $RPM_BUILD_ROOT/%{_libdir}/lib*.so*
 chmod 644 $RPM_BUILD_ROOT/%{_libdir}/lib*.*a
 
 # Remove files which we don't want packaged.
-rm -f $RPM_BUILD_ROOT/%{_datadir}/openldap/migration/*.{instdir,simple,schema,mktemp,suffix,noaliases}
+rm -f $RPM_BUILD_ROOT/%{_datadir}/openldap/migration/*.{instdir,simple,schema,mktemp,suffix,noaliases,autofs,one-domain,shadow-numbers}
 rm -f $RPM_BUILD_ROOT/%{_libdir}/*.la
 rm -f $RPM_BUILD_ROOT/%{evolution_connector_libdir}/*.la
 rm -f $RPM_BUILD_ROOT/%{evolution_connector_libdir}/*.so*
@@ -794,6 +819,7 @@ exec > /dev/null 2> /dev/null
 %ghost %config %{_sysconfdir}/pki/tls/certs/slapd.pem
 %attr(0755,root,root) %config %{_sysconfdir}/rc.d/init.d/ldap
 %attr(0640,root,ldap) %config(noreplace) %{_sysconfdir}/openldap/slapd.conf
+%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/sysconfig/ldap
 %attr(0640,root,ldap) %{_sysconfdir}/openldap/DB_CONFIG.example
 %attr(0755,root,root) %dir %{_sysconfdir}/openldap/schema
 %attr(0644,root,root) %dir %{_sysconfdir}/openldap/schema/README*
@@ -857,6 +883,47 @@ exec > /dev/null 2> /dev/null
 %attr(0644,root,root)      %{evolution_connector_libdir}/*.a
 
 %changelog
+* Wed Feb 17 2010 Jan Zeleny <jzeleny@redhat.com> - 2.3.43-12
+- updated spec file, so the compat-libs linking patch applies
+  correctly
+
+* Mon Feb 08 2010 Jan Zeleny <jzeleny@redhat.com> - 2.3.43-11
+- backported patch to handle null character in TLS
+  certificates (#560912)
+
+* Mon Feb 08 2010 Jan Zeleny <jzeleny@redhat.com> - 2.3.43-10
+- updated chase-referral patch to compile cleanly
+- updated init script (#562714)
+
+* Fri Jan 29 2010 Jan Zeleny <jzeleny@redhat.com> - 2.3.43-9
+- updated ldap.sysconf to include SLAPD_LDAP, SLAPD_LDAPS and
+  SLAPD_LDAPI options (#559520)
+
+* Mon Nov 16 2009 Jan Zeleny <jzeleny@redhat.com> - 2.3.43-8
+- fixed connection freeze when TLSVerifyClient = allow (#509230)
+
+* Wed Nov 11 2009 Jan Zeleny <jzeleny@redhat.com> - 2.3.43-7
+- fixed chasing referrals in libldap (#510522)
+
+* Wed Nov 11 2009 Jan Zeleny <jzeleny@redhat.com> - 2.3.43-6
+- fixed possible double free() in rwm overlay (#495628)
+- updated slapd man page and slapcat usage string (#468206)
+- updated default config for slapd - deleted syncprov module (#466937)
+- fixed migration tools autofs generated format (#460331)
+- fixed migration tools numbers detection in /etc/shadow (#113857)
+- fixed migration tools base ldif (#104585)
+
+* Tue Nov 10 2009 Jan Zeleny <jzeleny@redhat.com> - 2.3.43-5
+- implementation of limit adjustment before starting slapd (#527313)
+- init script no longer executes script in /tmp (#483356)
+- slapd not starting with ldap:/// every time (#481003)
+- delay between TERM and KILL when shutting down slapd (#452064)
+
+* Fri Oct 30 2009 Jan Zeleny <jzeleny@redhat.com> - 2.3.43-4
+- fixed compat libs linking (#503734)
+- activated lightweight dispatcher feature (#507276)
+- detection of timeout after failed result (#495701)
+
 * Thu Nov  6 2008 Jan Safranek <jsafranek@redhat.com> 2.3.43-3
 - fix smbk5pwd linking (#329441)
 
