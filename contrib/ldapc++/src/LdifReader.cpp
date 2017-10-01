@@ -1,4 +1,4 @@
-// $OpenLDAP: pkg/ldap/contrib/ldapc++/src/LdifReader.cpp,v 1.4.2.4 2008/07/09 21:45:42 quanah Exp $
+// $OpenLDAP: pkg/ldap/contrib/ldapc++/src/LdifReader.cpp,v 1.4.2.5 2009/09/29 21:35:03 quanah Exp $
 /*
  * Copyright 2008, OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
