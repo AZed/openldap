@@ -27,7 +27,7 @@
 Summary: The configuration files, libraries, and documentation for OpenLDAP.
 Name: openldap
 Version: %{version_23}
-Release: 25%{?dist}
+Release: 25%{?dist}.1
 License: OpenLDAP
 Group: System Environment/Daemons
 Source0: ftp://ftp.OpenLDAP.org/pub/OpenLDAP/openldap-release/openldap-%{version_23}.tgz
@@ -77,6 +77,7 @@ Patch27: openldap-2.3.43-man-tls-preferred.patch
 Patch28: openldap-2.3.43-tls-cacertdir-soft-error.patch
 Patch29: openldap-2.3.43-dns-priority.patch
 Patch30: openldap-2.3.43-leak-slfree-syncprov.patch
+Patch31: openldap-2.3.43-dns-ipv6-queries.patch
 
 # Patches for 2.2.29 for the compat-openldap package.
 Patch100: openldap-2.2.13-tls-fix-connection-test.patch
@@ -258,6 +259,7 @@ pushd openldap-%{version_23}
 %patch28 -p1 -b .tls-cacertdir-soft-error
 %patch29 -p1 -b .dns-priority
 %patch30 -p1 -b .leak-slfree-syncprov
+%patch31 -p1 -b .dns-ipv6-queries
 
 cp %{_datadir}/libtool/config.{sub,guess} build/
 popd
@@ -921,6 +923,9 @@ exec > /dev/null 2> /dev/null
 %attr(0644,root,root)      %{evolution_connector_libdir}/*.a
 
 %changelog
+* Tue Jun 26 2012 Jan Vcelak <jvcelak@redhat.com> 2.3.43-25.1
+- fix: do not send IPv6 DNS queries when IPv6 is disabled on the host (#835444)
+
 * Wed Jan 11 2012 Jan Vcelak <jvcelak@redhat.com> 2.3.43-25
 - fix: disable static libraries stripping (#684630)
 

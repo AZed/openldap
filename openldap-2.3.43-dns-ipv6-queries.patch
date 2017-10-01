@@ -1,0 +1,21 @@
+Do not send IPv6 queries when contacting the DNS when IPv6 is completely disabled on the host.
+
+Removes USE_AI_ATTRCONFIG ifdef condition, configure does not support it yet.
+
+Upstream commit: df2c36a
+Resolves: #812772, #835444 (Z-stream)
+
+--- a/libraries/libldap/os-ip.c
++++ b/libraries/libldap/os-ip.c
+@@ -421,10 +421,7 @@ ldap_connect_to_host(LDAP *ld, Sockbuf *
+ 
+ #if defined( HAVE_GETADDRINFO ) && defined( HAVE_INET_NTOP )
+ 	memset( &hints, '\0', sizeof(hints) );
+-#ifdef USE_AI_ATTRCONFIG /* FIXME: configure test needed */
+-	/* Use AI_ATTRCONFIG only on systems where its known to be needed. */
+-	hints.ai_flags = AI_ATTRCONFIG;
+-#endif
++	hints.ai_flags = AI_ADDRCONFIG;
+ 	hints.ai_family = ldap_int_inet4or6;
+ 	hints.ai_socktype = socktype;
+ 	snprintf(serv, sizeof serv, "%d", port );
