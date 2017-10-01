@@ -667,7 +667,7 @@ do_syncrep1(
 			LDAP_STAILQ_REMOVE( &slap_sync_cookie, sc, sync_cookie, sc_next );
 
 			/* ctxcsn wasn't parsed yet, do it now */
-			slap_parse_sync_cookie( sc, op->o_tmpmemctx );
+			slap_parse_sync_cookie( sc, NULL );
 			slap_sync_cookie_free( &si->si_syncCookie, 0 );
 			slap_dup_sync_cookie( &si->si_syncCookie, sc );
 			slap_sync_cookie_free( sc, 1 );
@@ -992,6 +992,7 @@ do_syncrep2(
 					case LDAP_NO_SUCH_OBJECT:
 					case LDAP_NO_SUCH_ATTRIBUTE:
 					case LDAP_TYPE_OR_VALUE_EXISTS:
+					case LDAP_NOT_ALLOWED_ON_NONLEAF:
 						rc = LDAP_SYNC_REFRESH_REQUIRED;
 						si->si_logstate = SYNCLOG_FALLBACK;
 						ldap_abandon_ext( si->si_ld, si->si_msgid, NULL, NULL );
