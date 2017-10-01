@@ -1,5 +1,5 @@
 /* dyngroup.c - Demonstration of overlay code */
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/dyngroup.c,v 1.1.2.4 2004/01/01 18:16:40 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/dyngroup.c,v 1.1.2.5 2005/01/20 17:01:17 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2003-2005 The OpenLDAP Foundation.

@@ -1,5 +1,5 @@
 /* map.c - ldap backend mapping routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/map.c,v 1.16.2.5 2004/03/17 20:59:58 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/map.c,v 1.16.2.9 2005/01/20 22:09:12 ando Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.

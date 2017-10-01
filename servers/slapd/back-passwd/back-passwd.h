@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-passwd/back-passwd.h,v 1.2.2.2 2004/01/01 18:16:38 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-passwd/back-passwd.h,v 1.2.2.3 2005/01/20 17:01:15 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.

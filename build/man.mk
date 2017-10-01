@@ -1,4 +1,4 @@
-# $OpenLDAP$
+# $OpenLDAP: pkg/ldap/build/man.mk,v 1.25.2.3 2005/01/20 17:00:55 kurt Exp $
 ## Copyright 1998-2005 The OpenLDAP Foundation.
 ## All rights reserved.
 ##

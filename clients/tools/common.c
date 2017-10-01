@@ -1,5 +1,5 @@
 /* common.c - common routines for the ldap client tools */
-/* $OpenLDAP: pkg/ldap/clients/tools/common.c,v 1.16.2.6 2004/03/17 19:54:53 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/clients/tools/common.c,v 1.16.2.10 2005/01/20 17:00:55 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.

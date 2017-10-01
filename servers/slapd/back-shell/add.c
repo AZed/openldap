@@ -1,5 +1,5 @@
 /* add.c - shell backend add function */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-shell/add.c,v 1.19.2.3 2004/01/01 18:16:39 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-shell/add.c,v 1.19.2.4 2005/01/20 17:01:16 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.

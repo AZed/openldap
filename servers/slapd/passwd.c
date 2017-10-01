@@ -1,5 +1,5 @@
 /* passwd.c - password extended operation routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/passwd.c,v 1.53.2.12 2004/04/06 18:16:00 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/passwd.c,v 1.53.2.14 2005/01/20 17:01:08 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.

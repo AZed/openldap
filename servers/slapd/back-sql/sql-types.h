@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/sql-types.h,v 1.6.2.3 2004/01/20 23:44:21 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/sql-types.h,v 1.6.2.4 2005/01/20 17:01:17 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2005 The OpenLDAP Foundation.

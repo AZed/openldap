@@ -1,5 +1,5 @@
 /* ctxcsn.c -- back-bdb Context CSN Management Routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/ctxcsn.c,v 1.10.2.8 2004/05/21 01:38:48 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/ctxcsn.c,v 1.10.2.14 2005/01/20 17:01:10 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2003-2005 The OpenLDAP Foundation.

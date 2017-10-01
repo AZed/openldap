@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/slapi/proto-slapi.h,v 1.8.2.7 2004/03/18 01:01:04 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/slapi/proto-slapi.h,v 1.8.2.9 2005/01/20 17:01:18 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2002-2005 The OpenLDAP Foundation.

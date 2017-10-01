@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/passwd/kerberos.c,v 1.1.2.1 2004/02/23 21:46:40 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/passwd/kerberos.c,v 1.1.2.3 2005/01/20 17:00:56 kurt Exp $ */
 /*
  * Copyright 1998-2005 The OpenLDAP Foundation.
  * All rights reserved.

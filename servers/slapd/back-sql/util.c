@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/util.c,v 1.16.2.5 2004/04/12 18:20:15 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/util.c,v 1.16.2.8 2005/01/20 17:01:17 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2005 The OpenLDAP Foundation.

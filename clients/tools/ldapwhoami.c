@@ -1,5 +1,5 @@
 /* ldapwhoami.c -- a tool for asking the directory "Who Am I?" */
-/* $OpenLDAP: pkg/ldap/clients/tools/ldapwhoami.c,v 1.26.2.6 2004/03/17 19:54:53 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/clients/tools/ldapwhoami.c,v 1.26.2.7 2005/01/20 17:00:56 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.

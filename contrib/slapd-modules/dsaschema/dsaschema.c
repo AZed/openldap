@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/dsaschema/dsaschema.c,v 1.2.2.2 2004/03/17 19:57:16 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/dsaschema/dsaschema.c,v 1.2.2.3 2005/01/20 17:00:56 kurt Exp $ */
 /*
  * Copyright 2004-2005 The OpenLDAP Foundation.
  * All rights reserved.

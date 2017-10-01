@@ -1,5 +1,5 @@
 /* dn2id.c - routines to deal with the dn2id index */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/dn2id.c,v 1.84.2.7 2004/03/18 01:01:03 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/dn2id.c,v 1.84.2.11 2005/01/20 17:01:11 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2005 The OpenLDAP Foundation.

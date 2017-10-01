@@ -1,5 +1,5 @@
 /* init.c - initialize ldap backend */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/init.c,v 1.43.2.10 2004/04/12 18:20:13 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/init.c,v 1.43.2.14 2005/01/20 17:01:12 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2003-2005 The OpenLDAP Foundation.

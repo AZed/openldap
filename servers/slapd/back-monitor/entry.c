@@ -1,5 +1,5 @@
 /* entry.c - monitor backend entry handling routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/entry.c,v 1.7.2.4 2004/03/18 00:56:29 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/entry.c,v 1.7.2.5 2005/01/20 17:01:15 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2001-2005 The OpenLDAP Foundation.

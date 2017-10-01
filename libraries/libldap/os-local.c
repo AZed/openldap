@@ -1,5 +1,5 @@
 /* os-local.c -- platform-specific domain socket code */
-/* $OpenLDAP: pkg/ldap/libraries/libldap/os-local.c,v 1.28.2.4 2004/01/01 18:16:30 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/os-local.c,v 1.28.2.5 2005/01/20 17:01:01 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.

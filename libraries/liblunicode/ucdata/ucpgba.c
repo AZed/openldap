@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/liblunicode/ucdata/ucpgba.c,v 1.3.4.2 2004/01/01 18:16:31 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/liblunicode/ucdata/ucpgba.c,v 1.3.4.3 2005/01/20 17:01:03 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.

@@ -1,5 +1,5 @@
 /* slapcommon.c - common routine for the slap tools */
-/* $OpenLDAP: pkg/ldap/servers/slapd/slapcommon.c,v 1.2.2.4 2004/04/12 18:13:21 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/slapcommon.c,v 1.2.2.8 2005/01/20 17:01:10 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.

@@ -1,5 +1,5 @@
 /* abandon.c - decode and handle an ldap abandon operation */
-/* $OpenLDAP: pkg/ldap/servers/slapd/abandon.c,v 1.36.2.3 2004/06/04 03:39:43 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/abandon.c,v 1.36.2.6 2005/01/20 17:01:05 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.

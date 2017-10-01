@@ -1,4 +1,4 @@
-# $OpenLDAP$
+# $OpenLDAP: pkg/ldap/build/top.mk,v 1.78.2.9 2005/01/20 17:00:55 kurt Exp $
 ## Copyright 1998-2005 The OpenLDAP Foundation.
 ## All rights reserved.
 ##

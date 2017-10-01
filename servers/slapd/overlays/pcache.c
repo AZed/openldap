@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/pcache.c,v 1.10.2.10 2004/06/08 19:36:54 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/pcache.c,v 1.10.2.13 2005/01/20 17:01:17 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2003-2005 The OpenLDAP Foundation.

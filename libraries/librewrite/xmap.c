@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/librewrite/xmap.c,v 1.2.2.4 2004/03/17 20:14:49 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/librewrite/xmap.c,v 1.2.2.5 2005/01/20 17:01:05 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2005 The OpenLDAP Foundation.

@@ -1,5 +1,5 @@
 /* modify.c - ldap backend modify function */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/modify.c,v 1.40.2.8 2004/04/15 01:41:49 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/modify.c,v 1.40.2.12 2005/01/20 22:43:28 ando Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2005 The OpenLDAP Foundation.

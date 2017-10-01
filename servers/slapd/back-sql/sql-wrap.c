@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/sql-wrap.c,v 1.15.2.7 2004/04/13 15:49:08 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/sql-wrap.c,v 1.15.2.9 2005/01/20 17:01:17 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2005 The OpenLDAP Foundation.

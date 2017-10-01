@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/util-int.c,v 1.45.2.3 2004/05/21 17:29:34 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/util-int.c,v 1.45.2.4 2005/01/20 17:01:02 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.

@@ -1,5 +1,5 @@
 /* ldapmodify.c - generic program to modify or add entries using LDAP */
-/* $OpenLDAP: pkg/ldap/clients/tools/ldapmodify.c,v 1.139.2.8 2004/04/06 16:49:54 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/clients/tools/ldapmodify.c,v 1.139.2.10 2005/01/20 17:00:56 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.

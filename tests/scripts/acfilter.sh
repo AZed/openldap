@@ -1,5 +1,5 @@
 #! /bin/sh
-# $OpenLDAP: pkg/ldap/tests/scripts/acfilter.sh,v 1.6.4.2 2004/01/01 18:16:43 kurt Exp $
+# $OpenLDAP: pkg/ldap/tests/scripts/acfilter.sh,v 1.6.4.3 2005/01/20 17:01:20 kurt Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 1998-2005 The OpenLDAP Foundation.

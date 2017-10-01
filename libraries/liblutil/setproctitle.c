@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/liblutil/setproctitle.c,v 1.11.2.2 2004/01/01 18:16:32 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/liblutil/setproctitle.c,v 1.11.2.3 2005/01/20 17:01:04 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.

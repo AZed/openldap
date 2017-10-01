@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/back-meta.h,v 1.16.2.4 2004/01/01 18:16:38 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/back-meta.h,v 1.16.2.5 2005/01/20 17:01:14 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2005 The OpenLDAP Foundation.

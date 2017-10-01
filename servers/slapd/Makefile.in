@@ -1,5 +1,5 @@
 ## Makefile.in for slapd
-# $OpenLDAP: pkg/ldap/servers/slapd/Makefile.in,v 1.124.2.12 2004/04/12 18:07:40 kurt Exp $
+# $OpenLDAP: pkg/ldap/servers/slapd/Makefile.in,v 1.124.2.16 2005/01/20 17:01:05 kurt Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 1998-2005 The OpenLDAP Foundation.

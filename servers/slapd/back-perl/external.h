@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-perl/external.h,v 1.13.2.2 2004/01/01 18:16:39 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-perl/external.h,v 1.13.2.3 2005/01/20 17:01:16 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2005 The OpenLDAP Foundation.

@@ -1,5 +1,5 @@
 /* search.c - ldbm backend search function */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/search.c,v 1.108.2.10 2004/04/27 09:21:20 ando Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/search.c,v 1.108.2.12 2005/01/20 17:01:14 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.

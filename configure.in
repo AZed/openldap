@@ -1,4 +1,4 @@
-dnl $OpenLDAP: pkg/ldap/configure.in,v 1.478.2.19 2004/04/16 15:21:40 kurt Exp $
+dnl $OpenLDAP: pkg/ldap/configure.in,v 1.478.2.23 2005/01/20 17:00:54 kurt Exp $
 dnl This work is part of OpenLDAP Software <http://www.openldap.org/>.
 dnl
 dnl Copyright 1998-2005 The OpenLDAP Foundation.
@@ -19,7 +19,7 @@ dnl at top of generated configure script.  Prints simple copyright.
 define([AC_INIT_BINSH],
 [[#! /bin/sh
 # $]OpenLDAP[$
-# from] translit([$OpenLDAP: pkg/ldap/configure.in,v 1.478.2.19 2004/04/16 15:21:40 kurt Exp $], $")] [
+# from] translit([$OpenLDAP: pkg/ldap/configure.in,v 1.478.2.23 2005/01/20 17:00:54 kurt Exp $], $")] [
 
 # This work is part of OpenLDAP Software <http://www.openldap.org/>.
 #

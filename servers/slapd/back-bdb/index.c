@@ -1,5 +1,5 @@
 /* index.c - routines for dealing with attribute indexes */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/index.c,v 1.38.2.7 2004/04/12 18:20:13 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/index.c,v 1.38.2.9 2005/01/20 17:01:11 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2005 The OpenLDAP Foundation.

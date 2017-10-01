@@ -1,5 +1,5 @@
 /* io.c - ber general i/o routines */
-/* $OpenLDAP: pkg/ldap/libraries/liblber/io.c,v 1.100.2.4 2004/04/15 16:13:52 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/liblber/io.c,v 1.100.2.5 2005/01/20 17:01:00 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.

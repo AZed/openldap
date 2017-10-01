@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/include/lber_types.h.in,v 1.10.2.2 2004/01/01 18:16:28 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/include/lber_types.h.in,v 1.10.2.3 2005/01/20 17:00:58 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.

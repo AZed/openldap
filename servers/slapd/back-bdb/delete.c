@@ -1,5 +1,5 @@
 /* delete.c - bdb backend delete routine */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/delete.c,v 1.79.2.12 2004/04/12 18:20:13 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/delete.c,v 1.79.2.21 2005/01/20 17:01:11 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2005 The OpenLDAP Foundation.

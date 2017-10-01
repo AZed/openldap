@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/main.c,v 1.157.2.11 2004/04/28 23:07:36 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/main.c,v 1.157.2.14 2005/01/20 17:01:08 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.

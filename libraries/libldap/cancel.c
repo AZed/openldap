@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/cancel.c,v 1.3.4.4 2004/03/17 20:10:49 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/cancel.c,v 1.3.4.5 2005/01/20 17:01:01 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.

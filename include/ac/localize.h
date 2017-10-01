@@ -1,5 +1,5 @@
 /* localize.h (i18n/l10n) */
-/* $OpenLDAP: pkg/ldap/include/ac/localize.h,v 1.1.2.3 2004/01/01 18:16:28 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/include/ac/localize.h,v 1.1.2.4 2005/01/20 17:00:59 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
