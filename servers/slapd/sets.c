@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/sets.c,v 1.24.2.8 2008/02/11 23:24:18 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/sets.c,v 1.28.2.10 2008/07/08 20:36:58 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2008 The OpenLDAP Foundation.
@@ -350,6 +350,7 @@ slap_set_join(
 
 	default:
 		break;
+	}
 
 done:;
 	if ( lset ) slap_set_dispose( cp, lset, SLAP_SET_LREF2REF( op_flags ) );

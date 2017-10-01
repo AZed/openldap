@@ -1,5 +1,5 @@
 /* compare.c - sock backend compare function */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-sock/compare.c,v 1.4.2.1 2008/02/09 00:46:09 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2008 The OpenLDAP Foundation.

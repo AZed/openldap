@@ -1,5 +1,5 @@
 #! /bin/sh
-# $OpenLDAP: pkg/ldap/tests/scripts/test014-whoami,v 1.17.2.8 2008/02/11 23:24:28 kurt Exp $
+# $OpenLDAP: pkg/ldap/tests/scripts/test014-whoami,v 1.23.2.4 2008/02/11 23:44:27 quanah Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 1998-2008 The OpenLDAP Foundation.

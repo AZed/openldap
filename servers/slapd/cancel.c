@@ -1,5 +1,5 @@
 /* cancel.c - LDAP cancel extended operation */
-/* $OpenLDAP: pkg/ldap/servers/slapd/cancel.c,v 1.16.2.8 2008/02/11 23:24:15 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/cancel.c,v 1.23.2.4 2008/02/11 23:26:43 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2008 The OpenLDAP Foundation.
@@ -63,9 +63,6 @@ int cancel_extop( Operation *op, SlapReply *rs )
 		rs->sr_text = "message ID invalid";
 		return LDAP_PROTOCOL_ERROR;
 	}
-
-	Statslog( LDAP_DEBUG_STATS, "%s CANCEL msg=%d\n",
-		op->o_log_prefix, opid, 0, 0, 0 );
 
 	ldap_pvt_thread_mutex_lock( &op->o_conn->c_mutex );
 	LDAP_STAILQ_FOREACH( o, &op->o_conn->c_pending_ops, o_next ) {

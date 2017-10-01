@@ -1,5 +1,5 @@
 /* rwm.c - rewrite/remap operations */
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/rwm.c,v 1.37.2.22 2008/02/11 23:24:25 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/rwm.c,v 1.70.2.10 2008/02/15 18:11:46 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2003-2008 The OpenLDAP Foundation.
@@ -183,7 +183,6 @@ rwm_op_dn_massage( Operation *op, SlapReply *rs, void *cookie,
 	} else {
 		op->o_req_dn = ndn;
 	}
-	ros->r_ndn = ndn;
 	op->o_req_ndn = ndn;
 	ros->r_ndn = ndn;
 
@@ -316,7 +315,6 @@ cleanup_attr:;
 	return SLAP_CB_CONTINUE;
 }
 
-#ifdef ENABLE_REWRITE
 static int
 rwm_conn_init( BackendDB *be, Connection *conn )
 {
@@ -480,34 +478,6 @@ rwm_op_delete( Operation *op, SlapReply *rs )
 	op->o_callback = &roc->cb;
 
 	return SLAP_CB_CONTINUE;
-}
-
-/* imported from HEAD */
-static int
-ber_bvarray_dup_x( BerVarray *dst, BerVarray src, void *ctx )
-{
-	int i, j;
-	BerVarray new;
-
-	if ( !src ) {
-		*dst = NULL;
-		return 0;
-	}
-
-	for (i=0; !BER_BVISNULL( &src[i] ); i++) ;
-	new = ber_memalloc_x(( i+1 ) * sizeof(BerValue), ctx );
-	if ( !new )
-		return -1;
-	for (j=0; j<i; j++) {
-		ber_dupbv_x( &new[j], &src[j], ctx );
-		if ( BER_BVISNULL( &new[j] )) {
-			ber_bvarray_free_x( new, ctx );
-			return -1;
-		}
-	}
-	BER_BVZERO( &new[j] );
-	*dst = new;
-	return 0;
 }
 
 static int

@@ -1,5 +1,5 @@
 /* slap.h - stand alone ldap server include file */
-/* $OpenLDAP: pkg/ldap/servers/slapd/slap.h,v 1.612.2.47 2008/02/11 23:24:18 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/slap.h,v 1.764.2.29 2008/07/08 19:25:39 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2008 The OpenLDAP Foundation.
@@ -774,10 +774,6 @@ struct ObjectClass {
 #define	SLAP_OCF_CHECK_SUP	0x2
 #define	SLAP_OCF_MASK		(SLAP_OCF_SET_FLAGS|SLAP_OCF_CHECK_SUP)
 
-#define	SLAP_OCF_SET_FLAGS	0x1
-#define	SLAP_OCF_CHECK_SUP	0x2
-#define	SLAP_OCF_MASK		(SLAP_OCF_SET_FLAGS|SLAP_OCF_CHECK_SUP)
-
 #define	SLAP_OC_ALIAS		0x0001
 #define	SLAP_OC_REFERRAL	0x0002
 #define	SLAP_OC_SUBENTRY	0x0004
@@ -1544,14 +1540,6 @@ typedef struct AccessControlState {
 #define ACL_STATE_INIT { NULL, NULL, NULL, \
 	ACL_STATE_NOT_RECORDED, 0, 0 }
 
-#ifdef SLAPD_ACI_ENABLED
-typedef enum slap_aci_scope_t {
-	SLAP_ACI_SCOPE_ENTRY		= 0x1,
-	SLAP_ACI_SCOPE_CHILDREN		= 0x2,
-	SLAP_ACI_SCOPE_SUBTREE		= ( SLAP_ACI_SCOPE_ENTRY | SLAP_ACI_SCOPE_CHILDREN )
-} slap_aci_scope_t;
-#endif /* SLAPD_ACI_ENABLED */
-
 /*
  * Backend-info
  * represents a backend 
@@ -1611,22 +1599,6 @@ typedef struct slap_bindconf {
 	int sb_tls_do_init;
 #endif
 } slap_bindconf;
-
-typedef struct slap_verbmasks {
-	struct berval word;
-	const slap_mask_t mask;
-} slap_verbmasks;
-
-typedef struct slap_cf_aux_table {
-	struct berval key;
-	int off;
-	char type;
-	char quote;
-	void *aux;
-} slap_cf_aux_table;
-
-#define SLAP_LIMIT_TIME	1
-#define SLAP_LIMIT_SIZE	2
 
 typedef struct slap_verbmasks {
 	struct berval word;
@@ -2611,11 +2583,6 @@ struct Operation {
 #define get_no_schema_check(op)			((op)->o_no_schema_check)
 	char o_no_subordinate_glue;
 #define get_no_subordinate_glue(op)		((op)->o_no_subordinate_glue)
-
-	char o_nocaching;
-	char o_delete_glue_parent;
-	char o_no_schema_check;
-#define get_no_schema_check(op)			((op)->o_no_schema_check)
 
 #define SLAP_CONTROL_NONE	0
 #define SLAP_CONTROL_IGNORED	1

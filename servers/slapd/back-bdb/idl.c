@@ -1,5 +1,5 @@
 /* idl.c - ldap id list handling routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/idl.c,v 1.94.2.17 2008/02/11 23:24:19 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/idl.c,v 1.124.2.7 2008/02/11 23:26:45 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2008 The OpenLDAP Foundation.
@@ -333,9 +333,6 @@ bdb_idl_cache_put(
 {
 	bdb_idl_cache_entry_t idl_tmp;
 	bdb_idl_cache_entry_t *ee, *eprev;
-
-	if ( rc == DB_NOTFOUND || BDB_IDL_IS_ZERO( ids ))
-		return;
 
 	if ( rc == DB_NOTFOUND || BDB_IDL_IS_ZERO( ids ))
 		return;

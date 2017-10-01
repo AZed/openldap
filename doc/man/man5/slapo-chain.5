@@ -1,7 +1,7 @@
 .TH SLAPO-CHAIN 5 "RELEASEDATE" "OpenLDAP LDVERSION"
 .\" Copyright 1998-2008 The OpenLDAP Foundation, All Rights Reserved.
 .\" Copying restrictions apply.  See the COPYRIGHT file.
-.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapo-chain.5,v 1.1.2.9 2008/02/11 23:24:09 kurt Exp $
+.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapo-chain.5,v 1.10.2.4 2008/02/11 23:26:40 kurt Exp $
 .SH NAME
 slapo-chain \- chain overlay to slapd
 .SH SYNOPSIS
@@ -13,7 +13,7 @@ overlay to
 .BR slapd (8)
 allows automatic referral chasing.
 Any time a referral is returned (except for bind operations),
-it chased by using an instance of the ldap backend.
+it is chased by using an instance of the ldap backend.
 If operations are performed with an identity (i.e. after a bind),
 that identity can be asserted while chasing the referrals 
 by means of the \fIidentity assertion\fP feature of back-ldap

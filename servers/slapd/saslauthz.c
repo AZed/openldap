@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/saslauthz.c,v 1.144.2.20 2008/02/11 23:24:17 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/saslauthz.c,v 1.163.2.8 2008/02/11 23:26:44 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2008 The OpenLDAP Foundation.
@@ -1364,13 +1364,6 @@ int slap_sasl_regexp_config( const char *match, const char *replace )
 #ifdef SLAP_AUTH_REWRITE
 	rc = slap_sasl_regexp_rewrite_config( "sasl-regexp", 0,
 			match, replace, AUTHID_CONTEXT );
-#else /* ! SLAP_AUTH_REWRITE */
-
-#ifdef SLAP_AUTH_REWRITE
-	rc = slap_sasl_regexp_rewrite_config( "sasl-regexp", 0,
-			match, replace, AUTHID_CONTEXT );
-	if ( rc == LDAP_SUCCESS ) nSaslRegexp++;
-	return rc;
 #else /* ! SLAP_AUTH_REWRITE */
 
 	/* Precompile matching pattern */

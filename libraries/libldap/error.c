@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/error.c,v 1.64.2.10 2008/02/11 23:24:11 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/error.c,v 1.76.2.3 2008/02/11 23:26:41 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2008 The OpenLDAP Foundation.
@@ -91,30 +91,6 @@ static struct ldaperror ldap_builtin_errlist[] = {
 
 	{LDAP_PROXIED_AUTHORIZATION_DENIED, N_("Proxied Authorization Denied")},
 	{LDAP_X_PROXY_AUTHZ_FAILURE,		N_("Proxy Authorization Failure (X)")},
-
-	{LDAP_SYNC_REFRESH_REQUIRED,	N_("Content Sync Refresh Required")},
-	{LDAP_X_SYNC_REFRESH_REQUIRED,	N_("Content Sync Refresh Required (X)")},
-
-	{LDAP_X_NO_OPERATION,			N_("No Operation (X)")},
-
-	{LDAP_CUP_RESOURCES_EXHAUSTED,	N_("LCUP Resources Exhausted")},
-	{LDAP_CUP_SECURITY_VIOLATION,	N_("LCUP Security Violation")},
-	{LDAP_CUP_INVALID_DATA,			N_("LCUP Invalid Data")},
-	{LDAP_CUP_UNSUPPORTED_SCHEME,	N_("LCUP Unsupported Scheme")},
-	{LDAP_CUP_RELOAD_REQUIRED,		N_("LCUP Reload Required")},
-
-#ifdef LDAP_X_TXN
-	{LDAP_X_TXN_SPECIFY_OKAY,		N_("TXN specify okay")},
-	{LDAP_X_TXN_ID_INVALID,			N_("TXN ID is invalid")},
-#endif
-
-	{LDAP_CANCELLED,				N_("Cancelled")},
-	{LDAP_NO_SUCH_OPERATION,		N_("No Operation to Cancel")},
-	{LDAP_TOO_LATE,					N_("Too Late to Cancel")},
-	{LDAP_CANNOT_CANCEL,			N_("Cannot Cancel")},
-
-	{LDAP_ASSERTION_FAILED,			N_("Assertion Failed")},
-	{LDAP_X_ASSERTION_FAILED,		N_("Assertion Failed (X)")},
 
 	{LDAP_SYNC_REFRESH_REQUIRED,	N_("Content Sync Refresh Required")},
 	{LDAP_X_SYNC_REFRESH_REQUIRED,	N_("Content Sync Refresh Required (X)")},
@@ -355,7 +331,6 @@ ldap_parse_result(
 
 		tag = ber_scanf( ber, "{iAA" /*}*/,
 			&ld->ld_errno, &ld->ld_matched, &ld->ld_error );
-#endif /* ! LDAP_NULL_IS_NULL */
 
 		if( tag != LBER_ERROR ) {
 			/* peek for referrals */

@@ -1,5 +1,5 @@
 /* phonetic.c - routines to do phonetic matching */
-/* $OpenLDAP: pkg/ldap/servers/slapd/phonetic.c,v 1.19.2.5 2008/02/11 23:24:16 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/phonetic.c,v 1.22.2.3 2008/02/11 23:26:44 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2008 The OpenLDAP Foundation.

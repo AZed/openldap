@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/include/lber.h,v 1.94.2.6 2008/02/11 23:24:10 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/include/lber.h,v 1.99.2.4 2008/02/11 23:26:40 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2008 The OpenLDAP Foundation.
@@ -653,10 +653,6 @@ LBER_F( int * ) ber_errno_addr LDAP_P((void));
 #define LBER_ERROR_NONE		0
 #define LBER_ERROR_PARAM	0x1
 #define LBER_ERROR_MEMORY	0x2
-
-#ifdef LDAP_DEVEL
-#define LDAP_NULL_IS_NULL
-#endif
 
 LDAP_END_DECL
 

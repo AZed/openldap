@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/pcache.c,v 1.41.2.23 2008/02/11 23:24:25 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/pcache.c,v 1.88.2.17 2008/07/08 21:09:37 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2003-2008 The OpenLDAP Foundation.
@@ -47,8 +47,6 @@
  */
 #define PCACHE_EXOP_QUERY_DELETE	"1.3.6.1.4.1.4203.666.11.9.6.1"
 #endif
-
-#include "config.h"
 
 /* query cache structs */
 /* query */
@@ -1949,11 +1947,6 @@ pcache_op_cleanup( Operation *op, SlapReply *rs ) {
 	cache_manager *cm = on->on_bi.bi_private;
 	query_manager*		qm = cm->qm;
 
-	if ( si->query.save_attrs != NULL ) {
-		rs->sr_attrs = si->query.save_attrs;
-		op->ors_attrs = si->query.save_attrs;
-	}
-
 	if ( rs->sr_type == REP_SEARCH ) {
 		Entry *e;
 
@@ -2275,11 +2268,6 @@ pcache_op_privdb(
 }
 #endif /* PCACHE_CONTROL_PRIVDB */
 
-/* NOTE: this is a quick workaround to let pcache minimally interact
- * with pagedResults.  A more articulated solutions would be to
- * perform the remote query without control and cache all results,
- * performing the pagedResults search only within the client
- * and the proxy.  This requires pcache to understand pagedResults. */
 static int
 pcache_op_search(
 	Operation	*op,

@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/connection.c,v 1.296.2.32 2008/04/21 18:51:48 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/connection.c,v 1.358.2.16 2008/04/21 18:51:10 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2008 The OpenLDAP Foundation.
@@ -1392,7 +1392,6 @@ connection_read( ber_socket_t s, conn_readinfo *cri )
 	if ( ber_sockbuf_ctrl( c->c_sb, LBER_SB_OPT_NEEDS_WRITE, NULL ) ) {
 		slapd_set_write( s, 0 );
 	}
-#endif
 
 	slapd_set_read( s, 1 );
 	connection_return( c );

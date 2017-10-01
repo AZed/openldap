@@ -1,5 +1,5 @@
 /* bind.c - ldap backend bind function */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/bind.c,v 1.85.2.39 2008/04/14 19:29:12 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/bind.c,v 1.162.2.17 2008/04/14 20:02:21 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2008 The OpenLDAP Foundation.
@@ -1609,31 +1609,6 @@ ldap_back_cancel(
 
 	if ( LDAP_BACK_IGNORE( li ) ) {
 		return ldap_pvt_discard( lc->lc_ld, msgid );
-	}
-
-	if ( LDAP_BACK_CANCEL( li ) ) {
-		/* FIXME: asynchronous? */
-		return ldap_cancel_s( lc->lc_ld, msgid, NULL, NULL );
-	}
-
-	assert( 0 );
-
-	return LDAP_OTHER;
-}
-
-int
-ldap_back_cancel(
-		ldapconn_t		*lc,
-		Operation		*op,
-		SlapReply		*rs,
-		ber_int_t		msgid,
-		ldap_back_send_t	sendok )
-{
-	ldapinfo_t	*li = (ldapinfo_t *)op->o_bd->be_private;
-
-	/* default behavior */
-	if ( LDAP_BACK_ABANDON( li ) ) {
-		return ldap_abandon_ext( lc->lc_ld, msgid, NULL, NULL );
 	}
 
 	if ( LDAP_BACK_CANCEL( li ) ) {

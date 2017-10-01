@@ -1,5 +1,5 @@
 ## Makefile for OpenLDAP Administrator's Guide
-# $OpenLDAP$
+# $OpenLDAP: pkg/openldap-guide/admin/Makefile,v 1.5.2.10 2008/07/10 00:58:19 quanah Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 2005-2008 The OpenLDAP Foundation.

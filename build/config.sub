@@ -4,7 +4,7 @@
 #   2000, 2001, 2002, 2003 Free Software Foundation, Inc.
 
 timestamp='2003-07-04-OpenLDAP'
-# $OpenLDAP$
+# $OpenLDAP: pkg/ldap/build/config.sub,v 1.19.2.3 2008/02/11 23:26:37 kurt Exp $
 
 # This file is (in principle) common to ALL GNU software.
 # The presence of a machine in this file suggests that SOME GNU software

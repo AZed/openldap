@@ -50,19 +50,6 @@ see
 .BR slapd (8)
 for details.
 .TP
-.BI \-F " confdir"
-specify a config directory.
-If both
-.B -f
-and
-.B -F
-are specified, the config file will be read and converted to
-config directory format and written to the specified directory.
-If neither option is specified, an attempt to read the
-default config directory will be made before trying to use the default
-config file. If a valid config directory exists then the
-default config file is ignored.
-.TP
 .BI \-D " authcDN"
 specify a DN to be used as identity through the test session
 when selecting appropriate

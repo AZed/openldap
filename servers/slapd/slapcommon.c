@@ -1,5 +1,5 @@
 /* slapcommon.c - common routine for the slap tools */
-/* $OpenLDAP: pkg/ldap/servers/slapd/slapcommon.c,v 1.23.2.25 2008/02/11 23:24:18 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/slapcommon.c,v 1.73.2.7 2008/02/11 23:26:44 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2008 The OpenLDAP Foundation.
@@ -498,8 +498,6 @@ slap_tool_init(
 	default:
 		break;
 	}
-
-	ldap_syslog = 0;
 
 	if ( ldiffile == NULL ) {
 		dummy.fp = tool == SLAPCAT ? stdout : stdin;

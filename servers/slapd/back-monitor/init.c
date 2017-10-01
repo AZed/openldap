@@ -1,5 +1,5 @@
 /* init.c - initialize monitor backend */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/init.c,v 1.89.2.19 2008/02/11 23:24:22 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/init.c,v 1.125.2.6 2008/04/24 08:13:39 hyc Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2001-2008 The OpenLDAP Foundation.
@@ -2124,136 +2124,6 @@ monitor_back_db_init(
 		return -1;
 	}
 
-	bi->bi_controls = controls;
-
-	bi->bi_init = 0;
-	bi->bi_open = 0;
-	bi->bi_config = monitor_back_config;
-	bi->bi_close = 0;
-	bi->bi_destroy = 0;
-
-	bi->bi_db_init = monitor_back_db_init;
-#if 0
-	bi->bi_db_config = monitor_back_db_config;
-#endif
-	bi->bi_db_open = monitor_back_db_open;
-	bi->bi_db_close = 0;
-	bi->bi_db_destroy = monitor_back_db_destroy;
-
-	bi->bi_op_bind = monitor_back_bind;
-	bi->bi_op_unbind = 0;
-	bi->bi_op_search = monitor_back_search;
-	bi->bi_op_compare = monitor_back_compare;
-	bi->bi_op_modify = monitor_back_modify;
-	bi->bi_op_modrdn = 0;
-	bi->bi_op_add = 0;
-	bi->bi_op_delete = 0;
-	bi->bi_op_abandon = 0;
-
-	bi->bi_extended = 0;
-
-	bi->bi_entry_release_rw = 0;
-	bi->bi_chk_referrals = 0;
-	bi->bi_operational = monitor_back_operational;
-
-	/*
-	 * hooks for slap tools
-	 */
-	bi->bi_tool_entry_open = 0;
-	bi->bi_tool_entry_close = 0;
-	bi->bi_tool_entry_first = 0;
-	bi->bi_tool_entry_next = 0;
-	bi->bi_tool_entry_get = 0;
-	bi->bi_tool_entry_put = 0;
-	bi->bi_tool_entry_reindex = 0;
-	bi->bi_tool_sync = 0;
-	bi->bi_tool_dn2id_get = 0;
-	bi->bi_tool_id2entry_get = 0;
-	bi->bi_tool_entry_modify = 0;
-
-	bi->bi_connection_init = 0;
-	bi->bi_connection_destroy = 0;
-
-	/*
-	 * configuration objectClasses (fake)
-	 */
-	bi->bi_cf_ocs = monitorocs;
-
-	rc = config_register_schema( monitorcfg, monitorocs );
-	if ( rc ) {
-		return rc;
-	}
-
-	return 0;
-}
-
-int
-monitor_back_db_init(
-	BackendDB	*be )
-{
-	int			rc;
-	struct berval		dn = BER_BVC( SLAPD_MONITOR_DN ),
-				pdn,
-				ndn;
-	BackendDB		*be2;
-
-	monitor_subsys_t	*ms;
-
-	/*
-	 * register subsys
-	 */
-	for ( ms = known_monitor_subsys; ms->mss_name != NULL; ms++ ) {
-		if ( monitor_back_register_subsys( ms ) ) {
-			return -1;
-		}
-	}
-
-	/*
-	 * database monitor can be defined once only
-	 */
-	if ( be_monitor != NULL ) {
-		Debug( LDAP_DEBUG_ANY,
-			"only one monitor database is allowed\n", 0, 0, 0 );
-		return( -1 );
-	}
-	be_monitor = be;
-
-	/* indicate system schema supported */
-	SLAP_BFLAGS(be) |= SLAP_BFLAG_MONITOR;
-
-	rc = dnPrettyNormal( NULL, &dn, &pdn, &ndn, NULL );
-	if( rc != LDAP_SUCCESS ) {
-		Debug( LDAP_DEBUG_ANY,
-			"unable to normalize/pretty monitor DN \"%s\" (%d)\n",
-			dn.bv_val, rc, 0 );
-		return -1;
-	}
-
-	ber_bvarray_add( &be->be_suffix, &pdn );
-	ber_bvarray_add( &be->be_nsuffix, &ndn );
-
-	/* NOTE: only one monitor database is allowed,
-	 * so we use static storage */
-	ldap_pvt_thread_mutex_init( &monitor_info.mi_cache_mutex );
-
-	be->be_private = &monitor_info;
-
-	be2 = select_backend( &ndn, 0, 0 );
-	if ( be2 != be ) {
-		char	*type = be2->bd_info->bi_type;
-
-		if ( overlay_is_over( be2 ) ) {
-			slap_overinfo	*oi = (slap_overinfo *)be2->bd_info->bi_private;
-			type = oi->oi_orig->bi_type;
-		}
-
-		Debug( LDAP_DEBUG_ANY,
-			"\"monitor\" database serving namingContext \"%s\" "
-			"is hidden by \"%s\" database serving namingContext \"%s\".\n",
-			pdn.bv_val, type, be2->be_nsuffix[ 0 ].bv_val );
-		return -1;
-	}
-
 	return 0;
 }
 
@@ -2459,11 +2329,6 @@ monitor_back_db_open(
 					monitor_subsys[ i ]->mss_desc, NULL );
 		}
 
-		if ( !BER_BVISNULL( &monitor_subsys[ i ]->mss_desc[ 0 ] ) ) {
-			attr_merge_normalize( e, slap_schema.si_ad_description,
-					monitor_subsys[ i ]->mss_desc, NULL );
-		}
-
 		mp = monitor_entrypriv_create();
 		if ( mp == NULL ) {
 			return -1;
@@ -2523,16 +2388,6 @@ monitor_back_db_open(
 						el->el_mss,
 						el->el_flags,
 						&el->el_nbase,
-						el->el_scope,
-						&el->el_filter );
-				break;
-				
-
-			case LIMBO_ENTRY_PARENT:
-				monitor_back_register_entry_parent(
-						el->el_e,
-						el->el_cb,
-						&el->el_base,
 						el->el_scope,
 						&el->el_filter );
 				break;

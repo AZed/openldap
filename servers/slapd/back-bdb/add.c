@@ -1,5 +1,5 @@
 /* add.c - ldap BerkeleyDB back-end add routine */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/add.c,v 1.126.2.18 2008/02/11 23:24:18 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/add.c,v 1.152.2.10 2008/05/01 21:39:35 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2008 The OpenLDAP Foundation.
@@ -92,16 +92,6 @@ txnReturn:
 #endif
 
 	ctrls[num_ctrls] = 0;
-
-	/* add opattrs to shadow as well, only missing attrs will actually
-	 * be added; helps compatibility with older OL versions */
-	rs->sr_err = slap_add_opattrs( op, &rs->sr_text, textbuf, textlen, 1 );
-	if ( rs->sr_err != LDAP_SUCCESS ) {
-		Debug( LDAP_DEBUG_TRACE,
-			LDAP_XSTRING(bdb_add) ": entry failed op attrs add: "
-			"%s (%d)\n", rs->sr_text, rs->sr_err, 0 );
-		goto return_results;
-	}
 
 	/* check entry's schema */
 	rs->sr_err = entry_schema_check( op, op->oq_add.rs_e, NULL,
@@ -264,7 +254,7 @@ retry:	/* transaction retry */
 			rs->sr_text = "parent is an alias";
 			goto return_results;;
 		}
-	
+
 		if ( is_entry_referral( p ) ) {
 			/* parent is a referral, don't allow add */
 			rs->sr_matched = ber_strdup_x( p->e_name.bv_val,
@@ -275,7 +265,7 @@ retry:	/* transaction retry */
 			Debug( LDAP_DEBUG_TRACE,
 				LDAP_XSTRING(bdb_add) ": parent is referral\n",
 				0, 0, 0 );
-	
+
 			rs->sr_err = LDAP_REFERRAL;
 			rs->sr_flags = REP_MATCHED_MUSTBEFREED | REP_REF_MUSTBEFREED;
 			goto return_results;
@@ -495,7 +485,6 @@ return_results:
 				bdb->bi_txn_cp_kbyte, bdb->bi_txn_cp_min, 0 );
 		}
 	}
-	op->o_private = NULL;
 
 	if( postread_ctrl != NULL && (*postread_ctrl) != NULL ) {
 		slap_sl_free( (*postread_ctrl)->ldctl_value.bv_val, op->o_tmpmemctx );

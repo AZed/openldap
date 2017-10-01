@@ -1,5 +1,5 @@
 # dyngroup.schema -- Dynamic Group schema
-# $OpenLDAP: pkg/ldap/servers/slapd/schema/dyngroup.schema,v 1.3.2.4 2008/02/11 23:24:25 kurt Exp $
+# $OpenLDAP: pkg/ldap/servers/slapd/schema/dyngroup.schema,v 1.6.2.4 2008/02/12 05:17:43 quanah Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 1998-2008 The OpenLDAP Foundation.

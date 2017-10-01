@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/schema.c,v 1.66.2.8 2008/02/11 23:24:12 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/schema.c,v 1.77.2.4 2008/04/14 22:32:48 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2008 The OpenLDAP Foundation.

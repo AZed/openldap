@@ -1,5 +1,5 @@
 /* common.c - common routines for the ldap client tools */
-/* $OpenLDAP: pkg/ldap/clients/tools/common.c,v 1.39.2.14 2008/02/11 23:24:07 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/clients/tools/common.c,v 1.78.2.8 2008/07/09 00:29:57 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2008 The OpenLDAP Foundation.
@@ -43,14 +43,6 @@
 #endif
 #endif
 
-#ifdef HAVE_CYRUS_SASL
-#ifdef HAVE_SASL_SASL_H
-#include <sasl/sasl.h>
-#else
-#include <sasl.h>
-#endif
-#endif
-
 #include <ldap.h>
 
 #include "ldif.h"
@@ -59,8 +51,6 @@
 #include "ldap_defaults.h"
 #include "ldap_pvt.h"
 #include "lber_pvt.h"
-#include "lutil.h"
-#include "ldif.h"
 
 #include "common.h"
 
@@ -1545,14 +1535,6 @@ tool_server_controls( LDAP *ld, LDAPControl *extra_c, int count )
 		i++;
 	}
 #endif /* LDAP_CONTROL_OBSOLETE_PROXY_AUTHZ */
-
-	if ( manageDIT ) {
-		c[i].ldctl_oid = LDAP_CONTROL_MANAGEDIT;
-		BER_BVZERO( &c[i].ldctl_value );
-		c[i].ldctl_iscritical = manageDIT > 1;
-		ctrls[i] = &c[i];
-		i++;
-	}
 
 	if ( manageDIT ) {
 		c[i].ldctl_oid = LDAP_CONTROL_MANAGEDIT;

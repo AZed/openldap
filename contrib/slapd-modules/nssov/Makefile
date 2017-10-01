@@ -1,4 +1,4 @@
-# $OpenLDAP$
+# $OpenLDAP: pkg/ldap/contrib/slapd-modules/nssov/Makefile,v 1.1.2.1 2008/07/08 18:53:57 quanah Exp $
 # Copyright 2008 Howard Chu, Symas Corp. All Rights Reserved.
 #
 # Redistribution and use in source and binary forms, with or without

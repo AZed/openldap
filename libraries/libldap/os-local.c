@@ -1,5 +1,5 @@
 /* os-local.c -- platform-specific domain socket code */
-/* $OpenLDAP: pkg/ldap/libraries/libldap/os-local.c,v 1.37.2.11 2008/05/19 23:28:54 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/os-local.c,v 1.44.2.4 2008/05/20 00:05:30 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2008 The OpenLDAP Foundation.
@@ -194,7 +194,6 @@ ldap_pvt_connect(LDAP *ld, ber_socket_t s, struct sockaddr_un *sa, int async)
 	 */
 sendcred:
 		{
-#if 0	/* ITS#4893 disable all of this for now */
 			int fds[2];
 			ber_socklen_t salen = sizeof(*sa);
 			if (pipe(fds) == 0) {
@@ -242,9 +241,6 @@ sendcred:
 				close(fds[0]);
 				close(fds[1]);
 			}
-# else
-			write( s, abandonPDU, sizeof( abandonPDU ));
-#endif /* ITS#4893 */
 		}
 #endif
 		return 0;

@@ -136,224 +136,6 @@ duplicate_deps=no
 preserve_args=
 lo2o="s/\\.lo\$/.${objext}/"
 o2lo="s/\\.${objext}\$/.lo/"
-quote_scanset='[[~#^*{};<>?'"'"' 	]'
-
-#####################################
-# Shell function definitions:
-# This seems to be the best place for them
-
-# func_win32_libid arg
-# return the library type of file 'arg'
-#
-# Need a lot of goo to handle *both* DLLs and import libs
-# Has to be a shell function in order to 'eat' the argument
-# that is supplied when $file_magic_command is called.
-func_win32_libid ()
-{
-  win32_libid_type="unknown"
-  win32_fileres=`file -L $1 2>/dev/null`
-  case $win32_fileres in
-  *ar\ archive\ import\ library*) # definitely import
-    win32_libid_type="x86 archive import"
-    ;;
-  *ar\ archive*) # could be an import, or static
-    if eval $OBJDUMP -f $1 | $SED -e '10q' 2>/dev/null | \
-      $EGREP -e 'file format pe-i386(.*architecture: i386)?' >/dev/null ; then
-      win32_nmres=`eval $NM -f posix -A $1 | \
-	sed -n -e '1,100{/ I /{x;/import/!{s/^/import/;h;p;};x;};}'`
-      if test "X$win32_nmres" = "Ximport" ; then
-        win32_libid_type="x86 archive import"
-      else
-        win32_libid_type="x86 archive static"
-      fi
-    fi
-    ;;
-  *DLL*)
-    win32_libid_type="x86 DLL"
-    ;;
-  *executable*) # but shell scripts are "executable" too...
-    case $win32_fileres in
-    *MS\ Windows\ PE\ Intel*)
-      win32_libid_type="x86 DLL"
-      ;;
-    esac
-    ;;
-  esac
-  $echo $win32_libid_type
-}
-
-
-# func_infer_tag arg
-# Infer tagged configuration to use if any are available and
-# if one wasn't chosen via the "--tag" command line option.
-# Only attempt this if the compiler in the base compile
-# command doesn't match the default compiler.
-# arg is usually of the form 'gcc ...'
-func_infer_tag ()
-{
-    if test -n "$available_tags" && test -z "$tagname"; then
-      CC_quoted=
-      for arg in $CC; do
-	case $arg in
-	  *$quote_scanset* | *]* | *\|* | *\&* | *\(* | *\)* | "")
-	  arg="\"$arg\""
-	  ;;
-	esac
-	CC_quoted="$CC_quoted $arg"
-      done
-      case $@ in
-      # Blanks in the command may have been stripped by the calling shell,
-      # but not from the CC environment variable when configure was run.
-      " $CC "* | "$CC "* | " `$echo $CC` "* | "`$echo $CC` "* | " $CC_quoted"* | "$CC_quoted "* | " `$echo $CC_quoted` "* | "`$echo $CC_quoted` "*) ;;
-      # Blanks at the start of $base_compile will cause this to fail
-      # if we don't check for them as well.
-      *)
-	for z in $available_tags; do
-	  if grep "^# ### BEGIN LIBTOOL TAG CONFIG: $z$" < "$progpath" > /dev/null; then
-	    # Evaluate the configuration.
-	    eval "`${SED} -n -e '/^# ### BEGIN LIBTOOL TAG CONFIG: '$z'$/,/^# ### END LIBTOOL TAG CONFIG: '$z'$/p' < $progpath`"
-	    CC_quoted=
-	    for arg in $CC; do
-	    # Double-quote args containing other shell metacharacters.
-	    case $arg in
-	      *$quote_scanset* | *]* | *\|* | *\&* | *\(* | *\)* | "")
-	      arg="\"$arg\""
-	      ;;
-	    esac
-	    CC_quoted="$CC_quoted $arg"
-	  done
-	    case "$@ " in
-	      " $CC "* | "$CC "* | " `$echo $CC` "* | "`$echo $CC` "* | " $CC_quoted"* | "$CC_quoted "* | " `$echo $CC_quoted` "* | "`$echo $CC_quoted` "*)
-	      # The compiler in the base compile command matches
-	      # the one in the tagged configuration.
-	      # Assume this is the tagged configuration we want.
-	      tagname=$z
-	      break
-	      ;;
-	    esac
-	  fi
-	done
-	# If $tagname still isn't set, then no tagged configuration
-	# was found and let the user know that the "--tag" command
-	# line option must be used.
-	if test -z "$tagname"; then
-	  $echo "$modename: unable to infer tagged configuration"
-	  $echo "$modename: specify a tag with \`--tag'" 1>&2
-	  exit $EXIT_FAILURE
-#        else
-#          $echo "$modename: using $tagname tagged configuration"
-	fi
-	;;
-      esac
-    fi
-}
-
-
-# func_extract_an_archive dir oldlib
-func_extract_an_archive ()
-{
-    f_ex_an_ar_dir="$1"; shift
-    f_ex_an_ar_oldlib="$1"
-
-    $show "(cd $f_ex_an_ar_dir && $AR x $f_ex_an_ar_oldlib)"
-    $run eval "(cd \$f_ex_an_ar_dir && $AR x \$f_ex_an_ar_oldlib)" || exit $?
-    if ($AR t "$f_ex_an_ar_oldlib" | sort | sort -uc >/dev/null 2>&1); then
-     :
-    else
-      $echo "$modename: ERROR: object name conflicts: $f_ex_an_ar_dir/$f_ex_an_ar_oldlib" 1>&2
-      exit $EXIT_FAILURE
-    fi
-}
-
-# func_extract_archives gentop oldlib ...
-func_extract_archives ()
-{
-    my_gentop="$1"; shift
-    my_oldlibs=${1+"$@"}
-    my_oldobjs=""
-    my_xlib=""
-    my_xabs=""
-    my_xdir=""
-    my_status=""
-
-    $show "${rm}r $my_gentop"
-    $run ${rm}r "$my_gentop"
-    $show "$mkdir $my_gentop"
-    $run $mkdir "$my_gentop"
-    my_status=$?
-    if test "$my_status" -ne 0 && test ! -d "$my_gentop"; then
-      exit $my_status
-    fi
-
-    for my_xlib in $my_oldlibs; do
-      # Extract the objects.
-      case $my_xlib in
-	[\\/]* | [A-Za-z]:[\\/]*) my_xabs="$my_xlib" ;;
-	*) my_xabs=`pwd`"/$my_xlib" ;;
-      esac
-      my_xlib=`$echo "X$my_xlib" | $Xsed -e 's%^.*/%%'`
-      my_xdir="$my_gentop/$my_xlib"
-
-      $show "${rm}r $my_xdir"
-      $run ${rm}r "$my_xdir"
-      $show "$mkdir $my_xdir"
-      $run $mkdir "$my_xdir"
-      status=$?
-      if test "$status" -ne 0 && test ! -d "$my_xdir"; then
-	exit $status
-      fi
-      case $host in
-      *-darwin*)
-	$show "Extracting $my_xabs"
-	# Do not bother doing anything if just a dry run
-	if test -z "$run"; then
-	  darwin_orig_dir=`pwd`
-	  cd $my_xdir || exit $?
-	  darwin_archive=$my_xabs
-	  darwin_curdir=`pwd`
-	  darwin_base_archive=`$echo "X$darwin_archive" | $Xsed -e 's%^.*/%%'`
-	  darwin_arches=`lipo -info "$darwin_archive" 2>/dev/null | $EGREP Architectures 2>/dev/null`
-	  if test -n "$darwin_arches"; then 
-	    darwin_arches=`echo "$darwin_arches" | $SED -e 's/.*are://'`
-	    darwin_arch=
-	    $show "$darwin_base_archive has multiple architectures $darwin_arches"
-	    for darwin_arch in  $darwin_arches ; do
-	      mkdir -p "unfat-$$/${darwin_base_archive}-${darwin_arch}"
-	      lipo -thin $darwin_arch -output "unfat-$$/${darwin_base_archive}-${darwin_arch}/${darwin_base_archive}" "${darwin_archive}"
-	      cd "unfat-$$/${darwin_base_archive}-${darwin_arch}"
-	      func_extract_an_archive "`pwd`" "${darwin_base_archive}"
-	      cd "$darwin_curdir"
-	      $rm "unfat-$$/${darwin_base_archive}-${darwin_arch}/${darwin_base_archive}"
-	    done # $darwin_arches
-      ## Okay now we have a bunch of thin objects, gotta fatten them up :)
-	    darwin_filelist=`find unfat-$$ -type f -name \*.o -print -o -name \*.lo -print| xargs basename | sort -u | $NL2SP`
-	    darwin_file=
-	    darwin_files=
-	    for darwin_file in $darwin_filelist; do
-	      darwin_files=`find unfat-$$ -name $darwin_file -print | $NL2SP`
-	      lipo -create -output "$darwin_file" $darwin_files
-	    done # $darwin_filelist
-	    ${rm}r unfat-$$
-	    cd "$darwin_orig_dir"
-	  else
-	    cd "$darwin_orig_dir"
- 	    func_extract_an_archive "$my_xdir" "$my_xabs"
-	  fi # $darwin_arches
-	fi # $run
-      ;;
-      *)
-        func_extract_an_archive "$my_xdir" "$my_xabs"
-        ;;
-      esac
-      my_oldobjs="$my_oldobjs "`find $my_xdir -name \*.$objext -print -o -name \*.lo -print | $NL2SP`
-    done
-    func_extract_archives_result="$my_oldobjs"
-}
-# End of Shell function definitions
-#####################################
-
-# Darwin sucks
-eval std_shrext=\"$shrext_cmds\"
 
 #####################################
 # Shell function definitions:
@@ -1386,7 +1168,7 @@ EOF
       arg="$1"
       shift
       case $arg in
-      *$quote_scanset* | *]* | *\|* | *\&* | *\(* | *\)* | "")
+      *[\[\~\#\^\&\*\(\)\{\}\|\;\<\>\?\'\ \	]*|*]*|"")
 	qarg=\"`$echo "X$arg" | $Xsed -e "$sed_quote_subst"`\" ### testsuite: skip nested quoting test
 	;;
       *) qarg=$arg ;;
@@ -1961,7 +1743,7 @@ EOF
 	for flag in $args; do
 	  IFS="$save_ifs"
 	  case $flag in
-	    *$quote_scanset* | *]* | *\|* | *\&* | *\(* | *\)* | "")
+	    *[\[\~\#\^\&\*\(\)\{\}\|\;\<\>\?\'\ \	]*|*]*|"")
 	    flag="\"$flag\""
 	    ;;
 	  esac
@@ -1979,7 +1761,7 @@ EOF
 	for flag in $args; do
 	  IFS="$save_ifs"
 	  case $flag in
-	    *$quote_scanset* | *]* | *\|* | *\&* | *\(* | *\)* | "")
+	    *[\[\~\#\^\&\*\(\)\{\}\|\;\<\>\?\'\ \	]*|*]*|"")
 	    flag="\"$flag\""
 	    ;;
 	  esac
@@ -2012,7 +1794,7 @@ EOF
 	# to be aesthetically quoted because they are evaled later.
 	arg=`$echo "X$arg" | $Xsed -e "$sed_quote_subst"`
 	case $arg in
-	*$quote_scanset* | *]* | *\|* | *\&* | *\(* | *\)* | "")
+	*[\[\~\#\^\&\*\(\)\{\}\|\;\<\>\?\'\ \	]*|*]*|"")
 	  arg="\"$arg\""
 	  ;;
 	esac
@@ -2151,7 +1933,7 @@ EOF
 	# to be aesthetically quoted because they are evaled later.
 	arg=`$echo "X$arg" | $Xsed -e "$sed_quote_subst"`
 	case $arg in
-	*$quote_scanset* | *]* | *\|* | *\&* | *\(* | *\)* | "")
+	*[\[\~\#\^\&\*\(\)\{\}\|\;\<\>\?\'\ \	]*|*]*|"")
 	  arg="\"$arg\""
 	  ;;
 	esac
@@ -3684,7 +3466,6 @@ EOF
 	    ;;
 	  *-*-openbsd* | *-*-freebsd* | *-*-dragonfly*)
 	    # Do not include libc due to us having libc/libc_r.
-	    test "X$arg" = "X-lc" && continue
 	    ;;
 	  *-*-sco3.2v5* | *-*-sco5v6*)
 	    # Causes problems with __ctype

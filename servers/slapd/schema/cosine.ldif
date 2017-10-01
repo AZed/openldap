@@ -1,5 +1,5 @@
 # RFC1274: Cosine and Internet X.500 schema
-# $OpenLDAP$
+# $OpenLDAP: pkg/ldap/servers/slapd/schema/cosine.ldif,v 1.1.2.3 2008/02/11 23:26:49 kurt Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 1998-2008 The OpenLDAP Foundation.

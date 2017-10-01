@@ -1,5 +1,5 @@
 /* distproc.c - implement distributed procedures */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/distproc.c,v 1.3.2.7 2008/02/12 00:58:15 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2005-2008 The OpenLDAP Foundation.

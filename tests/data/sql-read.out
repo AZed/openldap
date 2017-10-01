@@ -44,8 +44,6 @@ documentTitle: book2
 documentAuthor: cn=Mitya Kovalev,dc=example,dc=com
 documentIdentifier: document 2
 
-# refldap://localhost:9012/dc=example,dc=com??one
-
 dn: cn=Mitya Kovalev,dc=example,dc=com
 objectClass: inetOrgPerson
 cn: Mitya Kovalev
@@ -104,60 +102,6 @@ description: abstract2
 documentTitle: book2
 documentAuthor: cn=Mitya Kovalev,dc=example,dc=com
 documentIdentifier: document 2
-
-# refldap://localhost:9012/dc=example,dc=com??sub
-
-dn: dc=example,dc=com
-objectClass: organization
-objectClass: dcObject
-o: Example
-dc: example
-
-dn: cn=Mitya Kovalev,dc=example,dc=com
-objectClass: inetOrgPerson
-cn: Mitya Kovalev
-sn: Kovalev
-seeAlso: documentTitle=book1,dc=example,dc=com
-seeAlso: documentTitle=book2,dc=example,dc=com
-givenName: Mitya
-telephoneNumber: 222-3234
-telephoneNumber: 332-2334
-
-dn: cn=Torvlobnor Puzdoy,dc=example,dc=com
-objectClass: inetOrgPerson
-cn: Torvlobnor Puzdoy
-sn: Puzdoy
-seeAlso: documentTitle=book1,dc=example,dc=com
-givenName: Torvlobnor
-telephoneNumber: 545-4563
-
-dn: cn=Akakiy Zinberstein,dc=example,dc=com
-objectClass: inetOrgPerson
-cn: Akakiy Zinberstein
-sn: Zinberstein
-givenName: Akakiy
-
-# Testing subtree search with manageDSAit...
-dn: documentTitle=book1,dc=example,dc=com
-objectClass: document
-description: abstract1
-documentTitle: book1
-documentAuthor: cn=Mitya Kovalev,dc=example,dc=com
-documentAuthor: cn=Torvlobnor Puzdoy,dc=example,dc=com
-documentIdentifier: document 1
-
-dn: documentTitle=book2,dc=example,dc=com
-objectClass: document
-description: abstract2
-documentTitle: book2
-documentAuthor: cn=Mitya Kovalev,dc=example,dc=com
-documentIdentifier: document 2
-
-dn: ou=Referral,dc=example,dc=com
-objectClass: referral
-objectClass: extensibleObject
-ou: Referral
-ref: ldap://localhost:9012/
 
 dn: dc=example,dc=com
 objectClass: organization
@@ -256,8 +200,6 @@ telephoneNumber: 545-4563
 
 # Testing invalid filter...
 # Testing exact search...
-# refldap://localhost:9012/dc=example,dc=com??sub
-
 dn: cn=Mitya Kovalev,dc=example,dc=com
 objectClass: inetOrgPerson
 cn: Mitya Kovalev
@@ -271,8 +213,6 @@ telephoneNumber: 332-2334
 # refldap://localhost:9012/dc=example,dc=com??sub
 
 # Testing substrings initial search...
-# refldap://localhost:9012/dc=example,dc=com??sub
-
 dn: cn=Mitya Kovalev,dc=example,dc=com
 objectClass: inetOrgPerson
 cn: Mitya Kovalev
@@ -286,8 +226,6 @@ telephoneNumber: 332-2334
 # refldap://localhost:9012/dc=example,dc=com??sub
 
 # Testing substrings any search...
-# refldap://localhost:9012/dc=example,dc=com??sub
-
 dn: cn=Mitya Kovalev,dc=example,dc=com
 objectClass: inetOrgPerson
 cn: Mitya Kovalev
@@ -301,8 +239,6 @@ telephoneNumber: 332-2334
 # refldap://localhost:9012/dc=example,dc=com??sub
 
 # Testing substrings final search...
-# refldap://localhost:9012/dc=example,dc=com??sub
-
 dn: cn=Mitya Kovalev,dc=example,dc=com
 objectClass: inetOrgPerson
 cn: Mitya Kovalev
@@ -316,8 +252,6 @@ telephoneNumber: 332-2334
 # refldap://localhost:9012/dc=example,dc=com??sub
 
 # Testing approx search...
-# refldap://localhost:9012/dc=example,dc=com??sub
-
 dn: cn=Mitya Kovalev,dc=example,dc=com
 objectClass: inetOrgPerson
 cn: Mitya Kovalev
@@ -331,8 +265,6 @@ telephoneNumber: 332-2334
 # refldap://localhost:9012/dc=example,dc=com??sub
 
 # Testing extensible filter search...
-# refldap://localhost:9012/dc=example,dc=com??sub
-
 dn: cn=Mitya Kovalev,dc=example,dc=com
 objectClass: inetOrgPerson
 cn: Mitya Kovalev
@@ -346,8 +278,6 @@ telephoneNumber: 332-2334
 # refldap://localhost:9012/dc=example,dc=com??sub
 
 # Testing search for telephoneNumber...
-# refldap://localhost:9012/dc=example,dc=com??sub
-
 dn: cn=Mitya Kovalev,dc=example,dc=com
 objectClass: inetOrgPerson
 cn: Mitya Kovalev
@@ -361,8 +291,6 @@ telephoneNumber: 332-2334
 # refldap://localhost:9012/dc=example,dc=com??sub
 
 # Testing AND search...
-# refldap://localhost:9012/dc=example,dc=com??sub
-
 dn: cn=Mitya Kovalev,dc=example,dc=com
 objectClass: inetOrgPerson
 cn: Mitya Kovalev
@@ -383,8 +311,6 @@ o: Example
 dc: example
 
 # Testing OR search...
-# refldap://localhost:9012/dc=example,dc=com??sub
-
 dn: cn=Mitya Kovalev,dc=example,dc=com
 objectClass: inetOrgPerson
 cn: Mitya Kovalev
@@ -467,8 +393,6 @@ documentTitle: book2
 documentAuthor: cn=Mitya Kovalev,dc=example,dc=com
 documentIdentifier: document 2
 
-# refldap://localhost:9012/dc=example,dc=com??sub
-
 dn: dc=example,dc=com
 objectClass: organization
 objectClass: dcObject
@@ -515,8 +439,6 @@ description: abstract2
 documentTitle: book2
 documentAuthor: cn=Mitya Kovalev,dc=example,dc=com
 documentIdentifier: document 2
-
-# refldap://localhost:9012/dc=example,dc=com??sub
 
 dn: cn=Mitya Kovalev,dc=example,dc=com
 objectClass: inetOrgPerson
@@ -604,8 +526,6 @@ o: Example
 dc: example
 
 # Testing hasSubordinates in filter...
-# refldap://localhost:9012/dc=example,dc=com??sub
-
 dn: dc=example,dc=com
 objectClass: organization
 objectClass: dcObject
@@ -626,8 +546,6 @@ telephoneNumber: 222-3234
 telephoneNumber: 332-2334
 
 # Testing attribute inheritance in requested attributes...
-# refldap://localhost:9012/dc=example,dc=com??sub
-
 dn: cn=Mitya Kovalev,dc=example,dc=com
 cn: Mitya Kovalev
 sn: Kovalev
@@ -645,8 +563,6 @@ objectClass: document
 
 dn: documentTitle=book2,dc=example,dc=com
 objectClass: document
-
-# refldap://localhost:9012/dc=example,dc=com??sub
 
 dn: dc=example,dc=com
 objectClass: organization
@@ -681,8 +597,6 @@ entryDN: documentTitle=book2,dc=example,dc=com
 subschemaSubentry: cn=Subschema
 hasSubordinates: FALSE
 entryUUID: 00000002-0000-0002-0000-000000000000
-
-# refldap://localhost:9012/dc=example,dc=com??sub
 
 dn: dc=example,dc=com
 structuralObjectClass: organization

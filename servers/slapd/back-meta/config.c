@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/config.c,v 1.35.2.28 2008/05/22 16:31:41 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/config.c,v 1.74.2.13 2008/07/10 00:28:39 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2008 The OpenLDAP Foundation.
@@ -524,7 +524,6 @@ meta_back_db_config(
 	"%s: line %d: extra cruft after ttl value in \"conn-ttl <seconds>\" line\n",
 				fname, lineno, 0 );
 			return 1;
-
 		}
 
 		if ( lutil_parse_time( argv[ 1 ], &t ) ) {

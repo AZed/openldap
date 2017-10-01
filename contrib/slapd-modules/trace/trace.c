@@ -1,5 +1,5 @@
 /* trace.c - traces overlay invocation */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/trace/trace.c,v 1.2.2.3 2008/02/11 23:26:38 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2006-2008 The OpenLDAP Foundation.

@@ -1,4 +1,4 @@
-# $OpenLDAP$
+# $OpenLDAP: pkg/openldap-guide/admin/config.sdf,v 1.14.2.6 2008/04/14 20:43:48 quanah Exp $
 # Copyright 1999-2008 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 H1: The Big Picture - Configuration Choices

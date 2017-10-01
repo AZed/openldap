@@ -1,5 +1,5 @@
 /* smbk5pwd.c - Overlay for managing Samba and Heimdal passwords */
-/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/smbk5pwd/smbk5pwd.c,v 1.1.2.10 2006/12/15 15:39:35 hyc Exp $ */
+/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/smbk5pwd/smbk5pwd.c,v 1.17.2.12 2008/07/09 22:59:00 quanah Exp $ */
 /*
  * Copyright 2004-2005 by Howard Chu, Symas Corp.
  * All rights reserved.
@@ -93,24 +93,6 @@ typedef struct smbk5pwd_t {
 	time_t	smb_must_change;
 	/* How many seconds after allowing a password change? */
 	time_t  smb_can_change;
-#endif
-} smbk5pwd_t;
-
-static const unsigned SMBK5PWD_F_ALL	=
-	0
-#ifdef DO_KRB5
-	| SMBK5PWD_F_KRB5
-#endif
-#ifdef DO_SAMBA
-	| SMBK5PWD_F_SAMBA
-#endif
-;
-
-static int smbk5pwd_modules_init( smbk5pwd_t *pi );
-
-#ifdef DO_SAMBA
-	/* How many seconds before forcing a password change? */
-	time_t	smb_must_change;
 #endif
 } smbk5pwd_t;
 
@@ -750,8 +732,6 @@ smbk5pwd_cf_func( ConfigArgs *c )
 		}
 		return rc;
 	}
-	return rc;
-}
 
 	switch( c->type ) {
 	case PC_SMB_MUST_CHANGE:

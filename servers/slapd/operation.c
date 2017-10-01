@@ -1,5 +1,5 @@
 /* operation.c - routines to deal with pending ldap operations */
-/* $OpenLDAP: pkg/ldap/servers/slapd/operation.c,v 1.63.2.11 2008/02/12 20:49:32 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/operation.c,v 1.75.2.8 2008/02/12 20:48:44 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2008 The OpenLDAP Foundation.
@@ -77,9 +77,6 @@ slap_op_free( Operation *op, void *ctx )
 {
 	OperationBuffer *opbuf;
 
-void
-slap_op_free( Operation *op )
-{
 	assert( LDAP_STAILQ_NEXT(op, o_next) == NULL );
 
 	if ( op->o_ber != NULL ) {
@@ -127,21 +124,6 @@ slap_op_free( Operation *op )
 	} else {
 		ber_memfree_x( op, NULL );
 	}
-}
-
-void
-slap_op_time(time_t *t, int *nop)
-{
-	ldap_pvt_thread_mutex_lock( &slap_op_mutex );
-	*t = slap_get_time();
-	if ( *t == last_time ) {
-		*nop = ++last_incr;
-	} else {
-		last_time = *t;
-		last_incr = 0;
-		*nop = 0;
-	}
-	ldap_pvt_thread_mutex_unlock( &slap_op_mutex );
 }
 
 void

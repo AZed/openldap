@@ -1,7 +1,7 @@
 .TH SLAPD.ACCESS 5 "RELEASEDATE" "OpenLDAP LDVERSION"
 .\" Copyright 1998-2008 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
-.\" $OpenLDAP$
+.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapd.access.5,v 1.70.2.10 2008/07/09 00:48:35 quanah Exp $
 .SH NAME
 slapd.access \- access configuration for slapd, the stand-alone LDAP daemon
 .SH SYNOPSIS
@@ -692,28 +692,6 @@ By default, the
 .B OpenLDAPaci
 operational attribute is used.
 ACIs are experimental; they must be enabled at compile time.
-.LP
-The statement
-.B dynacl/<name>[/<options>][.<dynstyle>][=<pattern>]
-means that access checking is delegated to the admin-defined method
-indicated by
-.BR <name> ,
-which can be registered at run-time by means of the
-.B moduleload
-statement.
-The fields
-.BR <options> ,
-.B <dynstyle>
-and
-.B <pattern>
-are optional, and are directly passed to the registered parsing routine.
-Dynacl is experimental; it must be enabled at compile time.
-If dynacl and ACIs are both enabled, ACIs are cast into the dynacl scheme,
-where 
-.B <name>=aci
-and, optionally,
-.BR <patten>=<attrname> .
-However, the original ACI syntax is preserved for backward compatibility.
 .LP
 The statements
 .BR ssf=<n> ,

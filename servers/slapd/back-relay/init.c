@@ -1,5 +1,5 @@
 /* init.c - initialize relay backend */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-relay/init.c,v 1.19.2.4 2008/02/12 01:03:16 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2004-2008 The OpenLDAP Foundation.

@@ -1,5 +1,5 @@
 /* cr.c - content rule routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/cr.c,v 1.14.2.6 2008/02/11 23:24:16 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/cr.c,v 1.22.2.3 2008/02/11 23:26:44 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2008 The OpenLDAP Foundation.
@@ -410,63 +410,6 @@ cr_add(
 fail:
 	ch_free( scr );
 	return code;
-}
-
-void
-cr_unparse( BerVarray *res, ContentRule *start, ContentRule *end, int sys )
-{
-	ContentRule *cr;
-	int i, num;
-	struct berval bv, *bva = NULL, idx;
-	char ibuf[32];
-
-	if ( !start )
-		start = LDAP_STAILQ_FIRST( &cr_list );
-
-	/* count the result size */
-	i = 0;
-	for ( cr=start; cr; cr=LDAP_STAILQ_NEXT(cr, scr_next)) {
-		if ( sys && !(cr->scr_flags & SLAP_CR_HARDCODE)) continue;
-		i++;
-		if ( cr == end ) break;
-	}
-	if (!i) return;
-
-	num = i;
-	bva = ch_malloc( (num+1) * sizeof(struct berval) );
-	BER_BVZERO( bva );
-	idx.bv_val = ibuf;
-	if ( sys ) {
-		idx.bv_len = 0;
-		ibuf[0] = '\0';
-	}
-	i = 0;
-	for ( cr=start; cr; cr=LDAP_STAILQ_NEXT(cr, scr_next)) {
-		LDAPContentRule lcr, *lcrp;
-		if ( sys && !(cr->scr_flags & SLAP_CR_HARDCODE)) continue;
-		if ( cr->scr_oidmacro ) {
-			lcr = cr->scr_crule;
-			lcr.cr_oid = cr->scr_oidmacro;
-			lcrp = &lcr;
-		} else {
-			lcrp = &cr->scr_crule;
-		}
-		if ( ldap_contentrule2bv( lcrp, &bv ) == NULL ) {
-			ber_bvarray_free( bva );
-		}
-		if ( !sys ) {
-			idx.bv_len = sprintf(idx.bv_val, "{%d}", i);
-		}
-		bva[i].bv_len = idx.bv_len + bv.bv_len;
-		bva[i].bv_val = ch_malloc( bva[i].bv_len + 1 );
-		strcpy( bva[i].bv_val, ibuf );
-		strcpy( bva[i].bv_val + idx.bv_len, bv.bv_val );
-		i++;
-		bva[i].bv_val = NULL;
-		ldap_memfree( bv.bv_val );
-		if ( cr == end ) break;
-	}
-	*res = bva;
 }
 
 void

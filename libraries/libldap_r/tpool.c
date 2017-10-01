@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap_r/tpool.c,v 1.30.2.20 2008/02/11 23:24:13 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap_r/tpool.c,v 1.52.2.13 2008/03/21 00:46:03 hyc Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2008 The OpenLDAP Foundation.
@@ -903,30 +903,6 @@ void ldap_pvt_thread_pool_purgekey( void *key )
 						ctx->ltu_key[j].ltk_free( ctx->ltu_key[j].ltk_key,
 						ctx->ltu_key[j].ltk_data );
 					clear_key_idx( ctx, j );
-					break;
-				}
-			}
-		}
-	}
-}
-
-/* Free all elements with this key, no matter which thread they're in.
- * May only be called while the pool is paused.
- */
-void ldap_pvt_thread_pool_purgekey( void *key )
-{
-	int i, j;
-	ldap_int_thread_key_t *ctx;
-
-	for ( i=0; i<LDAP_MAXTHR; i++ ) {
-		if ( thread_keys[i].ctx ) {
-			ctx = thread_keys[i].ctx;
-			for ( j=0; j<MAXKEYS; j++ ) {
-				if ( ctx[j].ltk_key == key ) {
-					if (ctx[j].ltk_free)
-						ctx[j].ltk_free( ctx[j].ltk_key, ctx[j].ltk_data );
-					ctx[j].ltk_key = NULL;
-					ctx[j].ltk_free = NULL;
 					break;
 				}
 			}

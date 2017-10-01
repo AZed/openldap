@@ -1,4 +1,4 @@
-// $OpenLDAP$
+// $OpenLDAP: pkg/ldap/contrib/ldapc++/src/LDAPAttrType.h,v 1.3.4.3 2008/05/01 21:28:42 quanah Exp $
 /*
  * Copyright 2003, OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -72,7 +72,7 @@ class LDAPAttrType{
 	StringList getNames() const;
 	
 	/**
-	 * Returns true if attribute type hllows only single value
+	 * Returns true if attribute type allows only single value
 	 */
 	bool isSingle() const;
 	

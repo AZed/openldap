@@ -1,5 +1,5 @@
 /* attr.c - backend routines for dealing with attributes */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/attr.c,v 1.19.2.11 2008/02/11 23:24:18 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/attr.c,v 1.36.2.4 2008/05/27 20:26:12 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2008 The OpenLDAP Foundation.
@@ -346,52 +346,6 @@ bdb_attr_index_unparse( struct bdb_info *bdb, BerVarray *bva )
 	}
 	for ( i=0; i<bdb->bi_nattrs; i++ )
 		bdb_attr_index_unparser( bdb->bi_attrs[i], bva );
-}
-
-static int
-bdb_attr_index_unparser( void *v1, void *v2 )
-{
-	AttrInfo *ai = v1;
-	BerVarray *bva = v2;
-	struct berval bv;
-	char *ptr;
-
-	slap_index2bvlen( ai->ai_indexmask, &bv );
-	if ( bv.bv_len ) {
-		bv.bv_len += ai->ai_desc->ad_cname.bv_len + 1;
-		ptr = ch_malloc( bv.bv_len+1 );
-		bv.bv_val = lutil_strcopy( ptr, ai->ai_desc->ad_cname.bv_val );
-		*bv.bv_val++ = ' ';
-		slap_index2bv( ai->ai_indexmask, &bv );
-		bv.bv_val = ptr;
-		ber_bvarray_add( bva, &bv );
-	}
-	return 0;
-}
-
-static AttributeDescription addef = { NULL, NULL, BER_BVC("default") };
-static AttrInfo aidef = { &addef };
-
-void
-bdb_attr_index_unparse( struct bdb_info *bdb, BerVarray *bva )
-{
-	int i;
-
-	if ( bdb->bi_defaultmask ) {
-		aidef.ai_indexmask = bdb->bi_defaultmask;
-		bdb_attr_index_unparser( &aidef, bva );
-	}
-	for ( i=0; i<bdb->bi_nattrs; i++ )
-		bdb_attr_index_unparser( bdb->bi_attrs[i], bva );
-}
-
-void
-bdb_attr_info_free( AttrInfo *ai )
-{
-#ifdef LDAP_COMP_MATCH
-	free( ai->ai_cr );
-#endif
-	free( ai );
 }
 
 void

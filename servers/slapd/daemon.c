@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/daemon.c,v 1.318.2.34 2008/07/07 16:57:18 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/daemon.c,v 1.380.2.12 2008/05/27 20:12:44 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2008 The OpenLDAP Foundation.
@@ -1729,10 +1729,6 @@ slap_listener(
 		">>> slap_listener(%s)\n",
 		sl->sl_url.bv_val, 0, 0 );
 
-	Debug( LDAP_DEBUG_TRACE,
-		">>> slap_listener(%s)\n",
-		sl->sl_url.bv_val, 0, 0 );
-
 	peername[0] = '\0';
 
 #ifdef LDAP_CONNECTIONLESS
@@ -2114,7 +2110,6 @@ slapd_daemon_task(
 			slapd_shutdown = 2;
 			return (void*)-1;
 		}
-#endif /* SLAP_LIGHTWEIGHT_DISPATCHER */
 
 		slapd_add( slap_listeners[l]->sl_sd, 0, slap_listeners[l] );
 	}

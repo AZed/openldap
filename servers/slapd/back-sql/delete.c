@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/delete.c,v 1.15.2.10 2008/02/11 23:24:24 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/delete.c,v 1.35.2.8 2008/02/11 23:26:48 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2008 The OpenLDAP Foundation.
@@ -95,47 +95,9 @@ backsql_delete_int(
 
 	sth = *sthp;
 
-	/*
-	 * Get the parent
-	 */
-	e_id = bsi.bsi_base_id;
-	if ( !be_issuffix( op->o_bd, &op->o_req_ndn ) ) {
-		dnParent( &op->o_req_ndn, &pdn );
-		bsi.bsi_e = &p;
-		rs->sr_err = backsql_init_search( &bsi, &pdn,
-				LDAP_SCOPE_BASE, 
-				(time_t)(-1), NULL, dbh, op, rs,
-				slap_anlist_no_attrs,
-				BACKSQL_ISF_GET_ENTRY );
-		if ( rs->sr_err != LDAP_SUCCESS ) {
-			Debug( LDAP_DEBUG_TRACE, "backsql_delete(): "
-				"could not retrieve deleteDN ID "
-				"- no such entry\n", 
-				0, 0, 0 );
-			e = &p;
-			goto done;
-		}
-
-		(void)backsql_free_entryID( op, &bsi.bsi_base_id, 0 );
-
-		/* check parent for "children" acl */
-		if ( !access_allowed( op, &p, slap_schema.si_ad_children, 
-				NULL, ACL_WDEL, NULL ) )
-		{
-			Debug( LDAP_DEBUG_TRACE, "   backsql_delete(): "
-				"no write access to parent\n", 
-				0, 0, 0 );
-			rs->sr_err = LDAP_INSUFFICIENT_ACCESS;
-			e = &p;
-			goto done;
-
-		}
-	}
-
 	/* avl_apply ... */
 	rs->sr_err = backsql_delete_all_attrs( op, rs, dbh, eid );
 	if ( rs->sr_err != LDAP_SUCCESS ) {
-		e = &d;
 		goto done;
 	}
 
@@ -615,8 +577,6 @@ backsql_delete( Operation *op, SlapReply *rs )
 	{
 		backsql_delete_int( op, rs, dbh, &sth, &e_id, &e );
 	}
-
-	rs->sr_err = LDAP_SUCCESS;
 
 	/*
 	 * Commit only if all operations succeed

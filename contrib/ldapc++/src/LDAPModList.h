@@ -1,4 +1,4 @@
-// $OpenLDAP$
+// $OpenLDAP: pkg/ldap/contrib/ldapc++/src/LDAPModList.h,v 1.7.6.2 2008/04/14 23:29:26 quanah Exp $
 /*
  * Copyright 2000, OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file

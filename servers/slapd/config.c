@@ -1,5 +1,5 @@
 /* config.c - configuration file handling routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/config.c,v 1.341.2.28 2008/02/11 23:24:15 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/config.c,v 1.441.2.16 2008/04/14 22:20:28 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2008 The OpenLDAP Foundation.
@@ -1307,9 +1307,6 @@ slap_cf_aux_table_parse( const char *word, void *dst, slap_cf_aux_table *tab0, L
 	return rc;
 }
 
-/* Mask keywords that represent multiple bits should occur before single
- * bit keywords in the verbmasks array.
- */
 int
 slap_cf_aux_table_unparse( void *src, struct berval *bv, slap_cf_aux_table *tab0 )
 {
@@ -1708,8 +1705,6 @@ slap_client_connect( LDAP **ldp, slap_bindconf *sb )
 			if ( sb->sb_tls == SB_TLS_CRITICAL ) {
 				goto done;
 			}
-			
-			return rc;
 		}
 	}
 

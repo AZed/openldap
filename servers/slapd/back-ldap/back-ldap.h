@@ -1,5 +1,5 @@
 /* back-ldap.h - ldap backend header file */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/back-ldap.h,v 1.63.2.24 2008/02/11 23:24:20 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/back-ldap.h,v 1.88.2.10 2008/07/10 00:28:39 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2008 The OpenLDAP Foundation.
@@ -26,15 +26,7 @@
 
 #include "../back-monitor/back-monitor.h"
 
-enum {
-	/* even numbers are connection types */
-	LDAP_BACK_PCONN_FIRST = 0,
-	LDAP_BACK_PCONN_ROOTDN = LDAP_BACK_PCONN_FIRST,
-	LDAP_BACK_PCONN_ANON = 2,
-	LDAP_BACK_PCONN_BIND = 4,
-
-	/* add the TLS bit */
-	LDAP_BACK_PCONN_TLS = 0x1U,
+LDAP_BEGIN_DECL
 
 struct ldapinfo_t;
 

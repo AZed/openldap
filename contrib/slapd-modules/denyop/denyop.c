@@ -1,5 +1,5 @@
 /* denyop.c - Denies operations */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/denyop/denyop.c,v 1.2.2.3 2008/02/11 23:26:38 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2004-2008 The OpenLDAP Foundation.

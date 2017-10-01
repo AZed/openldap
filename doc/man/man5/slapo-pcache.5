@@ -2,7 +2,7 @@
 .\" Copyright 1998-2008 The OpenLDAP Foundation, All Rights Reserved.
 .\" Copying restrictions apply.  See the COPYRIGHT file.
 .\" Copyright 2001, Pierangelo Masarati, All rights reserved. <ando@sys-net.it>
-.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapo-pcache.5,v 1.3.2.11 2008/02/11 23:24:09 kurt Exp $
+.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapo-pcache.5,v 1.14.2.5 2008/07/08 21:13:31 quanah Exp $
 .SH NAME
 slapo-pcache \- proxycache overlay to slapd
 .SH SYNOPSIS
@@ -89,10 +89,6 @@ and
 directives are not changed neither in order nor in contents.
 If new sets and templates are added, or if other details of the pcache
 overlay configuration changed, this feature should not be affected.
-
-.TP
-.B proxycachequeries <queries>
-Specify the maximum number of queries to cache. The default is 10000.
 
 .TP
 .B proxyattrset <index> <attrs...>

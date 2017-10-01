@@ -1,5 +1,5 @@
 /* backend.c - routines for dealing with back-end databases */
-/* $OpenLDAP: pkg/ldap/servers/slapd/backend.c,v 1.288.2.27 2008/02/11 23:24:15 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/backend.c,v 1.362.2.17 2008/04/24 08:13:39 hyc Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2008 The OpenLDAP Foundation.
@@ -503,11 +503,6 @@ int backend_destroy(void)
 			free( bd->be_rootpw.bv_val );
 		}
 		acl_destroy( bd->be_acl, frontendDB->be_acl );
-
-		if ( bd->be_replogfile != NULL ) {
-			free( bd->be_replogfile );
-		}
-		assert( bd->be_replica == NULL );
 	}
 
 	return 0;
@@ -1916,6 +1911,7 @@ fe_aux_operational(
 	{
 		rc = op->o_bd->be_operational( op, rs );
 	}
+	op->o_bd = be_orig;
 
 	return rc;
 }

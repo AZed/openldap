@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/extended.c,v 1.78.2.9 2008/02/11 23:24:16 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/extended.c,v 1.92.2.5 2008/02/11 23:26:44 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2008 The OpenLDAP Foundation.
@@ -165,8 +165,6 @@ do_extended(
 
 	/* check for controls inappropriate for all extended operations */
 	if( get_manageDSAit( op ) == SLAP_CONTROL_CRITICAL ) {
-		Statslog( LDAP_DEBUG_STATS, "%s EXT oid=%s\n",
-		    op->o_log_prefix, op->ore_reqoid.bv_val, 0, 0, 0 );
 		send_ldap_error( op, rs,
 			LDAP_UNAVAILABLE_CRITICAL_EXTENSION,
 			"manageDSAit control inappropriate" );

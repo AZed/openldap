@@ -1,5 +1,5 @@
 /* init.c - initialize bdb backend */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/nextid.c,v 1.23.2.5 2008/02/11 23:24:19 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/nextid.c,v 1.26.2.4 2008/02/12 00:34:58 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2008 The OpenLDAP Foundation.

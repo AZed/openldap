@@ -1,5 +1,5 @@
 /* cache.c - routines to maintain an in-core cache of entries */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/cache.c,v 1.88.2.23 2008/02/11 23:24:18 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/cache.c,v 1.120.2.15 2008/05/01 21:39:35 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2008 The OpenLDAP Foundation.
@@ -583,12 +583,6 @@ hdb_cache_find_parent(
 		if ( ei2 && ( ei2->bei_kids || !ei2->bei_id ))
 				bdb->bi_cache.c_leaves++;
 		ldap_pvt_thread_rdwr_wunlock( &bdb->bi_cache.c_rwlock );
-
-		if ( addlru ) {
-			ldap_pvt_thread_mutex_lock( &bdb->bi_cache.lru_head_mutex );
-			bdb_cache_lru_add( bdb, ein );
-		}
-		addlru = 1;
 
 		/* Got the parent, link in and we're done. */
 		if ( ei2 ) {

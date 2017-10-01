@@ -1,4 +1,4 @@
-// $OpenLDAP$
+// $OpenLDAP: pkg/ldap/contrib/ldapc++/src/LDAPException.h,v 1.5.8.3 2008/04/14 23:09:26 quanah Exp $
 /*
  * Copyright 2000, OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file

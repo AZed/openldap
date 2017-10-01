@@ -55,7 +55,6 @@ if test "${PATH_SEPARATOR+set}" != set; then
   fi
   rm -f conf$$.sh
 fi
-DUALCASE=1; export DUALCASE # for MKS sh
 
 # Support unset when possible.
 if ( (MAIL=60; unset MAIL) || exit) >/dev/null 2>&1; then
@@ -4450,10 +4449,6 @@ fi
 else
   ac_cv_path_EGREP=$EGREP
 fi
-echo "$as_me:$LINENO: result: $ac_cv_prog_egrep" >&5
-echo "${ECHO_T}$ac_cv_prog_egrep" >&6
- EGREP=$ac_cv_prog_egrep
-
 
 
    fi
@@ -4863,9 +4858,6 @@ LTCFLAGS=${LTCFLAGS-"$CFLAGS"}
 # Allow CC to be a program name with arguments.
 compiler=$CC
 
-# Check whether --enable-libtool-lock or --disable-libtool-lock was given.
-if test "${enable_libtool_lock+set}" = set; then
-  enableval="$enable_libtool_lock"
 
 # Check whether --enable-libtool-lock was given.
 if test "${enable_libtool_lock+set}" = set; then
@@ -4883,9 +4875,6 @@ ia64-*-hpux*)
   if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; then
     case `/usr/bin/file conftest.$ac_objext` in
@@ -5814,11 +5803,6 @@ sed 's/^/| /' conftest.$ac_ext >&5
 ac_preproc_ok=:
 break
 fi
-if test -z "$ac_cpp_err"; then
-  :
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
 
 rm -f conftest.err conftest.$ac_ext
 
@@ -6332,11 +6316,7 @@ else
 echo "${ECHO_T}none" >&6; }
 fi
 
-# These are sane defaults that work on at least a few old systems.
-# [They come from Ultrix.  What could be older than Ultrix?!! ;)]
 
-# Character class describing NM global symbol codes.
-symcode='[BCDEGRST]'
 
 
 
@@ -6683,16 +6663,6 @@ done
 done
 IFS=$as_save_IFS
 
-  test -z "$ac_cv_prog_ac_ct_STRIP" && ac_cv_prog_ac_ct_STRIP=":"
-fi
-fi
-ac_ct_STRIP=$ac_cv_prog_ac_ct_STRIP
-if test -n "$ac_ct_STRIP"; then
-  echo "$as_me:$LINENO: result: $ac_ct_STRIP" >&5
-echo "${ECHO_T}$ac_ct_STRIP" >&6
-else
-  echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
 fi
 fi
 ac_ct_AR=$ac_cv_prog_ac_ct_AR
@@ -19375,12 +19345,6 @@ LTCFLAGS=${LTCFLAGS-"$CFLAGS"}
 # Allow CC to be a program name with arguments.
 compiler=$CC
 
-# save warnings/boilerplate of simple test code
-ac_outfile=conftest.$ac_objext
-printf "$lt_simple_compile_test_code" >conftest.$ac_ext
-eval "$ac_compile" 2>&1 >/dev/null | $SED '/^$/d' >conftest.err
-_lt_compiler_boilerplate=`cat conftest.err`
-$rm conftest*
 
 # save warnings/boilerplate of simple test code
 ac_outfile=conftest.$ac_objext
@@ -20720,7 +20684,6 @@ if test "${PATH_SEPARATOR+set}" != set; then
   fi
   rm -f conf$$.sh
 fi
-DUALCASE=1; export DUALCASE # for MKS sh
 
 # Support unset when possible.
 if ( (MAIL=60; unset MAIL) || exit) >/dev/null 2>&1; then

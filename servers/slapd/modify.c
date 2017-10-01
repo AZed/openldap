@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/modify.c,v 1.227.2.28 2008/02/11 23:24:16 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/modify.c,v 1.276.2.9 2008/04/14 22:05:06 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2008 The OpenLDAP Foundation.
@@ -258,13 +258,6 @@ fe_op_modify( Operation *op, SlapReply *rs )
 	}
 
 	rs->sr_err = slap_mods_obsolete_check( op, op->orm_modlist,
-		&rs->sr_text, textbuf, textlen );
-	if ( rs->sr_err != LDAP_SUCCESS ) {
-		send_ldap_result( op, rs );
-		goto cleanup;
-	}
-
-	rs->sr_err = slap_mods_obsolete_check( op, modlist,
 		&rs->sr_text, textbuf, textlen );
 	if ( rs->sr_err != LDAP_SUCCESS ) {
 		send_ldap_result( op, rs );
@@ -578,7 +571,6 @@ int slap_mods_check(
 				if ( pretty ) {
 					rc = ordered_value_pretty( ad,
 						&ml->sml_values[nvals], &pval, ctx );
-#endif /* ! SLAP_ORDERED_PRETTYNORM */
 				} else {
 					rc = ordered_value_validate( ad,
 						&ml->sml_values[nvals], ml->sml_op );

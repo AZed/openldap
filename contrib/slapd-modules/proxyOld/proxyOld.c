@@ -1,5 +1,5 @@
 /* proxyOld.c - module for supporting obsolete (rev 05) proxyAuthz control */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/proxyOld/proxyOld.c,v 1.1 2006/03/30 06:22:39 hyc Exp $ */
 /*
  * Copyright 2005 by Howard Chu, Symas Corp.
  * All rights reserved.

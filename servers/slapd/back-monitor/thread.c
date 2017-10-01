@@ -1,5 +1,5 @@
 /* thread.c - deal with thread subsystem */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/thread.c,v 1.29.2.7 2008/02/11 23:24:23 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/thread.c,v 1.38.2.7 2008/02/11 23:26:47 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2001-2008 The OpenLDAP Foundation.
@@ -114,8 +114,6 @@ monitor_subsys_thread_init(
 
 	ms->mss_update = monitor_subsys_thread_update;
 
-	ms->mss_update = monitor_subsys_thread_update;
-
 	mi = ( monitor_info_t * )be->be_private;
 
 	if ( monitor_cache_get( mi, &ms->mss_ndn, &e_thread ) ) {
@@ -210,57 +208,6 @@ monitor_subsys_thread_init(
 		*ep = e;
 		ep = &mp->mp_next;
 	}
-
-	/*
-	 * Runqueue runners
-	 */
-	snprintf( buf, sizeof( buf ),
-			"dn: cn=Runqueue,%s\n"
-			"objectClass: %s\n"
-			"structuralObjectClass: %s\n"
-			"cn: Runqueue\n"
-			"%s: 0\n"
-			"creatorsName: %s\n"
-			"modifiersName: %s\n"
-			"createTimestamp: %s\n"
-			"modifyTimestamp: %s\n",
-			ms->mss_dn.bv_val,
-			mi->mi_oc_monitoredObject->soc_cname.bv_val,
-			mi->mi_oc_monitoredObject->soc_cname.bv_val,
-			mi->mi_ad_monitoredInfo->ad_cname.bv_val,
-			mi->mi_creatorsName.bv_val,
-			mi->mi_creatorsName.bv_val,
-			mi->mi_startTime.bv_val,
-			mi->mi_startTime.bv_val );
-
-	e = str2entry( buf );
-	if ( e == NULL ) {
-		Debug( LDAP_DEBUG_ANY,
-			"monitor_subsys_thread_init: "
-			"unable to create entry \"cn=Runqueue,%s\"\n",
-			ms->mss_ndn.bv_val, 0, 0 );
-		return( -1 );
-	}
-
-	mp = monitor_entrypriv_create();
-	if ( mp == NULL ) {
-		return -1;
-	}
-	e->e_private = ( void * )mp;
-	mp->mp_info = ms;
-	mp->mp_flags = ms->mss_flags \
-		| MONITOR_F_SUB | MONITOR_F_PERSISTENT;
-
-	if ( monitor_cache_add( mi, e ) ) {
-		Debug( LDAP_DEBUG_ANY,
-			"monitor_subsys_thread_init: "
-			"unable to add entry \"cn=Runqueue,%s\"\n",
-			ms->mss_ndn.bv_val, 0, 0 );
-		return( -1 );
-	}
-	
-	*ep = e;
-	ep = &mp->mp_next;
 
 	monitor_cache_release( mi, e_thread );
 

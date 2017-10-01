@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/syncprov.c,v 1.56.2.51 2008/07/09 20:53:13 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/syncprov.c,v 1.147.2.34 2008/07/10 00:13:08 quanah Exp $ */
 /* syncprov.c - syncrepl provider */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
@@ -1653,13 +1653,6 @@ syncprov_op_response( Operation *op, SlapReply *rs )
 			return SLAP_CB_CONTINUE;
 		}
 
-		/* Don't do any processing for consumer contextCSN updates */
-		if ( SLAP_SYNC_SHADOW( op->o_bd ) && 
-			op->o_msgid == SLAP_SYNC_UPDATE_MSGID ) {
-			ldap_pvt_thread_rdwr_wunlock( &si->si_csn_rwlock );
-			return SLAP_CB_CONTINUE;
-		}
-
 		si->si_numops++;
 		if ( si->si_chkops || si->si_chktime ) {
 			if ( si->si_chkops && si->si_numops >= si->si_chkops ) {
@@ -2172,8 +2165,6 @@ syncprov_op_search( Operation *op, SlapReply *rs )
 		return rs->sr_err;
 	}
 
-	do_present = si->si_nopres ? 0 : 1;
-
 	srs = op->o_controls[slap_cids.sc_LDAPsync];
 	op->o_managedsait = SLAP_CONTROL_NONCRITICAL;
 
@@ -2231,7 +2222,7 @@ syncprov_op_search( Operation *op, SlapReply *rs )
 	ldap_pvt_thread_rdwr_runlock( &si->si_csn_rwlock );
 	
 	/* If we have a cookie, handle the PRESENT lookups */
-	if ( !BER_BVISNULL( &srs->sr_state.ctxcsn )) {
+	if ( srs->sr_state.ctxcsn ) {
 		sessionlog *sl;
 		int i, j;
 

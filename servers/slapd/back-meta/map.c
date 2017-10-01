@@ -1,5 +1,5 @@
 /* map.c - ldap backend mapping routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/map.c,v 1.1.2.16 2008/02/11 23:24:22 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/map.c,v 1.15.2.7 2008/02/11 23:26:47 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2008 The OpenLDAP Foundation.
@@ -213,7 +213,6 @@ map_attr_value(
 		int			remap )
 {
 	struct berval		vtmp;
-	char			uuid[ LDAP_LUTIL_UUIDSTR_BUFSIZE ];
 	int			freeval = 0;
 
 	ldap_back_map( &dc->target->mt_rwmap.rwm_at, &ad->ad_cname, mapped_attr, remap );

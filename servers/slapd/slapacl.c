@@ -108,16 +108,6 @@ slapacl( int argc, char **argv )
 	op->o_tls_ssf = tls_ssf;
 	op->o_sasl_ssf = sasl_ssf;
 
-	conn.c_listener = &listener;
-	conn.c_listener_url = listener_url;
-	conn.c_peer_domain = peer_domain;
-	conn.c_peer_name = peer_name;
-	conn.c_sock_name = sock_name;
-	op->o_ssf = ssf;
-	op->o_transport_ssf = transport_ssf;
-	op->o_tls_ssf = tls_ssf;
-	op->o_sasl_ssf = sasl_ssf;
-
 	if ( !BER_BVISNULL( &authcID ) ) {
 		if ( !BER_BVISNULL( &authcDN ) ) {
 			fprintf( stderr, "both authcID=\"%s\" "

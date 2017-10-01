@@ -52,4 +52,4 @@ smbk5pwd (overlay)
 trace (overlay)
 	Trace overlay invocation.
 
-$OpenLDAP$
+$OpenLDAP: pkg/ldap/contrib/slapd-modules/README,v 1.3.2.1 2008/07/09 00:33:24 quanah Exp $

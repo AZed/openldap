@@ -7075,9 +7075,6 @@ if test "`cd $srcdir && pwd`" != "`pwd`"; then
     AC_MSG_ERROR([source directory already configured; run "make distclean" there first])
   fi
 fi
-AM_CONDITIONAL([AMDEP], [test "x$enable_dependency_tracking" != xno])
-AC_SUBST([AMDEPBACKSLASH])
-])
 
 # test whether we have cygpath
 if test -z "$CYGPATH_W"; then

@@ -1,5 +1,5 @@
 /* ldap_pvt_thread.h - ldap threads header file */
-/* $OpenLDAP: pkg/ldap/include/ldap_pvt_thread.h,v 1.41.2.8 2008/02/11 23:24:10 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/include/ldap_pvt_thread.h,v 1.51.2.10 2008/03/21 00:46:03 hyc Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  * 
  * Copyright 1998-2008 The OpenLDAP Foundation.
@@ -283,9 +283,6 @@ ldap_pvt_thread_pool_setkey LDAP_P((
 	ldap_pvt_thread_pool_keyfree_t *kfree,
 	void **olddatap,
 	ldap_pvt_thread_pool_keyfree_t **oldkfreep ));
-
-LDAP_F( void )
-ldap_pvt_thread_pool_purgekey LDAP_P(( void *key ));
 
 LDAP_F( void )
 ldap_pvt_thread_pool_purgekey LDAP_P(( void *key ));

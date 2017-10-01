@@ -1,5 +1,5 @@
 /* thr_cthreads.c - wrapper for mach cthreads */
-/* $OpenLDAP: pkg/ldap/libraries/libldap_r/thr_cthreads.c,v 1.17.2.5 2008/02/11 23:24:13 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap_r/thr_cthreads.c,v 1.20.2.4 2008/02/11 23:26:42 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2008 The OpenLDAP Foundation.

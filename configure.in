@@ -1,4 +1,4 @@
-dnl $OpenLDAP: pkg/ldap/configure.in,v 1.560.2.34 2008/02/11 23:24:06 kurt Exp $
+dnl $OpenLDAP: pkg/ldap/configure.in,v 1.631.2.9 2008/02/11 23:26:37 kurt Exp $
 dnl This work is part of OpenLDAP Software <http://www.openldap.org/>.
 dnl
 dnl Copyright 1998-2008 The OpenLDAP Foundation.
@@ -25,7 +25,7 @@ dnl ================================================================
 dnl Configure.in for OpenLDAP
 AC_COPYRIGHT([[Copyright 1998-2008 The OpenLDAP Foundation. All rights reserved.
 Restrictions apply, see COPYRIGHT and LICENSE files.]])
-AC_REVISION([$OpenLDAP$])
+AC_REVISION([$OpenLDAP: pkg/ldap/configure.in,v 1.631.2.9 2008/02/11 23:26:37 kurt Exp $])
 AC_INIT([OpenLDAP],,[http://www.openldap.org/its/])
 m4_define([AC_PACKAGE_BUGREPORT],[<http://www.openldap.org/its/>])
 AC_CONFIG_SRCDIR(build/version.sh)dnl
@@ -1157,8 +1157,7 @@ if test $ol_with_tls = openssl || test $ol_with_tls = auto ; then
 			fi
 		fi
 	fi
-	;;
-esac
+fi
 
 if test $ol_link_tls = no ; then
 	if test $ol_with_tls = gnutls || test $ol_with_tls = auto ; then

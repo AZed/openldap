@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/sql-wrap.c,v 1.28.2.10 2008/02/11 23:24:24 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/sql-wrap.c,v 1.43.2.5 2008/02/11 23:26:48 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2008 The OpenLDAP Foundation.
@@ -459,9 +459,7 @@ backsql_open_db_handle(
 	Debug( LDAP_DEBUG_TRACE, "<==backsql_open_db_handle()\n",
 		0, 0, 0 );
 
-	Debug( LDAP_DEBUG_TRACE, "<==backsql_open_db_conn(%lu)\n", ldap_cid, 0, 0 );
-
-	return rc;
+	return LDAP_SUCCESS;
 }
 
 int

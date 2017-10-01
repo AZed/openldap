@@ -1,4 +1,4 @@
-# $OpenLDAP$
+# $OpenLDAP: pkg/openldap-guide/admin/tls.sdf,v 1.13.2.8 2008/07/09 00:40:40 quanah Exp $
 # Copyright 1999-2008 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 
@@ -149,16 +149,6 @@ to use a DSA certificate on the server side (i.e.
 {{EX:TLSCertificateKeyFile}} points to a DSA key).  Multiple sets
 of parameters can be included in the file; all of them will be
 processed.  Parameters can be generated using the following command
-
->	openssl dhparam [-dsaparam] -out <filename> <numbits>
-
-H4: TLSEphemeralDHParamFile <filename>
-
-This directive specifies the file that contains parameters for Diffie-Hellman
-ephemeral key exchange.  This is required in order to use a DSA certificate on
-the server side (i.e. {{EX:TLSCertificateKeyFile}} points to a DSA key).
-Multiple sets of parameters can be included in the file; all of them will
-be processed.  Parameters can be generated using the following command
 
 >	openssl dhparam [-dsaparam] -out <filename> <numbits>
 

@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/bind.c,v 1.40.2.33 2008/02/11 23:24:21 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/bind.c,v 1.95.2.15 2008/04/14 21:24:34 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2008 The OpenLDAP Foundation.
@@ -204,7 +204,6 @@ meta_back_bind( Operation *op, SlapReply *rs )
 		if ( isroot ) {
 			mc->mc_authz_target = META_BOUND_ALL;
 		}
-	}
 
 		if ( !LDAP_BACK_PCONN_ISPRIV( mc )
 			&& !dn_match( &op->o_req_ndn, &mc->mc_local_ndn ) )
@@ -918,10 +917,7 @@ meta_back_cancel(
 
 
 /*
- * meta_back_proxy_authz_cred()
- *
- * prepares credentials & method for meta_back_proxy_authz_bind();
- * or, if method is SASL, performs the SASL bind directly.
+ * FIXME: error return must be handled in a cleaner way ...
  */
 int
 meta_back_op_result(
@@ -1552,6 +1548,7 @@ meta_back_proxy_authz_bind( metaconn_t *mc, int candidate, Operation *op, SlapRe
 			assert( 0 );
 			break;
 		}
+	}
 
 	return LDAP_BACK_CONN_ISBOUND( msc );
 }
@@ -1692,51 +1689,3 @@ done:;
 	return rs->sr_err;
 }
 
-static int
-meta_back_proxy_authz_bind( metaconn_t *mc, int candidate, Operation *op, SlapReply *rs, ldap_back_send_t sendok )
-{
-	metainfo_t		*mi = (metainfo_t *)op->o_bd->be_private;
-	metatarget_t		*mt = mi->mi_targets[ candidate ];
-	metasingleconn_t	*msc = &mc->mc_conns[ candidate ];
-	struct berval		binddn = BER_BVC( "" ),
-				cred = BER_BVC( "" );
-	int			method = LDAP_AUTH_NONE,
-				rc;
-
-	rc = meta_back_proxy_authz_cred( mc, candidate, op, rs, sendok, &binddn, &cred, &method );
-	if ( rc == LDAP_SUCCESS && !LDAP_BACK_CONN_ISBOUND( msc ) ) {
-		int	msgid;
-
-		switch ( method ) {
-		case LDAP_AUTH_NONE:
-		case LDAP_AUTH_SIMPLE:
-			rs->sr_err = ldap_sasl_bind( msc->msc_ld,
-					binddn.bv_val, LDAP_SASL_SIMPLE,
-					&cred, NULL, NULL, &msgid );
-			rc = meta_back_bind_op_result( op, rs, mc, candidate, msgid, sendok );
-			if ( rc == LDAP_SUCCESS ) {
-				/* set rebind stuff in case of successful proxyAuthz bind,
-				 * so that referral chasing is attempted using the right
-				 * identity */
-				LDAP_BACK_CONN_ISBOUND_SET( msc );
-				ber_bvreplace( &msc->msc_bound_ndn, &binddn );
-
-				if ( LDAP_BACK_SAVECRED( mi ) ) {
-					if ( !BER_BVISNULL( &msc->msc_cred ) ) {
-						memset( msc->msc_cred.bv_val, 0,
-							msc->msc_cred.bv_len );
-					}
-					ber_bvreplace( &msc->msc_cred, &cred );
-					ldap_set_rebind_proc( msc->msc_ld, mt->mt_rebind_f, msc );
-				}
-			}
-			break;
-
-		default:
-			assert( 0 );
-			break;
-		}
-	}
-
-	return LDAP_BACK_CONN_ISBOUND( msc );
-}

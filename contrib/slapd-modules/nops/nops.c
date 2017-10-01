@@ -1,4 +1,4 @@
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/nops/nops.c,v 1.1.2.1 2008/05/27 20:00:51 quanah Exp $ */
 /* nops.c - Overlay to filter idempotent operations */
 /* 
  * Copyright 2008 Emmanuel Dreyfus

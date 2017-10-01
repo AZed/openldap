@@ -1,5 +1,5 @@
 .TH LDAPSEARCH 1 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" $OpenLDAP$
+.\" $OpenLDAP: pkg/ldap/doc/man/man1/ldapsearch.1,v 1.59.2.5 2008/02/11 23:26:39 kurt Exp $
 .\" Copyright 1998-2008 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .SH NAME
@@ -22,8 +22,6 @@ ldapsearch \- LDAP search tool
 .BI \-F \ prefix\fR]
 [\c
 .BR \-A ]
-[\c
-.BR \-C ]
 [\c
 .BR \-L[L[L]] ]
 [\c
@@ -140,9 +138,6 @@ URL prefix for temporary files.  Default is file://\fIpath\fP/ where
 Retrieve attributes only (no values).  This is useful when you just want to
 see if an attribute is present in an entry and are not interested in the
 specific values.
-.TP
-.B \-C
-Chase referrals (anonymously).
 .TP
 .B \-L
 Search results are display in LDAP Data Interchange Format detailed in

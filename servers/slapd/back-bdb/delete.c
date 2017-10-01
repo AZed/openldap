@@ -1,5 +1,5 @@
 /* delete.c - bdb backend delete routine */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/delete.c,v 1.132.2.11 2008/02/11 23:24:19 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/delete.c,v 1.155.2.8 2008/05/01 21:39:35 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2008 The OpenLDAP Foundation.
@@ -587,7 +587,6 @@ return_results:
 	if ( opinfo.boi_oe.oe_key ) {
 		LDAP_SLIST_REMOVE( &op->o_extra, &opinfo.boi_oe, OpExtra, oe_next );
 	}
-	op->o_private = NULL;
 
 	send_ldap_result( op, rs );
 	slap_graduate_commit_csn( op );

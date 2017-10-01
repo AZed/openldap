@@ -1,4 +1,4 @@
-# $OpenLDAP$
+# $OpenLDAP: pkg/ldap/contrib/slapd-modules/proxyOld/Makefile,v 1.1 2006/03/30 06:22:39 hyc Exp $
 # Copyright 2005 Howard Chu, Symas Corp. All Rights Reserved.
 #
 # Redistribution and use in source and binary forms, with or without

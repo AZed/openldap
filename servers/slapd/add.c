@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/add.c,v 1.208.2.19 2008/02/11 23:24:14 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/add.c,v 1.244.2.6 2008/03/21 01:01:07 hyc Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2008 The OpenLDAP Foundation.
@@ -256,10 +256,8 @@ fe_op_add( Operation *op, SlapReply *rs )
 				ber_bvarray_free( rs->sr_ref );
 			}
 		} else {
-			op->o_bd = frontendDB;
 			send_ldap_error( op, rs, LDAP_UNWILLING_TO_PERFORM,
 				"no global superior knowledge" );
-			op->o_bd = NULL;
 		}
 		goto done;
 	}
@@ -303,8 +301,6 @@ fe_op_add( Operation *op, SlapReply *rs )
 
 			op->o_bd = op_be;
 
-			op->o_bd = op_be;
-
 			if ( !update ) {
 				rs->sr_err = slap_mods_no_user_mod_check( op, op->ora_modlist,
 					&rs->sr_text, textbuf, textlen );
@@ -333,7 +329,6 @@ fe_op_add( Operation *op, SlapReply *rs )
 					send_ldap_result( op, rs );
 					goto done;
 				}
-#endif
 			}
 
 			rc = op->o_bd->be_add( op, rs );

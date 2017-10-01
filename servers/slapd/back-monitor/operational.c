@@ -1,5 +1,5 @@
 /* operational.c - monitor backend operational attributes function */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/operational.c,v 1.14.2.5 2008/02/11 23:24:23 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/operational.c,v 1.17.2.4 2008/02/12 00:58:15 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2001-2008 The OpenLDAP Foundation.

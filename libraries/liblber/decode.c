@@ -1,5 +1,5 @@
 /* decode.c - ber input decoding routines */
-/* $OpenLDAP: pkg/ldap/libraries/liblber/decode.c,v 1.101.2.6 2008/02/11 23:24:11 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/liblber/decode.c,v 1.105.2.4 2008/02/11 23:26:41 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2008 The OpenLDAP Foundation.
@@ -576,57 +576,6 @@ ber_get_stringbv_null( BerElement *ber, struct berval *bv, int option )
 	return tag;
 }
 
-#ifdef LDAP_NULL_IS_NULL
-ber_tag_t
-ber_get_stringbv_null( BerElement *ber, struct berval *bv, int alloc )
-{
-	ber_tag_t	tag;
-
-	assert( ber != NULL );
-	assert( bv != NULL );
-
-	assert( LBER_VALID( ber ) );
-
-	if ( (tag = ber_skip_tag( ber, &bv->bv_len )) == LBER_DEFAULT ) {
-		bv->bv_val = NULL;
-		return LBER_DEFAULT;
-	}
-
-	if ( (ber_len_t) ber_pvt_ber_remaining( ber ) < bv->bv_len ) {
-		return LBER_DEFAULT;
-	}
-
-	if ( bv->bv_len == 0 ) {
-		bv->bv_val = NULL;
-		ber->ber_tag = *(unsigned char *)ber->ber_ptr;
-		return tag;
-	}
-
-	if ( alloc ) {
-		bv->bv_val = (char *) ber_memalloc_x( bv->bv_len + 1,
-			ber->ber_memctx );
-		if ( bv->bv_val == NULL ) {
-			return LBER_DEFAULT;
-		}
-
-		if ( bv->bv_len > 0 && (ber_len_t) ber_read( ber, bv->bv_val,
-			bv->bv_len ) != bv->bv_len )
-		{
-			LBER_FREE( bv->bv_val );
-			bv->bv_val = NULL;
-			return LBER_DEFAULT;
-		}
-	} else {
-		bv->bv_val = ber->ber_ptr;
-		ber->ber_ptr += bv->bv_len;
-	}
-	ber->ber_tag = *(unsigned char *)ber->ber_ptr;
-	bv->bv_val[bv->bv_len] = '\0';
-
-	return tag;
-}
-#endif /* LDAP_NULL_IS_NULL */
-
 ber_tag_t
 ber_get_stringa( BerElement *ber, char **buf )
 {
@@ -654,22 +603,6 @@ ber_get_stringa_null( BerElement *ber, char **buf )
 
 	return tag;
 }
-
-#ifdef LDAP_NULL_IS_NULL
-ber_tag_t
-ber_get_stringa_null( BerElement *ber, char **buf )
-{
-	BerValue	bv;
-	ber_tag_t	tag;
-
-	assert( buf != NULL );
-
-	tag = ber_get_stringbv_null( ber, &bv, 1 );
-	*buf = bv.bv_val;
-
-	return tag;
-}
-#endif /* LDAP_NULL_IS_NULL */
 
 ber_tag_t
 ber_get_stringal( BerElement *ber, struct berval **bv )

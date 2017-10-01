@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/proto-slap.h,v 1.552.2.45 2008/02/11 23:24:16 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/proto-slap.h,v 1.670.2.26 2008/07/08 19:25:38 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2008 The OpenLDAP Foundation.
@@ -42,28 +42,6 @@ struct config_reply_s;	/* config.h */
 LDAP_SLAPD_F (int) dynacl_aci_init LDAP_P(( void ));
 #endif /* SLAPD_ACI_ENABLED */
 #endif /* SLAP_DYNACL */
-
-/*
- * aci.c
- */
-#ifdef SLAPD_ACI_ENABLED
-LDAP_SLAPD_F (int) aci_mask LDAP_P((
-	Operation *op, Entry *e,
-	AttributeDescription *desc,
-	struct berval *val,
-	struct berval *aci,
-	int nmatch,
-	regmatch_t *matches,
-	slap_access_t *grant,
-	slap_access_t *deny,
-	slap_aci_scope_t scope));
-#ifdef SLAP_DYNACL
-LDAP_SLAPD_F (int) dynacl_aci_init LDAP_P(( void ));
-#else /* !SLAP_DYNACL */
-LDAP_SLAPD_F (int) aci_init LDAP_P(( void ));
-LDAP_SLAPD_V (AttributeDescription *) slap_ad_aci;
-#endif /* !SLAP_DYNACL */
-#endif /* SLAPD_ACI_ENABLED */
 
 /*
  * acl.c
@@ -273,9 +251,6 @@ LDAP_SLAPD_F (int) register_at LDAP_P((
 	const char *at,
 	AttributeDescription **ad,
 	int dupok ));
-
-LDAP_SLAPD_F (void) at_unparse LDAP_P((
-	BerVarray *bva, AttributeType *start, AttributeType *end, int system ));
 
 /*
  * attr.c
@@ -1387,8 +1362,6 @@ LDAP_SLAPD_F (int) is_entry_objectclass LDAP_P((
 	 : is_entry_objectclass((e), slap_schema.si_oc_syncConsumerSubentry, SLAP_OCF_SET_FLAGS))
 
 LDAP_SLAPD_F (int) oc_schema_info( Entry *e );
-LDAP_SLAPD_F (void) oc_unparse LDAP_P((
-	BerVarray *bva, ObjectClass *start, ObjectClass *end, int system ));
 
 LDAP_SLAPD_F (int) oc_start LDAP_P(( ObjectClass **oc ));
 LDAP_SLAPD_F (int) oc_next LDAP_P(( ObjectClass **oc ));
@@ -1952,9 +1925,6 @@ LDAP_SLAPD_V (int)			slap_tool_thread_max;
 LDAP_SLAPD_V (ldap_pvt_thread_mutex_t)	entry2str_mutex;
 
 LDAP_SLAPD_V (ldap_pvt_thread_mutex_t)	gmtime_mutex;
-
-LDAP_SLAPD_V (ldap_pvt_thread_mutex_t)	ad_undef_mutex;
-LDAP_SLAPD_V (ldap_pvt_thread_mutex_t)	oc_undef_mutex;
 
 LDAP_SLAPD_V (ldap_pvt_thread_mutex_t)	ad_undef_mutex;
 LDAP_SLAPD_V (ldap_pvt_thread_mutex_t)	oc_undef_mutex;

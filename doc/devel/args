@@ -56,4 +56,4 @@ ldapwhoami       * DE**HI*   *O QR  UVWXYZ   def*h**  *nop*    vwxy
 
 
 ---
-$OpenLDAP: pkg/ldap/doc/devel/args,v 1.26.4.3 2006/02/12 03:19:48 kurt Exp $
+$OpenLDAP: pkg/ldap/doc/devel/args,v 1.29.2.3 2008/02/09 00:53:37 quanah Exp $

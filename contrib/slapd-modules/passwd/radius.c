@@ -1,4 +1,4 @@
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/passwd/radius.c,v 1.2.2.4 2008/02/11 23:26:38 kurt Exp $ */
 /*
  * Copyright 1998-2008 The OpenLDAP Foundation.
  * All rights reserved.

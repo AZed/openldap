@@ -1,5 +1,5 @@
 /* tls.c - Handle tls/ssl using SSLeay, OpenSSL or GNUTLS. */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/tls.c,v 1.133.2.11 2008/07/09 23:56:44 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2008 The OpenLDAP Foundation.
@@ -376,14 +376,6 @@ static int tls_verify_ok( int ok, X509_STORE_CTX *ctx );
 static RSA * tls_tmp_rsa_cb( SSL *ssl, int is_export, int key_length );
 
 static DH * tls_tmp_dh_cb( SSL *ssl, int is_export, int key_length );
-
-typedef struct dhplist {
-	struct dhplist *next;
-	int keylength;
-	DH *param;
-} dhplist;
-
-static dhplist *dhparams;
 
 typedef struct dhplist {
 	struct dhplist *next;
@@ -2873,30 +2865,6 @@ ldap_install_tls( LDAP *ld )
 }
 
 int
-ldap_start_tls( LDAP *ld,
-	LDAPControl **serverctrls,
-	LDAPControl **clientctrls,
-	int *msgidp )
-{
-	return ldap_extended_operation( ld, LDAP_EXOP_START_TLS,
-		NULL, serverctrls, clientctrls, msgidp );
-}
-
-int
-ldap_install_tls( LDAP *ld )
-{
-#ifndef HAVE_TLS
-	return LDAP_NOT_SUPPORTED;
-#else
-	if ( ldap_tls_inplace( ld ) ) {
-		return LDAP_LOCAL_ERROR;
-	}
-
-	return ldap_int_tls_start( ld, ld->ld_defconn, NULL );
-#endif
-}
-
-int
 ldap_start_tls_s ( LDAP *ld,
 	LDAPControl **serverctrls,
 	LDAPControl **clientctrls )
@@ -3162,6 +3130,5 @@ nomem:
 	if ( newDN != (LDAPDN)(char *) ptrs )
 		LDAP_FREE( newDN );
 	return rc;
-#endif
 }
 

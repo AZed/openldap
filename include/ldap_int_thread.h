@@ -1,5 +1,5 @@
 /* ldap_int_thread.h - ldap internal thread wrappers header file */
-/* $OpenLDAP: pkg/ldap/include/ldap_int_thread.h,v 1.13.2.5 2008/02/11 23:24:10 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/include/ldap_int_thread.h,v 1.20.2.5 2008/02/11 23:26:40 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  * 
  * Copyright 1998-2008 The OpenLDAP Foundation.
@@ -45,8 +45,6 @@ typedef pthread_t		ldap_int_thread_t;
 typedef pthread_mutex_t		ldap_int_thread_mutex_t;
 typedef pthread_cond_t		ldap_int_thread_cond_t;
 typedef pthread_key_t		ldap_int_thread_key_t;
-
-#define ldap_int_thread_equal(a, b)	pthread_equal((a), (b))
 
 #define ldap_int_thread_equal(a, b)	pthread_equal((a), (b))
 

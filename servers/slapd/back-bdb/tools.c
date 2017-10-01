@@ -1,5 +1,5 @@
 /* tools.c - tools for slap tools */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/tools.c,v 1.72.2.21 2008/02/11 23:24:19 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/tools.c,v 1.105.2.10 2008/02/12 00:34:58 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2008 The OpenLDAP Foundation.
@@ -127,35 +127,6 @@ int bdb_tool_entry_open(
 			}
 			bdb_tool_info = bdb;
 		}
-	}
-
-	if (cursor == NULL) {
-		int rc = bdb->bi_id2entry->bdi_db->cursor(
-			bdb->bi_id2entry->bdi_db, NULL, &cursor,
-			bdb->bi_db_opflags );
-		if( rc != 0 ) {
-			return -1;
-		}
-	}
-
-	/* Set up for threaded slapindex */
-	if (( slapMode & (SLAP_TOOL_QUICK|SLAP_TOOL_READONLY)) == SLAP_TOOL_QUICK
-		&& bdb->bi_nattrs ) {
-		if ( !bdb_tool_info ) {
-			int i;
-			ldap_pvt_thread_mutex_init( &bdb_tool_index_mutex );
-			ldap_pvt_thread_cond_init( &bdb_tool_index_cond );
-			bdb_tool_index_threads = ch_malloc( slap_tool_thread_max * sizeof( int ));
-			bdb_tool_index_rec = ch_malloc( bdb->bi_nattrs * sizeof( IndexRec ));
-			bdb_tool_index_tcount = slap_tool_thread_max - 1;
-			for (i=1; i<slap_tool_thread_max; i++) {
-				int *ptr = ch_malloc( sizeof( int ));
-				*ptr = i;
-				ldap_pvt_thread_pool_submit( &connection_pool,
-					bdb_tool_index_task, ptr );
-			}
-		}
-		bdb_tool_info = bdb;
 	}
 
 	return 0;

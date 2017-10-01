@@ -1,5 +1,5 @@
 /* init.c - initialize sock backend */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-sock/init.c,v 1.4.2.1 2008/02/09 00:46:09 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2007-2008 The OpenLDAP Foundation.

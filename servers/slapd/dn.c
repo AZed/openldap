@@ -1,5 +1,5 @@
 /* dn.c - routines for dealing with distinguished names */
-/* $OpenLDAP: pkg/ldap/servers/slapd/dn.c,v 1.170.2.13 2008/02/11 23:24:16 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/dn.c,v 1.182.2.8 2008/02/11 23:26:44 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2008 The OpenLDAP Foundation.
@@ -412,7 +412,7 @@ LDAPRDN_rewrite( LDAPRDN rdn, unsigned flags, void *ctx )
 static int
 LDAPDN_rewrite( LDAPDN dn, unsigned flags, void *ctx )
 {
-	int 		iRDN, do_sort = 0;
+	int 		iRDN;
 	int 		rc;
 
 	assert( dn != NULL );
@@ -423,6 +423,7 @@ LDAPDN_rewrite( LDAPDN dn, unsigned flags, void *ctx )
 			return rc;
 		}
 	}
+
 	return LDAP_SUCCESS;
 }
 
