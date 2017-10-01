@@ -4,9 +4,10 @@ actually happens if nss_ldap is used for hostname resolution and earlier
 modules can't resolve the local host name), so use the reentrant versions of
 the functions, even if we're not being compiled for use in libldap_r (patch
 from Jeffery Layton, #179730).
---- openldap-2.3.19/libraries/libldap/util-int.c	2006-02-23 15:42:14.000000000 -0500
-+++ openldap-2.3.19/libraries/libldap/util-int.c	2006-02-23 15:42:02.000000000 -0500
-@@ -52,8 +52,8 @@
+diff -up openldap-2.4.11/libraries/libldap/util-int.c.patch7 openldap-2.4.11/libraries/libldap/util-int.c
+--- openldap-2.4.11/libraries/libldap/util-int.c.patch7	2008-02-12 00:26:41.000000000 +0100
++++ openldap-2.4.11/libraries/libldap/util-int.c	2008-09-01 09:57:09.000000000 +0200
+@@ -52,8 +52,8 @@ extern int h_errno;
  #ifndef LDAP_R_COMPILE
  # undef HAVE_REENTRANT_FUNCTIONS
  # undef HAVE_CTIME_R
@@ -17,7 +18,7 @@ from Jeffery Layton, #179730).
  
  #else
  # include <ldap_pvt_thread.h>
-@@ -110,7 +110,7 @@
+@@ -110,7 +110,7 @@ char *ldap_pvt_ctime( const time_t *tp, 
  #define BUFSTART (1024-32)
  #define BUFMAX (32*1024-32)
  

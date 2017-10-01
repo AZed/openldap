@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # ldap	This shell script takes care of starting and stopping
-#	ldap servers (slapd and slurpd).
+#	ldap servers (slapd).
 #
 # chkconfig: - 27 73
 # description: LDAP stands for Lightweight Directory Access Protocol, used \
@@ -10,27 +10,39 @@
 # config: /etc/openldap/slapd.conf
 # pidfile: /var/run/openldap/slapd.pid
 
+### BEGIN INIT INFO
+# Provides: ldap
+# Required-Start: $network $local_fs
+# Required-Stop: $network $local_fs 
+# Should-Start: 
+# Should-Stop: 
+# Default-Start: 
+# Default-Stop: 
+# Short-Description: starts and stopd OpenLDAP server daemon
+# Description: LDAP stands for Lightweight Directory Access Protocol, used
+#              for implementing the industry standard directory services.
+### END INIT INFO
+
 # Source function library.
 . /etc/init.d/functions
 
-# Source networking configuration and check that networking is up.
-if [ -r /etc/sysconfig/network ] ; then
-	. /etc/sysconfig/network
-	[ ${NETWORKING} = "no" ] && exit 1
-fi
+# Define default values of options allowed in /etc/sysconfig/ldap
+SLAPD_LDAP="yes"
+SLAPD_LDAPI="no"
+SLAPD_LDAPS="no"
+SLAPD_SHUTDOWN_TIMEOUT=3
+# OPTIONS, SLAPD_OPTIONS and KTB5_KTNAME are not defined
 
-# Source an auxiliary options file if we have one, and pick up OPTIONS,
-# SLAPD_OPTIONS, SLURPD_OPTIONS, SLAPD_LDAPS, SLAPD_LDAPI, and maybe
-# KRB5_KTNAME and SLURPD_KRB5CCNAME.
+# Source an auxiliary options file if we have one
 if [ -r /etc/sysconfig/ldap ] ; then
 	. /etc/sysconfig/ldap
 fi
 
 slapd=/usr/sbin/slapd
-slurpd=/usr/sbin/slurpd
 slaptest=/usr/sbin/slaptest
-[ -x ${slapd} ] || exit 1
-[ -x ${slurpd} ] || exit 1
+lockfile=/var/lock/subsys/ldap
+configfile=/etc/openldap/slapd.conf
+pidfile=/var/run/openldap/slapd.pid
 
 RETVAL=0
 
@@ -90,15 +102,24 @@ function checkkeytab() {
 
 function configtest() {
 	local user= ldapuid= dbdir= file=
+	[ -f $configfile ] || exit 6
 	# Check for simple-but-common errors.
 	user=ldap
 	prog=`basename ${slapd}`
 	ldapuid=`id -u $user`
 	# Unaccessible database files.
-	for dbdir in `LANG=C egrep '^directory[[:space:]]+[[:print:]]+$' /etc/openldap/slapd.conf | sed s,^directory,,` ; do
-		for file in `find ${dbdir}/ -not -uid $ldapuid -and \( -name "*.dbb" -or -name "*.gdbm" -or -name "*.bdb" -or -name "__db.*" \)` ; do
+	slaptestflags=""
+	for dbdir in `LANG=C egrep '^directory[[:space:]]+[[:print:]]+$' $configfile | sed s,^directory,,` ; do
+		for file in `find ${dbdir}/ -not -uid $ldapuid -and \( -name "*.dbb" -or -name "*.gdbm" -or -name "*.bdb" -or -name "__db.*" -or -name "log.*" -or -name alock \)` ; do
 			echo -n $"$file is not owned by \"$user\"" ; warning ; echo
 		done
+		if ! test -s ${dbdir}/id2entry.dbb ; then
+			if ! test -s ${dbdir}/id2entry.gdbm ; then
+				if ! test -s ${dbdir}/id2entry.bdb ; then
+					slaptestflags="-u"
+				fi
+			fi
+		fi
 	done
 	# Unaccessible keytab with an "ldap" key.
 	if checkkeytab $user ldap ; then
@@ -106,43 +127,50 @@ function configtest() {
 		echo -n $"$file is not readable by \"$user\"" ; warning ; echo
 	fi
 	# Unaccessible TLS configuration files.
-	tlsconfigs=`LANG=C egrep '^(TLS_CACERT|TLSCACertificateFile|TLSCertificateFile|TLSCertificateKeyFile)[[:space:]]' /etc/openldap/slapd.conf /etc/openldap/ldap.conf | awk '{print $2}'`
+	tlsconfigs=`LANG=C egrep '^(TLSCACertificateFile|TLSCertificateFile|TLSCertificateKeyFile)[[:space:]]' $configfile | awk '{print $2}'`
 	for file in $tlsconfigs ; do
 		if ! testasuser $user -r $file ; then
 			echo -n $"$file is not readable by \"$user\"" ; warning ; echo
 		fi
 	done
 	# Check the configuration file.
-	slaptestout=`/sbin/runuser -m -s "$slaptest" -- "$user" "-u" 2>&1`
+	slaptestout=`/sbin/runuser -m -s "$slaptest" -- "$user" $slaptestflags 2>&1`
 	slaptestexit=$?
+#	slaptestout=`echo $slaptestout 2>/dev/null | grep -v "config file testing succeeded"`
+	# print warning if slaptest passed but reports some problems
 	if test $slaptestexit == 0 ; then
 		if echo "$slaptestout" | grep -v "config file testing succeeded" >/dev/null ; then
 			echo -n $"Checking configuration files for $prog: " ; warning ; echo
 			echo "$slaptestout"
 		fi
-	else
+	fi
+	# report error if configuration file is wrong
+	if test $slaptestexit != 0 ; then
 		echo -n $"Checking configuration files for $prog: " ; failure ; echo
 		echo "$slaptestout"
-		if /sbin/runuser -m -s "$slaptest" -- "$user" "-u" &>/dev/null ; then
-			for directory in `LANG=C egrep '^directory[[:space:]]+[[:print:]]+$' /etc/openldap/slapd.conf | sed s,^directory,,` ; do
+		if /sbin/runuser -m -s "$slaptest" -- "$user" "-u" > /dev/null 2> /dev/null ; then
+			dirs=`LANG=C egrep '^directory[[:space:]]+[[:print:]]+$' $configfile | awk '{print $2}'`
+			for directory in $dirs ; do
 				if test -r $directory/__db.001 ; then
 					echo -n $"stale lock files may be present in $directory" ; warning ; echo
 				fi
 			done
 		fi
-		exit 1
+		exit 6
 	fi
 }
 
 function start() {
+	[ -x $slapd ] || exit 5
 	configtest
 	# Define a couple of local variables which we'll need. Maybe.
 	user=ldap
 	prog=`basename ${slapd}`
+	harg=""
 	if test x$SLAPD_LDAP = xyes ; then
 	    harg="ldap:///"
-    fi
-	if grep -q ^TLS /etc/openldap/slapd.conf || test x$SLAPD_LDAPS = xyes ; then
+	fi
+	if test x$SLAPD_LDAPS = xyes ; then
 	    harg="$harg ldaps:///"
 	fi
 	if test x$SLAPD_LDAPI = xyes ; then
@@ -150,23 +178,10 @@ function start() {
 	fi
 	# Start daemons.
 	echo -n $"Starting $prog: "
-	ulimit $ULIMIT_SETTINGS > /dev/null 2>&1
-	daemon --check=$prog ${slapd} -h \"$harg\" -u ${user} $OPTIONS $SLAPD_OPTIONS
+	daemon --pidfile=$pidfile --check=$prog ${slapd} -h "\"$harg\"" -u ${user} $OPTIONS $SLAPD_OPTIONS 
 	RETVAL=$?
+	[ $RETVAL -eq 0 ] && touch $lockfile
 	echo
-	if [ $RETVAL -eq 0 ]; then
-	    if grep -q "^replogfile" /etc/openldap/slapd.conf; then
-		prog=`basename ${slurpd}`
-		echo -n $"Starting $prog: "
-		if [ -n "$SLURPD_KRB5CCNAME" ]; then
-			export KRB5CCNAME="$SLURPD_KRB5CCNAME";
-		fi
-		daemon ${slurpd} $OPTIONS $SLURPD_OPTIONS
-		RETVAL=$?
-		echo
-	    fi
-	fi
-	[ $RETVAL -eq 0 ] && touch /var/lock/subsys/ldap
 	return $RETVAL
 }
 
@@ -174,19 +189,10 @@ function stop() {
 	# Stop daemons.
 	prog=`basename ${slapd}`
 	echo -n $"Stopping $prog: "
-	killproc -d $STOP_DELAY ${slapd}
+	killproc -p $pidfile -d $SLAPD_SHUTDOWN_TIMEOUT ${slapd}
 	RETVAL=$?
+	[ $RETVAL -eq 0 ] && rm -f $lockfile /var/run/slapd.args
 	echo
-	if [ $RETVAL -eq 0 ]; then
-	    if grep -q "^replogfile" /etc/openldap/slapd.conf; then
-		prog=`basename ${slurpd}`
-		echo -n $"Stopping $prog: "
-		killproc ${slurpd}
-		RETVAL=$?
-		echo
-	    fi
-	fi
-	[ $RETVAL -eq 0 ] && rm -f /var/lock/subsys/ldap /var/run/slapd.args
 	return $RETVAL
 }
 
@@ -204,30 +210,24 @@ case "$1" in
 	RETVAL=$?
 	;;
     status)
-	status ${slapd}
+	status -p $pidfile ${slapd}
 	RETVAL=$?
-	if grep -q "^replogfile" /etc/openldap/slapd.conf ; then
-	    status ${slurpd}
-	    RET=$?
-	    if [ $RET -ne 0 ] ; then
-		RETVAL=$RET;
-	    fi
-	fi
 	;;
-    restart)
+    restart|force-reload)
 	stop
 	start
+	RETVAL=$?
 	;;
-    condrestart)
+    condrestart|try-restart)
 	if [ -f /var/lock/subsys/ldap ] ; then
 	    stop
- 	    start
+	    start
 	    RETVAL=$?
 	fi
 	;;
     *)
-	echo $"Usage: $0 {start|stop|restart|status|condrestart}"
-	RETVAL=1
+	echo $"Usage: $0 {start|stop|restart|status|condrestart|configtest}"
+	RETVAL=2
 esac
 
 exit $RETVAL

@@ -1,0 +1,39 @@
+diff -up openldap-2.4.11/doc/man/man8/slapd.8.patch9 openldap-2.4.11/doc/man/man8/slapd.8
+--- openldap-2.4.11/doc/man/man8/slapd.8.patch9	2008-02-12 00:26:40.000000000 +0100
++++ openldap-2.4.11/doc/man/man8/slapd.8	2008-09-01 09:57:09.000000000 +0200
+@@ -5,7 +5,7 @@
+ .SH NAME
+ slapd \- Stand-alone LDAP Daemon
+ .SH SYNOPSIS
+-.B LIBEXECDIR/slapd 
++.B slapd 
+ .B [\-[4|6]]
+ .B [\-T {acl|add|auth|cat|dn|index|passwd|test}]
+ .B [\-d debug\-level]
+@@ -263,7 +263,7 @@ the LDAP databases defined in the defaul
+ .LP
+ .nf
+ .ft tt
+-	LIBEXECDIR/slapd
++	slapd
+ .ft
+ .fi
+ .LP
+@@ -274,7 +274,7 @@ on voluminous debugging which will be pr
+ .LP
+ .nf
+ .ft tt
+-	LIBEXECDIR/slapd -f /var/tmp/slapd.conf -d 255
++	slapd -f /var/tmp/slapd.conf -d 255
+ .ft
+ .fi
+ .LP
+@@ -282,7 +282,7 @@ To test whether the configuration file i
+ .LP
+ .nf
+ .ft tt
+-	LIBEXECDIR/slapd -Tt
++	slapd -Tt
+ .ft
+ .fi
+ .LP
