@@ -27,7 +27,7 @@
 Summary: The configuration files, libraries, and documentation for OpenLDAP.
 Name: openldap
 Version: %{version_23}
-Release: 28%{?dist}
+Release: 29%{?dist}
 License: OpenLDAP
 Group: System Environment/Daemons
 Source0: ftp://ftp.OpenLDAP.org/pub/OpenLDAP/openldap-release/openldap-%{version_23}.tgz
@@ -80,6 +80,7 @@ Patch30: openldap-2.3.43-leak-slfree-syncprov.patch
 Patch31: openldap-2.3.43-dns-ipv6-queries.patch
 Patch32: openldap-rwm-reference-counting.patch
 Patch33: openldap-2.3.43-syncprov-psearch-race.patch
+Patch34: openldap-ITS8240-remove-obsolete-assert.patch
 
 # Patches for 2.2.29 for the compat-openldap package.
 Patch100: openldap-2.2.13-tls-fix-connection-test.patch
@@ -264,6 +265,7 @@ pushd openldap-%{version_23}
 %patch31 -p1 -b .dns-ipv6-queries
 %patch32 -p1 -b .rwm-ref-count
 %patch33 -p1 -b .syncprov-psearch-race
+%patch34 -p1 -b .ITS8240-remove-obsolete-assert
 
 cp %{_datadir}/libtool/config.{sub,guess} build/
 popd
@@ -304,6 +306,7 @@ make all install
 popd
 
 pushd openldap-%{version_22}
+%patch34 -p1 -b .ITS8240-remove-obsolete-assert
 %patch100 -p1 -b .resolv
 %patch101 -p1 -b .CAN-2005-2069
 %patch102 -p1 -b .ads
@@ -927,11 +930,14 @@ exec > /dev/null 2> /dev/null
 %attr(0644,root,root)      %{evolution_connector_libdir}/*.a
 
 %changelog
+* Thu Sep 17 2015 Matúš Honěk <mhonek@redhat.com> - 2.3.43-29
+- CVE-2015-6908 openldap: ber_get_next denial of service vulnerability (#1263170)
+
 * Wed Apr  9 2014 Jan Synáček <jsynacek@redhat.com> - 2.3.43-28
 - fix: syncprov psearch race condition (#999811)
 
 * Thu Feb 13 2014 Jan Synáček <jsynacek@redhat.com> - 2.3.43-27
-- fix: CVE-2013-4449 segfault on certain queries with rwm overlay (#1064145)
+- fix: CVE-2013-4449 segfault on certain queries with rwm overlay (#1064146)
 
 * Tue Jun 26 2012 Jan Vcelak <jvcelak@redhat.com> 2.3.43-26
 - fix: do not send IPv6 DNS queries when IPv6 is disabled on the host (#812772)
