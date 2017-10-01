@@ -11,7 +11,7 @@
 Summary: LDAP support libraries
 Name: openldap
 Version: %{version}
-Release: 4%{?dist}
+Release: 11%{?dist}
 License: OpenLDAP
 Group: System Environment/Daemons
 Source0: ftp://ftp.OpenLDAP.org/pub/OpenLDAP/openldap-release/openldap-%{version}.tgz
@@ -36,6 +36,8 @@ Patch9: openldap-2.3.37-smbk5pwd.patch
 Patch10: openldap-2.4.6-multilib.patch
 Patch11: openldap-2.4.16-doc-cacertdir.patch
 Patch12: openldap-2.4.21-dn2id-segfault.patch
+Patch13: openldap-2.4.21-modrdn-segfault.patch
+Patch14: openldap-2.4.21-config_emtpy_uri.patch
 
 # Patches for the evolution library
 Patch200: openldap-2.4.6-evolution-ntlm.patch
@@ -132,6 +134,8 @@ pushd openldap-%{version}
 %patch10 -p1 -b .multilib
 %patch11 -p1 -b .cacertdir
 %patch12 -p1 -b .segfault
+%patch13 -p1 -b .modrdn-segfault
+%patch14 -p1 -b .config-emtpy-uri
 
 cp %{_datadir}/libtool/config/config.{sub,guess} build/
 popd
@@ -192,7 +196,7 @@ ln -sf libslapd_db.so ${dbdir}/%{_lib}/${subdir}/libdb.so
 popd
 
 export CPPFLAGS="-I${dbdir}/include"
-export CFLAGS="$CPPFLAGS $RPM_OPT_FLAGS -D_REENTRANT -fPIC -D_GNU_SOURCE"
+export CFLAGS="$CPPFLAGS $RPM_OPT_FLAGS -D_REENTRANT -DLDAP_CONNECTIONLESS -fPIC -D_GNU_SOURCE"
 export LDFLAGS="-L${dbdir}/%{_lib}"
 export LD_LIBRARY_PATH=${dbdir}/%{_lib}${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
 
@@ -359,12 +363,6 @@ install -d -m755 $RPM_BUILD_ROOT%{_sysconfdir}/openldap/schema/redhat
 install -m644 %SOURCE6 \
     $RPM_BUILD_ROOT%{_sysconfdir}/openldap/schema/redhat/
 
-# Move doc files out of _sysconfdir
-mv $RPM_BUILD_ROOT%{_sysconfdir}/openldap/schema/README README.schema
-mv $RPM_BUILD_ROOT%{_sysconfdir}/openldap/DB_CONFIG.example DB_CONFIG.example
-chmod 0644 DB_CONFIG.example
-chmod 0644 openldap-%{version}/servers/slapd/back-sql/rdbms_depend/timesten/*.sh
-
 # Move slapd and slurpd out of _libdir
 mv $RPM_BUILD_ROOT/%{_libdir}/slapd $RPM_BUILD_ROOT/%{_sbindir}/
 rm -f $RPM_BUILD_ROOT/%{_sbindir}/slap{acl,add,auth,cat,dn,index,passwd,test,schema}
@@ -375,9 +373,18 @@ for X in acl add auth cat dn index passwd test schema; do ln -s slapd $RPM_BUILD
 chmod 755 $RPM_BUILD_ROOT/%{_libdir}/lib*.so*
 chmod 644 $RPM_BUILD_ROOT/%{_libdir}/lib*.*a
 
-# Add files and dirs which would be created by %post scriptlet
-touch $RPM_BUILD_ROOT/%{_sysconfdir}/openldap/slapd.conf.bak
+# slapd.conf(5) is obsoleted since 2.3, see slapd-config(5)
+# new configuration will be generated in %post
+mkdir -p $RPM_BUILD_ROOT/%{_datadir}/openldap-servers
 mkdir $RPM_BUILD_ROOT/%{_sysconfdir}/openldap/slapd.d
+mv $RPM_BUILD_ROOT/%{_sysconfdir}/openldap/slapd.conf $RPM_BUILD_ROOT/%{_datadir}/openldap-servers/slapd.conf.obsolete
+chmod 0644 $RPM_BUILD_ROOT/%{_datadir}/openldap-servers/slapd.conf.obsolete
+
+# Move doc files out of _sysconfdir
+mv $RPM_BUILD_ROOT%{_sysconfdir}/openldap/schema/README README.schema
+mv $RPM_BUILD_ROOT%{_sysconfdir}/openldap/DB_CONFIG.example $RPM_BUILD_ROOT/%{_datadir}/openldap-servers/DB_CONFIG.example
+chmod 0644 openldap-%{version}/servers/slapd/back-sql/rdbms_depend/timesten/*.sh
+chmod 0644 $RPM_BUILD_ROOT/%{_datadir}/openldap-servers/DB_CONFIG.example
 
 # Remove files which we don't want packaged.
 rm -f $RPM_BUILD_ROOT/%{_libdir}/*.la
@@ -485,7 +492,9 @@ fi
 # If there's a /var/lib/ldap/need_db_upgrade file, run db_upgrade and delete it.
 # It was created by the % pre above.
 if [ -f /var/lib/ldap/need_db_upgrade ]; then
-    /sbin/runuser -m -s /usr/sbin/slapd_db_upgrade -- "ldap"  -h /var/lib/ldap /var/lib/ldap/*.bdb
+	if ls /var/lib/ldap/*.bdb > /dev/null 2>&1; then
+		/sbin/runuser -m -s /usr/sbin/slapd_db_upgrade -- "ldap"  -h /var/lib/ldap /var/lib/ldap/*.bdb
+	fi
     /sbin/runuser -m -s /usr/sbin/slapd_db_checkpoint -- "ldap" -h /var/lib/ldap -1
     rm -f /var/lib/ldap/need_db_upgrade
 fi
@@ -507,8 +516,15 @@ chmod 640 slapd.pem
 popd
 fi
 
-if [ -f %{_sysconfdir}/openldap/slapd.conf ]; then
-    # if there is no slapd.conf, we probably already have new configuration in place
+if [ `find %{_sysconfdir}/openldap/slapd.d -maxdepth 0 -empty | wc -l` = "1" ]; then
+    # configuration in slapd.d not available
+
+    [ ! -f %{_sysconfdir}/openldap/slapd.conf ]
+    fresh_install=$?
+
+    [ $fresh_install -eq 0 ] && \
+        cp %{_datadir}/openldap-servers/slapd.conf.obsolete %{_sysconfdir}/openldap/slapd.conf
+
     mv %{_sysconfdir}/openldap/slapd.conf %{_sysconfdir}/openldap/slapd.conf.bak
     mkdir -p %{_sysconfdir}/openldap/slapd.d/
     lines=`egrep -n '^(database|backend)' %{_sysconfdir}/openldap/slapd.conf.bak | cut -d: -f1 | head -n 1`
@@ -527,6 +543,9 @@ EOF
     chmod -R 000 %{_sysconfdir}/openldap/slapd.d
     chmod -R u+rwX %{_sysconfdir}/openldap/slapd.d
     rm -f %{_sysconfdir}/openldap/slapd.conf
+	rm -f %{_sharedstatedir}/ldap/__db* %{_sharedstatedir}/ldap/alock
+
+    [ $fresh_install -eq 0 ] && rm -f %{_sysconfdir}/openldap/slapd.conf.bak
 fi
 
 
@@ -583,14 +602,12 @@ fi
 %doc openldap-%{version}/contrib/slapd-modules/smbk5pwd/README.smbk5pwd
 %doc openldap-%{version}/doc/guide/admin/*.html
 %doc openldap-%{version}/doc/guide/admin/*.png
-%attr(0644,root,root) %doc DB_CONFIG.example
 %doc README.schema
 %ghost %config(noreplace) %{_sysconfdir}/pki/tls/certs/slapd.pem
 %attr(0755,root,root) %{_sysconfdir}/rc.d/init.d/slapd
-%attr(0640,root,ldap) %config(noreplace,missingok) %{_sysconfdir}/openldap/slapd.conf
-%attr(0640,root,ldap) %ghost %{_sysconfdir}/openldap/slapd.conf.bak
-%attr(0640,ldap,ldap) %ghost %{_sysconfdir}/openldap/slapd.d
+%attr(0750,ldap,ldap) %dir %config(noreplace) %{_sysconfdir}/openldap/slapd.d
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/sysconfig/ldap
+%attr(0755,root,root) %dir %config(noreplace) %{_sysconfdir}/openldap/schema
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/openldap/schema/*.schema*
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/openldap/schema/*.ldif
 %attr(0755,root,root) %dir %{_sysconfdir}/openldap/schema/redhat
@@ -604,6 +621,11 @@ fi
 %attr(0755,root,root) %{_libdir}/libslapd_db-*.*.so
 %attr(0755,root,root) %dir %{_libdir}/openldap
 %attr(0755,root,root) %{_libdir}/openldap/[^b]*
+%attr(0755,root,root) %dir %{_datadir}/openldap-servers
+%attr(0644,root,root) %{_datadir}/openldap-servers/*
+# obsolete configuration
+%attr(0640,ldap,ldap) %ghost %config(noreplace,missingok) %{_sysconfdir}/openldap/slapd.conf
+%attr(0640,ldap,ldap) %ghost %config(noreplace,missingok) %{_sysconfdir}/openldap/slapd.conf.bak
 
 %files servers-sql
 %defattr(-,root,root)
@@ -631,6 +653,30 @@ fi
 %attr(0644,root,root)      %{evolution_connector_libdir}/*.a
 
 %changelog
+* Thu Sep 16 2010 Jan Vcelak <jvcelak@redhat.com> 2.4.21-11
+- fix: startup error after converting to slapd-config (#628726)
+
+* Tue Jul 20 2010 Jan Vcelak <jvcelak@redhat.com> - 2.4.21-10
+- CVE-2010-0211 openldap: modrdn processing uninitialized pointer free (#605448)
+- CVE-2010-0212 openldap: modrdn processing IA5StringNormalize NULL pointer dereference (#605452)
+- obsolete configuration file moved to /usr/share/openldap-servers (#612602)
+
+* Thu Jul 01 2010 Jan Zeleny <jzeleny@redhat.com> - 2.4.21-9
+- another shot at previous fix
+
+* Wed Jun 30 2010 Jan Zeleny <jzeleny@redhat.com> - 2.4.21-8
+- fixed issue with owner of /usr/lib/ldap/__db.* (#609523)
+
+* Thu May 27 2010 Jan Zeleny <jzeleny@redhat.com> - 2.4.21-7
+- updated autofs schema (#587722)
+- openldap built with conectionless support (#587722)
+
+* Fri Mar 19 2010 Jan Zeleny <jzeleny@redhat.com> - 2.4.21-6
+- moved slapd to start earlier during boot sequence
+
+* Tue Mar 16 2010 Jan Zeleny <jzeleny@redhat.com> - 2.4.21-5
+- minor corrections of init script (#571235, #570057, #573804)
+
 * Wed Feb 24 2010 Jan Zeleny <jzeleny@redhat.com> - 2.4.21-4
 - fixed SIGSEGV when deleting data using hdb (#562227)
 

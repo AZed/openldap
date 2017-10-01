@@ -3,7 +3,7 @@
 # slapd	This shell script takes care of starting and stopping
 #	ldap servers (slapd).
 #
-# chkconfig: - 27 73
+# chkconfig: - 12 73
 # description: LDAP stands for Lightweight Directory Access Protocol, used \
 #              for implementing the industry standard directory services.
 # processname: slapd
@@ -113,7 +113,7 @@ function configtest() {
 	slaptestflags=""
 	dbdirs=""
     if [ -d $configdir ]; then
-	    for configfile in `ls -1 $configdir/cn\=config/olcDatabase*`; do
+	    for configfile in `ls -1 $configdir/cn\=config/olcDatabase*.ldif`; do
 		    dbdirs=$dbdirs"
 		    "`LANG=C egrep '^olcDbDirectory[[:space:]]*:[[:space:]]+[[:print:]]+$' $configfile | sed 's,^olcDbDirectory: ,,'`
 	    done
@@ -144,7 +144,15 @@ function configtest() {
 	fi
 	# Unaccessible TLS configuration files.
     if [ -d $configdir ]; then
-	    tlsconfigs=`LANG=C egrep '^olc(TLSCACertificateFile|TLSCertificateFile|TLSCertificateKeyFile)[[:space:]]*:[[:space:]]' $configdir/cn\=config.ldif | awk '{print $2}'`
+		tlsconfigs=`LANG=C awk '/^olcTLS/ {
+				while (/^olcTLS/) {
+					if (/^olc(TLSCertificateKeyFile|TLSCertificateFile|TLSCACertificateFile)[ \t]*:[\t]*/) {
+						do { printf gensub(/^ /,"",1); getline } while (/^ /)
+						printf "\n" ;
+					}
+					else break; 
+				}
+			}' $configdir/cn\=config.ldif | awk '{print $2}'`
     elif [ -f $configfile ]; then
 	    tlsconfigs=`LANG=C egrep '^(TLSCACertificateFile|TLSCertificateFile|TLSCertificateKeyFile)[[:space:]]+' $configfile | awk '{print $2}'`
     fi
@@ -243,7 +251,6 @@ case "$1" in
 	RETVAL=$?
 	;;
     restart|force-reload)
-	status -p $pidfile ${slapd} > /dev/null 2>&1 || exit 7
 	stop
 	start
 	RETVAL=$?
@@ -254,12 +261,12 @@ case "$1" in
 	start
 	;;
     usage)
-	echo $"Usage: $0 {start|stop|restart|status|condrestart|configtest|usage}"
+	echo $"Usage: $0 {start|stop|restart|force-reload|status|condrestart|try-restart|configtest|usage}"
 	RETVAL=0
 	;;
     *)
-	echo $"Usage: $0 {start|stop|restart|status|condrestart|configtest|usage}"
-	RETVAL=3
+	echo $"Usage: $0 {start|stop|restart|force-reload|status|condrestart|try-restart|configtest|usage}"
+	RETVAL=2
 esac
 
 exit $RETVAL
