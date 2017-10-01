@@ -126,11 +126,13 @@ usage( void )
 	fprintf( stderr, _("  -E [!]<ext>[=<extparam>] search extensions (! indicates criticality)\n"));
 	fprintf( stderr, _("             [!]domainScope              (domain scope)\n"));
 	fprintf( stderr, _("             !dontUseCopy                (Don't Use Copy)\n"));
-	fprintf( stderr, _("             [!]mv=<filter>              (matched values filter)\n"));
-	fprintf( stderr, _("             [!]pr=<size>[/prompt|noprompt]   (paged results/prompt)\n"));
-	fprintf( stderr, _("             [!]subentries[=true|false]  (subentries)\n"));
-	fprintf( stderr, _("             [!]sync=ro[/<cookie>]            (LDAP Sync refreshOnly)\n"));
-	fprintf( stderr, _("                     rp[/<cookie>][/<slimit>] (LDAP Sync refreshAndPersist)\n"));
+	fprintf( stderr, _("             [!]mv=<filter>              (RFC 3876 matched values filter)\n"));
+	fprintf( stderr, _("             [!]pr=<size>[/prompt|noprompt] (RFC 2696 paged results/prompt)\n"));
+	fprintf( stderr, _("             [!]sss=[-]<attr[:OID]>[/[-]<attr[:OID]>...]\n"));
+	fprintf( stderr, _("                                         (RFC 2891 server side sorting)\n"));
+	fprintf( stderr, _("             [!]subentries[=true|false]  (RFC 3672 subentries)\n"));
+	fprintf( stderr, _("             [!]sync=ro[/<cookie>]       (RFC 4533 LDAP Sync refreshOnly)\n"));
+	fprintf( stderr, _("                     rp[/<cookie>][/<slimit>] (refreshAndPersist)\n"));
 	fprintf( stderr, _("             [!]<oid>=:<value>           (generic control; no response handling)\n"));
 	fprintf( stderr, _("  -F prefix  URL prefix for files (default: %s)\n"), def_urlpre);
 	fprintf( stderr, _("  -l limit   time limit (in seconds, or \"none\" or \"max\") for search\n"));
@@ -198,6 +200,9 @@ static int dontUseCopy = 0;
 #endif
 
 static int domainScope = 0;
+
+static int sss = 0;
+static LDAPSortKey **sss_keys = NULL;
 
 static int ldapsync = 0;
 static struct berval sync_cookie = { 0, NULL };
@@ -394,6 +399,31 @@ handle_private_option( int i )
 			}
 
 			domainScope = 1 + crit;
+
+		} else if ( strcasecmp( control, "sss" ) == 0 ) {
+			char *keyp;
+			if( sss ) {
+				fprintf( stderr,
+					_("server side sorting control previously specified\n"));
+				exit( EXIT_FAILURE );
+			}
+			if( cvalue == NULL ) {
+				fprintf( stderr,
+			         _("missing specification of sss control\n") );
+				exit( EXIT_FAILURE );
+			}
+			keyp = cvalue;
+			while (keyp = strchr(keyp, '/')) {
+				*keyp++ = ' ';
+			}
+			if ( ldap_create_sort_keylist( &sss_keys, cvalue )) {
+				fprintf( stderr,
+					_("server side sorting control value \"%s\" invalid\n"),
+					cvalue );
+				exit( EXIT_FAILURE );
+			}
+
+			sss = 1 + crit;
 
 		} else if ( strcasecmp( control, "subentries" ) == 0 ) {
 			if( subentries ) {
@@ -754,6 +784,7 @@ getNextPage:
 		|| domainScope
 		|| pagedResults
 		|| ldapsync
+		|| sss
 		|| subentries
 		|| valuesReturnFilter )
 	{
@@ -886,6 +917,22 @@ getNextPage:
 			c[i].ldctl_iscritical = pagedResults > 1;
 			i++;
 		}
+
+		if ( sss ) {
+			if ( ctrl_add() ) {
+				return EXIT_FAILURE;
+			}
+
+			if ( ldap_create_sort_control_value( ld,
+				sss_keys, &c[i].ldctl_value ) )
+			{
+				return EXIT_FAILURE;
+			}
+
+			c[i].ldctl_oid = LDAP_CONTROL_SORTREQUEST;
+			c[i].ldctl_iscritical = sss > 1;
+			i++;
+		}
 	}
 
 	tool_server_controls( ld, c, i );
@@ -967,6 +1014,10 @@ getNextPage:
 			printf(_("\n# with pagedResults %scontrol: size=%d"),
 				(pagedResults > 1) ? _("critical ") : "", 
 				pageSize );
+		}
+		if ( sss ) {
+			printf(_("\n# with server side sorting %scontrol"),
+				sss > 1 ? _("critical ") : "" );
 		}
 
 		printf( _("\n#\n\n") );
@@ -1050,6 +1101,9 @@ getNextPage:
 	}
 	if ( control != NULL ) {
 		ber_memfree( control );
+	}
+	if ( sss_keys != NULL ) {
+		ldap_free_sort_keylist( sss_keys );
 	}
 
 	if ( c ) {

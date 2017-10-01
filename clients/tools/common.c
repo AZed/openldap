@@ -134,6 +134,7 @@ static int print_paged_results( LDAP *ld, LDAPControl *ctrl );
 #ifdef LDAP_CONTROL_PASSWORDPOLICYREQUEST
 static int print_ppolicy( LDAP *ld, LDAPControl *ctrl );
 #endif
+static int print_sss( LDAP *ld, LDAPControl *ctrl );
 
 static struct tool_ctrls_t {
 	const char	*oid;
@@ -146,6 +147,7 @@ static struct tool_ctrls_t {
 #ifdef LDAP_CONTROL_PASSWORDPOLICYREQUEST
 	{ LDAP_CONTROL_PASSWORDPOLICYRESPONSE,		TOOL_ALL,	print_ppolicy },
 #endif
+	{ LDAP_CONTROL_SORTRESPONSE,	TOOL_SEARCH,	print_sss },
 	{ NULL,						0,		NULL }
 };
 
@@ -245,8 +247,8 @@ N_("  -c         continuous operation mode (do not stop on errors)\n"),
 N_("  -d level   set LDAP debugging level to `level'\n"),
 N_("  -D binddn  bind DN\n"),
 N_("  -e [!]<ext>[=<extparam>] general extensions (! indicates criticality)\n")
-N_("             [!]assert=<filter>     (a RFC 4515 Filter string)\n")
-N_("             [!]authzid=<authzid>   (\"dn:<dn>\" or \"u:<user>\")\n")
+N_("             [!]assert=<filter>     (RFC 4528; a RFC 4515 Filter string)\n")
+N_("             [!]authzid=<authzid>   (RFC 4370; \"dn:<dn>\" or \"u:<user>\")\n")
 #ifdef LDAP_CONTROL_OBSOLETE_PROXY_AUTHZ
 #if 0
                  /* non-advertized support for proxyDN */
@@ -258,13 +260,13 @@ N_("             [!]chaining[=<resolveBehavior>[/<continuationBehavior>]]\n")
 N_("                     one of \"chainingPreferred\", \"chainingRequired\",\n")
 N_("                     \"referralsPreferred\", \"referralsRequired\"\n")
 #endif /* LDAP_CONTROL_X_CHAINING_BEHAVIOR */
-N_("             [!]manageDSAit\n")
+N_("             [!]manageDSAit         (RFC 3296)\n")
 N_("             [!]noop\n")
 #ifdef LDAP_CONTROL_PASSWORDPOLICYREQUEST
 N_("             ppolicy\n")
 #endif
-N_("             [!]postread[=<attrs>]  (a comma-separated attribute list)\n")
-N_("             [!]preread[=<attrs>]   (a comma-separated attribute list)\n")
+N_("             [!]postread[=<attrs>]  (RFC 4527; comma-separated attr list)\n")
+N_("             [!]preread[=<attrs>]   (RFC 4527; comma-separated attr list)\n")
 N_("             [!]relax\n")
 #ifdef LDAP_CONTROL_X_SESSION_TRACKING
 N_("             [!]sessiontracking\n")
@@ -1862,6 +1864,26 @@ print_paged_results( LDAP *ld, LDAPControl *ctrl )
 	}
 
 	return 0;
+}
+
+static int
+print_sss( LDAP *ld, LDAPControl *ctrl )
+{
+	int rc;
+	ber_int_t err;
+	char *attr;
+
+	rc = ldap_parse_sortresponse_control( ld, ctrl, &err, &attr );
+	if ( rc == LDAP_SUCCESS ) {
+		char buf[ BUFSIZ ];
+		rc = snprintf( buf, sizeof(buf), "(%d) %s %s",
+			err, ldap_err2string(err), attr ? attr : "" );
+
+		tool_write_ldif( ldif ? LDIF_PUT_COMMENT : LDIF_PUT_VALUE,
+			"sortResult", buf, rc );
+	}
+
+	return rc;
 }
 
 #ifdef LDAP_CONTROL_PASSWORDPOLICYREQUEST

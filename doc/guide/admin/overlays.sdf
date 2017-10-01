@@ -322,6 +322,20 @@ side, the actual error is returned to the client.
 >        chain-return-error TRUE
 
 
+H3: Read-Back of Chained Modifications
+
+Occasionally, applications want to read back the data that they just wrote.
+If a modification requested to a shadow server was silently chained to its 
+producer, an immediate read could result in receiving data not yet sync'ed.  
+In those cases, clients should use the {{B:dontusecopy}} control to ensure 
+they are directed to the authoritative source for that piece of data.
+
+This control usually causes a referral to the actual source of the data
+to be returned.  However, when the {{slapo-chain(5)}} overlay is used,
+it intercepts the referral being returned in response to the
+{{B:dontusecopy}} control, and tries to fetch the requested data.
+
+
 H3: Further Information
 
 {{:slapo-chain(5)}}
@@ -1102,16 +1116,132 @@ H2: Translucent Proxy
 
 H3: Overview
 
-This overlay can be used with a backend database such as slapd-bdb (5)
+This overlay can be used with a backend database such as {{:slapd-bdb}}(5)
 to create a "translucent proxy".
 
-Content of entries retrieved from a remote LDAP server can be partially
-overridden by the database.
+Entries retrieved from a remote LDAP server may have some or all attributes 
+overridden, or new attributes added, by entries in the local database before 
+being presented to the client.
+
+A search operation is first populated with entries from the remote LDAP server, 
+the attributes of which are then overridden with any attributes defined in the
+local database. Local overrides may be populated with the add, modify, and 
+modrdn operations, the use of which is restricted to the root user of the 
+translucent local database.
+
+A compare operation will perform a comparison with attributes defined in the
+local database record (if any) before any comparison is made with data in the 
+remote database.
 
 
 H3: Translucent Proxy Configuration
 
+There are various options available with this overlay, but for this example we
+will demonstrate adding new attributes to a remote entry and also searching 
+against these newly added local attributes. For more information about overriding remote
+entries and search configuration, please see {{:slapo-translucent(5)}}
 
+Note: The Translucent Proxy overlay will disable schema checking in the local
+database, so that an entry consisting of overlay attributes need not adhere
+ to the complete schema.
+
+First we configure the overlay in the normal manner:
+
+>       include     /usr/local/etc/openldap/schema/core.schema
+>       include     /usr/local/etc/openldap/schema/cosine.schema
+>       include     /usr/local/etc/openldap/schema/nis.schema
+>       include     /usr/local/etc/openldap/schema/inetorgperson.schema
+>       
+>       pidfile     ./slapd.pid
+>       argsfile    ./slapd.args
+>       
+>       modulepath  /usr/local/libexec/openldap
+>       moduleload  back_bdb.la
+>       moduleload  back_ldap.la
+>       moduleload  translucent.la
+>       
+>       database    bdb
+>       suffix      "dc=suretecsystems,dc=com"
+>       rootdn      "cn=trans,dc=suretecsystems,dc=com"
+>       rootpw      secret
+>       directory   ./openldap-data
+>       
+>       index       objectClass eq
+>       
+>       overlay     translucent
+>       translucent_local carLicense
+>       
+>       uri         ldap://192.168.X.X:389
+>       lastmod     off
+>       acl-bind    binddn="cn=admin,dc=suretecsystems,dc=com" credentials="blahblah"
+
+You will notice the overlay directive and a directive to say what attribute we 
+want to be able to search against in the local database. We must also load the 
+ldap backend which will connect to the remote directory server.
+
+Now we take an example LDAP group:
+
+>       # itsupport, Groups, suretecsystems.com
+>       dn: cn=itsupport,ou=Groups,dc=suretecsystems,dc=com
+>       objectClass: posixGroup
+>       objectClass: sambaGroupMapping
+>       cn: itsupport
+>       gidNumber: 1000
+>       sambaSID: S-1-5-21-XXX
+>       sambaGroupType: 2
+>       displayName: itsupport
+>       memberUid: ghenry
+>       memberUid: joebloggs
+
+and create an LDIF file we can use to add our data to the local database, using
+ some pretty strange choices of new attributes for demonstration purposes:
+
+>       [ghenry@suretec test_configs]$ cat test-translucent-add.ldif 
+>       dn: cn=itsupport,ou=Groups,dc=suretecsystems,dc=com
+>       businessCategory: frontend-override
+>       carLicense: LIVID
+>       employeeType: special
+>       departmentNumber: 9999999
+>       roomNumber: 41L-535
+
+Searching against the proxy gives:
+
+>       [ghenry@suretec test_configs]$ ldapsearch -x -H ldap://127.0.0.1:9001 "(cn=itsupport)"
+>       # itsupport, Groups, OxObjects, suretecsystems.com
+>       dn: cn=itsupport,ou=Groups,ou=OxObjects,dc=suretecsystems,dc=com
+>       objectClass: posixGroup
+>       objectClass: sambaGroupMapping
+>       cn: itsupport
+>       gidNumber: 1003
+>       SAMBASID: S-1-5-21-XXX
+>       SAMBAGROUPTYPE: 2
+>       displayName: itsupport
+>       memberUid: ghenry
+>       memberUid: joebloggs
+>       roomNumber: 41L-535
+>       departmentNumber: 9999999
+>       employeeType: special
+>       carLicense: LIVID
+>       businessCategory: frontend-override
+
+Here we can see that the 5 new attributes are added to the remote entry before 
+being returned to the our client.
+
+Because we have configured a local attribute to search against:
+
+>       overlay     translucent
+>       translucent_local carLicense
+
+we can also search for that to return the completely fabricated entry:
+
+>       ldapsearch -x -H ldap://127.0.0.1:9001 (carLicense=LIVID)
+
+This is an extremely feature because you can then extend a remote directory server
+locally and also search against the local entries.
+
+Note: Because the translucent overlay does not perform any DN rewrites, the local
+ and remote database instances must have the same suffix. Other configurations 
+will probably fail with No Such Object and other errors
 
 H3: Further Information
 
@@ -1140,11 +1270,78 @@ H2: Value Sorting
 
 H3: Overview
 
-This overlay can be used to enforce a specific order for the values
-of an attribute when it is returned in a search.
-
+The Value Sorting overlay can be used with a backend database to sort the 
+values of specific multi-valued attributes within a subtree. The sorting occurs 
+whenever the attributes are returned in a search response.
 
 H3: Value Sorting Configuration
+
+Sorting can be specified in ascending or descending order, using either numeric 
+or alphanumeric sort methods. Additionally, a "weighted" sort can be specified,
+ which uses a numeric weight prepended to the attribute values. 
+
+The weighted sort is always performed in ascending order, but may be combined 
+with the other methods for values that all have equal weights. The weight is 
+specified by prepending an integer weight {<weight>} in front of each value 
+of the attribute for which weighted sorting is desired. This weighting factor 
+is stripped off and never returned in search results.
+
+Here are a few examples:
+
+>       loglevel    sync stats
+>       
+>       database    hdb
+>       suffix      "dc=suretecsystems,dc=com"
+>       directory   /usr/local/var/openldap-data
+>       
+>       ......
+>       
+>       overlay valsort
+>       valsort-attr memberUid ou=Groups,dc=suretecsystems,dc=com alpha-ascend
+
+For example, ascend:
+
+>       # sharedemail, Groups, suretecsystems.com
+>       dn: cn=sharedemail,ou=Groups,dc=suretecsystems,dc=com
+>       objectClass: posixGroup
+>       objectClass: top
+>       cn: sharedemail
+>       gidNumber: 517
+>       memberUid: admin
+>       memberUid: dovecot
+>       memberUid: laura
+>       memberUid: suretec
+
+For weighted, we change our data to:
+
+>       # sharedemail, Groups, suretecsystems.com
+>       dn: cn=sharedemail,ou=Groups,dc=suretecsystems,dc=com
+>       objectClass: posixGroup
+>       objectClass: top
+>       cn: sharedemail
+>       gidNumber: 517
+>       memberUid: {4}admin
+>       memberUid: {2}dovecot
+>       memberUid: {1}laura
+>       memberUid: {3}suretec
+
+and change the config to:
+
+>       overlay valsort
+>       valsort-attr memberUid ou=Groups,dc=suretecsystems,dc=com weighted
+
+Searching now results in:
+
+>       # sharedemail, Groups, OxObjects, suretecsystems.com
+>       dn: cn=sharedemail,ou=Groups,ou=OxObjects,dc=suretecsystems,dc=com
+>       objectClass: posixGroup
+>       objectClass: top
+>       cn: sharedemail
+>       gidNumber: 517
+>       memberUid: laura
+>       memberUid: dovecot
+>       memberUid: suretec
+>       memberUid: admin
 
 
 H3: Further Information

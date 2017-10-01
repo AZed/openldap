@@ -1072,6 +1072,10 @@ static struct slap_schema_mr_map {
 	{ "objectIdentifierFirstComponentMatch",
 		offsetof(struct slap_internal_schema,
 			si_mr_objectIdentifierFirstComponentMatch) },
+	{ "caseIgnoreMatch",
+		offsetof(struct slap_internal_schema, si_mr_caseIgnoreMatch) },
+	{ "caseIgnoreListMatch",
+		offsetof(struct slap_internal_schema, si_mr_caseIgnoreListMatch) },
 	{ NULL, 0 }
 };
 
@@ -1266,7 +1270,6 @@ slap_schema_load( void )
 					mr->smr_filter = ad_map[i].ssam_mr_filter;
 				}
 
-				/* FIXME: no-one will free this at exit */
 				(*adp)->ad_type->sat_equality = mr;
 			}
 		}

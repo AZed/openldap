@@ -79,7 +79,11 @@ Listener **slap_listeners = NULL;
 #define SLAPD_LISTEN_BACKLOG 1024
 #endif /* ! SLAPD_LISTEN_BACKLOG */
 
-static ber_socket_t wake_sds[2];
+static ber_socket_t wake_sds[2]
+#ifdef HAVE_WINSOCK
+	= { INVALID_SOCKET, INVALID_SOCKET }
+#endif /* HAVE_WINSOCK */
+	;
 static int emfile;
 
 static volatile int waking;
@@ -1641,8 +1645,14 @@ int
 slapd_daemon_destroy( void )
 {
 	connections_destroy();
-	tcp_close( SLAP_FD2SOCK(wake_sds[1]) );
-	tcp_close( SLAP_FD2SOCK(wake_sds[0]) );
+#ifdef HAVE_WINSOCK
+	if ( wake_sds[1] != INVALID_SOCKET )
+#endif /* HAVE_WINSOCK */
+		tcp_close( SLAP_FD2SOCK(wake_sds[1]) );
+#ifdef HAVE_WINSOCK
+	if ( wake_sds[0] != INVALID_SOCKET )
+#endif /* HAVE_WINSOCK */
+		tcp_close( SLAP_FD2SOCK(wake_sds[0]) );
 	sockdestroy();
 
 #ifdef HAVE_SLP
@@ -2291,7 +2301,7 @@ slapd_daemon_task(
 						Debug( LDAP_DEBUG_ANY,
 							"daemon: "
 							SLAP_EVENT_FNAME
-							"failed count %d "
+							" failed count %d "
 							"err (%d): %s\n",
 							ebadf, err,
 							sock_errstr( err ) );
@@ -2572,9 +2582,12 @@ slapd_daemon_task(
 		connections_shutdown();
 	}
 
-	Debug( LDAP_DEBUG_ANY,
-		"slapd shutdown: waiting for %d threads to terminate\n",
-		ldap_pvt_thread_pool_backload( &connection_pool ), 0, 0 );
+	if ( LogTest( LDAP_DEBUG_ANY )) {
+		int t = ldap_pvt_thread_pool_backload( &connection_pool );
+		Debug( LDAP_DEBUG_ANY,
+			"slapd shutdown: waiting for %d operations/tasks to finish\n",
+			t, 0, 0 );
+	}
 	ldap_pvt_thread_pool_destroy( &connection_pool, 1 );
 
 	free( slap_listeners );

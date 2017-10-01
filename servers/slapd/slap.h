@@ -415,6 +415,7 @@ struct Syntax {
 #else
 #define SLAP_SYNTAX_HIDE	0x8000U /* hide (do not publish) */
 #endif
+#define	SLAP_SYNTAX_HARDCODE	0x10000U	/* This is hardcoded schema */
 
 	Syntax				**ssyn_sups;
 
@@ -431,7 +432,7 @@ struct Syntax {
 	struct ComponentDesc* ssync_comp_syntax;
 #endif
 
-	LDAP_SLIST_ENTRY(Syntax)	ssyn_next;
+	LDAP_STAILQ_ENTRY(Syntax)	ssyn_next;
 };
 
 #define slap_syntax_is_flag(s,flag) ((int)((s)->ssyn_flags & (flag)) ? 1 : 0)
@@ -969,6 +970,8 @@ struct slap_internal_schema {
 	MatchingRule	*si_mr_integerMatch;
 	MatchingRule    *si_mr_integerFirstComponentMatch;
 	MatchingRule    *si_mr_objectIdentifierFirstComponentMatch;
+	MatchingRule    *si_mr_caseIgnoreMatch;
+	MatchingRule    *si_mr_caseIgnoreListMatch;
 
 	/* Syntaxes */
 	Syntax		*si_syn_directoryString;
@@ -2054,6 +2057,9 @@ struct SlapReply {
 
 #define REP_REF_MUSTBEFREED	0x0020U
 #define REP_REF_MASK		(REP_REF_MUSTBEFREED)
+
+#define REP_CTRLS_MUSTBEFREED	0x0040U
+#define REP_CTRLS_MASK		(REP_CTRLS_MUSTBEFREED)
 
 #define	REP_NO_ENTRYDN		0x1000U
 #define	REP_NO_SUBSCHEMA	0x2000U

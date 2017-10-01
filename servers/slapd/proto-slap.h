@@ -473,6 +473,9 @@ LDAP_SLAPD_F (void) overlay_move LDAP_P((
 LDAP_SLAPD_F (void) overlay_remove LDAP_P((
 	BackendDB *be, slap_overinst *on ));
 #endif /* SLAP_CONFIG_DELETE */
+LDAP_SLAPD_F (int) overlay_callback_after_backover LDAP_P((
+	Operation *op, slap_callback *sc, int append ));
+
 /*
  * bconfig.c
  */
@@ -1696,6 +1699,8 @@ LDAP_SLAPD_F (int) parse_at LDAP_P((
 LDAP_SLAPD_F (char *) scherr2str LDAP_P((int code)) LDAP_GCCATTR((const));
 LDAP_SLAPD_F (int) dscompare LDAP_P(( const char *s1, const char *s2del,
 	char delim ));
+LDAP_SLAPD_F (int) parse_syn LDAP_P((
+	struct config_args_s *ca, Syntax **sat, Syntax *prev ));
 
 /*
  * sessionlog.c
@@ -1755,7 +1760,10 @@ LDAP_SLAPD_F (Syntax *) syn_find_desc LDAP_P((
 	const char *syndesc, int *slen ));
 LDAP_SLAPD_F (int) syn_add LDAP_P((
 	LDAPSyntax *syn,
+	int user,
 	slap_syntax_defs_rec *def,
+	Syntax **ssyn,
+	Syntax *prev,
 	const char **err ));
 LDAP_SLAPD_F (void) syn_destroy LDAP_P(( void ));
 
@@ -1763,6 +1771,13 @@ LDAP_SLAPD_F (int) register_syntax LDAP_P((
 	slap_syntax_defs_rec *def ));
 
 LDAP_SLAPD_F (int) syn_schema_info( Entry *e );
+
+LDAP_SLAPD_F (int) syn_start LDAP_P(( Syntax **at ));
+LDAP_SLAPD_F (int) syn_next LDAP_P(( Syntax **at ));
+LDAP_SLAPD_F (void) syn_delete LDAP_P(( Syntax *at ));
+
+LDAP_SLAPD_F (void) syn_unparse LDAP_P((
+	BerVarray *bva, Syntax *start, Syntax *end, int system ));
 
 /*
  * user.c

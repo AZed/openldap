@@ -473,7 +473,7 @@ check_syncprov(
 			for ( i=0; i<num; i++ ) {
 				if ( ber_bvcmp( &a.a_nvals[i],
 					&si->si_cookieState->cs_vals[i] )) {
-					changed =1;
+					changed = 1;
 					break;
 				}
 			}
@@ -578,6 +578,9 @@ do_syncrep1(
 		?  op->o_sasl_ssf : op->o_tls_ssf;
 
 	ldap_set_option( si->si_ld, LDAP_OPT_TIMELIMIT, &si->si_tlimit );
+
+	rc = LDAP_DEREF_NEVER;	/* actually could allow DEREF_FINDING */
+	ldap_set_option( si->si_ld, LDAP_OPT_DEREF, &rc );
 
 	si->si_syncCookie.rid = si->si_rid;
 
@@ -911,6 +914,11 @@ do_syncrep2(
 				rc = err;
 				goto done;
 			}
+			if ( err ) {
+				Debug( LDAP_DEBUG_ANY,
+					"do_syncrep2: %s LDAP_RES_SEARCH_RESULT (%d) %s\n",
+					si->si_ridtxt, err, ldap_err2string( err ) );
+			}
 			if ( rctrls ) {
 				rctrlp = *rctrls;
 				ber_init2( ber, &rctrlp->ldctl_value, LBER_USE_DER );
@@ -1196,7 +1204,7 @@ do_syncrepl(
 	OperationBuffer opbuf;
 	Operation *op;
 	int rc = LDAP_SUCCESS;
-	int dostop = 0, do_setup = 0;
+	int dostop = 0;
 	ber_socket_t s;
 	int i, defer = 1, fail = 0;
 	Backend *be;
@@ -1311,9 +1319,8 @@ reload:
 				if ( rc == LDAP_SUCCESS ) {
 					if ( si->si_conn ) {
 						connection_client_enable( si->si_conn );
-						goto success;
 					} else {
-						do_setup = 1;
+						si->si_conn = connection_client_setup( s, do_syncrepl, arg );
 					} 
 				} else if ( si->si_conn ) {
 					dostop = 1;
@@ -1345,6 +1352,7 @@ reload:
 	if ( rc == SYNC_PAUSED ) {
 		rtask->interval.tv_sec = 0;
 		ldap_pvt_runqueue_resched( &slapd_rq, rtask, 0 );
+		rtask->interval.tv_sec = si->si_interval;
 		rc = 0;
 	} else if ( rc == LDAP_SUCCESS ) {
 		if ( si->si_type == LDAP_SYNC_REFRESH_ONLY ) {
@@ -1379,11 +1387,6 @@ reload:
 	}
 
 	ldap_pvt_thread_mutex_unlock( &slapd_rq.rq_mutex );
-
-	if ( do_setup )
-		si->si_conn = connection_client_setup( s, do_syncrepl, arg );
-
-success:
 	ldap_pvt_thread_mutex_unlock( &si->si_mutex );
 
 	if ( rc ) {
@@ -2762,8 +2765,13 @@ syncrepl_updateCookie(
 			if ( memcmp( syncCookie->ctxcsn[i].bv_val,
 				si->si_cookieState->cs_vals[j].bv_val, len ) > 0 ) {
 				mod.sml_values[j] = syncCookie->ctxcsn[i];
-				if ( BER_BVISNULL( &first ))
+				if ( BER_BVISNULL( &first ) ) {
 					first = syncCookie->ctxcsn[i];
+
+				} else if ( memcmp( syncCookie->ctxcsn[i].bv_val, first.bv_val, first.bv_len ) > 0 )
+				{
+					first = syncCookie->ctxcsn[i];
+				}
 			}
 			break;
 		}
@@ -2773,8 +2781,12 @@ syncrepl_updateCookie(
 				( mod.sml_numvals+2 )*sizeof(struct berval), op->o_tmpmemctx );
 			mod.sml_values[mod.sml_numvals++] = syncCookie->ctxcsn[i];
 			BER_BVZERO( &mod.sml_values[mod.sml_numvals] );
-			if ( BER_BVISNULL( &first ))
+			if ( BER_BVISNULL( &first ) ) {
 				first = syncCookie->ctxcsn[i];
+			} else if ( memcmp( syncCookie->ctxcsn[i].bv_val, first.bv_val, first.bv_len ) > 0 )
+			{
+				first = syncCookie->ctxcsn[i];
+			}
 		}
 	}
 	/* Should never happen, ITS#5065 */

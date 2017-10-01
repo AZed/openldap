@@ -193,7 +193,7 @@ over_db_destroy(
 	slap_overinfo *oi = be->bd_info->bi_private;
 	slap_overinst *on = oi->oi_list, *next;
 	BackendInfo *bi_orig = be->bd_info;
-	int rc;
+	int rc = 0;
 
 	be->bd_info = oi->oi_orig;
 	if ( be->bd_info->bi_db_destroy ) {
@@ -595,6 +595,27 @@ over_acl_attribute(
 	op->o_bd->bd_info = bi;
 
 	return rc;
+}
+
+int
+overlay_callback_after_backover( Operation *op, slap_callback *sc, int append )
+{
+	slap_callback **scp;
+
+	for ( scp = &op->o_callback; *scp != NULL; scp = &(*scp)->sc_next ) {
+		if ( (*scp)->sc_response == over_back_response ) {
+			sc->sc_next = (*scp)->sc_next;
+			(*scp)->sc_next = sc;
+			return 0;
+		}
+	}
+
+	if ( append ) {
+		*scp = sc;
+		return 0;
+	}
+
+	return 1;
 }
 
 /*
@@ -1042,7 +1063,7 @@ overlay_register_control( BackendDB *be, const char *oid )
 		
 		/* add to all backends... */
 		LDAP_STAILQ_FOREACH( bd, &backendDB, be_next ) {
-			if ( be == bd ) {
+			if ( bd == be->bd_self ) {
 				gotit = 1;
 			}
 
@@ -1053,8 +1074,8 @@ overlay_register_control( BackendDB *be, const char *oid )
 	}
 	
 	if ( !gotit ) {
-		be->be_ctrls[ cid ] = 1;
-		be->be_ctrls[ SLAP_MAX_CIDS ] = 1;
+		be->bd_self->be_ctrls[ cid ] = 1;
+		be->bd_self->be_ctrls[ SLAP_MAX_CIDS ] = 1;
 	}
 
 	return 0;

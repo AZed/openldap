@@ -945,6 +945,9 @@
 /* define to support cn=Monitor backend */
 #undef SLAPD_MONITOR
 
+/* define to support NDB backend */
+#undef SLAPD_NDB
+
 /* define to support NULL backend */
 #undef SLAPD_NULL
 
@@ -953,6 +956,9 @@
 
 /* define for Audit Logging overlay */
 #undef SLAPD_OVER_AUDITLOG
+
+/* define for Collect overlay */
+#undef SLAPD_OVER_COLLECT
 
 /* define for Attribute Constraint overlay */
 #undef SLAPD_OVER_CONSTRAINT

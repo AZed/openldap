@@ -67,13 +67,13 @@ static ConfigTable translucentcfg[] = {
 	  "DESC 'Disable automatic glue records for ADD and MODRDN' "
 	  "SYNTAX OMsBoolean SINGLE-VALUE )", NULL, NULL },
 	{ "translucent_local", "attr[,attr...]", 1, 2, 0,
-	  ARG_STRING|ARG_MAGIC|TRANS_LOCAL,
+	  ARG_MAGIC|TRANS_LOCAL,
 	  translucent_cf_gen,
 	  "( OLcfgOvAt:14.3 NAME 'olcTranslucentLocal' "
 	  "DESC 'Attributes to use in local search filter' "
 	  "SYNTAX OMsDirectoryString )", NULL, NULL },
 	{ "translucent_remote", "attr[,attr...]", 1, 2, 0,
-	  ARG_STRING|ARG_MAGIC|TRANS_REMOTE,
+	  ARG_MAGIC|TRANS_REMOTE,
 	  translucent_cf_gen,
 	  "( OLcfgOvAt:14.4 NAME 'olcTranslucentRemote' "
 	  "DESC 'Attributes to use in remote search filter' "
@@ -663,6 +663,7 @@ static int translucent_search_cb(Operation *op, SlapReply *rs) {
 	Entry *le, *re;
 	Attribute *a, *ax, *an, *as = NULL;
 	int rc;
+	int test_f = 0;
 
 	tc = op->o_callback->sc_private;
 
@@ -691,7 +692,7 @@ static int translucent_search_cb(Operation *op, SlapReply *rs) {
 			if ( re ) {
 				if ( rs->sr_flags & REP_ENTRY_MUSTRELEASE ) {
 					rs->sr_flags ^= REP_ENTRY_MUSTRELEASE;
-					be_entry_release_r( op, rs->sr_entry );
+					overlay_entry_release_ov( op, rs->sr_entry, 0, on );
 				}
 				if ( rs->sr_flags & REP_ENTRY_MUSTBEFREED ) {
 					rs->sr_flags ^= REP_ENTRY_MUSTBEFREED;
@@ -715,6 +716,7 @@ static int translucent_search_cb(Operation *op, SlapReply *rs) {
 			Entry *tmp = entry_dup( re );
 			be_entry_release_r( op, re );
 			re = tmp;
+			test_f = 1;
 		}
 	} else {
 	/* Else we have remote, get local */
@@ -724,7 +726,7 @@ static int translucent_search_cb(Operation *op, SlapReply *rs) {
 			re = entry_dup( rs->sr_entry );
 			if ( rs->sr_flags & REP_ENTRY_MUSTRELEASE ) {
 				rs->sr_flags ^= REP_ENTRY_MUSTRELEASE;
-				be_entry_release_r( op, rs->sr_entry );
+				overlay_entry_release_ov( op, rs->sr_entry, 0, on );
 			}
 			if ( rs->sr_flags & REP_ENTRY_MUSTBEFREED ) {
 				rs->sr_flags ^= REP_ENTRY_MUSTBEFREED;
@@ -767,7 +769,7 @@ static int translucent_search_cb(Operation *op, SlapReply *rs) {
 		if ( tc->step & LCL_SIDE ) {
 			if ( rs->sr_flags & REP_ENTRY_MUSTRELEASE ) {
 				rs->sr_flags ^= REP_ENTRY_MUSTRELEASE;
-				be_entry_release_r( op, rs->sr_entry );
+				overlay_entry_release_ov( op, rs->sr_entry, 0, on );
 			}
 			if ( rs->sr_flags & REP_ENTRY_MUSTBEFREED ) {
 				rs->sr_flags ^= REP_ENTRY_MUSTBEFREED;
@@ -795,7 +797,16 @@ static int translucent_search_cb(Operation *op, SlapReply *rs) {
 		/* send it now */
 			rs->sr_entry = re;
 			rs->sr_flags |= REP_ENTRY_MUSTBEFREED;
-			rc = SLAP_CB_CONTINUE;
+			if ( test_f ) {
+				rc = test_filter( op, rs->sr_entry, tc->orig );
+				if ( rc == LDAP_COMPARE_TRUE ) {
+					rc = SLAP_CB_CONTINUE;
+				} else {
+					rc = 0;
+				}
+			} else {
+				rc = SLAP_CB_CONTINUE;
+			}
 		}
 	} else if ( le ) {
 	/* Only a local entry: remote was deleted
