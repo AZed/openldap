@@ -1,7 +1,7 @@
 Compile AllOp together with other overlays.
 
 Author: Matus Honek <mhonek@redhat.com>
-Resolves: #1319782
+Resolves: #990893
 
 diff --git a/servers/slapd/overlays/Makefile.in b/servers/slapd/overlays/Makefile.in
 --- a/servers/slapd/overlays/Makefile.in
