@@ -32,6 +32,7 @@ SLAPD_LDAPI="no"
 SLAPD_LDAPS="no"
 SLAPD_URLS=""
 SLAPD_SHUTDOWN_TIMEOUT=3
+SLAPD_ULIMIT_SETTINGS=""
 # OPTIONS, SLAPD_OPTIONS and KTB5_KTNAME are not defined
 
 # Source an auxiliary options file if we have one
@@ -207,11 +208,12 @@ function start() {
 	fi
 	# Start daemons.
 	echo -n $"Starting $prog: "
+	ulimit $SLAPD_ULIMIT_SETTINGS > /dev/null 2>&1
 	daemon --pidfile=$pidfile --check=$prog ${slapd} -h "\"$harg\"" -u ${user} $OPTIONS $SLAPD_OPTIONS 
 	RETVAL=$?
 	if [ $RETVAL -eq 0 ]; then
 		touch $lockfile
-		ln $slapd_pidfile $pidfile
+		ln -s $slapd_pidfile $pidfile
 	fi
 	echo
 	return $RETVAL
@@ -261,12 +263,12 @@ case "$1" in
 	start
 	;;
     usage)
-	echo $"Usage: $0 {start|stop|restart|status|condrestart|configtest|usage}"
+	echo $"Usage: $0 {start|stop|restart|force-reload|status|try-restart|condrestart|configtest|usage}"
 	RETVAL=0
 	;;
     *)
-	echo $"Usage: $0 {start|stop|restart|status|condrestart|configtest|usage}"
-	RETVAL=3
+	echo $"Usage: $0 {start|stop|restart|force-reload|status|try-restart|condrestart|configtest|usage}"
+	RETVAL=2
 esac
 
 exit $RETVAL

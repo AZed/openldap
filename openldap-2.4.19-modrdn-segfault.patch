@@ -1,10 +1,6 @@
-bz #605448 CVE-2010-0211 openldap: modrdn processing uninitialized pointer free
-bz #605452 CVE-2010-0212 openldap: modrdn processing IA5StringNormalize NULL pointer dereference
-
-diff -ru openldap-2.4.19.old/servers/slapd/dn.c openldap-2.4.19.new/servers/slapd/dn.c
---- openldap-2.4.19.old/servers/slapd/dn.c	2009-08-13 01:38:56.000000000 +0200
-+++ openldap-2.4.19.new/servers/slapd/dn.c	2010-07-20 18:42:20.065806556 +0200
-@@ -302,16 +302,13 @@
+--- openldap-2.4.19/servers/slapd/dn.c.orig	2010-06-22 15:45:33.000000000 +0200
++++ openldap-2.4.19/servers/slapd/dn.c	2010-06-22 15:48:48.000000000 +0200
+@@ -302,16 +302,13 @@ LDAPRDN_rewrite( LDAPRDN rdn, unsigned f
  		ava->la_attr = ad->ad_cname;
  
  		if( ava->la_flags & LDAP_AVA_BINARY ) {
@@ -23,7 +19,7 @@ diff -ru openldap-2.4.19.old/servers/slapd/dn.c openldap-2.4.19.new/servers/slap
  		} else if( flags & SLAP_LDAPDN_PRETTY ) {
  			transf = ad->ad_type->sat_syntax->ssyn_pretty;
  			if( !transf ) {
-@@ -379,6 +376,10 @@
+@@ -379,6 +376,10 @@ LDAPRDN_rewrite( LDAPRDN rdn, unsigned f
  			ava->la_value = bv;
  			ava->la_flags |= LDAP_AVA_FREE_VALUE;
  		}
@@ -34,10 +30,9 @@ diff -ru openldap-2.4.19.old/servers/slapd/dn.c openldap-2.4.19.new/servers/slap
  	}
  	rc = LDAP_SUCCESS;
  
-diff -ru openldap-2.4.19.old/servers/slapd/modrdn.c openldap-2.4.19.new/servers/slapd/modrdn.c
---- openldap-2.4.19.old/servers/slapd/modrdn.c	2009-01-22 01:01:01.000000000 +0100
-+++ openldap-2.4.19.new/servers/slapd/modrdn.c	2010-07-20 18:42:20.065806556 +0200
-@@ -445,12 +445,19 @@
+--- openldap-2.4.19/servers/slapd/modrdn.c.orig	2010-06-22 15:45:42.000000000 +0200
++++ openldap-2.4.19/servers/slapd/modrdn.c	2010-06-22 15:49:58.000000000 +0200
+@@ -445,12 +445,19 @@ slap_modrdn2mods(
  		mod_tmp->sml_values[1].bv_val = NULL;
  		if( desc->ad_type->sat_equality->smr_normalize) {
  			mod_tmp->sml_nvalues = ( BerVarray )ch_malloc( 2 * sizeof( struct berval ) );
@@ -58,10 +53,9 @@ diff -ru openldap-2.4.19.old/servers/slapd/modrdn.c openldap-2.4.19.new/servers/
  			mod_tmp->sml_nvalues[1].bv_val = NULL;
  		} else {
  			mod_tmp->sml_nvalues = NULL;
-diff -ru openldap-2.4.19.old/servers/slapd/schema_init.c openldap-2.4.19.new/servers/slapd/schema_init.c
---- openldap-2.4.19.old/servers/slapd/schema_init.c	2009-08-13 02:35:54.000000000 +0200
-+++ openldap-2.4.19.new/servers/slapd/schema_init.c	2010-07-20 18:42:20.069806353 +0200
-@@ -1732,8 +1732,9 @@
+--- openldap-2.4.19/servers/slapd/schema_init.c.orig	2010-06-22 15:45:52.000000000 +0200
++++ openldap-2.4.19/servers/slapd/schema_init.c	2010-06-22 15:50:36.000000000 +0200
+@@ -1732,8 +1732,9 @@ UTF8StringNormalize(
  		? LDAP_UTF8_APPROX : 0;
  
  	val = UTF8bvnormalize( val, &tmp, flags, ctx );
