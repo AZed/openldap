@@ -5,7 +5,7 @@
 
 Name: openldap
 Version: 2.4.23
-Release: 32%{?dist}.1
+Release: 34%{?dist}.1
 Summary: LDAP support libraries
 Group: System Environment/Daemons
 License: OpenLDAP
@@ -32,6 +32,7 @@ Patch7: openldap-userconfig-setgid.patch
 Patch8: openldap-constraint-count.patch
 Patch9: openldap-man-sasl-nocanon.patch
 Patch10: openldap-memberof-disallow-global.patch
+Patch11: openldap-rwm-reference-counting.patch
 
 # already merged upstream
 Patch100: openldap-nss-ca-selfsigned.patch
@@ -97,6 +98,9 @@ Patch159: openldap-nss-pk11-freeslot.patch
 
 # patches for the evolution library (see README.evolution)
 Patch200: openldap-evolution-ntlm.patch
+
+# ssl deadlock "patch"
+Patch300: openldap-ssl-deadlock-revert.patch
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
@@ -197,6 +201,7 @@ pushd openldap-%{version}
 %patch8 -p1 -b .constraint-count
 %patch9 -p1 -b .man-sasl-nocanon
 %patch10 -p1 -b .memberof-disallow-global
+%patch11 -p1 -b .rwm-reference-counting
 
 %patch100 -p1 -b .nss-ca-selfsigned
 %patch101 -p1 -b .nss-delay-token-auth
@@ -258,6 +263,10 @@ pushd openldap-%{version}
 %patch157 -p1 -b .rwm-slapd-segfault-modrdn
 %patch158 -p1 -b .syncprov-segfault
 %patch159 -p1 -b .nss-leak
+
+# revert patch 133
+# it can't simply be removed as other patches wouldn't apply...
+%patch300 -p1 -b .ssl-deadlock-revert
 
 cp %{_datadir}/libtool/config/config.{sub,guess} build/
 
@@ -797,11 +806,16 @@ exit 0
 %attr(0644,root,root)      %{evolution_connector_libdir}/*.a
 
 %changelog
-* Mon Apr 22 2013 Jan Synáček <jsynacek@redhat.com> 2.4.23-32.1
-- fix: NSS related resource leak (#954299)
+* Tue Jan 28 2014 Jan Synáček <jsynacek@redhat.com> - 2.4.23-34.1
+- fix: segfault on certain queries with rwm overlay (#1058250)
+
+* Tue Jan 21 2014 Jan Synáček <jsynacek@redhat.com> - 2.4.23-34
+- fix: deadlock during SSL_ForceHandshake (#996373)
+  + revert nss-handshake-threadsafe.patch
 
 * Tue Feb 26 2013 Jan Synáček <jsynacek@redhat.com> 2.4.23-32
 - fix: segfault in syncprov overlay (#910241)
+- fix: NSS related resource leak (#929358)
 
 * Wed Oct 31 2012 Jan Vcelak <jvcelak@redhat.com> 2.4.23-31
 - fix update: libldap does not load PEM certificate if certdb is used as TLS_CACERTDIR (#859858)
