@@ -2,7 +2,7 @@ fix: OpenLDAP can't use TLS after a fork()
 
 Mozilla NSS - disable pkcs11 fork checking for the software token
 
-Resolves: #636956
+Resolves: #671553
 Upstream ITS: #6811, #6802, #6862
 Author: Rich Megginson <rmeggins@redhat.com>
 

@@ -202,9 +202,15 @@ function start() {
 	if test x$SLAPD_LDAPI = xyes ; then
 		harg="$harg ldapi:///"
 	fi
+	# System resources limit.
+	if [ -n "$SLAPD_ULIMIT_SETTINGS" ]; then
+		ulimit="ulimit $SLAPD_ULIMIT_SETTINGS &>/dev/null;"
+	else
+		ulimit=""
+	fi
 	# Start daemons.
 	echo -n $"Starting $prog: "
-	daemon --pidfile=$pidfile --check=$prog ${slapd} -h "\"$harg\"" -u ${user} $OPTIONS $SLAPD_OPTIONS 
+	daemon --pidfile=$pidfile --check=$prog $ulimit ${slapd} -h "\"$harg\"" -u ${user} $OPTIONS $SLAPD_OPTIONS 
 	RETVAL=$?
 	if [ $RETVAL -eq 0 ]; then
 		touch $lockfile

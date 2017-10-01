@@ -1,6 +1,6 @@
 openldap does not trust certs with Basic Constraint ext. with CA == FALSE
 
-Resolves: #657984, #668899
+Resolves: #667795, #669845
 Upstream: ITS #6742, #6791
 Author: Rich Megginson <rmeggins@redhat.com>
 

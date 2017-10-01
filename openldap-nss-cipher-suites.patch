@@ -1,7 +1,7 @@
 Makes tls_m use the "DEFAULT" list and adds more cipher suites to the default list.
 
 Upstream ITS: #6790
-Resolves: #669446
+Resolves: #669845
 Author: Rich Megginson <rmeggins@redhat.com>
 
 diff -uNrp openldap-2.4.23/libraries/libldap/tls_m.c openldap-2.4.23/libraries/libldap/tls_m.c

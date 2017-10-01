@@ -1,6 +1,6 @@
 fix: openldap-servers upgrade hangs
 
-Resolves: #664433
+Resolves: #685119
 Upstream ITS: #6853
 
 --- openldap-2.4.24.orig/servers/slapd/back-bdb/tools.c
