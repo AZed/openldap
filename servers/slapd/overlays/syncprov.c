@@ -444,6 +444,7 @@ syncprov_findbase( Operation *op, fbase_cookie *fc )
 		fop.o_hdr = op->o_hdr;
 		fop.o_time = op->o_time;
 		fop.o_tincr = op->o_tincr;
+		fop.o_extra = op->o_extra;
 
 		cb.sc_response = findbase_cb;
 		cb.sc_private = fc;
@@ -451,7 +452,6 @@ syncprov_findbase( Operation *op, fbase_cookie *fc )
 		fop.o_sync_mode = 0;	/* turn off sync mode */
 		fop.o_managedsait = SLAP_CONTROL_CRITICAL;
 		fop.o_callback = &cb;
-		LDAP_SLIST_INIT( &fop.o_extra );
 		fop.o_tag = LDAP_REQ_SEARCH;
 		fop.ors_scope = LDAP_SCOPE_BASE;
 		fop.ors_limit = NULL;
@@ -3172,6 +3172,7 @@ syncprov_db_close(
 
 #ifdef SLAP_CONFIG_DELETE
 	if ( !slapd_shutdown ) {
+		ldap_pvt_thread_mutex_lock( &si->si_ops_mutex );
 		for ( so=si->si_ops, sonext=so;  so; so=sonext  ) {
 			SlapReply rs = {REP_RESULT};
 			rs.sr_err = LDAP_UNAVAILABLE;
@@ -3180,6 +3181,7 @@ syncprov_db_close(
 			syncprov_drop_psearch( so, 0);
 		}
 		si->si_ops=NULL;
+		ldap_pvt_thread_mutex_unlock( &si->si_ops_mutex );
 	}
 	overlay_unregister_control( be, LDAP_CONTROL_SYNC );
 #endif /* SLAP_CONFIG_DELETE */
