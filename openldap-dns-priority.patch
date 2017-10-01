@@ -12,7 +12,7 @@ order of their priority.
 
 Author: James M Leddy <james.leddy@redhat.com>
 Upstream ITS: #7027
-Resolves: #733659
+Resolves: #730311
 
 diff -uNPrp openldap-2.4.23.orig/libraries/libldap/dnssrv.c openldap-2.4.23/libraries/libldap/dnssrv.c
 --- openldap-2.4.23.orig/libraries/libldap/dnssrv.c	2010-04-13 22:22:56.000000000 +0200
