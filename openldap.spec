@@ -5,7 +5,7 @@
 
 Name: openldap
 Version: 2.4.23
-Release: 26%{?dist}
+Release: 26%{?dist}.2
 Summary: LDAP support libraries
 Group: System Environment/Daemons
 License: OpenLDAP
@@ -78,6 +78,8 @@ Patch140: openldap-memleak-referrals.patch
 Patch141: openldap-cve-relay-rwm-translucent.patch
 Patch142: openldap-nss-allow-ca-dbdir-pemfile.patch
 Patch143: openldap-memleak-def_urlpre.patch
+Patch144: openldap-cve-nss-cipher-suite-ignored.patch
+Patch145: openldap-cve-nss-default-cipher-suite-always-selected.patch
 
 # patches for the evolution library (see README.evolution)
 Patch200: openldap-evolution-ntlm.patch
@@ -226,6 +228,8 @@ pushd openldap-%{version}
 %patch141 -p1 -b .cve-relay-rwm-translucent
 %patch142 -p1 -b .nss-allow-ca-dbdir-pemfile
 %patch143 -p1 -b .memleak-def_urlpre
+%patch144 -p1 -b .cve-nss-cipher-suite-ignored
+%patch145 -p1 -b .cve-nss-default-cipher-suite-always-selected
 
 cp %{_datadir}/libtool/config/config.{sub,guess} build/
 
@@ -765,6 +769,14 @@ exit 0
 %attr(0644,root,root)      %{evolution_connector_libdir}/*.a
 
 %changelog
+* Tue Jul 31 2012 Jan Vcelak <jvcelak@redhat.com> 2.4.23-26.2
+- CVE-2012-2668 (#825875)
+  + cipher suite selection by name can be ignored
+  + default cipher suite is always selected
+
+* Tue Jul 31 2012 Jan Vcelak <jvcelak@redhat.com> 2.4.23-26.1
+- fix: smbk5pwd module computes invalid LM hashes (#820278)
+
 * Mon May 07 2012 Jan Vcelak <jvcelak@redhat.com> 2.4.23-26
 - fix: MozNSS CA cert dir does not work together with PEM CA cert file (#818844)
 - fix: memory leak: def_urlpre is not freed (#816168)
