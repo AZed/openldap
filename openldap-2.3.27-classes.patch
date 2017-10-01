@@ -1,0 +1,17 @@
+Source: cvs diff -u -r1.227.2.25 -r1.227.2.26 modify.c
+Index: modify.c
+===================================================================
+RCS file: /repo/OpenLDAP/pkg/ldap/servers/slapd/modify.c,v
+retrieving revision 1.227.2.25
+retrieving revision 1.227.2.26
+diff -u -r1.227.2.25 -r1.227.2.26
+--- servers/slapd/modify.c	2 Jan 2007 21:43:56 -0000	1.227.2.25
++++ servers/slapd/modify.c	4 Sep 2007 03:42:37 -0000	1.227.2.26
+@@ -734,6 +734,7 @@
+ 							"%s: value #%ld normalization failed",
+ 							ml->sml_type.bv_val, (long) nvals );
+ 						*text = textbuf;
++						BER_BVZERO( &ml->sml_nvalues[nvals] );
+ 						return rc;
+ 					}
+ 				}

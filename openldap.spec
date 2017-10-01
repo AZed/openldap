@@ -13,7 +13,7 @@
 Summary: The configuration files, libraries, and documentation for OpenLDAP.
 Name: openldap
 Version: %{version_23}
-Release: 8
+Release: 8%{?dist}.3
 License: OpenLDAP
 Group: System Environment/Daemons
 Source0: ftp://ftp.OpenLDAP.org/pub/OpenLDAP/openldap-release/openldap-%{version_23}.tgz
@@ -45,6 +45,8 @@ Patch10: openldap-2.3.27-config-sasl-options.patch
 Patch11: openldap-2.3.27-timeout-option.patch
 Patch12: openldap-2.3.27-writable-socket.patch
 Patch13: openldap-2.3.27-acl-memleak.patch
+Patch14: openldap-2.3.27-classes.patch
+Patch15: openldap-2.3.27-modify-noop.patch
 
 # Patches for 2.2.29 for the compat-openldap package.
 Patch100: openldap-2.2.13-tls-fix-connection-test.patch
@@ -184,6 +186,8 @@ pushd openldap-%{version_23}
 %patch11 -p1 -b .timeout
 %patch12 -p1 -b .socket
 %patch13 -p1 -b .acl-memleak
+%patch14 -p0 -b .classes
+%patch15 -p1 -b .modify-noop
 
 cp %{_datadir}/libtool/config.{sub,guess} build/
 popd
@@ -750,6 +754,17 @@ exec > /dev/null 2> /dev/null
 %attr(0644,root,root)      %{evolution_connector_libdir}/*.a
 
 %changelog
+* Thu Feb  7 2008 Jan Safranek <jsafranek@redhat.com> 2.3.27-8.3
+- better fix for CVE-2007-6698 (#431407), now it fixes also
+  modrdn operations
+
+* Mon Feb  4 2008 Jan Safranek <jsafranek@redhat.com> 2.3.27-8.2
+- fix CVE-2007-6698 (#431407)
+
+* Mon Nov  5 2007 Jan Safranek <jsafranek@redhat.com> 2.3.27-8.1
+- fix security issue CVE-2007-5707 (#360001)
+- fix manual bind timeout (#368231)
+
 * Mon Jun 25 2007 Jan Safranek <jsafranek@redhat.com> 2.3.27-8
 - Fix initscript return codes again (#242665)
 
