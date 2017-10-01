@@ -15,7 +15,7 @@
 Summary: The configuration files, libraries, and documentation for OpenLDAP.
 Name: openldap
 Version: %{version_22}
-Release: 8%{?dist}.4
+Release: 8%{?dist}.5
 License: OpenLDAP
 Group: System Environment/Daemons
 Source0: ftp://ftp.OpenLDAP.org/pub/OpenLDAP/openldap-release/openldap-%{version_22}.tgz
@@ -76,6 +76,7 @@ Patch59: openldap-2.2.13-acl-parse.patch
 Patch60: openldap-2.2.13-classes.patch
 Patch61: openldap-2.2.13-modify-leak.patch
 Patch62: openldap-2.2.13-modify-noop.patch
+Patch63: openldap-2.3.27-ber-decode.patch
 
 URL: http://www.openldap.org/
 BuildRoot: %{_tmppath}/%{name}-%{version_22}-root
@@ -196,6 +197,7 @@ pushd openldap-%{version_22}
 %patch60 -p0 -b .classes
 %patch61 -p0 -b .modify-leak
 %patch62 -p1 -b .modify-noop
+%patch63 -p1 -b .ber-decode
 
 cp %{_datadir}/libtool/config.{sub,guess} build/
 popd
@@ -792,6 +794,9 @@ fi
 %attr(0644,root,root)      %{evolution_connector_libdir}/*.a
 
 %changelog
+* Wed Jul  2 2008 Jan Safranek <jsafranek@redhat.com> 2.2.13-8.5
+- fix CVE-2008-2952 (#453637)
+
 * Thu Feb  7 2008 Jan Safranek <jsafranek@redhat.com> 2.2.13-8.4
 - better fix for CVE-2007-6698 (#431405), now it fixes also
   add/delete/modrdn operations
