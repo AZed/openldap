@@ -16,7 +16,7 @@
 Summary: The configuration files, libraries, and documentation for OpenLDAP.
 Name: openldap
 Version: %{version_23}
-Release: 12%{?dist}
+Release: 12%{?dist}.1
 License: OpenLDAP
 Group: System Environment/Daemons
 Source0: ftp://ftp.OpenLDAP.org/pub/OpenLDAP/openldap-release/openldap-%{version_23}.tgz
@@ -56,12 +56,14 @@ Patch17: openldap-2.3.43-rwm-cleanup.patch
 Patch18: openldap-2.3.43-chase-referral.patch
 Patch19: openldap-2.3.43-tls-connection.patch
 Patch20: openldap-2.3.43-tls-null-char.patch
+Patch21: openldap-2.3.43-modrdn-segfault.patch
 
 # Patches for 2.2.29 for the compat-openldap package.
 Patch100: openldap-2.2.13-tls-fix-connection-test.patch
 Patch101: openldap-2.2.23-resolv.patch
 Patch102: openldap-2.2.29-ads.patch
 Patch103: openldap-2.3.43-compat-linking.patch
+Patch104: openldap-2.2.29-tls-null-char.patch
 
 # Patches for the evolution library
 Patch200: openldap-ntlm.diff
@@ -224,6 +226,7 @@ pushd openldap-%{version_23}
 %patch18 -p1 -b .chase-referral
 %patch19 -p1 -b .tls-connection
 %patch20 -p1 -b .tls-null-char
+%patch21 -p1 -b .modrdn-segfault
 
 cp %{_datadir}/libtool/config.{sub,guess} build/
 popd
@@ -267,6 +270,7 @@ pushd openldap-%{version_22}
 %patch101 -p1 -b .CAN-2005-2069
 %patch102 -p1 -b .ads
 %patch103 -p1 -b .compat-linking
+%patch104 -p1 -b .tls-null-char
         for subdir in build-servers build-compat ; do
                 mkdir $subdir
                 ln -s ../configure $subdir
@@ -883,6 +887,11 @@ exec > /dev/null 2> /dev/null
 %attr(0644,root,root)      %{evolution_connector_libdir}/*.a
 
 %changelog
+* Tue Jun 22 2010 Jan Zeleny <jzeleny@redhat.com> - 2.3.43-12.1
+- fixed segfault issues in modrdn (#606375)
+- added patch handling null char in TLS to compat package
+  (#606375, patch backported by Jan Vcelak <jvcelak@redhat.com>)
+
 * Wed Feb 17 2010 Jan Zeleny <jzeleny@redhat.com> - 2.3.43-12
 - updated spec file, so the compat-libs linking patch applies
   correctly
