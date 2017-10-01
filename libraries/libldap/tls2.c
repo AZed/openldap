@@ -434,11 +434,14 @@ ldap_pvt_tls_accept( Sockbuf *sb, void *ctx_arg )
 
 	if ( err < 0 )
 	{
-		char buf[256];
 		if ( update_flags( sb, ssl, err )) return 1;
 
-		Debug( LDAP_DEBUG_ANY,"TLS: can't accept: %s.\n",
-			tls_imp->ti_session_errmsg( err, buf, sizeof(buf) ),0,0 );
+		if ( DebugTest( LDAP_DEBUG_ANY ) ) {
+			char buf[256], *msg;
+			msg = tls_imp->ti_session_errmsg( err, buf, sizeof(buf) );
+			Debug( LDAP_DEBUG_ANY,"TLS: can't accept: %s.\n",
+				msg ? msg : "(unknown)", 0, 0 );
+		}
 
 		ber_sockbuf_remove_io( sb, tls_imp->ti_sbio,
 			LBER_SBIOD_LEVEL_TRANSPORT );
@@ -872,8 +875,9 @@ ldap_pvt_tls_get_my_dn( void *s, struct berval *dn, LDAPDN_rewrite_dummy *func, 
 	struct berval der_dn;
 	int rc;
 
-	tls_imp->ti_session_my_dn( session, &der_dn );
-	rc = ldap_X509dn2bv(&der_dn, dn, (LDAPDN_rewrite_func *)func, flags );
+	rc = tls_imp->ti_session_my_dn( session, &der_dn );
+	if ( rc == LDAP_SUCCESS )
+		rc = ldap_X509dn2bv(&der_dn, dn, (LDAPDN_rewrite_func *)func, flags );
 	return rc;
 }
 #endif /* HAVE_TLS */

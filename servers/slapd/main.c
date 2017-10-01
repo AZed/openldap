@@ -65,7 +65,7 @@ static struct sockaddr_in	bind_addr;
 
 typedef int (MainFunc) LDAP_P(( int argc, char *argv[] ));
 extern MainFunc slapadd, slapcat, slapdn, slapindex, slappasswd,
-	slaptest, slapauth, slapacl;
+	slaptest, slapauth, slapacl, slapschema;
 
 static struct {
 	char *name;
@@ -76,6 +76,7 @@ static struct {
 	{"slapdn", slapdn},
 	{"slapindex", slapindex},
 	{"slappasswd", slappasswd},
+	{"slapschema", slapschema},
 	{"slaptest", slaptest},
 	{"slapauth", slapauth},
 	{"slapacl", slapacl},
@@ -699,6 +700,7 @@ unhandled_option:;
 	Debug( LDAP_DEBUG_ANY, "%s", Versionstr, 0, 0 );
 
 	global_host = ldap_pvt_get_fqdn( NULL );
+	ber_str2bv( global_host, 0, 0, &global_host_bv );
 
 	if( check == CHECK_NONE && slapd_daemon_init( urls ) != 0 ) {
 		rc = 1;
@@ -1056,13 +1058,12 @@ wait4child( int sig )
     int save_errno = errno;
 
 #ifdef WNOHANG
-    errno = 0;
+    do
+        errno = 0;
 #ifdef HAVE_WAITPID
-    while ( waitpid( (pid_t)-1, NULL, WNOHANG ) > 0 || errno == EINTR )
-	;	/* NULL */
+    while ( waitpid( (pid_t)-1, NULL, WNOHANG ) > 0 || errno == EINTR );
 #else
-    while ( wait3( NULL, WNOHANG, NULL ) > 0 || errno == EINTR )
-	;	/* NULL */
+    while ( wait3( NULL, WNOHANG, NULL ) > 0 || errno == EINTR );
 #endif
 #else
     (void) wait( NULL );
@@ -1072,4 +1073,3 @@ wait4child( int sig )
 }
 
 #endif /* LDAP_SIGCHLD */
-

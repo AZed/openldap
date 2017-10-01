@@ -957,7 +957,7 @@ dynlist_db_config(
 		ObjectClass		*oc;
 		AttributeDescription	*ad = NULL,
 					*member_ad = NULL;
-		dynlist_map_t		*dlm = NULL;
+		dynlist_map_t		*dlm = NULL, *dlml = NULL;
 		const char		*text;
 
 		if ( argc < 3 ) {
@@ -997,7 +997,6 @@ dynlist_db_config(
 			AttributeDescription *member_ad = NULL;
 			AttributeDescription *mapped_ad = NULL;
 			dynlist_map_t *dlmp;
-			dynlist_map_t *dlml;
 
 
 			/*
@@ -1032,7 +1031,6 @@ dynlist_db_config(
 			dlmp = (dynlist_map_t *)ch_calloc( 1, sizeof( dynlist_map_t ) );
 			if ( dlm == NULL ) {
 				dlm = dlmp;
-				dlml = NULL;
 			}
 			dlmp->dlm_member_ad = member_ad;
 			dlmp->dlm_mapped_ad = mapped_ad;
@@ -1262,8 +1260,8 @@ dl_cfgen( ConfigArgs *c )
 				}
 
 				*ptr++ = ' ';
-				ptr = lutil_strncopy( ptr, dli->dli_oc->soc_cname.bv_val,
-					dli->dli_oc->soc_cname.bv_len );
+				ptr = lutil_strncopy( ptr, dli->dli_ad->ad_cname.bv_val,
+					dli->dli_ad->ad_cname.bv_len );
 
 				for ( dlm = dli->dli_dlm; dlm; dlm = dlm->dlm_next ) {
 					ptr[ 0 ] = ' ';
@@ -1406,7 +1404,7 @@ dl_cfgen( ConfigArgs *c )
 		struct berval		nbase = BER_BVNULL;
 		Filter			*filter = NULL;
 		struct berval		uri = BER_BVNULL;
-		dynlist_map_t           *dlm = NULL;
+		dynlist_map_t           *dlm = NULL, *dlml = NULL;
 		const char		*text;
 
 		oc = oc_find( c->argv[ 1 ] );
@@ -1534,7 +1532,6 @@ done_uri:;
 			AttributeDescription *member_ad = NULL;
 			AttributeDescription *mapped_ad = NULL;
 			dynlist_map_t *dlmp;
-			dynlist_map_t *dlml;
 
 
 			/*
@@ -1572,7 +1569,6 @@ done_uri:;
 			dlmp = (dynlist_map_t *)ch_calloc( 1, sizeof( dynlist_map_t ) );
 			if ( dlm == NULL ) {
 				dlm = dlmp;
-				dlml = NULL;
 			}
 			dlmp->dlm_member_ad = member_ad;
 			dlmp->dlm_mapped_ad = mapped_ad;

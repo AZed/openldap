@@ -130,6 +130,7 @@ typedef struct monitor_info_t {
 	AttributeDescription	*mi_ad_monitorIsShadow;
 	AttributeDescription	*mi_ad_monitorUpdateRef;
 	AttributeDescription	*mi_ad_monitorRuntimeConfig;
+	AttributeDescription	*mi_ad_monitorSuperiorDN;
 
 	/*
 	 * Generic description attribute
@@ -288,9 +289,9 @@ typedef struct monitor_extra_t {
 
 	int (*register_subsys)( monitor_subsys_t *ms );
 	int (*register_backend)( BackendInfo *bi );
-	int (*register_database)( BackendDB *be, struct berval *ndn );
+	int (*register_database)( BackendDB *be, struct berval *ndn_out );
 	int (*register_overlay_info)( slap_overinst *on );
-	int (*register_overlay)( BackendDB *be );
+	int (*register_overlay)( BackendDB *be, slap_overinst *on, struct berval *ndn_out );
 	int (*register_entry)( Entry *e, monitor_callback_t *cb,
 		monitor_subsys_t *ms, unsigned long flags );
 	int (*register_entry_parent)( Entry *e, monitor_callback_t *cb,

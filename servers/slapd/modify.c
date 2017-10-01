@@ -690,7 +690,7 @@ slap_sort_vals(
 #define	SWAP(a,b,tmp)	tmp=(a);(a)=(b);(b)=tmp
 #define	COMP(a,b)	match=0; rc = ordered_value_match( &match, \
 						ad, mr, SLAP_MR_EQUALITY \
-								| SLAP_MR_VALUE_OF_ATTRIBUTE_SYNTAX \
+								| SLAP_MR_VALUE_OF_ASSERTION_SYNTAX \
 								| SLAP_MR_ASSERTED_VALUE_NORMALIZED_MATCH \
 								| SLAP_MR_ATTRIBUTE_VALUE_NORMALIZED_MATCH, \
 								&(a), &(b), text );
@@ -808,7 +808,7 @@ slap_sort_vals(
 		}
 	}
 	done:
-	if ( i >= 0 )
+	if ( match == 0 && i >= 0 )
 		*dup = ix[i];
 
 	/* For sorted attributes, put the values in index order */

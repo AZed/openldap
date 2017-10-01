@@ -137,8 +137,12 @@ usage( void )
 	fprintf( stderr, _("Add or modify options:\n"));
 	fprintf( stderr, _("  -a         add values (%s)\n"),
 		(ldapadd ? _("default") : _("default is to replace")));
+	fprintf( stderr, _("  -c         continuous operation mode (do not stop on errors)\n"));
 	fprintf( stderr, _("  -E [!]ext=extparam	modify extensions"
 		" (! indicate s criticality)\n"));
+	fprintf( stderr, _("  -f file    read operations from `file'\n"));
+	fprintf( stderr, _("  -M         enable Manage DSA IT control (-MM to make critical)\n"));
+	fprintf( stderr, _("  -P version protocol version (default: 3)\n"));
 #ifdef LDAP_X_TXN
  	fprintf( stderr,
 		_("             [!]txn=<commit|abort>         (transaction)\n"));
@@ -240,7 +244,7 @@ main( int argc, char **argv )
 	FILE		*rejfp;
 	struct LDIFFP *ldiffp, ldifdummy = {0};
 	char		*matched_msg, *error_msg;
-	int		rc, retval;
+	int		rc, retval, ldifrc;
 	int		len;
 	int		i = 0;
 	int		lineno, nextline = 0, lmax = 0;
@@ -326,8 +330,8 @@ main( int argc, char **argv )
 	rc = 0;
 	retval = 0;
 	lineno = 1;
-	while (( rc == 0 || contoper ) && ldif_read_record( ldiffp, &nextline,
-		&rbuf, &lmax ))
+	while (( rc == 0 || contoper ) && ( ldifrc = ldif_read_record( ldiffp, &nextline,
+		&rbuf, &lmax )) > 0 )
 	{
 		if ( rejfp ) {
 			len = strlen( rbuf );
@@ -368,6 +372,9 @@ main( int argc, char **argv )
 		if (rejfp) ber_memfree( rejbuf );
 	}
 	ber_memfree( rbuf );
+
+	if ( ldifrc < 0 )
+		retval = LDAP_OTHER;
 
 #ifdef LDAP_X_TXN
 	if( retval == 0 && txn ) {

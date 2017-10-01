@@ -75,6 +75,9 @@
 
 #ifdef LDAP_DEBUG
 
+#define DebugTest( level ) \
+	( ldap_debug & level )
+
 #define Debug( level, fmt, arg1, arg2, arg3 ) \
 	do { if ( ldap_debug & level ) \
 	ldap_log_printf( NULL, (level), (fmt), (arg1), (arg2), (arg3) ); \
@@ -85,6 +88,7 @@
 
 #else
 
+#define DebugTest( level )                                    (0 == 1)
 #define Debug( level, fmt, arg1, arg2, arg3 )                 ((void)0)
 #define LDAP_Debug( subsystem, level, fmt, arg1, arg2, arg3 ) ((void)0)
 
@@ -239,6 +243,14 @@ struct ldapoptions {
 #define LDAP_GSSAPI_OPT_ALLOW_REMOTE_PRINCIPAL	0x0002
 	unsigned ldo_gssapi_options;
 #endif
+
+	/*
+	 * Per connection tcp-keepalive settings (Linux only,
+	 * ignored where unsupported)
+	 */
+	ber_int_t ldo_keepalive_idle;
+	ber_int_t ldo_keepalive_probes;
+	ber_int_t ldo_keepalive_interval;
 
 	int		ldo_refhoplimit;	/* limit on referral nesting */
 

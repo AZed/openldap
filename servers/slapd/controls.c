@@ -539,6 +539,37 @@ void slap_free_ctrls(
 	op->o_tmpfree( ctrls, op->o_tmpmemctx );
 }
 
+int slap_add_ctrls(
+	Operation *op,
+	SlapReply *rs,
+	LDAPControl **ctrls )
+{
+	int i = 0, j;
+	LDAPControl **ctrlsp;
+
+	if ( rs->sr_ctrls ) {
+		for ( ; rs->sr_ctrls[ i ]; i++ ) ;
+	}
+
+	for ( j=0; ctrls[j]; j++ ) ;
+
+	ctrlsp = op->o_tmpalloc(( i+j+1 )*sizeof(LDAPControl *), op->o_tmpmemctx );
+	i = 0;
+	if ( rs->sr_ctrls ) {
+		for ( ; rs->sr_ctrls[i]; i++ )
+			ctrlsp[i] = rs->sr_ctrls[i];
+	}
+	for ( j=0; ctrls[j]; j++)
+		ctrlsp[i++] = ctrls[j];
+	ctrlsp[i] = NULL;
+
+	if ( rs->sr_flags & REP_CTRLS_MUSTBEFREED )
+		op->o_tmpfree( rs->sr_ctrls, op->o_tmpmemctx );
+	rs->sr_ctrls = ctrlsp;
+	rs->sr_flags |= REP_CTRLS_MUSTBEFREED;
+	return i;
+}
+
 int slap_parse_ctrl(
 	Operation *op,
 	SlapReply *rs,
@@ -1383,7 +1414,7 @@ parseReadAttrs(
 
 		an[i].an_desc = NULL;
 		an[i].an_oc = NULL;
-		an[i].an_oc_exclude = 0;
+		an[i].an_flags = 0;
 		rc = slap_bv2ad( &an[i].an_name, &an[i].an_desc, &dummy );
 		if ( rc == LDAP_SUCCESS ) {
 			an[i].an_name = an[i].an_desc->ad_cname;

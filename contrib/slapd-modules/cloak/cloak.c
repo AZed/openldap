@@ -1,7 +1,9 @@
-/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/cloak/cloak.c,v 1.2.2.1 2009/01/21 01:15:37 quanah Exp $ */
 /* cloak.c - Overlay to hide some attribute except if explicitely requested */
-/* 
- * Copyright 2008 Emmanuel Dreyfus
+/* $OpenLDAP$ */
+/* This work is part of OpenLDAP Software <http://www.openldap.org/>.
+ *
+ * Copyright 2008-2009 The OpenLDAP Foundation.
+ * Portions Copyright 2008 Emmanuel Dreyfus
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -12,6 +14,11 @@
  * top-level directory of the distribution or, alternatively, at
  * <http://www.OpenLDAP.org/license.html>.
  */
+/* ACKNOWLEDGEMENTS:
+ * This work was originally developed by the Emmanuel Dreyfus for
+ * inclusion in OpenLDAP Software.
+ */
+
 #include "portable.h"
 
 #ifdef SLAPD_OVER_CLOAK
@@ -269,8 +276,8 @@ cloak_search( Operation *op, SlapReply *rs )
 
 	sc = op->o_tmpcalloc( 1, sizeof( *sc ), op->o_tmpmemctx );
 	sc->sc_response = cloak_search_cb;
-	sc->sc_cleanup = NULL;
-	sc->sc_next = NULL;
+	sc->sc_cleanup = slap_freeself_cb;
+	sc->sc_next = op->o_callback;
 	sc->sc_private = ci;
 	op->o_callback = sc;
 

@@ -851,16 +851,6 @@ parse_acl(
 					}
 				}
 
-				/* expand in <who> needs regex in <what> */
-				if ( ( sty == ACL_STYLE_EXPAND || expand )
-						&& a->acl_dn_style != ACL_STYLE_REGEX )
-				{
-					Debug( LDAP_DEBUG_CONFIG | LDAP_DEBUG_ACL, "%s: line %d: \"expand\" style "
-						"or modifier used in conjunction with a non-regex <what> clause.\n",
-						fname, lineno, 0 );
-						goto fail;
-				}
-
 				if ( strncasecmp( left, "real", STRLENOF( "real" ) ) == 0 ) {
 					is_realdn = 1;
 					bdn = &b->a_realdn;
@@ -2784,7 +2774,7 @@ acl_unparse( AccessControl *a, struct berval *bv )
 		for ( an = a->acl_attrs; an && !BER_BVISNULL( &an->an_name ); an++ ) {
 			if ( ! first ) *ptr++ = ',';
 			if (an->an_oc) {
-				*ptr++ = an->an_oc_exclude ? '!' : '@';
+				*ptr++ = ( an->an_flags & SLAP_AN_OCEXCLUDE ) ? '!' : '@';
 				ptr = lutil_strcopy( ptr, an->an_oc->soc_cname.bv_val );
 
 			} else {

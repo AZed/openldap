@@ -1,7 +1,9 @@
 /* smbk5pwd.c - Overlay for managing Samba and Heimdal passwords */
-/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/smbk5pwd/smbk5pwd.c,v 1.17.2.14 2009/01/26 21:05:10 quanah Exp $ */
-/*
- * Copyright 2004-2005 by Howard Chu, Symas Corp.
+/* $OpenLDAP$ */
+/* This work is part of OpenLDAP Software <http://www.openldap.org/>.
+ *
+ * Copyright 2004-2009 The OpenLDAP Foundation.
+ * Portions Copyright 2004-2005 by Howard Chu, Symas Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -12,11 +14,9 @@
  * top-level directory of the distribution or, alternatively, at
  * <http://www.OpenLDAP.org/license.html>.
  */
-/*
+/* ACKNOWLEDGEMENTS:
  * Support for table-driven configuration added by Pierangelo Masarati.
  * Support for sambaPwdMustChange and sambaPwdCanChange added by Marco D'Ettorre.
- *
- * The conditions of the OpenLDAP Public License apply.
  */
 
 #include <portable.h>
@@ -421,6 +421,7 @@ static int smbk5pwd_exop_passwd(
 		krb5_error_code ret;
 		hdb_entry ent;
 		struct berval *keys;
+		size_t nkeys;
 		int kvno, i;
 		Attribute *a;
 
@@ -451,7 +452,9 @@ static int smbk5pwd_exop_passwd(
 				op->o_log_prefix, e->e_name.bv_val, 0 );
 		}
 
-		ret = _kadm5_set_keys(kadm_context, &ent, qpw->rs_new.bv_val);
+		ret = hdb_generate_key_set_password(context, ent.principal,
+			qpw->rs_new.bv_val, &ent.keys.val, &nkeys);
+		ent.keys.len = nkeys;
 		hdb_seal_keys(context, db, &ent);
 		krb5_free_principal( context, ent.principal );
 
@@ -470,7 +473,7 @@ static int smbk5pwd_exop_passwd(
 		}
 		BER_BVZERO( &keys[i] );
 
-		_kadm5_free_keys(kadm_context, ent.keys.len, ent.keys.val);
+		hdb_free_keys(context, ent.keys.len, ent.keys.val);
 
 		if ( i != ent.keys.len ) {
 			ber_bvarray_free( keys );

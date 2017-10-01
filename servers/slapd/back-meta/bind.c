@@ -223,9 +223,10 @@ meta_back_bind( Operation *op, SlapReply *rs )
 
 				while ( ( tmpmc = avl_delete( &mi->mi_conninfo.lai_tree, (caddr_t)mc, meta_back_conn_cmp ) ) != NULL )
 				{
+					assert( !LDAP_BACK_PCONN_ISPRIV( mc ) );
 					Debug( LDAP_DEBUG_TRACE,
-						"=>meta_back_bind: destroying conn %ld (refcnt=%u)\n",
-						LDAP_BACK_PCONN_ID( mc ), mc->mc_refcnt, 0 );
+						"=>meta_back_bind: destroying conn %lu (refcnt=%u)\n",
+						mc->mc_conn->c_connid, mc->mc_refcnt, 0 );
 
 					if ( tmpmc->mc_refcnt != 0 ) {
 						/* taint it */
@@ -538,7 +539,7 @@ meta_back_single_bind(
 	LDAP_BACK_CONN_ISBOUND_SET( msc );
 	mc->mc_authz_target = candidate;
 
-	if ( LDAP_BACK_SAVECRED( mi ) ) {
+	if ( META_BACK_TGT_SAVECRED( mt ) ) {
 		if ( !BER_BVISNULL( &msc->msc_cred ) ) {
 			memset( msc->msc_cred.bv_val, 0,
 				msc->msc_cred.bv_len );
@@ -660,11 +661,15 @@ meta_back_dobind(
 		isroot = 1;
 	}
 
-	Debug( LDAP_DEBUG_TRACE,
-		"%s meta_back_dobind: conn=%ld%s\n",
-		op->o_log_prefix,
-		LDAP_BACK_PCONN_ID( mc ),
-		isroot ? " (isroot)" : "" );
+	if ( LogTest( LDAP_DEBUG_TRACE ) ) {
+		char buf[STRLENOF("4294967295U") + 1] = { 0 };
+		mi->mi_ldap_extra->connid2str( &mc->mc_base, buf, sizeof(buf) );
+
+		Debug( LDAP_DEBUG_TRACE,
+			"%s meta_back_dobind: conn=%s%s\n",
+			op->o_log_prefix, buf,
+			isroot ? " (isroot)" : "" );
+	}
 
 	/*
 	 * all the targets are bound as pseudoroot
@@ -796,9 +801,14 @@ retry_ok:;
 	}
 
 done:;
-	Debug( LDAP_DEBUG_TRACE,
-		"%s meta_back_dobind: conn=%ld bound=%d\n",
-		op->o_log_prefix, LDAP_BACK_PCONN_ID( mc ), bound );
+	if ( LogTest( LDAP_DEBUG_TRACE ) ) {
+		char buf[STRLENOF("4294967295U") + 1] = { 0 };
+		mi->mi_ldap_extra->connid2str( &mc->mc_base, buf, sizeof(buf) );
+
+		Debug( LDAP_DEBUG_TRACE,
+			"%s meta_back_dobind: conn=%s bound=%d\n",
+			op->o_log_prefix, buf, bound );
+	}
 
 	if ( bound == 0 ) {
 		meta_back_release_conn( mi, mc );
@@ -1539,7 +1549,7 @@ meta_back_proxy_authz_bind( metaconn_t *mc, int candidate, Operation *op, SlapRe
 				LDAP_BACK_CONN_ISBOUND_SET( msc );
 				ber_bvreplace( &msc->msc_bound_ndn, &binddn );
 
-				if ( LDAP_BACK_SAVECRED( mi ) ) {
+				if ( META_BACK_TGT_SAVECRED( mt ) ) {
 					if ( !BER_BVISNULL( &msc->msc_cred ) ) {
 						memset( msc->msc_cred.bv_val, 0,
 							msc->msc_cred.bv_len );

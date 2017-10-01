@@ -445,7 +445,7 @@ static int ndb_oc_search( Operation *op, SlapReply *rs, Ndb *ndb, NdbTransaction
 
 		dnNormalize( 0, NULL, NULL, &e.e_name, &e.e_nname, op->o_tmpmemctx );
 		{
-#ifdef notdef		/* NDBapi is broken here */
+#if 1	/* NDBapi was broken here but seems to work now */
 			Ndb::Key_part_ptr keys[2];
 			char xbuf[32];
 			keys[0].ptr = &eid;
@@ -634,6 +634,10 @@ int ndb_back_search( Operation *op, SlapReply *rs )
 	}
 
 	scan = txn->getNdbIndexScanOperation( "PRIMARY", DN2ID_TABLE );
+	if ( !scan ) {
+		rs->sr_err = LDAP_OTHER;
+		goto leave;
+	}
 	scan->readTuples( NdbOperation::LM_CommittedRead );
 	rc = ndb_dn2bound( scan, &rdns );
 
