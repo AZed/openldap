@@ -5,7 +5,7 @@
 
 Name: openldap
 Version: 2.4.23
-Release: 32%{?dist}
+Release: 32%{?dist}.1
 Summary: LDAP support libraries
 Group: System Environment/Daemons
 License: OpenLDAP
@@ -93,6 +93,7 @@ Patch155: openldap-dns-ipv6-queries.patch
 Patch156: openldap-slapd-preserve-mirrormode-when-deleting-syncrepl.patch
 Patch157: openldap-rwm-slapd-segfault-modrdn.patch
 Patch158: openldap-syncprov-segfault.patch
+Patch159: openldap-nss-pk11-freeslot.patch
 
 # patches for the evolution library (see README.evolution)
 Patch200: openldap-evolution-ntlm.patch
@@ -256,6 +257,7 @@ pushd openldap-%{version}
 %patch156 -p1 -b .slapd-preserve-mirrormode-when-deleting-syncrepl
 %patch157 -p1 -b .rwm-slapd-segfault-modrdn
 %patch158 -p1 -b .syncprov-segfault
+%patch159 -p1 -b .nss-leak
 
 cp %{_datadir}/libtool/config/config.{sub,guess} build/
 
@@ -795,6 +797,9 @@ exit 0
 %attr(0644,root,root)      %{evolution_connector_libdir}/*.a
 
 %changelog
+* Mon Apr 22 2013 Jan Synáček <jsynacek@redhat.com> 2.4.23-32.1
+- fix: NSS related resource leak (#954299)
+
 * Tue Feb 26 2013 Jan Synáček <jsynacek@redhat.com> 2.4.23-32
 - fix: segfault in syncprov overlay (#910241)
 
