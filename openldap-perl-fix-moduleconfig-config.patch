@@ -1,0 +1,24 @@
+fix: slaptest doesn't convert perlModuleConfig lines
+
+Resolves: #1184585
+Upstream: ITS #8105
+Author: Jan Synacek <jsynacek@redhat.com>
+
+diff --git a/servers/slapd/back-perl/config.c b/servers/slapd/back-perl/config.c
+index fd00965..d1c7886 100644
+--- a/servers/slapd/back-perl/config.c
++++ b/servers/slapd/back-perl/config.c
+@@ -219,9 +219,11 @@ perl_cf(
+ 			XPUSHs( pb->pb_obj_ref );
+ 
+ 			/* Put all arguments on the perl stack */
+-			for( args = 1; args < c->argc; args++ ) {
++			for( args = 1; args < c->argc; args++ )
+ 				XPUSHs(sv_2mortal(newSVpv(c->argv[args], 0)));
+-			}
++
++			ber_str2bv( c->line + STRLENOF("perlModuleConfig "), 0, 0, &bv );
++			value_add_one( &pb->pb_module_config, &bv );
+ 
+ 			PUTBACK ;
+ 
