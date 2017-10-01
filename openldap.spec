@@ -5,7 +5,7 @@
 
 Name: openldap
 Version: 2.4.44
-Release: 5%{?dist}
+Release: 5.lastbind.1%{?dist}
 Summary: LDAP support libraries
 Group: System Environment/Daemons
 License: OpenLDAP
@@ -78,6 +78,9 @@ Patch92: check-password-loglevels.patch
 # Fedora specific patches
 Patch100: openldap-autoconf-pkgconfig-nss.patch
 Patch102: openldap-fedora-systemd.patch
+
+# Lastbind support
+Patch200: openldap-lastbind.patch
 
 BuildRequires: cyrus-sasl-devel, nss-devel, krb5-devel, tcp_wrappers-devel, unixODBC-devel
 BuildRequires: glibc-devel, libtool, libtool-ltdl-devel, groff, perl, perl-devel, perl(ExtUtils::Embed)
@@ -209,6 +212,8 @@ AUTOMAKE=%{_bindir}/true autoreconf -fi
 
 %patch102 -p1
 
+%patch200 -p1
+
 # build smbk5pwd with other overlays
 ln -s ../../../contrib/slapd-modules/smbk5pwd/smbk5pwd.c servers/slapd/overlays
 mv contrib/slapd-modules/smbk5pwd/README contrib/slapd-modules/smbk5pwd/README.smbk5pwd
@@ -221,6 +226,8 @@ ln -s ../../../contrib/slapd-modules/passwd/sha2/{sha2.{c,h},slapd-sha2.c} \
       servers/slapd/overlays
 ls servers/slapd/overlays
 mv contrib/slapd-modules/passwd/sha2/README{,.sha2}
+# build lastbind with other overlays
+ln -s ../../../contrib/slapd-modules/lastbind/lastbind.c servers/slapd/overlays
 
 mv servers/slapd/back-perl/README{,.back_perl}
 
@@ -649,6 +656,7 @@ exit 0
 %{_libdir}/openldap/unique*
 %{_libdir}/openldap/valsort*
 %{_libdir}/openldap/check_password*
+%{_libdir}/openldap/lastbind*
 %{_libexecdir}/openldap/functions
 %{_libexecdir}/openldap/convert-config.sh
 %{_libexecdir}/openldap/check-config.sh

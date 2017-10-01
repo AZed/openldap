@@ -1,0 +1,48 @@
+From 394ff376bc62bb0fd76b13beec25f17ced4ac632 Mon Sep 17 00:00:00 2001
+From: Zed Pobre <zed@resonant.org>
+Date: Sun, 1 Oct 2017 16:36:55 -0400
+Subject: [PATCH] Add lastbind module to overlays
+
+---
+ servers/slapd/overlays/Makefile.in | 11 +++++++++--
+ 1 file changed, 9 insertions(+), 2 deletions(-)
+
+diff --git a/servers/slapd/overlays/Makefile.in b/servers/slapd/overlays/Makefile.in
+index fb88a8139..e911d8fe1 100644
+--- a/servers/slapd/overlays/Makefile.in
++++ b/servers/slapd/overlays/Makefile.in
+@@ -36,7 +36,8 @@ SRCS = overlays.c \
+ 	valsort.c \
+ 	smbk5pwd.c \
+ 	allop.c \
+-	sha2.c slapd-sha2.c
++	sha2.c slapd-sha2.c \
++	lastbind.c
+ OBJS = statover.o \
+ 	@SLAPD_STATIC_OVERLAYS@ \
+ 	overlays.o
+@@ -56,7 +57,7 @@ NT_LINK_LIBS = -L.. -lslapd $(@BUILD_LIBS_DYNAMIC@_LDAP_LIBS)
+ UNIX_LINK_LIBS = $(@BUILD_LIBS_DYNAMIC@_LDAP_LIBS)
+ 
+ LIBRARY = ../liboverlays.a
+-PROGRAMS = @SLAPD_DYNAMIC_OVERLAYS@ smbk5pwd.la allop.la pw-sha2.la
++PROGRAMS = @SLAPD_DYNAMIC_OVERLAYS@ smbk5pwd.la allop.la pw-sha2.la lastbind.la
+ 
+ XINCPATH = -I.. -I$(srcdir)/..
+ XDEFS = $(MODULES_CPPFLAGS)
+@@ -149,6 +150,12 @@ slapd-sha2.lo : slapd-sha2.c
+ pw-sha2.la : sha2.lo slapd-sha2.lo
+ 	$(LTLINK_MOD) -module -o $@ $? version.lo $(LINK_LIBS)
+ 
++lastbind.lo : lastbind.c
++	$(LTCOMPILE_MOD) -DSLAPD_OVER_LASTBIND=SLAPD_MOD_DYNAMIC -DDO_SAMBA -UHAVE_MOZNSS -DHAVE_OPENSSL $(shell pkg-config openssl --cflags) $<
++
++lastbind.la : lastbind.lo
++	$(LTLINK_MOD) -module -o $@ lastbind.lo version.lo $(LINK_LIBS) $(shell pkg-config openssl --libs)
++
+ install-local:	$(PROGRAMS)
+ 	@if test -n "$?" ; then \
+ 		$(MKDIR) $(DESTDIR)$(moduledir); \
+-- 
+2.11.0
+
