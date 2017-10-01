@@ -2,7 +2,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2009-2011 The OpenLDAP Foundation.
+ * Copyright 2009-2012 The OpenLDAP Foundation.
  * Portions copyright 2009 Symas Corporation.
  * All rights reserved.
  *
@@ -436,6 +436,8 @@ static void send_list(
 	Entry *e;
 	LDAPControl *ctrls[2];
 
+	rs->sr_attrs = op->ors_attrs;
+
 	/* FIXME: it may be better to just flatten the tree into
 	 * an array before doing all of this...
 	 */
@@ -515,8 +517,10 @@ range_err:
 		}
 		cur_node = tavl_find3( so->so_tree, sn, node_cmp, &j );
 		/* didn't find >= match */
-		if ( j > 0 )
-			cur_node = NULL;
+		if ( j > 0 ) {
+			if ( cur_node )
+				cur_node = tavl_next( cur_node, TAVL_DIR_RIGHT );
+		}
 		op->o_tmpfree( sn, op->o_tmpmemctx );
 
 		if ( !cur_node ) {
@@ -534,7 +538,7 @@ range_err:
 			}
 			for (i=0; tmp_node != cur_node;
 				tmp_node = tavl_next( tmp_node, dir ), i++);
-			so->so_vlv_target = i;
+			so->so_vlv_target = (dir == TAVL_DIR_RIGHT) ? i+1 : so->so_nentries - i;
 		}
 		if ( bv.bv_val != vc->vc_value.bv_val )
 			op->o_tmpfree( bv.bv_val, op->o_tmpmemctx );
@@ -583,6 +587,8 @@ static void send_page( Operation *op, SlapReply *rs, sort_op *so )
 	BackendDB *be = op->o_bd;
 	Entry *e;
 	int rc;
+
+	rs->sr_attrs = op->ors_attrs;
 
 	while ( cur_node && rs->sr_nentries < so->so_page_size ) {
 		sort_node *sn = cur_node->avl_data;
@@ -1295,6 +1301,10 @@ static int sssvlv_db_init(
 		if ( rc != LDAP_SUCCESS ) {
 			Debug( LDAP_DEBUG_ANY, "Failed to register VLV Request control '%s' (%d)\n",
 				LDAP_CONTROL_VLVREQUEST, rc, 0 );
+#ifdef SLAP_CONFIG_DELETE
+			overlay_unregister_control( be, LDAP_CONTROL_SORTREQUEST );
+			unregister_supported_control( LDAP_CONTROL_SORTREQUEST );
+#endif /* SLAP_CONFIG_DELETE */
 			return rc;
 		}
 	}
@@ -1319,7 +1329,7 @@ static int sssvlv_db_destroy(
 	slap_overinst	*on = (slap_overinst *)be->bd_info;
 	sssvlv_info *si = (sssvlv_info *)on->on_bi.bi_private;
 	int conn_index;
-	
+
 	ov_count--;
 	if ( !ov_count && sort_conns) {
 		sort_conns--;
@@ -1329,6 +1339,15 @@ static int sssvlv_db_destroy(
 		ch_free(sort_conns);
 		ldap_pvt_thread_mutex_destroy( &sort_conns_mutex );
 	}
+
+#ifdef SLAP_CONFIG_DELETE
+	overlay_unregister_control( be, LDAP_CONTROL_SORTREQUEST );
+	overlay_unregister_control( be, LDAP_CONTROL_VLVREQUEST );
+	if ( ov_count == 0 ) {
+		unregister_supported_control( LDAP_CONTROL_SORTREQUEST );
+		unregister_supported_control( LDAP_CONTROL_VLVREQUEST );
+	}
+#endif /* SLAP_CONFIG_DELETE */
 
 	if ( si ) {
 		ch_free( si );

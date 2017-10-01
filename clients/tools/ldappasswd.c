@@ -2,7 +2,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2011 The OpenLDAP Foundation.
+ * Copyright 1998-2012 The OpenLDAP Foundation.
  * Portions Copyright 1998-2003 Kurt D. Zeilenga.
  * Portions Copyright 1998-2001 Net Boolean Incorporated.
  * Portions Copyright 2001-2003 IBM Corporation.
@@ -313,7 +313,7 @@ main( int argc, char *argv[] )
 		struct timeval	tv;
 
 		if ( tool_check_abandon( ld, id ) ) {
-			return LDAP_CANCELLED;
+			tool_exit( ld, LDAP_CANCELLED );
 		}
 
 		tv.tv_sec = 0;
@@ -322,7 +322,7 @@ main( int argc, char *argv[] )
 		rc = ldap_result( ld, LDAP_RES_ANY, LDAP_MSG_ALL, &tv, &res );
 		if ( rc < 0 ) {
 			tool_perror( "ldap_result", rc, NULL, NULL, NULL, NULL );
-			return rc;
+			tool_exit( ld, rc );
 		}
 
 		if ( rc != 0 ) {
@@ -409,8 +409,5 @@ main( int argc, char *argv[] )
 
 done:
 	/* disconnect from server */
-	if ( ld )
-		tool_unbind( ld ); 
-	tool_destroy();
-	return rc;
+	tool_exit( ld, rc ); 
 }

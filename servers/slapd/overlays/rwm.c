@@ -2,7 +2,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2011 The OpenLDAP Foundation.
+ * Copyright 2003-2012 The OpenLDAP Foundation.
  * Portions Copyright 2003 Pierangelo Masarati.
  * All rights reserved.
  *
@@ -911,6 +911,7 @@ rwm_entry_get_rw( Operation *op, struct berval *ndn,
 		/* duplicate & release */
 		op2.o_bd->bd_info = (BackendInfo *)on;
 		rc = rwm_send_entry( &op2, &rs );
+		RS_ASSERT( rs.sr_flags & REP_ENTRY_MUSTFLUSH );
 		if ( rc == SLAP_CB_CONTINUE ) {
 			*ep = rs.sr_entry;
 			rc = LDAP_SUCCESS;
@@ -1276,7 +1277,13 @@ rwm_attrs( Operation *op, SlapReply *rs, Attribute** a_first, int stripEntryDN )
 								NULL );
 
 							if ( rc != LDAP_SUCCESS ) {
-								BER_BVZERO( &(*ap)->a_nvals[i] );
+								/* FIXME: this is wrong, putting a non-normalized value
+								 * into nvals. But when a proxy sends us bogus data,
+								 * we still need to give it to the client, even if it
+								 * violates the syntax. I.e., we don't want to silently
+								 * drop things and trigger an apparent data loss.
+								 */
+								ber_dupbv( &(*ap)->a_nvals[i], &(*ap)->a_vals[i] );
 							}
 						}
 						BER_BVZERO( &(*ap)->a_nvals[i] );
@@ -1498,6 +1505,7 @@ rwm_send_entry( Operation *op, SlapReply *rs )
 	} else if ( rs->sr_flags & REP_ENTRY_MUSTRELEASE ) {
 		/* ITS#6423: REP_ENTRY_MUSTRELEASE incompatible
 		 * with REP_ENTRY_MODIFIABLE */
+		RS_ASSERT( 0 );
 		rc = 1;
 		goto fail;
 	}

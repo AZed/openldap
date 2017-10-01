@@ -2,7 +2,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2011 The OpenLDAP Foundation.
+ * Copyright 1998-2012 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -62,7 +62,6 @@ LDAP_BEGIN_DECL
 #define LDAP_COLLECTIVE_ATTRIBUTES
 #define LDAP_COMP_MATCH
 #define LDAP_SYNC_TIMESTAMP
-#define SLAP_CONTROL_X_SESSION_TRACKING
 #define SLAP_CONTROL_X_WHATFAILED
 #define SLAP_CONFIG_DELETE
 #ifndef SLAP_SCHEMA_EXPOSE
@@ -72,6 +71,7 @@ LDAP_BEGIN_DECL
 
 #define LDAP_DYNAMIC_OBJECTS
 #define SLAP_CONTROL_X_TREE_DELETE LDAP_CONTROL_X_TREE_DELETE
+#define SLAP_CONTROL_X_SESSION_TRACKING
 #define SLAP_DISTPROC
 
 #ifdef ENABLE_REWRITE
@@ -110,12 +110,25 @@ LDAP_BEGIN_DECL
 # define SLAP_STRING_UNKNOWN	"unknown"
 #endif /* ! TCP Wrappers */
 
-/* LDAPMod.mod_op value ===> Must be kept in sync with ldap.h!
- * This is a value used internally by the backends. It is needed to allow
- * adding values that already exist without getting an error as required by
- * modrdn when the new rdn was already an attribute value itself.
+/* LDAPMod.mod_op value ===> Must be kept in sync with ldap.h! */
+/* These values are used internally by the backends. */
+/* SLAP_MOD_SOFTADD allows adding values that already exist without getting
+ * an error as required by modrdn when the new rdn was already an attribute
+ * value itself.
  */
-#define SLAP_MOD_SOFTADD	0x1000
+#define SLAP_MOD_SOFTADD		0x1000
+/* SLAP_MOD_SOFTDEL allows deleting values if they exist without getting
+ * an error otherwise.
+ */
+#define SLAP_MOD_SOFTDEL		0x1001
+/* SLAP_MOD_ADD_IF_NOT_PRESENT allows adding values unless the attribute
+ * is already present without getting an error.
+ */
+#define SLAP_MOD_ADD_IF_NOT_PRESENT	0x1002
+/* SLAP_MOD_DEL_IF_PRESENT allows deleting values if the attribute
+ * is present, without getting an error otherwise.
+ * The semantics can be obtained using SLAP_MOD_SOFTDEL with NULL values.
+ */
 
 #define MAXREMATCHES (100)
 
@@ -129,10 +142,10 @@ LDAP_BEGIN_DECL
 
 #define SLAP_TEXT_BUFLEN (256)
 
-/* psuedo error code indicating abandoned operation */
+/* pseudo error code indicating abandoned operation */
 #define SLAPD_ABANDON (-1024)
 
-/* psuedo error code indicating disconnect */
+/* pseudo error code indicating disconnect */
 #define SLAPD_DISCONNECT (-1025)
 
 /* unknown config file directive */
@@ -837,6 +850,7 @@ struct AttributeDescription {
 #define SLAP_DESC_BINARY	0x01U
 #define SLAP_DESC_TAG_RANGE	0x80U
 #define SLAP_DESC_TEMPORARY	0x1000U
+	unsigned ad_index;
 };
 
 /* flags to slap_*2undef_ad to register undefined (0, the default)
@@ -1836,6 +1850,7 @@ struct BackendDB {
 #define SLAP_DBFLAG_CLEAN		0x10000U /* was cleanly shutdown */
 #define SLAP_DBFLAG_ACL_ADD		0x20000U /* check attr ACLs on adds */
 #define SLAP_DBFLAG_SYNC_SUBENTRY	0x40000U /* use subentry for context */
+#define SLAP_DBFLAG_MULTI_SHADOW	0x80000U /* uses mirrorMode/multi-master */
 	slap_mask_t	be_flags;
 #define SLAP_DBFLAGS(be)			((be)->be_flags)
 #define SLAP_NOLASTMOD(be)			(SLAP_DBFLAGS(be) & SLAP_DBFLAG_NOLASTMOD)
@@ -1859,7 +1874,7 @@ struct BackendDB {
 #define SLAP_SYNC_SHADOW(be)			(SLAP_DBFLAGS(be) & SLAP_DBFLAG_SYNC_SHADOW)
 #define SLAP_SLURP_SHADOW(be)			(SLAP_DBFLAGS(be) & SLAP_DBFLAG_SLURP_SHADOW)
 #define SLAP_SINGLE_SHADOW(be)			(SLAP_DBFLAGS(be) & SLAP_DBFLAG_SINGLE_SHADOW)
-#define SLAP_MULTIMASTER(be)			(!SLAP_SINGLE_SHADOW(be))
+#define SLAP_MULTIMASTER(be)			(SLAP_DBFLAGS(be) & SLAP_DBFLAG_MULTI_SHADOW)
 #define SLAP_DBCLEAN(be)			(SLAP_DBFLAGS(be) & SLAP_DBFLAG_CLEAN)
 #define SLAP_DBACL_ADD(be)			(SLAP_DBFLAGS(be) & SLAP_DBFLAG_ACL_ADD)
 #define SLAP_SYNC_SUBENTRY(be)			(SLAP_DBFLAGS(be) & SLAP_DBFLAG_SYNC_SUBENTRY)
@@ -3025,7 +3040,6 @@ typedef int (*SLAP_ENTRY_INFO_FN) LDAP_P(( void *arg, Entry *e ));
 
 #define SLAP_SLAB_SIZE	(1024*1024)
 #define SLAP_SLAB_STACK 1
-#define SLAP_SLAB_SOBLOCK 64
 
 #define SLAP_ZONE_ALLOC 1
 #undef SLAP_ZONE_ALLOC
@@ -3254,25 +3268,6 @@ struct ComponentSyntaxInfo {
 };
 
 #endif /* LDAP_COMP_MATCH */
-
-/* slab heap data structures */
-
-struct slab_object {
-    void *so_ptr;
-	int so_blockhead;
-    LDAP_LIST_ENTRY(slab_object) so_link;
-};
-
-struct slab_heap {
-    void *sh_base;
-    void *sh_last;
-    void *sh_end;
-	int sh_stack;
-	int sh_maxorder;
-    unsigned char **sh_map;
-    LDAP_LIST_HEAD( sh_freelist, slab_object ) *sh_free;
-	LDAP_LIST_HEAD( sh_so, slab_object ) sh_sopool;
-};
 
 #ifdef SLAP_ZONE_ALLOC
 #define SLAP_ZONE_SIZE 0x80000		/* 512KB */

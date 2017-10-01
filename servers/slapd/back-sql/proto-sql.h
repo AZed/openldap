@@ -1,7 +1,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2011 The OpenLDAP Foundation.
+ * Copyright 1999-2012 The OpenLDAP Foundation.
  * Portions Copyright 1999 Dmitry Kovalev.
  * Portions Copyright 2002 Pierangelo Mararati.
  * All rights reserved.
@@ -307,5 +307,7 @@ extern BI_entry_get_rw		backsql_entry_get;
 extern BI_entry_release_rw	backsql_entry_release;
 
 extern BI_connection_destroy	backsql_connection_destroy;
+
+int backsql_init_cf( BackendInfo * bi );
 
 #endif /* PROTO_SQL_H */

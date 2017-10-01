@@ -1,7 +1,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2011 The OpenLDAP Foundation.
+ * Copyright 1998-2012 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -328,6 +328,10 @@ ldap_x_wcs_to_utf8s ( char *utf8str, const wchar_t *wcstr, size_t count )
 	return (p - utf8str);
 }
 
+#ifdef ANDROID
+int wctomb(char *s, wchar_t wc) { return wcrtomb(s,wc,NULL); }
+int mbtowc(wchar_t *pwc, const char *s, size_t n) { return mbrtowc(pwc, s, n, NULL); }
+#endif
 
 /*-----------------------------------------------------------------------------
    Convert a UTF-8 character to a MultiByte character.

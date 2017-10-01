@@ -2,7 +2,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2011 The OpenLDAP Foundation.
+ * Copyright 1998-2012 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -1990,7 +1990,14 @@ acl_check_modlist(
 			/* fall thru to check value to add */
 
 		case LDAP_MOD_ADD:
+		case SLAP_MOD_ADD_IF_NOT_PRESENT:
 			assert( mlist->sml_values != NULL );
+
+			if ( mlist->sml_op == SLAP_MOD_ADD_IF_NOT_PRESENT
+				&& attr_find( e->e_attrs, mlist->sml_desc ) )
+			{
+				break;
+			}
 
 			for ( bv = mlist->sml_nvalues
 					? mlist->sml_nvalues : mlist->sml_values;
@@ -2008,6 +2015,7 @@ acl_check_modlist(
 			break;
 
 		case LDAP_MOD_DELETE:
+		case SLAP_MOD_SOFTDEL:
 			if ( mlist->sml_values == NULL ) {
 				if ( ! access_allowed( op, e,
 					mlist->sml_desc, NULL,

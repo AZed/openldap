@@ -2,7 +2,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2008-2011 The OpenLDAP Foundation.
+ * Copyright 2008-2012 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -657,10 +657,8 @@ static int
 tlso_session_strength( tls_session *sess )
 {
 	tlso_session *s = (tlso_session *)sess;
-	SSL_CIPHER *c;
 
-	c = SSL_get_current_cipher(s);
-	return SSL_CIPHER_get_bits(c, NULL);
+	return SSL_CIPHER_get_bits(SSL_get_current_cipher(s), NULL);
 }
 
 /*

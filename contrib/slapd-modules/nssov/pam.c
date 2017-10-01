@@ -2,7 +2,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>. 
  *
- * Copyright 2008-2011 The OpenLDAP Foundation.
+ * Copyright 2008-2012 The OpenLDAP Foundation.
  * Portions Copyright 2008 by Howard Chu, Symas Corp.
  * All rights reserved.
  *
@@ -678,7 +678,7 @@ int nssov_pam_init()
 	int code = 0;
 	const char *text;
 	if (!ad_loginStatus)
-		code = slap_str2ad( "loginStatus", &ad_loginStatus, &text );
+		code = slap_str2ad("loginStatus", &ad_loginStatus, &text);
 
 	return code;
 }

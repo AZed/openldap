@@ -2,7 +2,7 @@
 /* syncprov.c - syncrepl provider */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2004-2011 The OpenLDAP Foundation.
+ * Copyright 2004-2012 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -439,6 +439,7 @@ syncprov_findbase( Operation *op, fbase_cookie *fc )
 		fop.o_sync_mode = 0;	/* turn off sync mode */
 		fop.o_managedsait = SLAP_CONTROL_CRITICAL;
 		fop.o_callback = &cb;
+		LDAP_SLIST_INIT( &fop.o_extra );
 		fop.o_tag = LDAP_REQ_SEARCH;
 		fop.ors_scope = LDAP_SCOPE_BASE;
 		fop.ors_limit = NULL;
@@ -821,7 +822,7 @@ syncprov_sendresp( Operation *op, opcookie *opc, syncops *so, int mode )
 {
 	SlapReply rs = { REP_SEARCH };
 	LDAPControl *ctrls[2];
-	struct berval cookie = BER_BVNULL, csns[2];
+	struct berval cookie, csns[2];
 	Entry e_uuid = {0};
 	Attribute a_uuid = {0};
 
@@ -829,19 +830,17 @@ syncprov_sendresp( Operation *op, opcookie *opc, syncops *so, int mode )
 		return SLAPD_ABANDON;
 
 	ctrls[1] = NULL;
-	if ( !BER_BVISNULL( &opc->sctxcsn )) {
-		csns[0] = opc->sctxcsn;
-		BER_BVZERO( &csns[1] );
-		slap_compose_sync_cookie( op, &cookie, csns, so->s_rid, slap_serverID ? slap_serverID : -1 );
-	}
+	csns[0] = opc->sctxcsn;
+	BER_BVZERO( &csns[1] );
+	slap_compose_sync_cookie( op, &cookie, csns, so->s_rid, slap_serverID ? slap_serverID : -1 );
 
 #ifdef LDAP_DEBUG
 	if ( so->s_sid > 0 ) {
 		Debug( LDAP_DEBUG_SYNC, "syncprov_sendresp: to=%03x, cookie=%s\n",
-			so->s_sid, cookie.bv_val ? cookie.bv_val : "", 0 );
+			so->s_sid, cookie.bv_val, 0 );
 	} else {
 		Debug( LDAP_DEBUG_SYNC, "syncprov_sendresp: cookie=%s\n",
-			cookie.bv_val ? cookie.bv_val : "", 0, 0 );
+			cookie.bv_val, 0, 0 );
 	}
 #endif
 
@@ -850,9 +849,7 @@ syncprov_sendresp( Operation *op, opcookie *opc, syncops *so, int mode )
 	a_uuid.a_nvals = &opc->suuid;
 	rs.sr_err = syncprov_state_ctrl( op, &rs, &e_uuid,
 		mode, ctrls, 0, 1, &cookie );
-	if ( !BER_BVISNULL( &cookie )) {
-		op->o_tmpfree( cookie.bv_val, op->o_tmpmemctx );
-	}
+	op->o_tmpfree( cookie.bv_val, op->o_tmpmemctx );
 
 	rs.sr_ctrls = ctrls;
 	rs.sr_entry = &e_uuid;
@@ -991,6 +988,7 @@ syncprov_qtask( void *ctx, void *arg )
 	op->o_hdr = &opbuf.ob_hdr;
 	op->o_controls = opbuf.ob_controls;
 	memset( op->o_controls, 0, sizeof(opbuf.ob_controls) );
+	op->o_sync = SLAP_CONTROL_IGNORED;
 
 	*op->o_hdr = *so->s_op->o_hdr;
 
@@ -2113,10 +2111,12 @@ syncprov_op_mod( Operation *op, SlapReply *rs )
 				/* clean up if the caller is giving up */
 				if ( op->o_abandon ) {
 					modinst *m2;
-					for ( m2 = mt->mt_mods; m2->mi_next != mi;
+					for ( m2 = mt->mt_mods; m2 && m2->mi_next != mi;
 						m2 = m2->mi_next );
-					m2->mi_next = mi->mi_next;
-					if ( mt->mt_tail == mi ) mt->mt_tail = m2;
+					if ( m2 ) {
+						m2->mi_next = mi->mi_next;
+						if ( mt->mt_tail == mi ) mt->mt_tail = m2;
+					}
 					op->o_tmpfree( cb, op->o_tmpmemctx );
 					ldap_pvt_thread_mutex_unlock( &mt->mt_mutex );
 					return SLAPD_ABANDON;
@@ -2583,7 +2583,7 @@ syncprov_op_search( Operation *op, SlapReply *rs )
 					mincsn = srs->sr_state.ctxcsn[i];
 					minsid = sids[j];
 				}
-			} else if ( newer > 0 ) {
+			} else if ( newer > 0 && sids[j] == slap_serverID ) {
 			/* our state is older, complain to consumer */
 				rs->sr_err = LDAP_UNWILLING_TO_PERFORM;
 				rs->sr_text = "consumer state is newer than provider!";
@@ -3143,6 +3143,9 @@ syncprov_db_close(
 {
     slap_overinst   *on = (slap_overinst *) be->bd_info;
     syncprov_info_t *si = (syncprov_info_t *)on->on_bi.bi_private;
+#ifdef SLAP_CONFIG_DELETE
+	syncops *so, *sonext;
+#endif /* SLAP_CONFIG_DELETE */
 
 	if ( slapMode & SLAP_TOOL_MODE ) {
 		return 0;
@@ -3161,6 +3164,20 @@ syncprov_db_close(
 		op->o_ndn = be->be_rootndn;
 		syncprov_checkpoint( op, on );
 	}
+
+#ifdef SLAP_CONFIG_DELETE
+	if ( !slapd_shutdown ) {
+		for ( so=si->si_ops, sonext=so;  so; so=sonext  ) {
+			SlapReply rs = {REP_RESULT};
+			rs.sr_err = LDAP_UNAVAILABLE;
+			send_ldap_result( so->s_op, &rs );
+			sonext=so->s_next;
+			syncprov_drop_psearch( so, 0);
+		}
+		si->si_ops=NULL;
+	}
+	overlay_unregister_control( be, LDAP_CONTROL_SYNC );
+#endif /* SLAP_CONFIG_DELETE */
 
     return 0;
 }

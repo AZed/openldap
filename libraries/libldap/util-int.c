@@ -1,7 +1,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2011 The OpenLDAP Foundation.
+ * Copyright 1998-2012 The OpenLDAP Foundation.
  * Portions Copyright 1998 A. Hartgers.
  * All rights reserved.
  *
@@ -271,7 +271,7 @@ ldap_pvt_gettime( struct lutil_tm *ltm )
 	t = tv.tv_sec;
 
 	if ( tv.tv_sec < prevTv.tv_sec
-		|| ( tv.tv_sec == prevTv.tv_sec && tv.tv_usec == prevTv.tv_usec )) {
+		|| ( tv.tv_sec == prevTv.tv_sec && tv.tv_usec <= prevTv.tv_usec )) {
 		subs++;
 	} else {
 		subs = 0;

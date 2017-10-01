@@ -2,7 +2,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2011 The OpenLDAP Foundation.
+ * Copyright 1998-2012 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -369,9 +369,11 @@ static long send_ldap_ber(
 
 		ldap_pvt_thread_mutex_unlock( &conn->c_write1_mutex );
 		ldap_pvt_thread_mutex_unlock( &conn->c_mutex );
+		ldap_pvt_thread_pool_idle( &connection_pool );
 		ldap_pvt_thread_cond_wait( &conn->c_write2_cv, &conn->c_write2_mutex );
 		conn->c_writewaiter = 0;
 		ldap_pvt_thread_mutex_unlock( &conn->c_write2_mutex );
+		ldap_pvt_thread_pool_unidle( &connection_pool );
 		ldap_pvt_thread_mutex_lock( &conn->c_write1_mutex );
 		if ( conn->c_writers < 0 ) {
 			ret = 0;
@@ -570,7 +572,8 @@ send_ldap_response(
 	int		rc = LDAP_SUCCESS;
 	long	bytes;
 
-	if (( rs->sr_err == SLAPD_ABANDON || op->o_abandon ) && !op->o_cancel ) {
+	/* op was actually aborted, bypass everything if client didn't Cancel */
+	if (( rs->sr_err == SLAPD_ABANDON ) && !op->o_cancel ) {
 		rc = SLAPD_ABANDON;
 		goto clean2;
 	}
@@ -580,6 +583,12 @@ send_ldap_response(
 		if ( rc != SLAP_CB_CONTINUE ) {
 			goto clean2;
 		}
+	}
+
+	/* op completed, connection aborted, bypass sending response */
+	if ( op->o_abandon && !op->o_cancel ) {
+		rc = SLAPD_ABANDON;
+		goto clean2;
 	}
 
 #ifdef LDAP_CONNECTIONLESS
@@ -964,18 +973,20 @@ slap_send_search_entry( Operation *op, SlapReply *rs )
 	 */
 	char **e_flags = NULL;
 
+	rs->sr_type = REP_SEARCH;
+
 	if ( op->ors_slimit >= 0 && rs->sr_nentries >= op->ors_slimit ) {
-		return LDAP_SIZELIMIT_EXCEEDED;
+		rc = LDAP_SIZELIMIT_EXCEEDED;
+		goto error_return;
 	}
 
 	/* Every 64 entries, check for thread pool pause */
 	if ( ( ( rs->sr_nentries & 0x3f ) == 0x3f ) &&
 		ldap_pvt_thread_pool_pausing( &connection_pool ) > 0 )
 	{
-		return LDAP_BUSY;
+		rc = LDAP_BUSY;
+		goto error_return;
 	}
-
-	rs->sr_type = REP_SEARCH;
 
 	/* eventually will loop through generated operational attribute types
 	 * currently implemented types include:
@@ -1294,6 +1305,10 @@ slap_send_search_entry( Operation *op, SlapReply *rs )
 				{
 					continue;
 				}
+				/* if DSA-specific and replicating, skip */
+				if ( op->o_sync != SLAP_CONTROL_NONE &&
+					desc->ad_type->sat_usage == LDAP_SCHEMA_DSA_OPERATION )
+					continue;
 			} else {
 				if ( !userattrs && !ad_inlist( desc, rs->sr_attrs ) ) {
 					continue;
@@ -1607,7 +1622,11 @@ slap_send_search_reference( Operation *op, SlapReply *rs )
 
 	Debug( LDAP_DEBUG_TRACE, "<= send_search_reference\n", 0, 0, 0 );
 
+	if ( 0 ) {
 rel:
+	    rs_flush_entry( op, rs, NULL );
+	}
+
 	if ( op->o_callback ) {
 		(void)slap_cleanup_play( op, rs );
 	}
@@ -1681,15 +1700,16 @@ str2result(
 				continue;
 			}
 
-			while ( isspace( (unsigned char) next[ 0 ] ) ) next++;
-			if ( next[ 0 ] != '\0' ) {
+			while ( isspace( (unsigned char) next[ 0 ] ) && next[ 0 ] != '\n' )
+				next++;
+			if ( next[ 0 ] != '\0' && next[ 0 ] != '\n' ) {
 				Debug( LDAP_DEBUG_ANY, "str2result (%s) extra cruft after value\n",
 				    s, 0, 0 );
 				rc = -1;
 				continue;
 			}
 
-			/* FIXME: what if it's larger that max int? */
+			/* FIXME: what if it's larger than max int? */
 			*code = (int)retcode;
 
 		} else if ( strncasecmp( s, "matched", STRLENOF( "matched" ) ) == 0 ) {

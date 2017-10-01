@@ -2,7 +2,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2011 The OpenLDAP Foundation.
+ * Copyright 1998-2012 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -164,6 +164,7 @@ unsigned int index_intlen = SLAP_INDEX_INTLEN_DEFAULT;
 unsigned int index_intlen_strlen = SLAP_INDEX_INTLEN_STRLEN(
 	SLAP_INDEX_INTLEN_DEFAULT );
 
+ldap_pvt_thread_mutex_t	ad_index_mutex;
 ldap_pvt_thread_mutex_t	ad_undef_mutex;
 ldap_pvt_thread_mutex_t	oc_undef_mutex;
 
@@ -1852,12 +1853,12 @@ UTF8StringNormalize(
 		}
 		nvalue.bv_val[nvalue.bv_len] = '\0';
 
-	} else {
+	} else if ( tmp.bv_len )  {
 		/* string of all spaces is treated as one space */
 		nvalue.bv_val[0] = ' ';
 		nvalue.bv_val[1] = '\0';
 		nvalue.bv_len = 1;
-	}
+	}	/* should never be entered with 0-length val */
 
 	*normalized = nvalue;
 	return LDAP_SUCCESS;
@@ -2331,13 +2332,18 @@ postalAddressNormalize(
 	}
 	lines[l].bv_len = &val->bv_val[c] - lines[l].bv_val;
 
-	normalized->bv_len = l;
+	normalized->bv_len = c = l;
 
-	for ( l = 0; !BER_BVISNULL( &lines[l] ); l++ ) {
+	for ( l = 0; l <= c; l++ ) {
 		/* NOTE: we directly normalize each line,
 		 * without unescaping the values, since the special
 		 * values '\24' ('$') and '\5C' ('\') are not affected
 		 * by normalization */
+		if ( !lines[l].bv_len ) {
+			nlines[l].bv_len = 0;
+			nlines[l].bv_val = NULL;
+			continue;
+		}
 		rc = UTF8StringNormalize( usage, NULL, xmr, &lines[l], &nlines[l], ctx );
 		if ( rc != LDAP_SUCCESS ) {
 			rc = LDAP_INVALID_SYNTAX;
@@ -2350,7 +2356,7 @@ postalAddressNormalize(
 	normalized->bv_val = slap_sl_malloc( normalized->bv_len + 1, ctx );
 
 	p = normalized->bv_val;
-	for ( l = 0; !BER_BVISNULL( &nlines[l] ); l++ ) {
+	for ( l = 0; l <= c ; l++ ) {
 		p = lutil_strbvcopy( p, &nlines[l] );
 		*p++ = '$';
 	}
@@ -6844,6 +6850,7 @@ schema_destroy( void )
 	syn_destroy();
 
 	if( schema_init_done ) {
+		ldap_pvt_thread_mutex_destroy( &ad_index_mutex );
 		ldap_pvt_thread_mutex_destroy( &ad_undef_mutex );
 		ldap_pvt_thread_mutex_destroy( &oc_undef_mutex );
 	}

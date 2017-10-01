@@ -2,7 +2,7 @@
 # $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2011 The OpenLDAP Foundation.
+## Copyright 1998-2012 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -245,6 +245,8 @@ LDIFTRANSLUCENTMERGED=$DATADIR/test-translucent-merged.ldif
 LDIFMETA=$DATADIR/test-meta.ldif
 LDIFVALSORT=$DATADIR/test-valsort.ldif
 SQLADD=$DATADIR/sql-add.ldif
+LDIFUNORDERED=$DATADIR/test-unordered.ldif
+LDIFREORDERED=$DATADIR/test-reordered.ldif
 
 # strings
 MONITOR=""

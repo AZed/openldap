@@ -2,7 +2,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2007-2011 The OpenLDAP Foundation.
+ * Copyright 2007-2012 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,11 +28,14 @@ LDAP_BEGIN_DECL
 struct sockinfo {
 	const char	*si_sockpath;
 	slap_mask_t	si_extensions;
+	slap_mask_t	si_ops;		/* overlay: operations to act on */
+	slap_mask_t	si_resps;	/* overlay: responses to forward */
 };
 
 #define	SOCK_EXT_BINDDN	1
 #define	SOCK_EXT_PEERNAME	2
 #define	SOCK_EXT_SSF		4
+#define	SOCK_EXT_CONNID		8
 
 extern FILE *opensock LDAP_P((
 	const char *sockpath));

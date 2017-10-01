@@ -2,7 +2,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2005-2011 The OpenLDAP Foundation.
+ * Copyright 2005-2012 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -1197,6 +1197,31 @@ apply_modify_to_entry(
 			if (rc == LDAP_TYPE_OR_VALUE_EXISTS) {
 				rc = LDAP_SUCCESS;
 			}
+			break;
+
+		case SLAP_MOD_SOFTDEL:
+			mods->sm_op = LDAP_MOD_DELETE;
+			rc = modify_delete_values(entry, mods,
+				   get_permissiveModify(op),
+				   &rs->sr_text, textbuf,
+				   SLAP_TEXT_BUFLEN );
+			mods->sm_op = SLAP_MOD_SOFTDEL;
+			if (rc == LDAP_NO_SUCH_ATTRIBUTE) {
+				rc = LDAP_SUCCESS;
+			}
+			break;
+
+		case SLAP_MOD_ADD_IF_NOT_PRESENT:
+			if ( attr_find( entry->e_attrs, mods->sm_desc ) ) {
+				rc = LDAP_SUCCESS;
+				break;
+			}
+			mods->sm_op = LDAP_MOD_ADD;
+			rc = modify_add_values(entry, mods,
+				   get_permissiveModify(op),
+				   &rs->sr_text, textbuf,
+				   SLAP_TEXT_BUFLEN );
+			mods->sm_op = SLAP_MOD_ADD_IF_NOT_PRESENT;
 			break;
 		}
 		if(rc != LDAP_SUCCESS) break;

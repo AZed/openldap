@@ -2,7 +2,7 @@
 # $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2011 The OpenLDAP Foundation.
+## Copyright 1998-2012 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -72,7 +72,9 @@ EOF
 	fi
 fi
 
-bdbInclude="# " nullExclude=""
+indexInclude="" mainInclude="" bdbInclude="# " nullExclude=""
+test $INDEXDB = indexdb	|| indexInclude="# "
+test $MAINDB  = maindb	|| mainInclude="# "
 case $BACKEND in
 bdb | hdb) bdbInclude="" ;;
 null) nullExclude="# " ;;
@@ -111,11 +113,11 @@ olcRootPW:: c2VjcmV0
 olcMonitoring: TRUE
 ${nullExclude}olcDbDirectory: $TESTDIR/db.1.a/
 ${bdbInclude}olcDbCacheSize: 1000
-${bdbInclude}olcDbIndex: objectClass eq
-${bdbInclude}olcDbIndex: cn pres,eq,sub
-${bdbInclude}olcDbIndex: uid pres,eq,sub
-${bdbInclude}olcDbIndex: sn pres,eq,sub
-${bdbInclude}olcDbMode: 384"
+${indexInclude}olcDbIndex: objectClass eq
+${indexInclude}olcDbIndex: cn pres,eq,sub
+${indexInclude}olcDbIndex: uid pres,eq,sub
+${indexInclude}olcDbIndex: sn pres,eq,sub
+${mainInclude}olcDbMode: 384"
 
 dn: olcOverlay={0}memberof,olcDatabase={1}$BACKEND,cn=config
 objectClass: olcOverlayConfig

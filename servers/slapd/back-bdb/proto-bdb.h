@@ -1,7 +1,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2011 The OpenLDAP Foundation.
+ * Copyright 2000-2012 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -281,6 +281,7 @@ bdb_idl_cache_del_id(
 #define bdb_idl_next				BDB_SYMBOL(idl_next)
 #define bdb_idl_search				BDB_SYMBOL(idl_search)
 #define bdb_idl_insert				BDB_SYMBOL(idl_insert)
+#define bdb_idl_delete				BDB_SYMBOL(idl_delete)
 #define bdb_idl_intersection		BDB_SYMBOL(idl_intersection)
 #define bdb_idl_union				BDB_SYMBOL(idl_union)
 #define bdb_idl_sort				BDB_SYMBOL(idl_sort)
@@ -303,6 +304,7 @@ int bdb_idl_fetch_key(
 	int                     get_flag );
 
 int bdb_idl_insert( ID *ids, ID id );
+int bdb_idl_delete( ID *ids, ID id );
 
 int bdb_idl_insert_key(
 	BackendDB *be,

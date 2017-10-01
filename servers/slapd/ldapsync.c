@@ -2,7 +2,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2011 The OpenLDAP Foundation.
+ * Copyright 2003-2012 The OpenLDAP Foundation.
  * Portions Copyright 2003 IBM Corporation.
  * All rights reserved.
  *
@@ -169,16 +169,16 @@ slap_parse_csn_sids( BerVarray csns, int numcsns, void *memctx )
 static slap_mr_match_func sidsort_cmp;
 
 static const MatchingRule sidsort_mr = {
-	{},
+	{ 0 },
 	NULL,
-	{},
-	{},
+	{ 0 },
+	{ 0 },
 	0,
 	NULL, NULL, NULL, sidsort_cmp
 };
 static const AttributeType sidsort_at = {
-	{},
-	{},
+	{ 0 },
+	{ 0 },
 	NULL, NULL, (MatchingRule *)&sidsort_mr,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, SLAP_AT_SORTED_VAL
 };

@@ -2,7 +2,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2011 The OpenLDAP Foundation.
+ * Copyright 2000-2012 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -945,6 +945,7 @@ hdb_dn2idl_internal(
 			cx->rc = bdb_idl_cache_get(cx->bdb, cx->db, &cx->key, ids);
 			if ( cx->rc == LDAP_SUCCESS ) {
 				if ( cx->depth ) {
+					bdb_idl_delete( cx->tmp, cx->id );	/* ITS#6983, drop our own ID */
 					bdb_idl_append( cx->ids, cx->tmp );
 					cx->need_sort = 1;
 				}

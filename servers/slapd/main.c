@@ -1,7 +1,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2011 The OpenLDAP Foundation.
+ * Copyright 1998-2012 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -368,6 +368,9 @@ int main( int argc, char **argv )
 	int syslogUser = SLAP_DEFAULT_SYSLOG_USER;
 #endif
 	
+#ifndef HAVE_WINSOCK
+	int pid, waitfds[2];
+#endif
 	int g_argc = argc;
 	char **g_argv = argv;
 
@@ -848,7 +851,7 @@ unhandled_option:;
 	if( rc != 0) {
 		Debug( LDAP_DEBUG_ANY,
 		    "main: TLS init failed: %d\n",
-		    0, 0, 0 );
+		    rc, 0, 0 );
 		rc = 1;
 		SERVICE_EXIT( ERROR_SERVICE_SPECIFIC_ERROR, 20 );
 		goto destroy;
@@ -903,7 +906,26 @@ unhandled_option:;
 #endif
 
 #ifndef HAVE_WINSOCK
-	lutil_detach( no_detach, 0 );
+	if ( !no_detach ) {
+		if ( lutil_pair( waitfds ) < 0 ) {
+			Debug( LDAP_DEBUG_ANY,
+				"main: lutil_pair failed: %d\n",
+				0, 0, 0 );
+			rc = 1;
+			goto destroy;
+		}
+		pid = lutil_detach( no_detach, 0 );
+		if ( pid ) {
+			char buf[4];
+			rc = EXIT_SUCCESS;
+			close( waitfds[1] );
+			if ( read( waitfds[0], buf, 1 ) != 1 )
+				rc = EXIT_FAILURE;
+			_exit( rc );
+		} else {
+			close( waitfds[0] );
+		}
+	}
 #endif /* HAVE_WINSOCK */
 
 #ifdef CSRIMALLOC
@@ -973,6 +995,13 @@ unhandled_option:;
 	}
 
 	Debug( LDAP_DEBUG_ANY, "slapd starting\n", 0, 0, 0 );
+
+#ifndef HAVE_WINSOCK
+	if ( !no_detach ) {
+		write( waitfds[1], "1", 1 );
+		close( waitfds[1] );
+	}
+#endif
 
 #ifdef HAVE_NT_EVENT_LOG
 	if (is_NT_Service)

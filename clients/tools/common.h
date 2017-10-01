@@ -2,7 +2,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2011 The OpenLDAP Foundation.
+ * Copyright 1998-2012 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -118,6 +118,7 @@ LDAP *tool_conn_setup LDAP_P(( int dont, void (*private_setup)( LDAP * ) ));
 void tool_bind LDAP_P(( LDAP * ));
 void tool_unbind LDAP_P(( LDAP * ));
 void tool_destroy LDAP_P(( void ));
+void tool_exit LDAP_P(( LDAP *ld, int status )) LDAP_GCCATTR((noreturn));
 void tool_server_controls LDAP_P(( LDAP *, LDAPControl *, int ));
 int tool_check_abandon LDAP_P(( LDAP *ld, int msgid ));
 void tool_perror LDAP_P((

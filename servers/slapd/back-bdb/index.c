@@ -2,7 +2,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2011 The OpenLDAP Foundation.
+ * Copyright 2000-2012 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -452,7 +452,7 @@ int bdb_index_recrun(
 	if ( id == 0 )
 		return 0;
 
-	for (i=base; i<bdb->bi_nattrs; i+=slap_tool_thread_max) {
+	for (i=base; i<bdb->bi_nattrs; i+=slap_tool_thread_max-1) {
 		ir = ir0 + i;
 		if ( !ir->ai ) continue;
 		while (( al = ir->attrs )) {

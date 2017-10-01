@@ -1,7 +1,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2011 The OpenLDAP Foundation.
+ * Copyright 1999-2012 The OpenLDAP Foundation.
  * Portions Copyright 1999 John C. Quillan.
  * Portions Copyright 2002 myinternet Limited.
  * All rights reserved.
@@ -25,10 +25,7 @@ perl_back_modrdn(
 	PerlBackend *perl_back = (PerlBackend *) op->o_bd->be_private;
 	int count;
 
-#if defined(HAVE_WIN32_ASPERL) || defined(USE_ITHREADS)
 	PERL_SET_CONTEXT( PERL_INTERPRETER );
-#endif
-
 	ldap_pvt_thread_mutex_lock( &perl_interpreter_mutex );	
 
 	{
@@ -44,11 +41,7 @@ perl_back_modrdn(
 		}
 		PUTBACK ;
 
-#ifdef PERL_IS_5_6
 		count = call_method("modrdn", G_SCALAR);
-#else
-		count = perl_call_method("modrdn", G_SCALAR);
-#endif
 
 		SPAGAIN ;
 

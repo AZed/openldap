@@ -1,7 +1,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2011 The OpenLDAP Foundation.
+ * Copyright 1998-2012 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -483,7 +483,10 @@ LDAP_SLAPD_F (void) overlay_move LDAP_P((
 	BackendDB *be, slap_overinst *on, int idx ));
 #ifdef SLAP_CONFIG_DELETE
 LDAP_SLAPD_F (void) overlay_remove LDAP_P((
-	BackendDB *be, slap_overinst *on ));
+	BackendDB *be, slap_overinst *on, Operation *op ));
+LDAP_SLAPD_F (void) overlay_unregister_control LDAP_P((
+	BackendDB *be,
+	const char *oid ));
 #endif /* SLAP_CONFIG_DELETE */
 LDAP_SLAPD_F (int) overlay_callback_after_backover LDAP_P((
 	Operation *op, slap_callback *sc, int append ));
@@ -657,6 +660,10 @@ LDAP_SLAPD_F (int) register_supported_control2 LDAP_P((
 	int *controlcid ));
 #define register_supported_control(oid, mask, exops, fn, cid) \
 	register_supported_control2((oid), (mask), (exops), (fn), 0, (cid))
+#ifdef SLAP_CONFIG_DELETE
+LDAP_SLAPD_F (int) unregister_supported_control LDAP_P((
+	const char* controloid ));
+#endif /* SLAP_CONFIG_DELETE */
 LDAP_SLAPD_F (int) slap_controls_init LDAP_P ((void));
 LDAP_SLAPD_F (void) controls_destroy LDAP_P ((void));
 LDAP_SLAPD_F (int) controls_root_dse_info LDAP_P ((Entry *e));
@@ -2051,6 +2058,7 @@ LDAP_SLAPD_V (ldap_pvt_thread_mutex_t)	entry2str_mutex;
 #define gmtime_mutex ldap_int_gmtime_mutex
 #endif /* ! LDAP_DEVEL */
 
+LDAP_SLAPD_V (ldap_pvt_thread_mutex_t)	ad_index_mutex;
 LDAP_SLAPD_V (ldap_pvt_thread_mutex_t)	ad_undef_mutex;
 LDAP_SLAPD_V (ldap_pvt_thread_mutex_t)	oc_undef_mutex;
 

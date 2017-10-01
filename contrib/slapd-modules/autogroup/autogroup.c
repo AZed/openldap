@@ -2,7 +2,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2007-2011 The OpenLDAP Foundation.
+ * Copyright 2007-2012 The OpenLDAP Foundation.
  * Portions Copyright 2007 Michał Szulczyński.
  * Portions Copyright 2009 Howard Chu.
  * All rights reserved.
@@ -321,8 +321,6 @@ autogroup_delete_member_values_from_group( Operation *op, Entry *e, autogroup_en
 static int
 autogroup_member_search_cb( Operation *op, SlapReply *rs )
 {
-	slap_overinst		*on = (slap_overinst *)op->o_bd->bd_info;
-
 	assert( op->o_tag == LDAP_REQ_SEARCH );
 
 	if ( rs->sr_type == REP_SEARCH ) {
@@ -632,11 +630,12 @@ autogroup_add_group( Operation *op, autogroup_info_t *agi, autogroup_def_t *agd,
 				}
 
 				if ( i > 1 ) {
-					Debug( LDAP_DEBUG_ANY, "autogroup_add_group: to much attributes specified in url <%s>\n",
+					Debug( LDAP_DEBUG_ANY, "autogroup_add_group: too many attributes specified in url <%s>\n",
 						bv->bv_val, 0, 0);
 					/* FIXME: error? */
 					ldap_free_urldesc( lud );
 					ch_free( agf ); 
+					continue;
 				}
 					
 				agf->agf_anlist = str2anlist( NULL, lud->lud_attrs[0], "," );

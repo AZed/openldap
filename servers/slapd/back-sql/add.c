@@ -1,7 +1,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2011 The OpenLDAP Foundation.
+ * Copyright 1999-2012 The OpenLDAP Foundation.
  * Portions Copyright 1999 Dmitry Kovalev.
  * Portions Copyright 2002 Pierangelo Masarati.
  * Portions Copyright 2004 Mark Adamson.
@@ -389,6 +389,7 @@ del_all:
 		 */
 		case LDAP_MOD_ADD:
 		/* case SLAP_MOD_SOFTADD: */
+		/* case SLAP_MOD_ADD_IF_NOT_PRESENT: */
 add_only:;
 			if ( at->bam_add_proc == NULL ) {
 				Debug( LDAP_DEBUG_TRACE,
@@ -541,6 +542,7 @@ add_only:;
 			break;
 			
 	      	case LDAP_MOD_DELETE:
+		/* case SLAP_MOD_SOFTDEL: */
 			if ( at->bam_delete_proc == NULL ) {
 				Debug( LDAP_DEBUG_TRACE,
 					"   backsql_modify_internal(): "

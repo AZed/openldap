@@ -1,7 +1,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2004-2011 The OpenLDAP Foundation.
+ * Copyright 2004-2012 The OpenLDAP Foundation.
  * Portions Copyright 2004-2005 Howard Chu, Symas Corporation.
  * Portions Copyright 2004 Hewlett-Packard Company.
  * All rights reserved.
@@ -1788,7 +1788,10 @@ ppolicy_modify( Operation *op, SlapReply *rs )
 
 	if (be_isroot( op )) goto do_modify;
 
-	if (!pp.pwdAllowUserChange) {
+	/* NOTE: according to draft-behera-ldap-password-policy
+	 * pwdAllowUserChange == FALSE must only prevent pwd changes
+	 * by the user the pwd belongs to (ITS#7021) */
+	if (!pp.pwdAllowUserChange && dn_match(&op->o_req_ndn, &op->o_ndn)) {
 		rs->sr_err = LDAP_INSUFFICIENT_ACCESS;
 		rs->sr_text = "User alteration of password is not allowed";
 		pErr = PP_passwordModNotAllowed;
@@ -2307,6 +2310,10 @@ ppolicy_close(
 {
 	slap_overinst *on = (slap_overinst *) be->bd_info;
 	pp_info *pi = on->on_bi.bi_private;
+
+#ifdef SLAP_CONFIG_DELETE
+	overlay_unregister_control( be, LDAP_CONTROL_PASSWORDPOLICYREQUEST );
+#endif /* SLAP_CONFIG_DELETE */
 
 	/* Perhaps backover should provide bi_destroy hooks... */
 	ov_count--;

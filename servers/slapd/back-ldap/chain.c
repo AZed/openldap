@@ -2,7 +2,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2011 The OpenLDAP Foundation.
+ * Copyright 2003-2012 The OpenLDAP Foundation.
  * Portions Copyright 2003 Howard Chu.
  * All rights reserved.
  *
@@ -1979,6 +1979,11 @@ ldap_chain_db_close(
 	BackendDB	*be,
 	ConfigReply	*cr )
 {
+#ifdef LDAP_CONTROL_X_CHAINING_BEHAVIOR
+#ifdef SLAP_CONFIG_DELETE
+	overlay_unregister_control( be, LDAP_CONTROL_X_CHAINING_BEHAVIOR );
+#endif /* SLAP_CONFIG_DELETE */
+#endif /* LDAP_CONTROL_X_CHAINING_BEHAVIOR */
 	return ldap_chain_db_func( be, db_close );
 }
 

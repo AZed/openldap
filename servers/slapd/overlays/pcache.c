@@ -1,7 +1,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2011 The OpenLDAP Foundation.
+ * Copyright 2003-2012 The OpenLDAP Foundation.
  * Portions Copyright 2003 IBM Corporation.
  * Portions Copyright 2003-2009 Symas Corporation.
  * All rights reserved.
@@ -2343,62 +2343,6 @@ pcache_op_cleanup( Operation *op, SlapReply *rs ) {
 	cache_manager *cm = on->on_bi.bi_private;
 	query_manager*		qm = cm->qm;
 
-	if ( rs->sr_type == REP_SEARCH ) {
-		Entry *e;
-
-		/* don't return more entries than requested by the client */
-		if ( si->slimit > 0 && rs->sr_nentries >= si->slimit ) {
-			si->slimit_exceeded = 1;
-		}
-
-		/* If we haven't exceeded the limit for this query,
-		 * build a chain of answers to store. If we hit the
-		 * limit, empty the chain and ignore the rest.
-		 */
-		if ( !si->over ) {
-			/* check if the entry contains undefined
-			 * attributes/objectClasses (ITS#5680) */
-			if ( cm->check_cacheability && test_filter( op, rs->sr_entry, si->query.filter ) != LDAP_COMPARE_TRUE ) {
-				Debug( pcache_debug, "%s: query not cacheable because of schema issues in DN \"%s\"\n",
-					op->o_log_prefix, rs->sr_entry->e_name.bv_val, 0 );
-				goto over;
-			}
-
-			/* check for malformed entries: attrs with no values */
-			{
-				Attribute *a = rs->sr_entry->e_attrs;
-				for (; a; a=a->a_next) {
-					if ( !a->a_numvals ) {
-						Debug( pcache_debug, "%s: query not cacheable because of attrs without values in DN \"%s\" (%s)\n",
-						op->o_log_prefix, rs->sr_entry->e_name.bv_val,
-						a->a_desc->ad_cname.bv_val );
-						goto over;
-					}
-				}
-			}
-
-			if ( si->count < si->max ) {
-				si->count++;
-				e = entry_dup( rs->sr_entry );
-				if ( !si->head ) si->head = e;
-				if ( si->tail ) si->tail->e_private = e;
-				si->tail = e;
-
-			} else {
-over:;
-				si->over = 1;
-				si->count = 0;
-				for (;si->head; si->head=e) {
-					e = si->head->e_private;
-					si->head->e_private = NULL;
-					entry_free(si->head);
-				}
-				si->tail = NULL;
-			}
-		}
-
-	}
-
 	if ( rs->sr_type == REP_RESULT || 
 		op->o_abandon || rs->sr_err == SLAPD_ABANDON )
 	{
@@ -2498,11 +2442,64 @@ pcache_response(
 	}
 
 	if ( rs->sr_type == REP_SEARCH ) {
+		Entry *e;
+
 		/* don't return more entries than requested by the client */
+		if ( si->slimit > 0 && rs->sr_nentries >= si->slimit ) {
+			si->slimit_exceeded = 1;
+		}
+
+		/* If we haven't exceeded the limit for this query,
+		 * build a chain of answers to store. If we hit the
+		 * limit, empty the chain and ignore the rest.
+		 */
+		if ( !si->over ) {
+			slap_overinst *on = si->on;
+			cache_manager *cm = on->on_bi.bi_private;
+
+			/* check if the entry contains undefined
+			 * attributes/objectClasses (ITS#5680) */
+			if ( cm->check_cacheability && test_filter( op, rs->sr_entry, si->query.filter ) != LDAP_COMPARE_TRUE ) {
+				Debug( pcache_debug, "%s: query not cacheable because of schema issues in DN \"%s\"\n",
+					op->o_log_prefix, rs->sr_entry->e_name.bv_val, 0 );
+				goto over;
+			}
+
+			/* check for malformed entries: attrs with no values */
+			{
+				Attribute *a = rs->sr_entry->e_attrs;
+				for (; a; a=a->a_next) {
+					if ( !a->a_numvals ) {
+						Debug( pcache_debug, "%s: query not cacheable because of attrs without values in DN \"%s\" (%s)\n",
+						op->o_log_prefix, rs->sr_entry->e_name.bv_val,
+						a->a_desc->ad_cname.bv_val );
+						goto over;
+					}
+				}
+			}
+
+			if ( si->count < si->max ) {
+				si->count++;
+				e = entry_dup( rs->sr_entry );
+				if ( !si->head ) si->head = e;
+				if ( si->tail ) si->tail->e_private = e;
+				si->tail = e;
+
+			} else {
+over:;
+				si->over = 1;
+				si->count = 0;
+				for (;si->head; si->head=e) {
+					e = si->head->e_private;
+					si->head->e_private = NULL;
+					entry_free(si->head);
+				}
+				si->tail = NULL;
+			}
+		}
 		if ( si->slimit_exceeded ) {
 			return 0;
 		}
-
 	} else if ( rs->sr_type == REP_RESULT ) {
 
 		if ( si->count ) {
@@ -2908,9 +2905,9 @@ pcache_op_bind(
 
 	/* OK, just bind locally */
 	if ( bi.bi_flags & BI_HASHED ) {
+		int delete = 0;
 		BackendDB *be = op->o_bd;
 		op->o_bd = &cm->db;
-		int delete = 0;
 
 		Debug( pcache_debug, "pcache_op_bind: CACHED BIND for %s\n",
 			op->o_req_dn.bv_val, 0, 0 );
@@ -3421,6 +3418,7 @@ refresh_query( Operation *op, CachedQuery *query, slap_overinst *on )
 	op->o_req_dn = query->qbase->base;
 	op->o_req_ndn = query->qbase->base;
 	op->ors_scope = query->scope;
+	op->ors_deref = LDAP_DEREF_NEVER;
 	op->ors_slimit = SLAP_NO_LIMIT;
 	op->ors_tlimit = SLAP_NO_LIMIT;
 	op->ors_limit = NULL;
