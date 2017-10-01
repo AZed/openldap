@@ -5,7 +5,7 @@
 
 Name: openldap
 Version: 2.4.23
-Release: 15%{?dist}.1
+Release: 15%{?dist}.3
 Summary: LDAP support libraries
 Group: System Environment/Daemons
 License: OpenLDAP
@@ -44,6 +44,7 @@ Patch113: openldap-cve-ndb-bind-rootdn.patch
 Patch114: openldap-security-dos-empty-modrdn.patch
 Patch115: openldap-slapadd-hang.patch
 Patch116: openldap-nss-free-peer-cert.patch
+Patch117: openldap-dns-priority.patch
 
 # patches for the evolution library (see README.evolution)
 Patch200: openldap-evolution-ntlm.patch
@@ -162,6 +163,7 @@ pushd openldap-%{version}
 %patch114 -p1 -b .security-dos-empty-modrdn
 %patch115 -p1 -b .slapadd-hang
 %patch116 -p1 -b .nss-free-peer-cert
+%patch117 -p1 -b .dns-priority
 
 cp %{_datadir}/libtool/config/config.{sub,guess} build/
 
@@ -708,6 +710,12 @@ exit 0
 %attr(0644,root,root)      %{evolution_connector_libdir}/*.a
 
 %changelog
+* Tue Sep 20 2011 Jan Vcelak <jvcelak@redhat.com> 2.4.23-15.3
+- new feature update: honor priority/weight with ldap_domain2hostlist (#733659)
+
+* Fri Aug 26 2011 Jan Vcelak <jvcelak@redhat.com> 2.4.23-15.2
+- new feature: honor priority/weight with ldap_domain2hostlist (#733659)
+
 * Wed Jul 20 2011 Jan Vcelak <jvcelak@redhat.com> 2.4.23-15.1
 - fix: memleak in tlsm_auth_cert_handler (#723134)
 
