@@ -27,7 +27,7 @@
 Summary: The configuration files, libraries, and documentation for OpenLDAP.
 Name: openldap
 Version: %{version_23}
-Release: 27%{?dist}
+Release: 28%{?dist}
 License: OpenLDAP
 Group: System Environment/Daemons
 Source0: ftp://ftp.OpenLDAP.org/pub/OpenLDAP/openldap-release/openldap-%{version_23}.tgz
@@ -79,6 +79,7 @@ Patch29: openldap-2.3.43-dns-priority.patch
 Patch30: openldap-2.3.43-leak-slfree-syncprov.patch
 Patch31: openldap-2.3.43-dns-ipv6-queries.patch
 Patch32: openldap-rwm-reference-counting.patch
+Patch33: openldap-2.3.43-syncprov-psearch-race.patch
 
 # Patches for 2.2.29 for the compat-openldap package.
 Patch100: openldap-2.2.13-tls-fix-connection-test.patch
@@ -262,6 +263,7 @@ pushd openldap-%{version_23}
 %patch30 -p1 -b .leak-slfree-syncprov
 %patch31 -p1 -b .dns-ipv6-queries
 %patch32 -p1 -b .rwm-ref-count
+%patch33 -p1 -b .syncprov-psearch-race
 
 cp %{_datadir}/libtool/config.{sub,guess} build/
 popd
@@ -925,6 +927,9 @@ exec > /dev/null 2> /dev/null
 %attr(0644,root,root)      %{evolution_connector_libdir}/*.a
 
 %changelog
+* Wed Apr  9 2014 Jan Synáček <jsynacek@redhat.com> - 2.3.43-28
+- fix: syncprov psearch race condition (#999811)
+
 * Thu Feb 13 2014 Jan Synáček <jsynacek@redhat.com> - 2.3.43-27
 - fix: CVE-2013-4449 segfault on certain queries with rwm overlay (#1064145)
 
