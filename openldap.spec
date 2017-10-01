@@ -1,13 +1,12 @@
 # TODO: add make test after build
 
-%define ldbm_backend berkeley
 %define evolution_connector_prefix %{_libdir}/evolution-openldap
 %define evolution_connector_includedir %{evolution_connector_prefix}/include
 %define evolution_connector_libdir %{evolution_connector_prefix}/%{_lib}
 
 Name: openldap
-Version: 2.4.24
-Release: 6%{?dist}
+Version: 2.4.26
+Release: 1%{?dist}.1
 Summary: LDAP support libraries
 Group: System Environment/Daemons
 License: OpenLDAP
@@ -17,40 +16,17 @@ Source1: ldap.init
 Source2: ldap.sysconfig
 Source3: README.evolution
 Source4: ldap.tmpfiles
+Source5: slapd.conf
 
 # patches for 2.4
-Patch0: openldap-slapd-conf.patch
-Patch1: openldap-manpages.patch
-Patch2: openldap-security-pie.patch
-Patch3: openldap-sql-linking.patch
-Patch4: openldap-reentrant-gethostby.patch
-Patch5: openldap-export-ldif.patch
-Patch6: openldap-smbk5pwd-overlay.patch
-Patch7: openldap-ldaprc-currentdir.patch
-Patch8: openldap-userconfig-setgid.patch
-Patch9: openldap-nss-nofork.patch
-Patch10: openldap-nss-null-pointer.patch
-Patch11: openldap-slapadd-hang.patch
-Patch12: openldap-nss-cacertdir-soft-error.patch
-Patch13: openldap-ldapexop-double-free.patch
-Patch14: openldap-segfault-ldif-indent.patch
-Patch15: openldap-segfault-ldif-nl-end.patch
-Patch16: openldap-nss-init-threadsafe.patch
-Patch17: openldap-nss-free-peer-cert.patch
-Patch18: openldap-nss-reqcert-hostname.patch
-Patch19: openldap-nss-verifycert.patch
-Patch20: openldap-nss-memleak-free-certs.patch
-Patch21: openldap-constraint-overlay-config.patch
-Patch22: openldap-dds-overlay-tolerance.patch
-Patch23: openldap-man-slapo-unique.patch
-Patch24: openldap-nss-wildcards.patch
-Patch25: openldap-man-ldap-sync.patch
-Patch26: openldap-sasl-gssapi-options.patch
-Patch27: openldap-nss-can-ignore-expired-issuer.patch
-Patch28: openldap-sql-datatypes.patch
-Patch29: openldap-nss-handshake-threadsafe.patch
-Patch30: openldap-syncrepl-unset-tls-options.patch
-Patch31: openldap-ld_defconn-rebind.patch
+Patch0: openldap-manpages.patch
+Patch1: openldap-security-pie.patch
+Patch2: openldap-sql-linking.patch
+Patch3: openldap-reentrant-gethostby.patch
+Patch4: openldap-smbk5pwd-overlay.patch
+Patch5: openldap-ldaprc-currentdir.patch
+Patch6: openldap-userconfig-setgid.patch
+Patch7: openldap-nss-free-peer-cert.patch
 
 # patches for the evolution library (see README.evolution)
 Patch200: openldap-evolution-ntlm.patch
@@ -96,7 +72,8 @@ Requires: openldap = %{version}-%{release}, openssl
 Requires(pre): shadow-utils, initscripts
 Requires(post): chkconfig, /sbin/runuser, make, initscripts
 Requires(preun): chkconfig, initscripts
-BuildRequires: db4-devel >= 4.4, db4-devel < 4.9
+# BEWARE: DB 5.1 is the latest version supported by OpenLDAP 2.4.25; however we have 5.2 in Rawhide
+BuildRequires: libdb-devel >= 5.0, libdb-devel < 5.3
 Group: System Environment/Daemons
 
 %description servers
@@ -142,38 +119,14 @@ programs needed for accessing and modifying OpenLDAP directories.
 
 pushd openldap-%{version}
 
-%patch0 -p1 -b .config
-%patch1 -p1 -b .manpages
-%patch2 -p1 -b .security-pie
-%patch3 -p1 -b .sql-linking
-%patch4 -p1 -b .reentrant-gethostby
-%patch5 -p1 -b .export-ldif
-%patch6 -p1 -b .smbk5pwd-overlay
-%patch7 -p1 -b .ldaprc-currentdir
-%patch8 -p1 -b .userconfig-setgid
-%patch9 -p1 -b .nss-nofork
-%patch10 -p1 -b .nss-null-pointer
-%patch11 -p1 -b .slapadd-hang
-%patch12 -p1 -b .nss-cacertdir-soft-error
-%patch13 -p1 -b .ldapexop-double-free
-%patch14 -p1 -b .segfault-ldif-indent
-%patch15 -p1 -b .segfault-ldif-nl-end
-%patch16 -p1 -b .nss-init-threadsafe
-%patch17 -p1 -b .nss-free-peer-cert
-%patch18 -p1 -b .nss-reqcert-hostname
-%patch19 -p1 -b .nss-verifycert
-%patch20 -p1 -b .nss-memleak-free-certs
-%patch21 -p1 -b .constraint-overlay-config
-%patch22 -p1 -b .dds-overlay-tolerance
-%patch23 -p1 -b .man-slapo-unique
-%patch24 -p1 -b .nss-wildcards
-%patch25 -p1 -b .man-ldap-sync
-%patch26 -p1 -b .sasl-gssapi-options
-%patch27 -p1 -b .nss-can-ignore-expired-issuer
-%patch28 -p1 -b .sql-datatypes
-%patch29 -p1 -b .nss-handshake-threadsafe
-%patch30 -p1 -b .syncrepl-unset-tls-options
-%patch31 -p1 -b .ld_defconn-rebind
+%patch0 -p1 -b .manpages
+%patch1 -p1 -b .security-pie
+%patch2 -p1 -b .sql-linking
+%patch3 -p1 -b .reentrant-gethostby
+%patch4 -p1 -b .smbk5pwd-overlay
+%patch5 -p1 -b .ldaprc-currentdir
+%patch6 -p1 -b .userconfig-setgid
+%patch7 -p1 -b .nss-free-peer-cert
 
 cp %{_datadir}/libtool/config/config.{sub,guess} build/
 
@@ -218,12 +171,10 @@ build() {
     --with-threads=posix \
     \
     --enable-local \
-	--enable-rlookups \
+    --enable-rlookups \
     \
     --with-tls=no \
     --with-cyrus-sasl \
-    \
-    --with-wrappers \
     \
     --enable-passwd \
     \
@@ -259,14 +210,10 @@ make %{_smp_mflags} LIBTOOL="$libtool"
 export LIBS="$NSS_LIBS -lpthread"
 pushd openldap-%{version}/build-servers
 build \
-    --enable-plugins \
     --enable-slapd \
-    --enable-multimaster \
     --enable-bdb \
     --enable-hdb \
     --enable-ldap \
-    --enable-ldbm \
-    --with-ldbm-api=%{ldbm_backend} \
     --enable-meta \
     --enable-monitor \
     --enable-null \
@@ -279,7 +226,6 @@ build \
     --enable-relay \
     --disable-shared \
     --disable-dynamic \
-    --with-kerberos=k5only \
     --enable-overlays=mod
 popd
 
@@ -386,8 +332,8 @@ chmod 644 %{buildroot}/%{_libdir}/lib*.*a
 # new configuration will be generated in %post
 mkdir -p %{buildroot}/%{_datadir}/openldap-servers
 mkdir %{buildroot}/%{_sysconfdir}/openldap/slapd.d
-mv %{buildroot}/%{_sysconfdir}/openldap/slapd.conf %{buildroot}/%{_datadir}/openldap-servers/slapd.conf.obsolete
-chmod 0644 %{buildroot}/%{_datadir}/openldap-servers/slapd.conf.obsolete
+rm -f %{buildroot}/%{_sysconfdir}/openldap/slapd.conf
+install -m 644 %SOURCE5 %{buildroot}/%{_datadir}/openldap-servers/slapd.conf.obsolete
 
 # move doc files out of _sysconfdir
 mv %{buildroot}%{_sysconfdir}/openldap/schema/README README.schema
@@ -537,18 +483,7 @@ if ! ls -d %{_sysconfdir}/openldap/slapd.d/* &>/dev/null; then
 	# convert from old style config slapd.conf
 	mv %{_sysconfdir}/openldap/slapd.conf %{_sysconfdir}/openldap/slapd.conf.bak
 	mkdir -p %{_sysconfdir}/openldap/slapd.d/
-	lines=$(egrep -n '^(database|backend)' %{_sysconfdir}/openldap/slapd.conf.bak | cut -d: -f1 | head -n 1)
-	lines=$(($lines-1))
-	head -n $lines %{_sysconfdir}/openldap/slapd.conf.bak > %{_sysconfdir}/openldap/slapd.conf
-	cat >> %{_sysconfdir}/openldap/slapd.conf << EOF
-database config
-rootdn   "cn=admin,cn=config"
-#rootpw   secret
-EOF
-	lines_r=$(wc --lines %{_sysconfdir}/openldap/slapd.conf.bak | cut -f1 -d" ")
-	lines_r=$(($lines_r-$lines))
-	tail -n $lines_r %{_sysconfdir}/openldap/slapd.conf.bak >> %{_sysconfdir}/openldap/slapd.conf
-	slaptest -f %{_sysconfdir}/openldap/slapd.conf -F %{_sysconfdir}/openldap/slapd.d > /dev/null 2> /dev/null
+	slaptest -f %{_sysconfdir}/openldap/slapd.conf.bak -F %{_sysconfdir}/openldap/slapd.d &>/dev/null
 	chown -R ldap:ldap %{_sysconfdir}/openldap/slapd.d
 	chmod -R 000 %{_sysconfdir}/openldap/slapd.d
 	chmod -R u+rwX %{_sysconfdir}/openldap/slapd.d
@@ -654,7 +589,6 @@ exit 0
 %attr(0755,root,root) %dir %{_sysconfdir}/openldap
 %attr(0755,root,root) %dir %{_sysconfdir}/openldap/cacerts
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/openldap/ldap*.conf
-%attr(0755,root,root) %{_libdir}/libldif-2.4*.so.*
 %attr(0755,root,root) %{_libdir}/liblber-2.4*.so.*
 %attr(0755,root,root) %{_libdir}/libldap-2.4*.so.*
 %attr(0755,root,root) %{_libdir}/libldap_r-2.4*.so.*
@@ -715,33 +649,26 @@ exit 0
 %attr(0644,root,root)      %{evolution_connector_libdir}/*.a
 
 %changelog
-* Mon Mar 26 2012 Jan Synáček <jsynacek@redhat.com> 2.4.26-7
-- fix: Re-binding to a failed connection can segfault (#784989)
+* Sun Aug 14 2011 Rex Dieter <rdieter@fedoraproject.org> - 2.4.26-1.1
+- Rebuilt for rpm (#728707)
 
-* Mon Sep 12 2011 Jan Vcelak <jvcelak@redhat.com> 2.4.24-5
-- fix: SSL_ForceHandshake function is not thread safe (#701678)
-- fix: allow unsetting of tls_* syncrepl options (#734187)
-
-* Wed Aug 24 2011 Jan Vcelak <jvcelak@redhat.com> 2.4.24-4
-- fix: NSS_Init* functions are not thread safe (#731112)
+* Wed Jul 20 2011 Jan Vcelak <jvcelak@redhat.com> 2.4.26-1
+- rebase to new upstream release
 - fix: memleak in tlsm_auth_cert_handler (#717730)
-- fix: incorrect behavior of allow/try options of VerifyCert and TLS_REQCERT (#725819)
-- fix: memleak - free the return of tlsm_find_and_verify_cert_key (#725818)
-- fix: conversion of constraint overlay settings to cn=config is incorrect (#733067)
-- fix: DDS overlay tolerance parametr doesn't function and breakes default TTL (#733069)
-- manpage fix: errors in manual page slapo-unique (#733070)
-- fix: matching wildcard hostnames in certificate Subject field does not work (#733073)
-- manpage fix: wrong ldap_sync_destroy() prototype in ldap_sync(3) manpage (#717722)
-- fix: cannot set SASL or GSSAPI options (#733056)
-- fix: TLS_REQCERT=never ignored when the issuer certificate is expired (#722961)
-- fix: OpenLDAP server segfaults when using back-sql (#733077)
 
-* Tue Jun 28 2011 Jan Vcelak <jvcelak@redhat.com> 2.4.24-3
-- fix: openldap-servers scriptlets require initscripts package (#716857)
-- fix: connection failure if TLS_CACERTDIR doesn't exist but TLS_REQCERT is set to 'never' (#716854)
+* Mon Jun 27 2011 Jan Vcelak <jvcelak@redhat.com> 2.4.25-1
+- rebase to new upstream release
+- change default database type from BDB to HDB
+- enable ldapi:/// interface by default
+- set cn=config management ACLs for root user, SASL external schema (#712495)
+- fix: server scriptlets require initscripts package (#716857)
+- fix: connection fails if TLS_CACERTDIR doesn't exist but TLS_REQCERT
+  is set to 'never' (#716854)
 - fix: segmentation fault caused by double-free in ldapexop (#699683)
-- fix: segfault when input line in LDIF file is indented incorrectly (#716855)
-- fix: segfault when LDIF input is not terminated by newline (#716858)
+- fix: segmentation fault of client tool when input line in LDIF file
+  is splitted but indented incorrectly (#716855)
+- fix: segmentation fault of client tool when LDIF input file is not terminated
+  by a new line character (#716858)
 
 * Fri Mar 18 2011 Jan Vcelak <jvcelak@redhat.com> 2.4.24-2
 - new: system resource limiting for slapd using ulimit
@@ -751,6 +678,7 @@ exit 0
 
 * Mon Feb 14 2011 Jan Vcelak <jvcelak@redhat.com> 2.4.24-1
 - rebase to 2.4.24
+- BDB backend switch from DB4 to DB5
 
 * Tue Feb 08 2011 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 2.4.23-9
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_15_Mass_Rebuild
