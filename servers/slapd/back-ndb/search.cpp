@@ -1,5 +1,5 @@
 /* search.cpp - tools for slap tools */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ndb/search.cpp,v 1.3.2.2 2009/01/22 00:01:09 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ndb/search.cpp,v 1.3.2.4 2009/08/02 21:14:22 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2008-2009 The OpenLDAP Foundation.

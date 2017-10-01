@@ -1,4 +1,4 @@
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/passwd/kerberos.c,v 1.5.2.5 2009/08/17 21:48:59 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2009 The OpenLDAP Foundation.

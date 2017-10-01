@@ -1,5 +1,5 @@
 /* addrdnvalues.c */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/contrib/slapi-plugins/addrdnvalues/addrdnvalues.c,v 1.6.6.1 2009/08/17 21:49:00 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2003-2009 The OpenLDAP Foundation.

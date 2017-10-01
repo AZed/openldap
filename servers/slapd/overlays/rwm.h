@@ -1,5 +1,5 @@
 /* rwm.h - dn rewrite/attribute mapping header file */
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/rwm.h,v 1.15.2.5 2009/01/22 00:01:13 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/rwm.h,v 1.15.2.6 2009/05/01 19:18:10 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2009 The OpenLDAP Foundation.

@@ -1,5 +1,5 @@
 #! /bin/sh
-# $OpenLDAP: pkg/ldap/tests/scripts/test020-proxycache,v 1.26.2.10 2009/01/22 00:01:19 kurt Exp $
+# $OpenLDAP: pkg/ldap/tests/scripts/test020-proxycache,v 1.26.2.11 2009/08/25 21:24:47 quanah Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 1998-2009 The OpenLDAP Foundation.

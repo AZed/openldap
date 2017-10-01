@@ -1,5 +1,5 @@
 /* sent.c - deal with data sent subsystem */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/sent.c,v 1.42.2.5 2009/01/22 00:01:08 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/sent.c,v 1.42.2.6 2009/04/27 22:50:11 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2001-2009 The OpenLDAP Foundation.

@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/config.c,v 1.74.2.17 2009/01/22 00:01:07 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/config.c,v 1.74.2.18 2009/08/14 20:54:14 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2009 The OpenLDAP Foundation.

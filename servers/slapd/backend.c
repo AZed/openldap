@@ -1,5 +1,5 @@
 /* backend.c - routines for dealing with back-end databases */
-/* $OpenLDAP: pkg/ldap/servers/slapd/backend.c,v 1.362.2.26 2009/01/30 19:00:12 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/backend.c,v 1.362.2.28 2009/08/25 23:10:31 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2009 The OpenLDAP Foundation.

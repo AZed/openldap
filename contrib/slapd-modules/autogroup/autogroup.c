@@ -1,5 +1,5 @@
 /* autogroup.c - automatic group overlay */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/autogroup/autogroup.c,v 1.2.2.4 2009/08/17 21:48:56 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2007-2009 The OpenLDAP Foundation.

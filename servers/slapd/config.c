@@ -1,5 +1,5 @@
 /* config.c - configuration file handling routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/config.c,v 1.441.2.20 2009/02/13 03:16:59 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/config.c,v 1.441.2.26 2009/08/02 21:26:43 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2009 The OpenLDAP Foundation.

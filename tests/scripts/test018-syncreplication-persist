@@ -1,5 +1,5 @@
 #! /bin/sh
-# $OpenLDAP: pkg/ldap/tests/scripts/test018-syncreplication-persist,v 1.38.2.8 2009/01/28 19:22:51 quanah Exp $
+# $OpenLDAP: pkg/ldap/tests/scripts/test018-syncreplication-persist,v 1.38.2.10 2009/03/05 23:32:21 quanah Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 1998-2009 The OpenLDAP Foundation.

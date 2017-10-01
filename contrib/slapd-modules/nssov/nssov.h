@@ -1,5 +1,5 @@
 /* nssov.h - NSS overlay header file */
-/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/nssov/nssov.h,v 1.1.2.3 2009/01/22 00:00:45 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/nssov/nssov.h,v 1.1.2.5 2009/08/17 21:48:58 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2008-2009 The OpenLDAP Foundation.

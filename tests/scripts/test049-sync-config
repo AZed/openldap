@@ -1,5 +1,5 @@
 #! /bin/sh
-# $OpenLDAP: pkg/ldap/tests/scripts/test049-sync-config,v 1.4.2.9 2009/02/10 12:29:01 hyc Exp $
+# $OpenLDAP: pkg/ldap/tests/scripts/test049-sync-config,v 1.4.2.11 2009/03/05 23:32:21 quanah Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 1998-2009 The OpenLDAP Foundation.

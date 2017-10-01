@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/unbind.c,v 1.30.2.6 2009/01/22 00:01:08 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/unbind.c,v 1.30.2.7 2009/08/26 00:50:20 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2009 The OpenLDAP Foundation.

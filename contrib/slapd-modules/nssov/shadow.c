@@ -1,5 +1,5 @@
 /* shadow.c - shadow account lookup routines */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/nssov/shadow.c,v 1.1.2.3 2009/08/17 21:48:59 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>. 
  *
  * Copyright 2008-2009 The OpenLDAP Foundation.

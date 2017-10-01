@@ -1,5 +1,5 @@
 /* filterentry.c - apply a filter to an entry */
-/* $OpenLDAP: pkg/ldap/servers/slapd/filterentry.c,v 1.104.2.6 2009/01/22 00:01:01 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/filterentry.c,v 1.104.2.7 2009/06/02 23:09:42 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2009 The OpenLDAP Foundation.

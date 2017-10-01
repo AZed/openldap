@@ -1,5 +1,5 @@
 /* ldapexop.c -- a tool for performing well-known extended operations */
-/* $OpenLDAP: pkg/ldap/clients/tools/ldapexop.c,v 1.9.2.5 2009/01/22 00:00:42 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/clients/tools/ldapexop.c,v 1.9.2.6 2009/08/14 20:51:14 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2005-2009 The OpenLDAP Foundation.

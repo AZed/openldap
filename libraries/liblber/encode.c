@@ -1,5 +1,5 @@
 /* encode.c - ber output encoding routines */
-/* $OpenLDAP: pkg/ldap/libraries/liblber/encode.c,v 1.64.2.4 2009/01/22 00:00:53 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/liblber/encode.c,v 1.64.2.6 2009/08/13 00:56:58 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2009 The OpenLDAP Foundation.

@@ -1,5 +1,5 @@
 /* dynlist.c - dynamic list overlay */
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/dynlist.c,v 1.20.2.26 2009/02/17 19:14:41 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/dynlist.c,v 1.20.2.28 2009/08/25 23:13:42 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2003-2009 The OpenLDAP Foundation.

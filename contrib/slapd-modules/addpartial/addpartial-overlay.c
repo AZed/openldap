@@ -1,5 +1,5 @@
 /* addpartial-overlay.c */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/addpartial/addpartial-overlay.c,v 1.1.2.5 2009/08/17 21:48:56 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2004-2009 The OpenLDAP Foundation.

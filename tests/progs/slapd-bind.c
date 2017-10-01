@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/tests/progs/slapd-bind.c,v 1.18.2.10 2009/02/10 17:13:05 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/tests/progs/slapd-bind.c,v 1.18.2.11 2009/03/09 23:16:48 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2009 The OpenLDAP Foundation.

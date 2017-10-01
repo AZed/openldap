@@ -1,4 +1,4 @@
-dnl $OpenLDAP: pkg/ldap/configure.in,v 1.631.2.22 2009/01/26 21:54:23 quanah Exp $
+dnl $OpenLDAP: pkg/ldap/configure.in,v 1.631.2.26 2009/08/13 00:11:16 quanah Exp $
 dnl This work is part of OpenLDAP Software <http://www.openldap.org/>.
 dnl
 dnl Copyright 1998-2009 The OpenLDAP Foundation.
@@ -25,7 +25,7 @@ dnl ================================================================
 dnl Configure.in for OpenLDAP
 AC_COPYRIGHT([[Copyright 1998-2009 The OpenLDAP Foundation. All rights reserved.
 Restrictions apply, see COPYRIGHT and LICENSE files.]])
-AC_REVISION([$OpenLDAP: pkg/ldap/configure.in,v 1.631.2.22 2009/01/26 21:54:23 quanah Exp $])
+AC_REVISION([$OpenLDAP: pkg/ldap/configure.in,v 1.631.2.26 2009/08/13 00:11:16 quanah Exp $])
 AC_INIT([OpenLDAP],,[http://www.openldap.org/its/])
 m4_define([AC_PACKAGE_BUGREPORT],[<http://www.openldap.org/its/>])
 AC_CONFIG_SRCDIR(build/version.sh)dnl

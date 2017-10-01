@@ -1,5 +1,5 @@
 /* bind.c - ldap backend bind function */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/bind.c,v 1.162.2.21 2009/01/22 00:01:06 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/bind.c,v 1.162.2.24 2009/09/01 22:50:21 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2009 The OpenLDAP Foundation.

@@ -1,5 +1,5 @@
 /* ldap_pvt_thread.h - ldap threads header file */
-/* $OpenLDAP: pkg/ldap/include/ldap_pvt_thread.h,v 1.51.2.12 2009/01/22 00:00:52 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/include/ldap_pvt_thread.h,v 1.51.2.13 2009/06/11 21:53:23 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  * 
  * Copyright 1998-2009 The OpenLDAP Foundation.

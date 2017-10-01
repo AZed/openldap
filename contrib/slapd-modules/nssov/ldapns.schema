@@ -1,4 +1,4 @@
-# $OpenLDAP$
+# $OpenLDAP: pkg/ldap/contrib/slapd-modules/nssov/ldapns.schema,v 1.2.2.3 2009/08/17 21:48:58 quanah Exp $
 # LDAP Name Service Additional Schema
 # http://www.iana.org/assignments/gssapi-service-names
 
