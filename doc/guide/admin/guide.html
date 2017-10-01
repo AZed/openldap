@@ -23,7 +23,7 @@
 <DIV CLASS="title">
 <H1 CLASS="doc-title">OpenLDAP Software 2.4 Administrator's Guide</H1>
 <ADDRESS CLASS="doc-author">The OpenLDAP Project &lt;<A HREF="http://www.openldap.org/">http://www.openldap.org/</A>&gt;</ADDRESS>
-<ADDRESS CLASS="doc-modified">28 March 2013</ADDRESS>
+<ADDRESS CLASS="doc-modified">16 August 2013</ADDRESS>
 <BR CLEAR="All">
 </DIV>
 <DIV CLASS="contents">
@@ -243,7 +243,7 @@
 <BR>
 <A HREF="#Further Information">11.3.3. Further Information</A></UL>
 <BR>
-<A HREF="#MDB">11.4. MDB</A><UL>
+<A HREF="#LMDB">11.4. LMDB</A><UL>
 <A HREF="#Overview">11.4.1. Overview</A>
 <BR>
 <A HREF="#back-mdb Configuration">11.4.2. back-mdb Configuration</A>
@@ -4633,10 +4633,13 @@ Members of a group
 </PRE>
 <H2><A NAME="Berkeley DB Backends">11.1. Berkeley DB Backends</A></H2>
 <H3><A NAME="Overview">11.1.1. Overview</A></H3>
-<P>The <EM>bdb</EM> backend to <EM>slapd</EM>(8) is the recommended primary backend for a normal <EM>slapd</EM> database.  It uses the Oracle Berkeley DB (<TERM>BDB</TERM>) package to store data. It makes extensive use of indexing and caching (see the <A HREF="#Tuning">Tuning</A> section) to speed data access.</P>
-<P><EM>hdb</EM> is a variant of the <EM>bdb</EM> backend that uses a hierarchical database layout which supports subtree renames. It is otherwise identical to the <EM>bdb</EM> behavior, and all the same configuration options apply.</P>
+<P>The <EM>hdb</EM> backend to <EM>slapd</EM>(8) is the recommended primary backend for a normal <EM>slapd</EM> database.  It uses the Oracle Berkeley DB (<TERM>BDB</TERM>) package to store data. It makes extensive use of indexing and caching (see the <A HREF="#Tuning">Tuning</A> section) to speed data access.</P>
+<P><EM>hdb</EM> is a variant of the original <EM>bdb</EM> backend which was first written for use with BDB. <EM>hdb</EM> uses a hierarchical database layout which supports subtree renames. It is otherwise identical to the <EM>bdb</EM> behavior, and all the same configuration options apply.</P>
 <P><HR WIDTH="80%" ALIGN="Left">
 <STRONG>Note: </STRONG>An <EM>hdb</EM> database needs a large <EM>idlcachesize</EM> for good search performance, typically three times the <EM>cachesize</EM> (entry cache size) or larger.
+<HR WIDTH="80%" ALIGN="Left"></P>
+<P><HR WIDTH="80%" ALIGN="Left">
+<STRONG>Note: </STRONG>The <EM>hdb</EM> backend has superseded the <EM>bdb</EM> backend, and both will soon be deprecated in favor of the new <EM>mdb</EM> backend. See below.
 <HR WIDTH="80%" ALIGN="Left"></P>
 <H3><A NAME="back-bdb/back-hdb Configuration">11.1.2. back-bdb/back-hdb Configuration</A></H3>
 <P>MORE LATER</P>
@@ -4719,12 +4722,12 @@ Members of a group
 <P>This is the complete format you would get when exporting your directory using <TT>slapcat</TT> etc.</P>
 <H3><A NAME="Further Information">11.3.3. Further Information</A></H3>
 <P><EM>slapd-ldif</EM>(5)</P>
-<H2><A NAME="MDB">11.4. MDB</A></H2>
+<H2><A NAME="LMDB">11.4. LMDB</A></H2>
 <H3><A NAME="Overview">11.4.1. Overview</A></H3>
-<P>The <EM>mdb</EM> backend to <EM>slapd</EM>(8) is the upcoming primary backend for a normal <EM>slapd</EM> database.  It uses OpenLDAP's own Memory-Mapped Database (<TERM>MDB</TERM>) library to store data and is intended to replace the Berkeley DB backends.</P>
+<P>The <EM>mdb</EM> backend to <EM>slapd</EM>(8) is the upcoming primary backend for a normal <EM>slapd</EM> database.  It uses OpenLDAP's own Lightning Memory-Mapped Database (<TERM>LMDB</TERM>) library to store data and is intended to replace the Berkeley DB backends.</P>
 <P>It supports indexing like the BDB backends, but it uses no caching and requires no tuning to deliver maximum search performance.  Like <EM>hdb</EM>, it is also fully hierarchical and supports subtree renames in constant time.</P>
 <H3><A NAME="back-mdb Configuration">11.4.2. back-mdb Configuration</A></H3>
-<P>Unlike the BDB backends, the MDB backend can be instantiated with very few configuration lines:</P>
+<P>Unlike the BDB backends, the <EM>mdb</EM> backend can be instantiated with very few configuration lines:</P>
 <PRE>
         include ./schema/core.schema
 
@@ -4735,7 +4738,7 @@ Members of a group
         rootpw    mdb
         maxsize   1073741824
 </PRE>
-<P>In addition to the usual parameters that a minimal configuration requires, the MDB backend requires a maximum size to be set. This should be the largest that the database is ever anticipated to grow (in bytes). The filesystem must also provide enough free space to accommodate this size.</P>
+<P>In addition to the usual parameters that a minimal configuration requires, the <EM>mdb</EM> backend requires a maximum size to be set. This should be the largest that the database is ever anticipated to grow (in bytes). The filesystem must also provide enough free space to accommodate this size.</P>
 <H3><A NAME="Further Information">11.4.3. Further Information</A></H3>
 <P><EM>slapd-mdb</EM>(5)</P>
 <H2><A NAME="Metadirectory">11.5. Metadirectory</A></H2>
@@ -8212,7 +8215,7 @@ Database objects of instances of this backend
 <P>Various factors can play a part in how your directory performs on your chosen hardware and environment. We will attempt to discuss these here.</P>
 <H3><A NAME="Memory">21.1.1. Memory</A></H3>
 <P>Scale your cache to use available memory and increase system memory if you can.</P>
-<P>See <A HREF="#Caching">Caching</A> for BDB cache tuning hints. Note that MDB uses no cache of its own and has no tuning options, so the Caching section can be ignored when using MDB.</P>
+<P>See <A HREF="#Caching">Caching</A> for BDB cache tuning hints. Note that LMDB uses no cache of its own and has no tuning options, so the Caching section can be ignored when using LMDB.</P>
 <H3><A NAME="Disks">21.1.2. Disks</A></H3>
 <P>Use fast filesystems, and conduct your own testing to see which filesystem types perform best with your workload. (On our own Linux testing, EXT2 and JFS tend to provide better write performance than everything else, including newer filesystems like EXT4, BTRFS, etc.)</P>
 <P>Use fast subsystems. Put each database and logs on separate disks (for BDB this is configurable via <EM>DB_CONFIG</EM>):</P>
@@ -9866,18 +9869,18 @@ LDAP Data Interchange Format
 </TR>
 <TR>
 <TD>
-MD5
+LMDB
 </TD>
 <TD>
-Message Digest 5
+Lightning Memory-Mapped Database
 </TD>
 </TR>
 <TR>
 <TD>
-MDB
+MD5
 </TD>
 <TD>
-Memory-Mapped Database
+Message Digest 5
 </TD>
 </TR>
 <TR>
