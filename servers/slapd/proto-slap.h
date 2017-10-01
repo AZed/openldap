@@ -129,6 +129,7 @@ LDAP_SLAPD_F (int) slap_bv2ad LDAP_P((
 	const char **text ));
 
 LDAP_SLAPD_F (void) ad_destroy LDAP_P(( AttributeDescription * ));
+LDAP_SLAPD_F (int) ad_keystring LDAP_P(( struct berval *bv ));
 
 #define ad_cmp(l,r)	(((l)->ad_cname.bv_len < (r)->ad_cname.bv_len) \
 	? -1 : (((l)->ad_cname.bv_len > (r)->ad_cname.bv_len) \
@@ -707,6 +708,10 @@ LDAP_SLAPD_F (int) verbs_to_mask LDAP_P((
 	int argc, char *argv[], slap_verbmasks *v, slap_mask_t *m ));
 LDAP_SLAPD_F (int) mask_to_verbs LDAP_P((
 	slap_verbmasks *v, slap_mask_t m, BerVarray *bva ));
+LDAP_SLAPD_F (int) mask_to_verbstring LDAP_P((
+	slap_verbmasks *v, slap_mask_t m, char delim, struct berval *bv ));
+LDAP_SLAPD_F (int) verbstring_to_mask LDAP_P((
+	slap_verbmasks *v, char *str, char delim, slap_mask_t *m ));
 LDAP_SLAPD_F (int) enum_to_verb LDAP_P((
 	slap_verbmasks *v, slap_mask_t m, struct berval *bv ));
 LDAP_SLAPD_F (int) slap_verbmasks_init LDAP_P(( slap_verbmasks **vp, slap_verbmasks *v ));
@@ -743,6 +748,7 @@ LDAP_SLAPD_F (int) connections_init LDAP_P((void));
 LDAP_SLAPD_F (int) connections_shutdown LDAP_P((void));
 LDAP_SLAPD_F (int) connections_destroy LDAP_P((void));
 LDAP_SLAPD_F (int) connections_timeout_idle LDAP_P((time_t));
+LDAP_SLAPD_F (void) connections_drop LDAP_P((void));
 
 LDAP_SLAPD_F (Connection *) connection_client_setup LDAP_P((
 	ber_socket_t s,
@@ -849,6 +855,9 @@ LDAP_SLAPD_F (void) slapd_remove LDAP_P((ber_socket_t s, Sockbuf *sb,
 LDAP_SLAPD_F (RETSIGTYPE) slap_sig_shutdown LDAP_P((int sig));
 LDAP_SLAPD_F (RETSIGTYPE) slap_sig_wake LDAP_P((int sig));
 LDAP_SLAPD_F (void) slap_wake_listener LDAP_P((void));
+
+LDAP_SLAPD_F (void) slap_suspend_listeners LDAP_P((void));
+LDAP_SLAPD_F (void) slap_resume_listeners LDAP_P((void));
 
 LDAP_SLAPD_F (void) slapd_set_write LDAP_P((ber_socket_t s, int wake));
 LDAP_SLAPD_F (void) slapd_clr_write LDAP_P((ber_socket_t s, int wake));
@@ -1152,6 +1161,10 @@ LDAP_SLAPD_F (int) slap_parse_csn_sid LDAP_P((
 				struct berval * ));
 LDAP_SLAPD_F (int *) slap_parse_csn_sids LDAP_P((
 				BerVarray, int, void *memctx ));
+LDAP_SLAPD_F (int) slap_sort_csn_sids LDAP_P((
+				BerVarray, int *, int, void *memctx ));
+LDAP_SLAPD_F (void) slap_insert_csn_sids LDAP_P((
+				struct sync_cookie *ck, int, int, struct berval * ));
 LDAP_SLAPD_F (int) slap_parse_sync_cookie LDAP_P((
 				struct sync_cookie *, void *memctx ));
 LDAP_SLAPD_F (int) slap_init_sync_cookie_ctxcsn LDAP_P((

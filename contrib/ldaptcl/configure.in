@@ -4,6 +4,8 @@ dnl	to configure the system for the local environment.
 AC_INIT(neoXldap.c)
 # $OpenLDAP: pkg/ldap/contrib/ldaptcl/configure.in,v 1.8.2.1 2007/08/31 23:13:51 quanah Exp $
 
+AC_REVISION([$Id$])
+
 NEO_VERSION=2.0
 NEO_MAJOR_VERSION=2
 NEO_MINOR_VERSION=0

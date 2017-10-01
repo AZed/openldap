@@ -1736,12 +1736,12 @@ struct syncinfo_s;
 #define SLAP_SYNCUUID_SET_SIZE 256
 
 struct sync_cookie {
-	struct berval *ctxcsn;
-	struct berval octet_str;
-	int rid;
-	int sid;
-	int numcsns;
+	BerVarray ctxcsn;
 	int *sids;
+	int numcsns;
+	int rid;
+	struct berval octet_str;
+	int sid;
 	LDAP_STAILQ_ENTRY(sync_cookie) sc_next;
 };
 
@@ -1939,6 +1939,7 @@ struct BackendDB {
 	struct slap_limits **be_limits; /* regex-based size and time limits */
 	AccessControl *be_acl;	/* access control list for this backend	   */
 	slap_access_t	be_dfltaccess;	/* access given if no acl matches	   */
+	AttributeName	*be_extra_anlist;	/* attributes that need to be added to search requests (ITS#6513) */
 
 	/* Replica Information */
 	struct berval be_update_ndn;	/* allowed to make changes (in replicas) */

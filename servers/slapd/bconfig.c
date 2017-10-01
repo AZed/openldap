@@ -135,6 +135,7 @@ static ConfigDriver config_referral;
 static ConfigDriver config_loglevel;
 static ConfigDriver config_updatedn;
 static ConfigDriver config_updateref;
+static ConfigDriver config_extra_attrs;
 static ConfigDriver config_include;
 static ConfigDriver config_obsolete;
 #ifdef HAVE_TLS
@@ -313,6 +314,7 @@ static ConfigTable config_back_cf_table[] = {
 		&config_generic, "( OLcfgGlAt:4 NAME 'olcAttributeTypes' "
 			"DESC 'OpenLDAP attributeTypes' "
 			"EQUALITY caseIgnoreMatch "
+			"SUBSTR caseIgnoreSubstringsMatch "
 			"SYNTAX OMsDirectoryString X-ORDERED 'VALUES' )",
 				NULL, NULL },
 	{ "authid-rewrite", NULL, 2, 0, STRLENOF( "authid-rewrite" ),
@@ -362,8 +364,13 @@ static ConfigTable config_back_cf_table[] = {
 		&config_generic, "( OLcfgGlAt:16 NAME 'olcDitContentRules' "
 			"DESC 'OpenLDAP DIT content rules' "
 			"EQUALITY caseIgnoreMatch "
+			"SUBSTR caseIgnoreSubstringsMatch "
 			"SYNTAX OMsDirectoryString X-ORDERED 'VALUES' )",
 			NULL, NULL },
+	{ "extra_attrs", "attrlist", 2, 2, 0, ARG_DB|ARG_MAGIC,
+		&config_extra_attrs, "( OLcfgDbAt:0.20 NAME 'olcExtraAttrs' "
+			"EQUALITY caseIgnoreMatch "
+			"SYNTAX OMsDirectoryString )", NULL, NULL },
 	{ "gentlehup", "on|off", 2, 2, 0,
 #ifdef SIGHUP
 		ARG_ON_OFF, &global_gentlehup,
@@ -404,6 +411,7 @@ static ConfigTable config_back_cf_table[] = {
 		&config_generic, "( OLcfgGlAt:85 NAME 'olcLdapSyntaxes' "
 			"DESC 'OpenLDAP ldapSyntax' "
 			"EQUALITY caseIgnoreMatch "
+			"SUBSTR caseIgnoreSubstringsMatch "
 			"SYNTAX OMsDirectoryString X-ORDERED 'VALUES' )",
 				NULL, NULL },
 	{ "limits", "limits", 2, 0, 0, ARG_DB|ARG_MAGIC|CFG_LIMITS,
@@ -459,11 +467,13 @@ static ConfigTable config_back_cf_table[] = {
 		&config_generic, "( OLcfgGlAt:32 NAME 'olcObjectClasses' "
 		"DESC 'OpenLDAP object classes' "
 		"EQUALITY caseIgnoreMatch "
+		"SUBSTR caseIgnoreSubstringsMatch "
 		"SYNTAX OMsDirectoryString X-ORDERED 'VALUES' )",
 			NULL, NULL },
 	{ "objectidentifier", "name> <oid",	3, 3, 0, ARG_MAGIC|CFG_OID,
 		&config_generic, "( OLcfgGlAt:33 NAME 'olcObjectIdentifier' "
 			"EQUALITY caseIgnoreMatch "
+			"SUBSTR caseIgnoreSubstringsMatch "
 			"SYNTAX OMsDirectoryString X-ORDERED 'VALUES' )", NULL, NULL },
 	{ "overlay", "overlay", 2, 2, 0, ARG_MAGIC,
 		&config_overlay, "( OLcfgGlAt:34 NAME 'olcOverlay' "
@@ -832,7 +842,7 @@ static ConfigOCs cf_ocs[] = {
 		 "olcReplogFile $ olcRequires $ olcRestrict $ olcRootDN $ olcRootPW $ "
 		 "olcSchemaDN $ olcSecurity $ olcSizeLimit $ olcSyncUseSubentry $ olcSyncrepl $ "
 		 "olcTimeLimit $ olcUpdateDN $ olcUpdateRef $ olcMirrorMode $ "
-		 "olcMonitoring ) )",
+		 "olcMonitoring $ olcExtraAttrs ) )",
 		 	Cft_Database, NULL, cfAddDatabase },
 	{ "( OLcfgGlOc:5 "
 		"NAME 'olcOverlayConfig' "
@@ -1621,7 +1631,8 @@ config_generic(ConfigArgs *c) {
 					int i;
 					for (i=0, oc = cfn->c_oc_head; i<c->valx; i++) {
 						prev = oc;
-						oc_next( &oc );
+						if ( !oc_next( &oc ))
+							break;
 					}
 				} else
 				/* If adding the first, and head exists, find its prev */
@@ -1653,7 +1664,8 @@ config_generic(ConfigArgs *c) {
 					int i;
 					for (i=0, at = cfn->c_at_head; i<c->valx; i++) {
 						prev = at;
-						at_next( &at );
+						if ( !at_next( &at ))
+							break;
 					}
 				} else
 				/* If adding the first, and head exists, find its prev */
@@ -1685,7 +1697,8 @@ config_generic(ConfigArgs *c) {
 					int i;
 					for ( i = 0, syn = cfn->c_syn_head; i < c->valx; i++ ) {
 						prev = syn;
-						syn_next( &syn );
+						if ( !syn_next( &syn ))
+							break;
 					}
 				} else
 				/* If adding the first, and head exists, find its prev */
@@ -3166,6 +3179,58 @@ config_requires(ConfigArgs *c) {
 	return(0);
 }
 
+static int
+config_extra_attrs(ConfigArgs *c)
+{
+	assert( c->be != NULL );
+
+	if ( c->op == SLAP_CONFIG_EMIT ) {
+		int i;
+
+		if ( c->be->be_extra_anlist == NULL ) {
+			return 1;
+		}
+
+		for ( i = 0; !BER_BVISNULL( &c->be->be_extra_anlist[i].an_name ); i++ ) {
+			value_add_one( &c->rvalue_vals, &c->be->be_extra_anlist[i].an_name );
+		}
+
+	} else if ( c->op == LDAP_MOD_DELETE ) {
+		if ( c->be->be_extra_anlist == NULL ) {
+			return 1;
+		}
+
+		if ( c->valx < 0 ) {
+			anlist_free( c->be->be_extra_anlist, 1, NULL );
+			c->be->be_extra_anlist = NULL;
+
+		} else {
+			int i;
+
+			for ( i = 0; i < c->valx && !BER_BVISNULL( &c->be->be_extra_anlist[i + 1].an_name ); i++ )
+				;
+
+			if ( BER_BVISNULL( &c->be->be_extra_anlist[i].an_name ) ) {
+				return 1;
+			}
+
+			ch_free( c->be->be_extra_anlist[i].an_name.bv_val );
+
+			for ( ; !BER_BVISNULL( &c->be->be_extra_anlist[i].an_name ); i++ ) {
+				c->be->be_extra_anlist[i] = c->be->be_extra_anlist[i + 1];
+			}
+		}
+
+	} else {
+		c->be->be_extra_anlist = str2anlist( c->be->be_extra_anlist, c->argv[1], " ,\t" );
+		if ( c->be->be_extra_anlist == NULL ) {
+			return 1;
+		}
+	}
+
+	return 0;
+}
+
 static slap_verbmasks	*loglevel_ops;
 
 static int
@@ -4557,11 +4622,18 @@ check_name_index( CfEntryInfo *parent, ConfigType ce_type, Entry *e,
 	return rc;
 }
 
+/* Insert all superior classes of the given class */
 static int
 count_oc( ObjectClass *oc, ConfigOCs ***copp, int *nocs )
 {
 	ConfigOCs	co, *cop;
 	ObjectClass	**sups;
+
+	for ( sups = oc->soc_sups; sups && *sups; sups++ ) {
+		if ( count_oc( *sups, copp, nocs ) ) {
+			return -1;
+		}
+	}
 
 	co.co_name = &oc->soc_cname;
 	cop = avl_find( CfOcTree, &co, CfOc_cmp );
@@ -4586,27 +4658,23 @@ count_oc( ObjectClass *oc, ConfigOCs ***copp, int *nocs )
 		}
 	}
 
-	for ( sups = oc->soc_sups; sups && *sups; sups++ ) {
-		if ( count_oc( *sups, copp, nocs ) ) {
-			return -1;
-		}
-	}
-
 	return 0;
 }
 
+/* Find all superior classes of the given objectclasses,
+ * return list in order of most-subordinate first.
+ *
+ * Special / auxiliary / Cft_Misc classes always take precedence.
+ */
 static ConfigOCs **
 count_ocs( Attribute *oc_at, int *nocs )
 {
-	int		i;
+	int		i, j, misc = -1;
 	ConfigOCs	**colst = NULL;
 
 	*nocs = 0;
 
-	for ( i = 0; !BER_BVISNULL( &oc_at->a_nvals[i] ); i++ )
-		/* count attrs */ ;
-
-	for ( ; i--; ) {
+	for ( i = oc_at->a_numvals; i--; ) {
 		ObjectClass	*oc = oc_bvfind( &oc_at->a_nvals[i] );
 
 		assert( oc != NULL );
@@ -4614,6 +4682,25 @@ count_ocs( Attribute *oc_at, int *nocs )
 			ch_free( colst );
 			return NULL;
 		}
+	}
+
+	/* invert order */
+	i = 0;
+	j = *nocs - 1;
+	while ( i < j ) {
+		ConfigOCs *tmp = colst[i];
+		colst[i] = colst[j];
+		colst[j] = tmp;
+		if (tmp->co_type == Cft_Misc)
+			misc = j;
+		i++; j--;
+	}
+	/* Move misc class to front of list */
+	if (misc > 0) {
+		ConfigOCs *tmp = colst[misc];
+		for (i=misc; i>0; i--)
+			colst[i] = colst[i-1];
+		colst[0] = tmp;
 	}
 
 	return colst;
@@ -5353,6 +5440,11 @@ config_modify_internal( CfEntryInfo *ce, Operation *op, SlapReply *rs,
 
 	oc_at = attr_find( e->e_attrs, slap_schema.si_ad_objectClass );
 	if ( !oc_at ) return LDAP_OBJECT_CLASS_VIOLATION;
+
+	for (ml = op->orm_modlist; ml; ml=ml->sml_next) {
+		if (ml->sml_desc == slap_schema.si_ad_objectClass)
+			return rc;
+	}
 
 	colst = count_ocs( oc_at, &nocs );
 
@@ -6328,11 +6420,12 @@ config_build_schema_inc( ConfigArgs *c, CfEntryInfo *ceparent,
 			bv.bv_len );
 		c->value_dn.bv_len += bv.bv_len;
 		c->value_dn.bv_val[c->value_dn.bv_len] ='\0';
-		rdn = c->value_dn;
+		rdnNormalize( 0, NULL, NULL, &c->value_dn, &rdn, NULL );
 
 		c->ca_private = cf;
 		e = config_build_entry( op, rs, ceparent, c, &rdn,
 			&CFOC_SCHEMA, NULL );
+		ch_free( rdn.bv_val );
 		if ( !e ) {
 			return -1;
 		} else if ( e && cf->c_kids ) {
@@ -6900,6 +6993,7 @@ config_tool_entry_put( BackendDB *be, Entry *e, struct berval *text )
 	Operation *op = NULL;
 	void *thrctx;
 	int isFrontend = 0;
+	int isFrontendChild = 0;
 
 	/* Create entry for frontend database if it does not exist already */
 	if ( !entry_put_got_frontend ) {
@@ -6953,8 +7047,34 @@ config_tool_entry_put( BackendDB *be, Entry *e, struct berval *text )
 			}
 		}
 	}
+
+	/* Child entries of the frontend database, e.g. slapo-chain's back-ldap
+	 * instances, may appear before the config database entry in the ldif, skip
+	 * auto-creation of olcDatabase={0}config in such a case */
+	if ( !entry_put_got_config &&
+			!strncmp( e->e_nname.bv_val, "olcDatabase", STRLENOF( "olcDatabase" ))) {
+		struct berval pdn;
+		dnParent( &e->e_nname, &pdn );
+		while ( pdn.bv_len ) {
+			if ( !strncmp( pdn.bv_val, "olcDatabase",
+					STRLENOF( "olcDatabase" ))) {
+				if ( !strncmp( pdn.bv_val +
+						STRLENOF( "olcDatabase" ), "={-1}frontend",
+						STRLENOF( "={-1}frontend" )) ||
+						!strncmp( pdn.bv_val +
+						STRLENOF( "olcDatabase" ), "=frontend",
+						STRLENOF( "=frontend" ))) {
+
+					isFrontendChild = 1;
+					break;
+				}
+			}
+			dnParent( &pdn, &pdn );
+		}
+	}
+
 	/* Create entry for config database if it does not exist already */
-	if ( !entry_put_got_config && !isFrontend ) {
+	if ( !entry_put_got_config && !isFrontend && !isFrontendChild ) {
 		if ( !strncmp( e->e_nname.bv_val, "olcDatabase",
 				STRLENOF( "olcDatabase" ))) {
 			if ( strncmp( e->e_nname.bv_val +

@@ -557,8 +557,8 @@ static slap_daemon_st slap_daemon[MAX_DAEMON_THREADS];
 	memset( slap_daemon[t].sd_flags, 0, dtblsize ); \
 	slapd_ws_sockets[t*2] = wake_sds[t][0]; \
 	slapd_ws_sockets[t*2+1] = wake_sds[t][1]; \
-	wake_sds[0] = t*2; \
-	wake_sds[1] = t*2+1; \
+	wake_sds[t][0] = t*2; \
+	wake_sds[t][1] = t*2+1; \
 	slap_daemon[t].sd_nfds = t*2 + 2; \
 	} while ( 0 )
 
@@ -2098,7 +2098,7 @@ slap_listener_activate(
 	Debug( LDAP_DEBUG_TRACE, "slap_listener_activate(%d): %s\n",
 		sl->sl_sd, sl->sl_busy ? "busy" : "", 0 );
 
-	sl->sl_busy++;
+	sl->sl_busy = 1;
 
 	rc = ldap_pvt_thread_pool_submit( &connection_pool,
 		slap_listener_thread, (void *) sl );
@@ -3046,6 +3046,28 @@ slapd_get_listeners( void )
 	 * identify the server, which means it wants the startup arguments.
 	 */
 	return slap_listeners;
+}
+
+/* Reject all incoming requests */
+void
+slap_suspend_listeners( void )
+{
+	int i;
+	for (i=0; slap_listeners[i]; i++) {
+		slap_listeners[i]->sl_mute = 1;
+		listen( slap_listeners[i]->sl_sd, 0 );
+	}
+}
+
+/* Resume after a suspend */
+void
+slap_resume_listeners( void )
+{
+	int i;
+	for (i=0; slap_listeners[i]; i++) {
+		slap_listeners[i]->sl_mute = 0;
+		listen( slap_listeners[i]->sl_sd, SLAPD_LISTEN_BACKLOG );
+	}
 }
 
 void

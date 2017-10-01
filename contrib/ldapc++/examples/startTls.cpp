@@ -1,6 +1,6 @@
 // $OpenLDAP: pkg/ldap/contrib/ldapc++/examples/startTls.cpp,v 1.1.2.2 2010/04/14 23:50:43 quanah Exp $
 /*
- * Copyright 2010, OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 2010-2011 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 
