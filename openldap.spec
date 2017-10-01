@@ -13,7 +13,7 @@
 Summary: The configuration files, libraries, and documentation for OpenLDAP.
 Name: openldap
 Version: %{version_23}
-Release: 8%{?dist}.3
+Release: 8%{?dist}.4
 License: OpenLDAP
 Group: System Environment/Daemons
 Source0: ftp://ftp.OpenLDAP.org/pub/OpenLDAP/openldap-release/openldap-%{version_23}.tgz
@@ -47,6 +47,7 @@ Patch12: openldap-2.3.27-writable-socket.patch
 Patch13: openldap-2.3.27-acl-memleak.patch
 Patch14: openldap-2.3.27-classes.patch
 Patch15: openldap-2.3.27-modify-noop.patch
+Patch16: openldap-2.3.27-ber-decode.patch
 
 # Patches for 2.2.29 for the compat-openldap package.
 Patch100: openldap-2.2.13-tls-fix-connection-test.patch
@@ -188,6 +189,7 @@ pushd openldap-%{version_23}
 %patch13 -p1 -b .acl-memleak
 %patch14 -p0 -b .classes
 %patch15 -p1 -b .modify-noop
+%patch16 -p1 -b .ber-decode
 
 cp %{_datadir}/libtool/config.{sub,guess} build/
 popd
@@ -754,6 +756,9 @@ exec > /dev/null 2> /dev/null
 %attr(0644,root,root)      %{evolution_connector_libdir}/*.a
 
 %changelog
+* Wed Jul  2 2008 Jan Safranek <jsafranek@redhat.com> 2.3.27-8.4
+- fix CVE-2008-2952 (#453639)
+
 * Thu Feb  7 2008 Jan Safranek <jsafranek@redhat.com> 2.3.27-8.3
 - better fix for CVE-2007-6698 (#431407), now it fixes also
   modrdn operations
