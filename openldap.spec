@@ -16,7 +16,7 @@
 Summary: The configuration files, libraries, and documentation for OpenLDAP.
 Name: openldap
 Version: %{version_23}
-Release: 12%{?dist}.7
+Release: 12%{?dist}.9
 License: OpenLDAP
 Group: System Environment/Daemons
 Source0: ftp://ftp.OpenLDAP.org/pub/OpenLDAP/openldap-release/openldap-%{version_23}.tgz
@@ -62,6 +62,7 @@ Patch23: openldap-2.3.43-allow-delete-userpassword.patch
 Patch24: openldap-2.3.43-add-ldap_init_fd.patch
 Patch25: openldap-2.3.43-connections-concurrent-access.patch
 Patch26: openldap-2.3.43-cve-ppolicy-forward-updates.patch
+Patch27: openldap-2.3.43-dns-priority.patch
 
 # Patches for 2.2.29 for the compat-openldap package.
 Patch100: openldap-2.2.13-tls-fix-connection-test.patch
@@ -237,6 +238,7 @@ pushd openldap-%{version_23}
 %patch24 -p1 -b .add-ldap_init_fd
 %patch25 -p1 -b .connections-concurrent-access
 %patch26 -p1 -b .cve-ppolicy-forward-updates
+%patch27 -p1 -b .dns-priority
 
 cp %{_datadir}/libtool/config.{sub,guess} build/
 popd
@@ -312,7 +314,7 @@ RPM_OPT_FLAGS="$RPM_OPT_FLAGS -O0"
 %endif
 
 # Set CFLAGS to incorporate RPM_OPT_FLAGS.
-CFLAGS="$RPM_OPT_FLAGS -D_REENTRANT -fPIC"; export CFLAGS
+CFLAGS="$RPM_OPT_FLAGS -D_REENTRANT -fPIC -fno-strict-aliasing"; export CFLAGS
 
 # Build Berkeley DB and install it into a temporary area, isolating OpenLDAP
 # from any future changes to the system-wide Berkeley DB library.  Version 4.2
@@ -378,7 +380,7 @@ if pkg-config openssl ; then
 	LDFLAGS="$OPENSSL_LDFLAGS" ; export LDFLAGS
 fi
 CPPFLAGS="-I${dbdir}/include $OPENSSL_CPPFLAGS" ; export CPPFLAGS
-CFLAGS="$CPPFLAGS $RPM_OPT_FLAGS -D_REENTRANT -fPIC"; export CFLAGS
+CFLAGS="$CPPFLAGS $RPM_OPT_FLAGS -D_REENTRANT -fPIC -fno-strict-aliasing"; export CFLAGS
 LDFLAGS="-L${dbdir}/%{_lib} $OPENSSL_LDFLAGS" ; export LDFLAGS
 LD_LIBRARY_PATH=${dbdir}/%{_lib}${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}; export LD_LIBRARY_PATH
 
@@ -483,7 +485,7 @@ tagname=CC; export tagname
 # libraries share sonames, so we have to choose one or the other.
 mkdir -p $RPM_BUILD_ROOT/%{_libdir}/
 pushd openldap-%{compat_version}/build-compat/libraries
-	make install DESTDIR=$RPM_BUILD_ROOT
+	make install DESTDIR=$RPM_BUILD_ROOT STRIP=""
 	rm $RPM_BUILD_ROOT/%{_libdir}/*.a
 	rm $RPM_BUILD_ROOT/%{_libdir}/*.la
 	rm $RPM_BUILD_ROOT/%{_libdir}/*.so
@@ -514,7 +516,7 @@ install -m755 libslapd_db-*.*.so $RPM_BUILD_ROOT/%{_libdir}/
 popd
 
 pushd openldap-%{version_23}/build-servers
-make install DESTDIR=$RPM_BUILD_ROOT libdir=%{_libdir} LIBTOOL="$libtool"
+make install DESTDIR=$RPM_BUILD_ROOT libdir=%{_libdir} LIBTOOL="$libtool" STRIP=""
 popd
 
 # Install the bdb maintenance tools.
@@ -530,13 +532,14 @@ pushd evo-openldap-%{version_23}
 make install DESTDIR=$RPM_BUILD_ROOT \
 	includedir=%{evolution_connector_includedir} \
 	libdir=%{evolution_connector_libdir} \
-	LIBTOOL="$libtool"
+	LIBTOOL="$libtool" \
+	STRIP=""
 install -m644 \
 	$RPM_SOURCE_DIR/README.evolution \
 	$RPM_BUILD_ROOT/%{evolution_connector_prefix}/
 popd
 pushd openldap-%{version_23}/build-clients
-make install DESTDIR=$RPM_BUILD_ROOT libdir=%{_libdir} LIBTOOL="$libtool"
+make install DESTDIR=$RPM_BUILD_ROOT libdir=%{_libdir} LIBTOOL="$libtool" STRIP=""
 popd
 
 # Create this directory so that authconfig setting TLS_CACERT to
@@ -897,6 +900,14 @@ exec > /dev/null 2> /dev/null
 %attr(0644,root,root)      %{evolution_connector_libdir}/*.a
 
 %changelog
+* Tue Sep 20 2011 Jan Vcelak <jvcelak@redhat.com> 2.3.43-12.9
+- new feature update: honor priority/weight with ldap_domain2hostlist (#734143)
+
+* Mon Aug 29 2011 Jan Vcelak <jvcelak@redhat.com> 2.3.43-12.8
+- new feature: honor priority/weight with ldap_domain2hostlist (#734143)
+- fix: strict aliasing warnings during package build (#734145)
+- fix: OpenLDAP packages lack debug data (#734144)
+
 * Mon Feb 28 2011 Jan Vcelak <jvcelak@redhat.com> 2.3.43-12.7
 - fix: CVE-2011-1024 ppolicy forwarded bind failure messages cause success (#680484)
 
