@@ -23,7 +23,7 @@
 <DIV CLASS="title">
 <H1 CLASS="doc-title">OpenLDAP Software 2.4 Administrator's Guide</H1>
 <ADDRESS CLASS="doc-author">The OpenLDAP Project &lt;<A HREF="http://www.openldap.org/">http://www.openldap.org/</A>&gt;</ADDRESS>
-<ADDRESS CLASS="doc-modified">16 July 2008</ADDRESS>
+<ADDRESS CLASS="doc-modified">12 October 2008</ADDRESS>
 <BR CLEAR="All">
 </DIV>
 <DIV CLASS="contents">
@@ -287,7 +287,9 @@
 <BR>
 <A HREF="#Handling Chaining Errors">11.3.3. Handling Chaining Errors</A>
 <BR>
-<A HREF="#Further Information">11.3.4. Further Information</A></UL>
+<A HREF="#Read-Back of Chained Modifications">11.3.4. Read-Back of Chained Modifications</A>
+<BR>
+<A HREF="#Further Information">11.3.5. Further Information</A></UL>
 <BR>
 <A HREF="#Constraints">11.4. Constraints</A><UL>
 <A HREF="#Overview">11.4.1. Overview</A>
@@ -1063,7 +1065,7 @@ Support Pages
 <P><B>Internationalization</B>: <EM>slapd</EM> supports Unicode and language tags.</P>
 <P><B>Choice of database backends</B>: <EM>slapd</EM> comes with a variety of different database backends you can choose from. They include <TERM>BDB</TERM>, a high-performance transactional database backend; <TERM>HDB</TERM>, a hierarchical high-performance transactional backend; <EM>SHELL</EM>, a backend interface to arbitrary shell scripts; and PASSWD, a simple backend interface to the <EM>passwd</EM>(5) file. The BDB and HDB backends utilize <A HREF="http://www.oracle.com/">Oracle</A> <A HREF="http://www.oracle.com/database/berkeley-db/db/index.html">Berkeley DB</A>.</P>
 <P><B>Multiple database instances</B>: <EM>slapd</EM> can be configured to serve multiple databases at the same time. This means that a single <EM>slapd</EM> server can respond to requests for many logically different portions of the LDAP tree, using the same or different database backends.</P>
-<P><B>Generic modules API</B>:  If you require even more customization, <EM>slapd</EM> lets you write your own modules easily. <EM>slapd</EM> consists of two distinct parts: a front end that handles protocol communication with LDAP clients; and modules which handle specific tasks such as database operations.  Because these two pieces communicate via a well-defined <TERM>C</TERM> <TERM>API</TERM>, you can write your own customized modules which extend <EM>slapd</EM> in numerous ways.  Also, a number of <EM>programmable database</EM> modules are provided.  These allow you to expose external data sources to <EM>slapd</EM> using popular programming languages (<A HREF="http://www.perl.org/">Perl</A>, <EM>shell</EM>, and <TERM>SQL</TERM>.</P>
+<P><B>Generic modules API</B>:  If you require even more customization, <EM>slapd</EM> lets you write your own modules easily. <EM>slapd</EM> consists of two distinct parts: a front end that handles protocol communication with LDAP clients; and modules which handle specific tasks such as database operations.  Because these two pieces communicate via a well-defined <TERM>C</TERM> <TERM>API</TERM>, you can write your own customized modules which extend <EM>slapd</EM> in numerous ways.  Also, a number of <EM>programmable database</EM> modules are provided.  These allow you to expose external data sources to <EM>slapd</EM> using popular programming languages (<A HREF="http://www.perl.org/">Perl</A>, <EM>shell</EM>, and <TERM>SQL</TERM>).</P>
 <P><B>Threads</B>: <EM>slapd</EM> is threaded for high performance.  A single multi-threaded <EM>slapd</EM> process handles all incoming requests using a pool of threads.  This reduces the amount of system overhead required while providing high performance.</P>
 <P><B>Replication</B>: <EM>slapd</EM> can be configured to maintain shadow copies of directory information.  This <EM>single-master/multiple-slave</EM> replication scheme is vital in high-volume environments where a single <EM>slapd</EM> installation just doesn't provide the necessary availability or reliability.  For extremely demanding environments where a single point of failure is not acceptable, <EM>multi-master</EM> replication is also available.  <EM>slapd</EM> includes support for <EM>LDAP Sync</EM>-based replication.</P>
 <P><B>Proxy Cache</B>: <EM>slapd</EM> can be configured as a caching LDAP proxy service.</P>
@@ -1258,7 +1260,7 @@ Now we're ready to verify the added entries are in your directory. You can use a
 <BR>
 This command will search for and retrieve every entry in the database.</OL>
 <P>You are now ready to add more entries using <EM>ldapadd</EM>(1) or another LDAP client, experiment with various configuration options, backend arrangements, etc..</P>
-<P>Note that by default, the <EM>slapd</EM>(8) database grants <EM>read access to everybody</EM> excepting the <EM>super-user</EM> (as specified by the <TT>rootdn</TT> configuration directive).  It is highly recommended that you establish controls to restrict access to authorized users. Access controls are discussed in the <A HREF="#The access Configuration Directive">The access Configuration Directive</A> section of <A HREF="#The slapd Configuration File">The slapd Configuration File</A> chapter. You are also encouraged to read the <A HREF="#Security Considerations">Security Considerations</A>, <A HREF="#Using SASL">Using SASL</A> and <A HREF="#Using TLS">Using TLS</A> sections.</P>
+<P>Note that by default, the <EM>slapd</EM>(8) database grants <EM>read access to everybody</EM> excepting the <EM>super-user</EM> (as specified by the <TT>rootdn</TT> configuration directive).  It is highly recommended that you establish controls to restrict access to authorized users. Access controls are discussed in the <A HREF="#Access Control">Access Control</A> chapter. You are also encouraged to read the <A HREF="#Security Considerations">Security Considerations</A>, <A HREF="#Using SASL">Using SASL</A> and <A HREF="#Using TLS">Using TLS</A> sections.</P>
 <P>The following chapters provide more detailed information on making, installing, and running <EM>slapd</EM>(8).</P>
 <P></P>
 <HR>
@@ -1311,7 +1313,7 @@ This command will search for and retrieve every entry in the database.</OL>
 <P>Heimdal Kerberos is available from <A HREF="http://www.pdc.kth.se/heimdal/">http://www.pdc.kth.se/heimdal/</A>. MIT Kerberos is available from <A HREF="http://web.mit.edu/kerberos/www/">http://web.mit.edu/kerberos/www/</A>.</P>
 <P>Use of strong authentication services, such as those provided by Kerberos, is highly recommended.</P>
 <H3><A NAME="Database Software">4.2.4. Database Software</A></H3>
-<P>OpenLDAP's <EM>slapd</EM>(8) <TERM>BDB</TERM> and <TERM>HDB</TERM> primary database backends require <A HREF="http://www.oracle.com/">Oracle Corporation</A> <A HREF="http://www.oracle.com/database/berkeley-db/db/index.html">Berkeley DB</A>. If not available at configure time, you will not be able build <EM>slapd</EM>(8) with these primary database backends.</P>
+<P>OpenLDAP's <EM>slapd</EM>(8) <TERM>BDB</TERM> and <TERM>HDB</TERM> primary database backends require <A HREF="http://www.oracle.com/">Oracle Corporation</A> <A HREF="http://www.oracle.com/database/berkeley-db/db/index.html">Berkeley DB</A>. If not available at configure time, you will not be able to build <EM>slapd</EM>(8) with these primary database backends.</P>
 <P>Your operating system may provide a supported version of <A HREF="http://www.oracle.com/database/berkeley-db/db/index.html">Berkeley DB</A> in the base system or as an optional software component.  If not, you'll have to obtain and install it yourself.</P>
 <P><A HREF="http://www.oracle.com/database/berkeley-db/db/index.html">Berkeley DB</A> is available from <A HREF="http://www.oracle.com/">Oracle Corporation</A>'s Berkeley DB download page <A HREF="http://www.oracle.com/technology/software/products/berkeley-db/index.html">http://www.oracle.com/technology/software/products/berkeley-db/index.html</A>.</P>
 <P>There are several versions available. Generally, the most recent release (with published patches) is recommended. This package is required if you wish to use the <TERM>BDB</TERM> or <TERM>HDB</TERM> database backends.</P>
@@ -1501,7 +1503,7 @@ Databases and Overlays may also have other miscellaneous children.</UL></UL>
 <H4><A NAME="olcIdleTimeout: &lt;integer&gt;">5.2.1.1. olcIdleTimeout: &lt;integer&gt;</A></H4>
 <P>Specify the number of seconds to wait before forcibly closing an idle client connection.  A value of 0, the default, disables this feature.</P>
 <H4><A NAME="olcLogLevel: &lt;level&gt;">5.2.1.2. olcLogLevel: &lt;level&gt;</A></H4>
-<P>This directive specifies the level at which debugging statements and operation statistics should be syslogged (currently logged to the <EM>syslogd</EM>(8) <TT>LOG_LOCAL4</TT> facility). You must have configured OpenLDAP <TT>--enable-debug</TT> (the default) for this to work (except for the two statistics levels, which are always enabled). Log levels may be specified as integers or by keyword. Multiple log levels may be used and the levels are additive. To display what levels correspond to what kind of debugging, invoke slapd with <TT>-?</TT> or consult the table below. The possible values for &lt;level&gt; are:</P>
+<P>This directive specifies the level at which debugging statements and operation statistics should be syslogged (currently logged to the <EM>syslogd</EM>(8) <TT>LOG_LOCAL4</TT> facility). You must have configured OpenLDAP <TT>--enable-debug</TT> (the default) for this to work (except for the two statistics levels, which are always enabled). Log levels may be specified as integers or by keyword. Multiple log levels may be used and the levels are additive. To display what levels correspond to what kind of debugging, invoke slapd with <TT>-d?</TT> or consult the table below. The possible values for &lt;level&gt; are:</P>
 <TABLE CLASS="columns" BORDER ALIGN='Center'>
 <CAPTION ALIGN=top>Table 5.1: Debugging Levels</CAPTION>
 <TR CLASS="heading">
@@ -2104,8 +2106,8 @@ olcRootDN: cn=Manager,dc=example,dc=com
 <P>If this setting is changed while slapd is running, an internal task will be run to generate the changed index data. All server operations can continue as normal while the indexer does its work.  If slapd is stopped before the index task completes, indexing will have to be manually completed using the slapindex tool.</P>
 <H4><A NAME="olcDbLinearIndex: { TRUE | FALSE }">5.2.6.8. olcDbLinearIndex: { TRUE | FALSE }</A></H4>
 <P>If this setting is <TT>TRUE</TT> slapindex will index one attribute at a time. The default settings is <TT>FALSE</TT> in which case all indexed attributes of an entry are processed at the same time. When enabled, each indexed attribute is processed individually, using multiple passes through the entire database. This option improves slapindex performance when the database size exceeds the BDB cache size. When the BDB cache is large enough, this option is not needed and will decrease performance. Also by default, slapadd performs full indexing and so a separate slapindex run is not needed. With this option, slapadd does no indexing and slapindex must be used.</P>
-<H4><A NAME="olcDbMode: &lt;integer&gt;">5.2.6.9. olcDbMode: &lt;integer&gt;</A></H4>
-<P>This directive specifies the file protection mode that newly created database index files should have.</P>
+<H4><A NAME="olcDbMode: { &lt;octal&gt; | &lt;symbolic&gt; }">5.2.6.9. olcDbMode: { &lt;octal&gt; | &lt;symbolic&gt; }</A></H4>
+<P>This directive specifies the file protection mode that newly created database index files should have. This can be in the form <TT>0600</TT> or <TT>-rw-------</TT></P>
 <P>Default:</P>
 <PRE>
         olcDbMode: 0600
@@ -2192,7 +2194,7 @@ olcDbIndex: objectClass eq
 <STRONG>Note: </STRONG>You should be careful when using this directive - there is no small limit on the number of nested include directives, and no loop detection is done.
 <HR WIDTH="80%" ALIGN="Left"></P>
 <H4><A NAME="loglevel &lt;integer&gt;">6.2.1.5. loglevel &lt;integer&gt;</A></H4>
-<P>This directive specifies the level at which debugging statements and operation statistics should be syslogged (currently logged to the <EM>syslogd</EM>(8) <TT>LOG_LOCAL4</TT> facility). You must have configured OpenLDAP <TT>--enable-debug</TT> (the default) for this to work (except for the two statistics levels, which are always enabled).  Log levels are additive. To display what numbers correspond to what kind of debugging, invoke slapd with <TT>-?</TT> or consult the table below. The possible values for &lt;integer&gt; are:</P>
+<P>This directive specifies the level at which debugging statements and operation statistics should be syslogged (currently logged to the <EM>syslogd</EM>(8) <TT>LOG_LOCAL4</TT> facility). You must have configured OpenLDAP <TT>--enable-debug</TT> (the default) for this to work (except for the two statistics levels, which are always enabled).  Log levels are additive. To display what numbers correspond to what kind of debugging, invoke slapd with <TT>-d?</TT> or consult the table below. The possible values for &lt;integer&gt; are:</P>
 <TABLE CLASS="columns" BORDER ALIGN='Center'>
 <CAPTION ALIGN=top>Table 6.1: Debugging Levels</CAPTION>
 <TR CLASS="heading">
@@ -3768,7 +3770,7 @@ needed to manage
 <PRE>
         -F &lt;slapd-config-directory&gt;
 </PRE>
-<P>Specifies the slapd configuration directory. The default is <TT>/usr/local/etc/openldap/slapd.d</TT></P>
+<P>Specifies the slapd configuration directory. The default is <TT>/usr/local/etc/openldap/slapd.d</TT>.</P>
 <P>If both <TT>-f</TT> and <TT>-F</TT> are specified, the config file will be read and converted to config directory format and written to the specified directory. If neither option is specified, slapd will attempt to read the default config directory before trying to use the default config file. If a valid config directory exists then the default config file is ignored. All of the slap tools that use the config options observe this same behavior.</P>
 <PRE>
         -h &lt;URLs&gt;
@@ -4708,7 +4710,10 @@ print entry parsing debugging
 <PRE>
         chain-return-error TRUE
 </PRE>
-<H3><A NAME="Further Information">11.3.4. Further Information</A></H3>
+<H3><A NAME="Read-Back of Chained Modifications">11.3.4. Read-Back of Chained Modifications</A></H3>
+<P>Occasionally, applications want to read back the data that they just wrote. If a modification requested to a shadow server was silently chained to its producer, an immediate read could result in receiving data not yet sync'ed. In those cases, clients should use the <B>dontusecopy</B> control to ensure they are directed to the authoritative source for that piece of data.</P>
+<P>This control usually causes a referral to the actual source of the data to be returned.  However, when the <EM>slapo-chain(5)</EM> overlay is used, it intercepts the referral being returned in response to the <B>dontusecopy</B> control, and tries to fetch the requested data.</P>
+<H3><A NAME="Further Information">11.3.5. Further Information</A></H3>
 <P><EM>slapo-chain(5)</EM></P>
 <H2><A NAME="Constraints">11.4. Constraints</A></H2>
 <H3><A NAME="Overview">11.4.1. Overview</A></H3>
@@ -5149,9 +5154,104 @@ print entry parsing debugging
 <P><EM>slapo-syncprov(5)</EM></P>
 <H2><A NAME="Translucent Proxy">11.15. Translucent Proxy</A></H2>
 <H3><A NAME="Overview">11.15.1. Overview</A></H3>
-<P>This overlay can be used with a backend database such as slapd-bdb (5) to create a &quot;translucent proxy&quot;.</P>
-<P>Content of entries retrieved from a remote LDAP server can be partially overridden by the database.</P>
+<P>This overlay can be used with a backend database such as <EM>slapd-bdb</EM>(5) to create a &quot;translucent proxy&quot;.</P>
+<P>Entries retrieved from a remote LDAP server may have some or all attributes overridden, or new attributes added, by entries in the local database before being presented to the client.</P>
+<P>A search operation is first populated with entries from the remote LDAP server, the attributes of which are then overridden with any attributes defined in the local database. Local overrides may be populated with the add, modify, and modrdn operations, the use of which is restricted to the root user of the translucent local database.</P>
+<P>A compare operation will perform a comparison with attributes defined in the local database record (if any) before any comparison is made with data in the remote database.</P>
 <H3><A NAME="Translucent Proxy Configuration">11.15.2. Translucent Proxy Configuration</A></H3>
+<P>There are various options available with this overlay, but for this example we will demonstrate adding new attributes to a remote entry and also searching against these newly added local attributes. For more information about overriding remote entries and search configuration, please see <EM>slapo-translucent(5)</EM></P>
+<P><HR WIDTH="80%" ALIGN="Left">
+<STRONG>Note: </STRONG>The Translucent Proxy overlay will disable schema checking in the local database, so that an entry consisting of overlay attributes need not adhere to the complete schema.
+<HR WIDTH="80%" ALIGN="Left"></P>
+<P>First we configure the overlay in the normal manner:</P>
+<PRE>
+       include     /usr/local/etc/openldap/schema/core.schema
+       include     /usr/local/etc/openldap/schema/cosine.schema
+       include     /usr/local/etc/openldap/schema/nis.schema
+       include     /usr/local/etc/openldap/schema/inetorgperson.schema
+
+       pidfile     ./slapd.pid
+       argsfile    ./slapd.args
+
+       modulepath  /usr/local/libexec/openldap
+       moduleload  back_bdb.la
+       moduleload  back_ldap.la
+       moduleload  translucent.la
+
+       database    bdb
+       suffix      &quot;dc=suretecsystems,dc=com&quot;
+       rootdn      &quot;cn=trans,dc=suretecsystems,dc=com&quot;
+       rootpw      secret
+       directory   ./openldap-data
+
+       index       objectClass eq
+
+       overlay     translucent
+       translucent_local carLicense
+
+       uri         ldap://192.168.X.X:389
+       lastmod     off
+       acl-bind    binddn=&quot;cn=admin,dc=suretecsystems,dc=com&quot; credentials=&quot;blahblah&quot;
+</PRE>
+<P>You will notice the overlay directive and a directive to say what attribute we want to be able to search against in the local database. We must also load the ldap backend which will connect to the remote directory server.</P>
+<P>Now we take an example LDAP group:</P>
+<PRE>
+       # itsupport, Groups, suretecsystems.com
+       dn: cn=itsupport,ou=Groups,dc=suretecsystems,dc=com
+       objectClass: posixGroup
+       objectClass: sambaGroupMapping
+       cn: itsupport
+       gidNumber: 1000
+       sambaSID: S-1-5-21-XXX
+       sambaGroupType: 2
+       displayName: itsupport
+       memberUid: ghenry
+       memberUid: joebloggs
+</PRE>
+<P>and create an LDIF file we can use to add our data to the local database, using some pretty strange choices of new attributes for demonstration purposes:</P>
+<PRE>
+       [ghenry@suretec test_configs]$ cat test-translucent-add.ldif
+       dn: cn=itsupport,ou=Groups,dc=suretecsystems,dc=com
+       businessCategory: frontend-override
+       carLicense: LIVID
+       employeeType: special
+       departmentNumber: 9999999
+       roomNumber: 41L-535
+</PRE>
+<P>Searching against the proxy gives:</P>
+<PRE>
+       [ghenry@suretec test_configs]$ ldapsearch -x -H ldap://127.0.0.1:9001 &quot;(cn=itsupport)&quot;
+       # itsupport, Groups, OxObjects, suretecsystems.com
+       dn: cn=itsupport,ou=Groups,ou=OxObjects,dc=suretecsystems,dc=com
+       objectClass: posixGroup
+       objectClass: sambaGroupMapping
+       cn: itsupport
+       gidNumber: 1003
+       SAMBASID: S-1-5-21-XXX
+       SAMBAGROUPTYPE: 2
+       displayName: itsupport
+       memberUid: ghenry
+       memberUid: joebloggs
+       roomNumber: 41L-535
+       departmentNumber: 9999999
+       employeeType: special
+       carLicense: LIVID
+       businessCategory: frontend-override
+</PRE>
+<P>Here we can see that the 5 new attributes are added to the remote entry before being returned to the our client.</P>
+<P>Because we have configured a local attribute to search against:</P>
+<PRE>
+       overlay     translucent
+       translucent_local carLicense
+</PRE>
+<P>we can also search for that to return the completely fabricated entry:</P>
+<PRE>
+       ldapsearch -x -H ldap://127.0.0.1:9001 (carLicense=LIVID)
+</PRE>
+<P>This is an extremely feature because you can then extend a remote directory server locally and also search against the local entries.</P>
+<P><HR WIDTH="80%" ALIGN="Left">
+<STRONG>Note: </STRONG>Because the translucent overlay does not perform any DN rewrites, the local and remote database instances must have the same suffix. Other configurations will probably fail with No Such Object and other errors
+<HR WIDTH="80%" ALIGN="Left"></P>
 <H3><A NAME="Further Information">11.15.3. Further Information</A></H3>
 <P><EM>slapo-translucent(5)</EM></P>
 <H2><A NAME="Attribute Uniqueness">11.16. Attribute Uniqueness</A></H2>
@@ -5162,8 +5262,67 @@ print entry parsing debugging
 <P><EM>slapo-unique(5)</EM></P>
 <H2><A NAME="Value Sorting">11.17. Value Sorting</A></H2>
 <H3><A NAME="Overview">11.17.1. Overview</A></H3>
-<P>This overlay can be used to enforce a specific order for the values of an attribute when it is returned in a search.</P>
+<P>The Value Sorting overlay can be used with a backend database to sort the values of specific multi-valued attributes within a subtree. The sorting occurs whenever the attributes are returned in a search response.</P>
 <H3><A NAME="Value Sorting Configuration">11.17.2. Value Sorting Configuration</A></H3>
+<P>Sorting can be specified in ascending or descending order, using either numeric or alphanumeric sort methods. Additionally, a &quot;weighted&quot; sort can be specified, which uses a numeric weight prepended to the attribute values.</P>
+<P>The weighted sort is always performed in ascending order, but may be combined with the other methods for values that all have equal weights. The weight is specified by prepending an integer weight {&lt;weight&gt;} in front of each value of the attribute for which weighted sorting is desired. This weighting factor is stripped off and never returned in search results.</P>
+<P>Here are a few examples:</P>
+<PRE>
+       loglevel    sync stats
+
+       database    hdb
+       suffix      &quot;dc=suretecsystems,dc=com&quot;
+       directory   /usr/local/var/openldap-data
+
+       ......
+
+       overlay valsort
+       valsort-attr memberUid ou=Groups,dc=suretecsystems,dc=com alpha-ascend
+</PRE>
+<P>For example, ascend:</P>
+<PRE>
+       # sharedemail, Groups, suretecsystems.com
+       dn: cn=sharedemail,ou=Groups,dc=suretecsystems,dc=com
+       objectClass: posixGroup
+       objectClass: top
+       cn: sharedemail
+       gidNumber: 517
+       memberUid: admin
+       memberUid: dovecot
+       memberUid: laura
+       memberUid: suretec
+</PRE>
+<P>For weighted, we change our data to:</P>
+<PRE>
+       # sharedemail, Groups, suretecsystems.com
+       dn: cn=sharedemail,ou=Groups,dc=suretecsystems,dc=com
+       objectClass: posixGroup
+       objectClass: top
+       cn: sharedemail
+       gidNumber: 517
+       memberUid: {4}admin
+       memberUid: {2}dovecot
+       memberUid: {1}laura
+       memberUid: {3}suretec
+</PRE>
+<P>and change the config to:</P>
+<PRE>
+       overlay valsort
+       valsort-attr memberUid ou=Groups,dc=suretecsystems,dc=com weighted
+</PRE>
+<P>Searching now results in:</P>
+<PRE>
+       # sharedemail, Groups, OxObjects, suretecsystems.com
+       dn: cn=sharedemail,ou=Groups,ou=OxObjects,dc=suretecsystems,dc=com
+       objectClass: posixGroup
+       objectClass: top
+       cn: sharedemail
+       gidNumber: 517
+       memberUid: laura
+       memberUid: dovecot
+       memberUid: suretec
+       memberUid: admin
+</PRE>
 <H3><A NAME="Further Information">11.17.3. Further Information</A></H3>
 <P><EM>slapo-valsort(5)</EM></P>
 <H2><A NAME="Overlay Stacking">11.18. Overlay Stacking</A></H2>
@@ -5339,7 +5498,7 @@ x-my-ObjectClass
 <HR WIDTH="80%" ALIGN="Left"></P>
 <P>Alternatively, OID name space may be available from a national authority (e.g., <A HREF="http://www.ansi.org/">ANSI</A>, <A HREF="http://www.bsi-global.com/">BSI</A>).</P>
 <H3><A NAME="Naming Elements">12.2.2. Naming Elements</A></H3>
-<P>In addition to assigning a unique object identifier to each schema element, you should provide a least one textual name for each element.  Names should be registered with the <A HREF="http://www.iana.org/">IANA</A> or prefixed with &quot;x-&quot; to place in the &quot;private use&quot; name space.</P>
+<P>In addition to assigning a unique object identifier to each schema element, you should provide at least one textual name for each element.  Names should be registered with the <A HREF="http://www.iana.org/">IANA</A> or prefixed with &quot;x-&quot; to place in the &quot;private use&quot; name space.</P>
 <P>The name should be both descriptive and not likely to clash with names of other schema elements.  In particular, any name you choose should not clash with present or future Standard Track names (this is assured if you registered names or use names beginning with &quot;x-&quot;).</P>
 <P>It is noted that you can obtain your own registered name prefix so as to avoid having to register your names individually. See <A HREF="http://www.rfc-editor.org/rfc/rfc4520.txt">RFC4520</A> for details.</P>
 <P>In the examples below, we have used a short prefix '<TT>x-my-</TT>'. Such a short prefix would only be suitable for a very large, global organization.  In general, we recommend something like '<TT>x-de-Firm-</TT>' (German company) or '<TT>x-com-Example</TT>' (elements associated with organization associated with <TT>example.com</TT>).</P>
@@ -5397,7 +5556,7 @@ x-my-ObjectClass
                 SUP name )
 </PRE>
 <P>Notice that each defines the attribute's OID, provides a short name, and a brief description.  Each name is an alias for the OID. <EM>slapd</EM>(8) returns the first listed name when returning results.</P>
-<P>The first attribute, <TT>name</TT>, holds values of <TT>directoryString</TT> (<TERM>UTF-8</TERM> encoded Unicode) syntax.  The syntax is specified by OID (1.3.6.1.4.1.1466.115.121.1.15 identifies the directoryString syntax).  A length recommendation of 32768 is specified.  Servers should support values of this length, but may support longer values The field does NOT specify a size constraint, so is ignored on servers (such as slapd) which don't impose such size limits.  In addition, the equality and substring matching uses case ignore rules.  Below are tables listing commonly used syntax and matching rules (<EM>slapd</EM>(8) supports these and many more).</P>
+<P>The first attribute, <TT>name</TT>, holds values of <TT>directoryString</TT> (<TERM>UTF-8</TERM> encoded Unicode) syntax.  The syntax is specified by OID (1.3.6.1.4.1.1466.115.121.1.15 identifies the directoryString syntax).  A length recommendation of 32768 is specified.  Servers should support values of this length, but may support longer values. The field does NOT specify a size constraint, so is ignored on servers (such as slapd) which don't impose such size limits.  In addition, the equality and substring matching uses case ignore rules.  Below are tables listing commonly used syntax and matching rules (<EM>slapd</EM>(8) supports these and many more).</P>
 <TABLE CLASS="columns" BORDER ALIGN='Center'>
 <CAPTION ALIGN=top>Table 8.3: Commonly Used Syntaxes</CAPTION>
 <TR CLASS="heading">
@@ -5662,7 +5821,7 @@ octet string
 </TR>
 <TR>
 <TD>
-<TT>octetStringOrderingStringMatch</TT>
+<TT>octetStringOrderingMatch</TT>
 </TD>
 <TD>
 ordering
@@ -5673,13 +5832,13 @@ octet string
 </TR>
 <TR>
 <TD>
-<TT>octetStringSubstringsStringMatch</TT>
+<TT>octetStringSubstringsMatch      ordering</TT>
 </TD>
 <TD>
-ordering
+octet st
 </TD>
 <TD>
-octet string
+ring
 </TD>
 </TR>
 <TR>
@@ -6066,7 +6225,7 @@ object identifier
         uid=&lt;username&gt;,cn=digest-md5,cn=auth
 </PRE>
 <P>See <A HREF="#Mapping Authentication Identities">Mapping Authentication Identities</A> below for information on optional mapping of identities.</P>
-<P>With suitable mappings in place, users can specify SASL IDs when performing LDAP operations and sldb}} and the directory itself will be used to verify the authentication.  For example, the user identified by the directory entry:</P>
+<P>With suitable mappings in place, users can specify SASL IDs when performing LDAP operations, and the password stored in <EM>sasldb</EM> or in the directory itself will be used to verify the authentication. For example, the user identified by the directory entry:</P>
 <PRE>
        dn: cn=Andrew Findlay+uid=u000997,dc=example,dc=com
        objectclass: inetOrgPerson
@@ -6608,8 +6767,8 @@ object identifier
 <H3><A NAME="Delta-syncrepl replication">17.2.2. Delta-syncrepl replication</A></H3>
 <UL>
 <LI>Disadvantages of Syncrepl replication:</UL>
-<P>OpenLDAP's syncrepl replication is an object-based replication mechanism. When any attribute value in a replicated object is changed on the provider, each consumer fetches and processes the complete changed object {B:both changed and unchanged attribute values} during replication. This works well, but has drawbacks in some situations.</P>
-<P>For example, suppose you have a database consisting of 100,000 objects of 1 KB each. Further, suppose you routinely run a batch job to change the value of a single two-byte attribute value that appears in each of the 100,000 objects on the master. Not counting LDAP and TCP/IP protocol overhead, each time you run this job each consumer will transfer and process {B:1 GB} of data to process {B:200KB of changes! }</P>
+<P>OpenLDAP's syncrepl replication is an object-based replication mechanism. When any attribute value in a replicated object is changed on the provider, each consumer fetches and processes the complete changed object <B>both changed and unchanged attribute values</B> during replication. This works well, but has drawbacks in some situations.</P>
+<P>For example, suppose you have a database consisting of 100,000 objects of 1 KB each. Further, suppose you routinely run a batch job to change the value of a single two-byte attribute value that appears in each of the 100,000 objects on the master. Not counting LDAP and TCP/IP protocol overhead, each time you run this job each consumer will transfer and process <B>1 GB</B> of data to process <B>200KB of changes!</B></P>
 <P>99.98% of the data that is transmitted and processed in a case like this will be redundant, since it represents values that did not change. This is a waste of valuable transmission and processing bandwidth and can cause an unacceptable replication backlog to develop. While this situation is extreme, it serves to demonstrate a very real problem that is encountered in some LDAP deployments.</P>
 <UL>
 <LI>Where Delta-syncrepl comes in:</UL>
@@ -6633,7 +6792,7 @@ object identifier
 <LI>Masters <B>must</B> propagate writes to <B>all</B> the other servers, which means the network traffic and write load is constant and spreads across all of the servers</UL></UL>
 <P>For configuration, please see the <A HREF="#N-Way Multi-Master">N-Way Multi-Master</A> section below</P>
 <H3><A NAME="MirrorMode replication">17.3.2. MirrorMode replication</A></H3>
-<P>MirrorMode is a hybrid configuration that provides all of the consistency guarantees of single-master replication, while also providing the high availability of multi-master. In MirrorMode two masters are set up to replicate from each other (as a multi-master configuration) but an external frontend is employed to direct all writes to only one of the two servers. The second master will only be used for writes if the first master crashes, at which point the frontend will switch to directing all writes to the second master. When a crashed master is repaired and restarted it will automatically catch up to any changes on the running master and resync.</P>
+<P>MirrorMode is a hybrid configuration that provides all of the consistency guarantees of single-master replication, while also providing the high availability of multi-master. In MirrorMode two masters are set up to replicate from each other (as a multi-master configuration), but an external frontend is employed to direct all writes to only one of the two servers. The second master will only be used for writes if the first master crashes, at which point the frontend will switch to directing all writes to the second master. When a crashed master is repaired and restarted it will automatically catch up to any changes on the running master and resync.</P>
 <H4><A NAME="Arguments for MirrorMode">17.3.2.1. Arguments for MirrorMode</A></H4>
 <UL>
 <LI>Provides a high-availability (HA) solution for directory writes (replicas handle reads)
@@ -6715,9 +6874,10 @@ object identifier
 <H4><A NAME="Delta-syncrepl Master configuration">17.4.2.1. Delta-syncrepl Master configuration</A></H4>
 <P>Setting up delta-syncrepl requires configuration changes on both the master and replica servers:</P>
 <PRE>
-     # Give the replica DN unlimited read access.  This ACL may need to be
-     # merged with other ACL statements.
-
+     # Give the replica DN unlimited read access.  This ACL needs to be
+     # merged with other ACL statements, and/or moved within the scope
+     # of a database.  The &quot;by * break&quot; portion causes evaluation of
+     # subsequent rules.  See slapd.access(5) for details.
      access to *
         by dn.base=&quot;cn=replicator,dc=symas,dc=com&quot; read
         by * break
@@ -6913,7 +7073,7 @@ object identifier
 <STRONG>Note: </STRONG>You need to make sure that the <EM>serverID</EM> of each mirror node pair is different and add it as a global configuration option.
 <HR WIDTH="80%" ALIGN="Left"></P>
 <H4><A NAME="Mirror Node Configuration">17.4.4.1. Mirror Node Configuration</A></H4>
-<P>This is the same as the <A HREF="#Set up the provider slapd">Set up the provider slapd</A> section.</P>
+<P>The first step is to configure the syncrepl provider the same as in the <A HREF="#Set up the provider slapd">Set up the provider slapd</A> section.</P>
 <P><HR WIDTH="80%" ALIGN="Left">
 <STRONG>Note: </STRONG>Delta-syncrepl is not yet supported with MirrorMode.
 <HR WIDTH="80%" ALIGN="Left"></P>
@@ -6924,19 +7084,9 @@ object identifier
        serverID    1
        # database section
 
-       # syncrepl directives
+       # syncrepl directive
        syncrepl      rid=001
-                     provider=ldap://ldap-ridr1.example.com
-                     bindmethod=simple
-                     binddn=&quot;cn=mirrormode,dc=example,dc=com&quot;
-                     credentials=mirrormode
-                     searchbase=&quot;dc=example,dc=com&quot;
-                     schemachecking=on
-                     type=refreshAndPersist
-                     retry=&quot;60 +&quot;
-
-       syncrepl      rid=002
-                     provider=ldap://ldap-rid2.example.com
+                     provider=ldap://ldap-sid2.example.com
                      bindmethod=simple
                      binddn=&quot;cn=mirrormode,dc=example,dc=com&quot;
                      credentials=mirrormode
@@ -6953,19 +7103,9 @@ object identifier
        serverID    2
        # database section
 
-       # syncrepl directives
+       # syncrepl directive
        syncrepl      rid=001
-                     provider=ldap://ldap-ridr1.example.com
-                     bindmethod=simple
-                     binddn=&quot;cn=mirrormode,dc=example,dc=com&quot;
-                     credentials=mirrormode
-                     searchbase=&quot;dc=example,dc=com&quot;
-                     schemachecking=on
-                     type=refreshAndPersist
-                     retry=&quot;60 +&quot;
-
-       syncrepl      rid=002
-                     provider=ldap://ldap-rid2.example.com
+                     provider=ldap://ldap-sid1.example.com
                      bindmethod=simple
                      binddn=&quot;cn=mirrormode,dc=example,dc=com&quot;
                      credentials=mirrormode
@@ -6976,7 +7116,7 @@ object identifier
 
        mirrormode on
 </PRE>
-<P>It's simple really; each MirrorMode node is setup <B>exactly</B> the same, except that the <EM>serverID</EM> is unique.</P>
+<P>It's simple really; each MirrorMode node is setup <B>exactly</B> the same, except that the <EM>serverID</EM> is unique, and each consumer is pointed to the other server.</P>
 <H5><A NAME="Failover Configuration">17.4.4.1.1. Failover Configuration</A></H5>
 <P>There are generally 2 choices for this; 1.  Hardware proxies/load-balancing or dedicated proxy software, 2. using a Back-LDAP proxy as a syncrepl provider</P>
 <P>A typical enterprise example might be:</P>
@@ -7029,7 +7169,7 @@ object identifier
 <LI>to keep data files and log files on different mediums (i.e. disks) to improve performance and/or reliability;
 <LI>to fine-tune some specific options (such as shared memory region sizes);
 <LI>to set the log file limit (please read Log file limits before doing this).</UL>
-<P>To figure out the best-practice BDB backup scenario, the reader is highly recommended to read the whole Chapter 9: Berkeley DB Transactional Data Store Applications. This chapter is a set of small pages with examples in C language. Non-programming people can skip this examples without loss of knowledge.</P>
+<P>To figure out the best-practice BDB backup scenario, the reader is highly recommended to read the whole Chapter 9: Berkeley DB Transactional Data Store Applications. This chapter is a set of small pages with examples in C language. Non-programming people can skip these examples without loss of knowledge.</P>
 <H2><A NAME="Checkpointing">18.3. Checkpointing</A></H2>
 <P>MORE/TIDY</P>
 <P>If you put &quot;checkpoint 1024 5&quot; in slapd.conf (to checkpoint after 1024kb or 5 minutes, for example), this does not checkpoint every 5 minutes as you may think. The explanation from Howard is:</P>
@@ -8186,17 +8326,6 @@ Database Software
 <TT>&nbsp;</TT>
 </TD>
 <TD>
-<TT>4.2</TT>
-</TD>
-</TR>
-<TR>
-<TD>
-&nbsp;
-</TD>
-<TD>
-<TT>&nbsp;</TT>
-</TD>
-<TD>
 <TT>4.4</TT>
 </TD>
 </TR>
@@ -8230,7 +8359,18 @@ Database Software
 <TT>&nbsp;</TT>
 </TD>
 <TD>
-<TT>Note: It is highly recommended to apply the patches from for a given release.</TT>
+<TT>4.7</TT>
+</TD>
+</TR>
+<TR>
+<TD>
+&nbsp;
+</TD>
+<TD>
+<TT>&nbsp;</TT>
+</TD>
+<TD>
+<TT>Note: It is highly recommended to apply the patches from Oracle for a given release.</TT>
 </TD>
 </TR>
 <TR>
@@ -8341,8 +8481,8 @@ TCP Wrappers
 <P></P>
 <HR>
 <H1><A NAME="LDAP Result Codes">H. LDAP Result Codes</A></H1>
-<P>For the purposes of this guide, we have incorporated the standard LDAP result codes from <EM>Appendix A.  LDAP Result Codes</EM> of rfc4511. A copy of which can be found in <TT>doc/rfc</TT> of the OpenLDAP source code.</P>
-<P>We have expanded the description of each error in relation to the OpenLDAP toolsets.</P>
+<P>For the purposes of this guide, we have incorporated the standard LDAP result codes from <EM>Appendix A.  LDAP Result Codes</EM> of rfc4511, a copy of which can be found in <TT>doc/rfc</TT> of the OpenLDAP source code.</P>
+<P>We have expanded the description of each error in relation to the OpenLDAP toolsets. LDAP extensions may introduce extension-specific result codes, which are not part of rfc4511. OpenLDAP returns the result codes related to extensions it implements. Their meaning is documented in the extension they are related to.</P>
 <H2><A NAME="Non-Error Result Codes">H.1. Non-Error Result Codes</A></H2>
 <P>These result codes (called &quot;non-error&quot; result codes) do not indicate an error condition:</P>
 <PRE>

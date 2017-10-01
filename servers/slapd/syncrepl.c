@@ -1,5 +1,5 @@
 /* syncrepl.c -- Replication Engine which uses the LDAP Sync protocol */
-/* $OpenLDAP: pkg/ldap/servers/slapd/syncrepl.c,v 1.254.2.37 2008/07/10 00:52:39 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/syncrepl.c,v 1.254.2.40 2008/10/06 17:49:55 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2003-2008 The OpenLDAP Foundation.

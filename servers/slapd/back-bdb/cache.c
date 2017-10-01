@@ -1,5 +1,5 @@
 /* cache.c - routines to maintain an in-core cache of entries */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/cache.c,v 1.120.2.15 2008/05/01 21:39:35 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/cache.c,v 1.120.2.17 2008/09/30 20:09:20 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2008 The OpenLDAP Foundation.

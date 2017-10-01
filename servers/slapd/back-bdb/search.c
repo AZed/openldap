@@ -1,5 +1,5 @@
 /* search.c - search operation */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/search.c,v 1.246.2.14 2008/05/01 21:39:35 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/search.c,v 1.246.2.19 2008/10/08 19:48:27 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2008 The OpenLDAP Foundation.

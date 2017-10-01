@@ -1,5 +1,5 @@
 /* frontend.c - routines for dealing with frontend */
-/* $OpenLDAP: pkg/ldap/servers/slapd/frontend.c,v 1.19.2.6 2008/04/24 08:13:39 hyc Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/frontend.c,v 1.19.2.7 2008/09/26 22:26:16 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2008 The OpenLDAP Foundation.

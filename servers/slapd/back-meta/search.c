@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/search.c,v 1.146.2.12 2008/07/10 00:28:39 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/search.c,v 1.146.2.13 2008/09/04 20:11:37 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2008 The OpenLDAP Foundation.

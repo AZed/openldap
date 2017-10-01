@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/tests/progs/slapd-addel.c,v 1.41.2.6 2008/04/14 21:43:13 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/tests/progs/slapd-addel.c,v 1.41.2.7 2008/09/02 23:13:17 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2008 The OpenLDAP Foundation.

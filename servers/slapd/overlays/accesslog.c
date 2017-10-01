@@ -1,5 +1,5 @@
 /* accesslog.c - log operations for audit/history purposes */
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/accesslog.c,v 1.37.2.17 2008/05/01 20:37:48 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/accesslog.c,v 1.37.2.18 2008/09/10 02:21:29 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2005-2008 The OpenLDAP Foundation.

@@ -1,5 +1,5 @@
 /* config.c - bdb backend configuration file routine */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/config.c,v 1.91.2.11 2008/04/14 21:28:42 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/config.c,v 1.91.2.14 2008/09/29 21:25:20 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2008 The OpenLDAP Foundation.

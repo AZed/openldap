@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/daemon.c,v 1.380.2.12 2008/05/27 20:12:44 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/daemon.c,v 1.380.2.15 2008/09/26 19:42:21 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2008 The OpenLDAP Foundation.

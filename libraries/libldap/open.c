@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/open.c,v 1.110.2.7 2008/02/11 23:56:32 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/open.c,v 1.110.2.8 2008/09/03 21:11:06 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2008 The OpenLDAP Foundation.

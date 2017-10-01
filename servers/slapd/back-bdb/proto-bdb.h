@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/proto-bdb.h,v 1.137.2.9 2008/02/12 00:34:58 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/proto-bdb.h,v 1.137.2.11 2008/09/26 22:37:12 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2008 The OpenLDAP Foundation.

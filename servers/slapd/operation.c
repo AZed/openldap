@@ -1,5 +1,5 @@
 /* operation.c - routines to deal with pending ldap operations */
-/* $OpenLDAP: pkg/ldap/servers/slapd/operation.c,v 1.75.2.8 2008/02/12 20:48:44 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/operation.c,v 1.75.2.9 2008/09/29 20:33:18 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2008 The OpenLDAP Foundation.

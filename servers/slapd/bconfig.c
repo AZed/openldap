@@ -1,5 +1,5 @@
 /* bconfig.c - the config backend */
-/* $OpenLDAP: pkg/ldap/servers/slapd/bconfig.c,v 1.202.2.37 2008/07/09 23:52:27 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/bconfig.c,v 1.202.2.41 2008/09/29 20:58:51 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2005-2008 The OpenLDAP Foundation.

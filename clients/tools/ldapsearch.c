@@ -1,5 +1,5 @@
 /* ldapsearch -- a tool for searching LDAP directories */
-/* $OpenLDAP: pkg/ldap/clients/tools/ldapsearch.c,v 1.234.2.9 2008/02/12 19:59:52 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/clients/tools/ldapsearch.c,v 1.234.2.11 2008/09/29 21:30:49 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2008 The OpenLDAP Foundation.

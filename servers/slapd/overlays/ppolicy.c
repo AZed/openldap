@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/ppolicy.c,v 1.75.2.14 2008/07/10 00:55:07 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/ppolicy.c,v 1.75.2.15 2008/09/29 19:59:47 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2004-2008 The OpenLDAP Foundation.

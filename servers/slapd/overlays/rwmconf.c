@@ -1,5 +1,5 @@
 /* rwmconf.c - rewrite/map configuration file routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/rwmconf.c,v 1.25.2.3 2008/02/11 23:26:48 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/rwmconf.c,v 1.25.2.4 2008/09/03 00:11:49 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2008 The OpenLDAP Foundation.

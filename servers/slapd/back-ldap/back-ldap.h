@@ -1,5 +1,5 @@
 /* back-ldap.h - ldap backend header file */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/back-ldap.h,v 1.88.2.10 2008/07/10 00:28:39 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/back-ldap.h,v 1.88.2.11 2008/09/02 22:53:41 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2008 The OpenLDAP Foundation.
