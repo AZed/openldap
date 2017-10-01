@@ -1,14 +1,17 @@
-MozNSS: better file name matching for hashed CA  certificate directory
+fix: not all certificates in OpenSSL compatible CA certificate directory format are loaded
 
-CA certificate files in OpenSSL compatible CACERTDIR were loaded if the file extension was '.0'. However the file name
-should be 8 letters long certificate hash of the certificate subject name, followed by a numeric suffix which is used
-to differentiate between two certificates with the same subject name.
+CA certificate files in OpenSSL compatible CACERTDIR were loaded if the
+file extension was '.0'. However the file name should be 8 letters long
+certificate hash of the certificate subject name, followed by a numeric
+suffix which is used to differentiate between two certificates with the
+same subject name.
 
-Wit this patch, certificate file names are matched correctly (using regular expressions).
+Wit this patch, certificate file names are matched correctly (using
+regular expressions).
 
 Author: Jan Vcelak <jvcelak@redhat.com>
 Upstream ITS: #7374
-Resolves: #852786
+Resolves: #811468
 
 diff --git a/libraries/libldap/tls_m.c b/libraries/libldap/tls_m.c
 index 5e49fc5..61d71d4 100644

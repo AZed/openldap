@@ -1,4 +1,4 @@
-MozNSS: ignore certdb database type prefix when checking existence of the directory
+fix: MozNSS certificate database in SQL format cannot be used
 
 If the certdb is specified including the database type prefix (e.g.
 sql:, dbm:), the prefix has to be ignored when checking the
@@ -6,11 +6,7 @@ certificate directory existence.
 
 Author: Jan Vcelak <jvcelak@redhat.com>
 Upstream ITS: #7388
-Resolves: #857373
-
----
- libraries/libldap/tls_m.c | 11 ++++++++++-
- 1 file changed, 10 insertions(+), 1 deletion(-)
+Resolves: #857390
 
 diff --git a/libraries/libldap/tls_m.c b/libraries/libldap/tls_m.c
 index 49a3f8f..5ee21a2 100644
@@ -43,5 +39,5 @@ index 49a3f8f..5ee21a2 100644
  		return;
  	}
 -- 
-1.7.11.7
+1.7.11.4
 
