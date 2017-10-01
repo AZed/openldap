@@ -1,0 +1,95 @@
+Pulled from HEAD, this lets the client wait for a specified period of time
+for an okay from the server instead of waiting indefinitely.
+
+Index: include/ldap.h
+===================================================================
+RCS file: /repo/OpenLDAP/pkg/ldap/include/ldap.h,v
+retrieving revision 1.270
+retrieving revision 1.271
+diff -u -r1.270 -r1.271
+--- include/ldap.h	25 Jan 2005 15:11:26 -0000	1.270
++++ include/ldap.h	1 Feb 2005 22:53:17 -0000	1.271
+@@ -1304,6 +1304,21 @@
+ 	LDAP **ldp,
+ 	LDAP_CONST char *url ));
+ 
++/*
++ * in tls.c
++ */
++
++LDAP_F( int )
++ldap_start_tls LDAP_P((
++	LDAP *ld,
++	LDAPControl **serverctrls,
++	LDAPControl **clientctrls,
++	int *msgidp ));
++
++LDAP_F( int )
++ldap_install_tls LDAP_P((
++	LDAP *ld ));
++
+ LDAP_F( int )
+ ldap_start_tls_s LDAP_P((
+ 	LDAP *ld,
+Ident string hunk removed to allow the patch to apply.
+
+Index: libraries/libldap/tls.c
+===================================================================
+RCS file: /repo/OpenLDAP/pkg/ldap/libraries/libldap/tls.c,v
+retrieving revision 1.119
+retrieving revision 1.120
+diff -u -r1.119 -r1.120
+--- libraries/libldap/tls.c	1 Jan 2005 19:49:45 -0000	1.119
++++ libraries/libldap/tls.c	1 Feb 2005 22:53:17 -0000	1.120
+@@ -1652,13 +1652,38 @@
+ }
+ 
+ int
++ldap_start_tls( LDAP *ld,
++	LDAPControl **serverctrls,
++	LDAPControl **clientctrls,
++	int *msgidp )
++{
++	return ldap_extended_operation( ld, LDAP_EXOP_START_TLS,
++		NULL, serverctrls, clientctrls, msgidp );
++}
++
++int
++ldap_install_tls( LDAP *ld )
++{
++#ifndef HAVE_TLS
++	return LDAP_NOT_SUPPORTED;
++#else
++	if ( ld->ld_sb != NULL && ldap_pvt_tls_inplace( ld->ld_sb ) != 0 ) {
++		return LDAP_LOCAL_ERROR;
++	}
++
++	return ldap_int_tls_start( ld, ld->ld_defconn, NULL );
++#endif
++}
++
++int
+ ldap_start_tls_s ( LDAP *ld,
+ 	LDAPControl **serverctrls,
+ 	LDAPControl **clientctrls )
+ {
++#ifndef HAVE_TLS
++	return LDAP_NOT_SUPPORTED;
++#else
+ 	int rc;
+-
+-#ifdef HAVE_TLS
+ 	char *rspoid = NULL;
+ 	struct berval *rspdata = NULL;
+ 
+@@ -1683,9 +1708,7 @@
+ 		rc = ldap_int_tls_start( ld, ld->ld_defconn, NULL );
+ 	}
+ 
+-#else
+-	rc = LDAP_NOT_SUPPORTED;
+-#endif
+ 	return rc;
++#endif
+ }
+ 

@@ -1,0 +1,30 @@
+If we're building a library which will be installed into one of the default
+search directories, don't add that directory to the linker search list, in case
+we're linking with a dependent library which we're also installing to the same
+location using a non-empty $DESTDIR.
+
+--- openldap/build/ltmain.sh	2004-09-08 14:35:12.000000000 -0400
++++ openldap/build/ltmain.sh	2004-09-08 14:35:04.000000000 -0400
+@@ -1908,8 +1908,20 @@
+ 	      add="-l$name"
+ 	    else
+ 	      # We cannot seem to hardcode it, guess we'll fake it.
+-	      add_dir="-L$libdir"
+-	      test -d "$ladir/.libs" && add_dir="-L$ladir/.libs $add_dir"
++	      add_dir=
++	      if test -n "$sys_lib_search_path_spec" ; then
++	        for searchdir in $sys_lib_search_path_spec ; do
++		  if test "$searchdir" = "$libdir" ; then
++		    break
++		  fi
++		  if test -z "$searchdir" ; then
++	            add_dir="-L$libdir"
++		  fi
++		done
++	      else
++	        add_dir="-L$libdir"
++	      fi
++	      test -d "$ladir/.libs" && add_dir="-L$ladir/.libs $add_dir"
+ 	      add="-l$name"
+ 	    fi
+ 

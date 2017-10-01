@@ -1,5 +1,5 @@
 These files are here specifically for use in building the evolution-connector
-package.
+package, and should not be used for any other purpose.
 
 In order to authenticate to older servers, an LDAP client must perform an
 ntlm_bind operation instead of a simple or SASL bind.  The ntlm_bind is not the
