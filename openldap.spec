@@ -15,7 +15,7 @@
 Summary: The configuration files, libraries, and documentation for OpenLDAP.
 Name: openldap
 Version: %{version_22}
-Release: 12%{?dist}.3
+Release: 12%{?dist}.4
 License: OpenLDAP
 Group: System Environment/Daemons
 Source0: ftp://ftp.OpenLDAP.org/pub/OpenLDAP/openldap-release/openldap-%{version_22}.tgz
@@ -86,6 +86,7 @@ Patch69: openldap-2.2.13-clear-assert.patch
 Patch70: openldap-2.2.13-modrdn-segfault.patch
 Patch71: openldap-2.1.30-tls-null-char.patch
 Patch72: openldap-2.2.13-tls-null-char.patch
+Patch73: openldap-2.2.13-assert.patch
 
 URL: http://www.openldap.org/
 BuildRoot: %{_tmppath}/%{name}-%{version_22}-root
@@ -215,6 +216,7 @@ pushd openldap-%{version_22}
 %patch69 -p1 -b .clear-assert
 %patch70 -p1 -b .modrdn-segfault
 %patch72 -p1 -b .tls-null-char
+%patch73 -p1 -b .assert
 
 cp %{_datadir}/libtool/config.{sub,guess} build/
 popd
@@ -812,6 +814,9 @@ fi
 %attr(0644,root,root)      %{evolution_connector_libdir}/*.a
 
 %changelog
+* Fri Nov 26 2010 Jan Vcelak <jvcelak@redhat.com> 2.2.13-12.4
+- slapd dies due to assert failure in entry.c from cache.c (#657533)
+
 * Tue Jun 22 2010 Jan Zeleny <jzeleny@redhat.com> - 2.2.13-12.3
 - fixed modrdn segfault issues (#606399)
 - fixed handling of null character when using TLS (#606399, patches for both

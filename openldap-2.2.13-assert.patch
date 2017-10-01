@@ -1,0 +1,20 @@
+slapd dies due to assert failure in entry.c from cache.c
+
+Resolves: #652238
+Upstream: partial diff 1.68 -> 1.69 (Ctxcsn assert failure)
+
+diff -uNPrp openldap-2.2.13/servers/slapd/back-bdb/cache.c openldap-2.2.13.new/servers/slapd/back-bdb/cache.c
+--- openldap-2.2.13/servers/slapd/back-bdb/cache.c	2010-11-23 19:42:44.000000000 +0100
++++ openldap-2.2.13.new/servers/slapd/back-bdb/cache.c	2010-11-23 19:46:29.000000000 +0100
+@@ -775,7 +778,10 @@ bdb_cache_add(
+ 
+ 	rc = bdb_entryinfo_add_internal( bdb, &ei, &new );
+ 	/* bdb_csn_commit can cause this when adding the database root entry */
+-	if ( new->bei_e ) bdb_entry_return( new->bei_e );
++	if ( new->bei_e ) {
++		new->bei_e->e_private = NULL;
++		bdb_entry_return( new->bei_e );
++	}
+ 	new->bei_e = e;
+ 	e->e_private = new;
+ 	new->bei_state = CACHE_ENTRY_NO_KIDS | CACHE_ENTRY_NO_GRANDKIDS;
