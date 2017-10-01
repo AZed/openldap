@@ -15,7 +15,7 @@
 Summary: The configuration files, libraries, and documentation for OpenLDAP.
 Name: openldap
 Version: %{version_22}
-Release: 12%{?dist}
+Release: 12%{?dist}.2
 License: OpenLDAP
 Group: System Environment/Daemons
 Source0: ftp://ftp.OpenLDAP.org/pub/OpenLDAP/openldap-release/openldap-%{version_22}.tgz
@@ -81,6 +81,8 @@ Patch64: openldap-2.2.13-sasl-referral.patch
 Patch65: openldap-2.2.13-modify-noop.patch
 Patch66: openldap-2.2.13-ldapmodify-noop.patch
 Patch67: openldap-2.3.27-ber-decode.patch
+Patch68: openldap-2.2.13-chase-referral.patch
+Patch69: openldap-2.2.13-clear-assert.patch
 
 URL: http://www.openldap.org/
 BuildRoot: %{_tmppath}/%{name}-%{version_22}-root
@@ -206,6 +208,8 @@ pushd openldap-%{version_22}
 %patch65 -p1 -b .modify-noop
 %patch66 -p0 -b .ldapmodify-noop
 %patch67 -p1 -b .ber-decode
+%patch68 -p1 -b .chase-referral
+%patch69 -p1 -b .clear-assert
 
 cp %{_datadir}/libtool/config.{sub,guess} build/
 popd
@@ -802,6 +806,12 @@ fi
 %attr(0644,root,root)      %{evolution_connector_libdir}/*.a
 
 %changelog
+* Wed Jul 8 2009 Jan Zeleny <jzeleny@redhat.com> 2.2.13-12.2
+- fix unnecessary assertion in slapd_clr_write (#510233)
+
+* Fri Jul 3 2009 Jan Zeleny <jzeleny@redhat.com> 2.2.13-12.1
+- fix crash when ldapmodify follows referrals (#474788)
+
 * Wed Jul  2 2008 Jan Safranek <jsafranek@redhat.com> 2.2.13-12
 - fix CVE-2008-2952 (#453638)
 
