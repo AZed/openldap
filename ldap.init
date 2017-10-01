@@ -43,6 +43,7 @@ slapd=/usr/sbin/slapd
 slaptest=/usr/sbin/slaptest
 lockfile=/var/lock/subsys/slapd
 configdir=/etc/openldap/slapd.d/
+configfile=/etc/openldap/slapd.conf
 pidfile=/var/run/slapd.pid
 slapd_pidfile=/var/run/openldap/slapd.pid
 
@@ -104,7 +105,6 @@ function checkkeytab() {
 
 function configtest() {
 	local user= ldapuid= dbdir= file=
-	[ -d $configdir ] || exit 6
 	# Check for simple-but-common errors.
 	user=ldap
 	prog=`basename ${slapd}`
@@ -112,11 +112,20 @@ function configtest() {
 	# Unaccessible database files.
 	slaptestflags=""
 	dbdirs=""
-	for configfile in `ls -1 $configdir/cn\=config/olcDatabase*`; do
-		dbdirs=$dbdirs"
-		"`LANG=C egrep '^olcDbDirectory[[:space:]]*:[[:space:]]+[[:print:]]+$' $configfile | sed 's,^olcDbDirectory: ,,'`
-	done
+    if [ -d $configdir ]; then
+	    for configfile in `ls -1 $configdir/cn\=config/olcDatabase*.ldif`; do
+		    dbdirs=$dbdirs"
+		    "`LANG=C egrep '^olcDbDirectory[[:space:]]*:[[:space:]]+[[:print:]]+$' $configfile | sed 's,^olcDbDirectory: ,,'`
+	    done
+    elif [ -f $configfile ]; then
+		    dbdirs=`LANG=C egrep '^directory[[:space:]]+' $configfile | sed 's,^directory[[:space:]]*,,'`
+    else
+        exit 6
+    fi
 	for dbdir in $dbdirs; do
+		if [ ! -d $dbdir ]; then
+			exit 6
+		fi
 		for file in `find ${dbdir}/ -not -uid $ldapuid -and \( -name "*.dbb" -or -name "*.gdbm" -or -name "*.bdb" -or -name "__db.*" -or -name "log.*" -or -name alock \)` ; do
 			echo -n $"$file is not owned by \"$user\"" ; warning ; echo
 		done
@@ -134,7 +143,19 @@ function configtest() {
 		echo -n $"$file is not readable by \"$user\"" ; warning ; echo
 	fi
 	# Unaccessible TLS configuration files.
-	tlsconfigs=`LANG=C egrep '^olc(TLSCACertificateFile|TLSCertificateFile|TLSCertificateKeyFile)[[:space:]]*:[[:space:]]' $configdir/cn\=config.ldif | awk '{print $2}'`
+    if [ -d $configdir ]; then
+		tlsconfigs=`LANG=C awk '/^olcTLS/ {
+				while (/^olcTLS/) {
+					if (/^olc(TLSCertificateKeyFile|TLSCertificateFile|TLSCACertificateFile)[ \t]*:[\t]*/) {
+						do { printf gensub(/^ /,"",1); getline } while (/^ /)
+						printf "\n" ;
+					}
+					else break; 
+				}
+			}' $configdir/cn\=config.ldif | awk '{print $2}'`
+    elif [ -f $configfile ]; then
+	    tlsconfigs=`LANG=C egrep '^(TLSCACertificateFile|TLSCertificateFile|TLSCertificateKeyFile)[[:space:]]+' $configfile | awk '{print $2}'`
+    fi
 	for file in $tlsconfigs ; do
 		if ! testasuser $user -r $file ; then
 			echo -n $"$file is not readable by \"$user\"" ; warning ; echo
@@ -235,7 +256,7 @@ case "$1" in
 	RETVAL=$?
 	;;
     condrestart|try-restart)
-	status -p $pidfile ${slapd} || exit 0
+	status -p $pidfile ${slapd} > /dev/null 2>&1 || exit 0
 	stop
 	start
 	;;

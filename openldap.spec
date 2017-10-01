@@ -1,9 +1,9 @@
 # We distribute own version of Berkeley DB to prevent 
 # problems on db4.rpm upgrade - some versions of db4 do
 # not work with some versions of OpenLDAP.
-%define db_version 4.7.25
+%define db_version 4.8.24
 %define ldbm_backend berkeley
-%define version 2.4.18
+%define version 2.4.19
 %define evolution_connector_prefix %{_libdir}/evolution-openldap
 %define evolution_connector_includedir %{evolution_connector_prefix}/include
 %define evolution_connector_libdir %{evolution_connector_prefix}/%{_lib}
@@ -11,7 +11,7 @@
 Summary: LDAP support libraries
 Name: openldap
 Version: %{version}
-Release: 5%{?dist}
+Release: 6%{?dist}
 License: OpenLDAP
 Group: System Environment/Daemons
 Source0: ftp://ftp.OpenLDAP.org/pub/OpenLDAP/openldap-release/openldap-%{version}.tgz
@@ -35,15 +35,12 @@ Patch6: openldap-2.3.19-gethostbyXXXX_r.patch
 Patch9: openldap-2.3.37-smbk5pwd.patch
 Patch10: openldap-2.4.6-multilib.patch
 Patch11: openldap-2.4.16-doc-cacertdir.patch
-Patch12: openldap-2.4.18-ldif-buf-overflow.patch
+Patch12: openldap-2.4.19-tls-accept.patch
+Patch13: openldap-2.4.19-dn2id-segfault.patch
+Patch14: openldap-2.4.19-modrdn-segfault.patch
 
 # Patches for the evolution library
 Patch200: openldap-2.4.6-evolution-ntlm.patch
-
-# Patches for db4 library
-Patch400: patch.4.7.25.1
-Patch401: patch.4.7.25.2
-Patch402: patch.4.7.25.3
 
 URL: http://www.openldap.org/
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
@@ -125,12 +122,6 @@ programs needed for accessing and modifying OpenLDAP directories.
 %prep
 %setup -q -c -a 1
 
-pushd db-%{db_version}
-%patch400 -p0 -b .patch1
-%patch401 -p0 -b .patch2
-%patch402 -p0 -b .patch3
-popd
-
 pushd openldap-%{version}
 %patch0 -p1 -b .config
 %patch1 -p1 -b .ldaprc
@@ -142,7 +133,9 @@ pushd openldap-%{version}
 %patch9 -p1 -b .smbk5pwd
 %patch10 -p1 -b .multilib
 %patch11 -p1 -b .cacertdir
-%patch12 -p1 -b .malloc
+%patch12 -p1 -b .tls-accept
+%patch13 -p1 -b .segfault
+%patch14 -p1 -b .modrdn-segfault
 
 cp %{_datadir}/libtool/config/config.{sub,guess} build/
 popd
@@ -203,7 +196,7 @@ ln -sf libslapd_db.so ${dbdir}/%{_lib}/${subdir}/libdb.so
 popd
 
 export CPPFLAGS="-I${dbdir}/include"
-export CFLAGS="$CPPFLAGS $RPM_OPT_FLAGS -D_REENTRANT -fPIC -D_GNU_SOURCE"
+export CFLAGS="$CPPFLAGS $RPM_OPT_FLAGS -D_REENTRANT -DLDAP_CONNECTIONLESS -fPIC -D_GNU_SOURCE"
 export LDFLAGS="-L${dbdir}/%{_lib}"
 export LD_LIBRARY_PATH=${dbdir}/%{_lib}${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
 
@@ -503,7 +496,7 @@ if [ -f /var/lib/ldap/need_db_upgrade ]; then
 fi
 
 if [ ! -f %{_sysconfdir}/pki/tls/certs/slapd.pem ] ; then
-pushd %{_sysconfdir}/pki/tls/certs
+pushd %{_sysconfdir}/pki/tls/certs > /dev/null 2>&1
 umask 077
 cat << EOF | make slapd.pem > /dev/null 2>&1
 --
@@ -599,7 +592,6 @@ fi
 %doc README.schema
 %ghost %config(noreplace) %{_sysconfdir}/pki/tls/certs/slapd.pem
 %attr(0755,root,root) %{_sysconfdir}/rc.d/init.d/slapd
-%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/openldap/ldap*.conf
 %attr(0640,root,ldap) %config(noreplace,missingok) %{_sysconfdir}/openldap/slapd.conf
 %attr(0640,root,ldap) %ghost %{_sysconfdir}/openldap/slapd.conf.bak
 %attr(0640,ldap,ldap) %ghost %{_sysconfdir}/openldap/slapd.d
@@ -645,6 +637,33 @@ fi
 %attr(0644,root,root)      %{evolution_connector_libdir}/*.a
 
 %changelog
+* Tue Jul 20 2010 Jan Vcelak <jvcelak@redhat.com> - 2.4.19-6
+- CVE-2010-0211 openldap: modrdn processing uninitialized pointer free (#605448)
+- CVE-2010-0212 openldap: modrdn processing IA5StringNormalize NULL pointer dereference (#605452)
+
+* Fri Jun 25 2010 Jan Zeleny <jzeleny@redhat.com> - 2.4.19-5
+- fixed regression caused by tls accept patch
+- updated autofs schema (#587722)
+- openldap built with conectionless support (#587722)
+
+* Tue Mar 16 2010 Jan Zeleny <jzeleny@redhat.com> - 2.4.19-4
+- minor corrections of init script (#571235, #570057, #573804)
+
+* Wed Feb 24 2010 Jan Zeleny <jzeleny@redhat.com> - 2.4.19-3
+- fixed SIGSEGV when deleting data using hdb (#562227)
+
+* Mon Nov 23 2009 Jan Zeleny <jzeleny@redhat.com> - 2.4.19-2
+- minor changes in init script
+
+* Wed Nov 18 2009 Jan Zeleny <jzeleny@redhat.com> - 2.4.19-1
+- fixed tls connection accepting when TLSVerifyClient = allow
+- /etc/openldap/ldap.conf removed from files owned by openldap-servers
+- minor changes in spec file to supress warnings
+- some changes in init script, so it would be possible to use it when
+  using old configuration style
+- rebased openldap to 2.4.19
+- rebased bdb to 4.8.24
+
 * Wed Oct 07 2009 Jan Zeleny <jzeleny@redhat.com> 2.4.18-5
 - updated smbk5pwd patch to be linked with libldap (#526500)
 
