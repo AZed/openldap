@@ -15,7 +15,7 @@
 Summary: The configuration files, libraries, and documentation for OpenLDAP.
 Name: openldap
 Version: %{version_22}
-Release: 2
+Release: 3
 License: OpenLDAP
 Group: System Environment/Daemons
 Source0: ftp://ftp.OpenLDAP.org/pub/OpenLDAP/openldap-release/openldap-%{version_22}.tgz
@@ -42,6 +42,8 @@ Patch6: openldap-2.2.13-pie.patch
 Patch7: openldap-2.2.13-toollinks.patch
 Patch8: openldap-2.2.13-nosql.patch
 Patch9: openldap-2.1.30-ldapi.patch
+Patch10: openldap-2.2.13-3201.patch
+Patch11: openldap-2.2.13-dryrun.patch
 Patch12: db-4.0.14-disable-mutex.patch
 Patch13: db-4.0.14-libobjs.patch
 Patch21: MigrationTools-38-instdir.patch
@@ -150,6 +152,8 @@ pushd openldap-%{version_22}
 %patch6 -p1 -b .pie
 %patch7 -p1 -b .toollinks
 %patch8 -p1 -b .nosql
+%patch10 -p0 -b .3201
+%patch11 -p0 -b .dryrun
 cp %{_datadir}/libtool/config.{sub,guess} build/
 popd
 
@@ -345,7 +349,7 @@ CFLAGS="$CPPFLAGS $RPM_OPT_FLAGS -D_REENTRANT -fPIC"; export CFLAGS
 LDFLAGS="-L${dbdir}/%{_lib} $OPENSSL_LDFLAGS" ; export LDFLAGS
 
 # Build the 2.1 server tools for dumping out old on-disk databases.  This
-# requires Berkeley DB 4.2.x.
+# requires Berkeley DB 4.3.x.
 pushd openldap-%{version_21}/build-servers
 LIBS=-lpthread; export LIBS
 %configure \
@@ -421,6 +425,7 @@ build \
 	--disable-shared \
 	--disable-dynamic \
 	--with-kerberos=k5only
+unset LDFLAGS
 unset LIBS
 popd
 
@@ -495,9 +500,21 @@ popd
 
 # Install servers.
 %ifarch %{nptl_arches}
+case %{_target_platform} in
+	i386*|i486*) archp=i486; arches="i586 i686";;
+	i586*) archp=i586; arches=i686;;
+	i686*) archp=i686; arches=;;
+	athlon*) archp=i686; arches=;;
+	*) archp=; arches=;;
+esac
+
 pushd db-instroot/%{_lib}/tls/
-install -d $RPM_BUILD_ROOT/%{_libdir}/tls/
-install -m755 libslapd_db-*.*.so $RPM_BUILD_ROOT/%{_libdir}/tls/
+install -d $RPM_BUILD_ROOT/%{_libdir}/tls/${archp}/
+install -m755 libslapd_db-*.*.so $RPM_BUILD_ROOT/%{_libdir}/tls/${archp}/
+for arch in $arches ; do
+	install -d $RPM_BUILD_ROOT/%{_libdir}/tls/${arch}/
+	ln $RPM_BUILD_ROOT/%{_libdir}/tls/${archp}/* $RPM_BUILD_ROOT/%{_libdir}/tls/${arch}/
+done
 popd
 %endif
 
@@ -687,7 +704,7 @@ fi
 %attr(0700,ldap,ldap) %dir /var/lib/ldap
 %attr(0755,root,root) %{_libdir}/libslapd_db-*.*.so
 %ifarch %{nptl_arches}
-%attr(0755,root,root) %{_libdir}/tls/libslapd_db-*.*.so
+%attr(0755,root,root) %{_libdir}/tls
 %endif
 
 %files servers-sql
@@ -717,6 +734,13 @@ fi
 %attr(0644,root,root)      %{evolution_connector_libdir}/*.a
 
 %changelog
+* Tue Apr 19 2005 Nalin Dahyabhai <nalin@redhat.com> 2.2.13-3
+- move nptl libraries into arch-specific subdirectories on %%{ix86} boxes,
+  to match glibc's layout
+- update notes on upgrading from previous releases
+- pull in fix for ITS #3201 from 2.2.15
+- pull in fix for ITS #3326 from 2.2.16
+
 * Thu Aug 19 2004 Nalin Dahyabhai <nalin@redhat.com> 2.2.13-2
 - build a separate, static set of libraries for openldap-devel with the
   non-standard ntlm bind patch applied, for use by the evolution-connector

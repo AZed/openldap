@@ -1,0 +1,22 @@
+--- servers/slapd/slapcommon.c	2004-04-12 14:13:21.000000000 -0400
++++ servers/slapd/slapcommon.c	2004-09-10 12:42:41.000000000 -0400
+@@ -448,7 +448,7 @@
+ 	mal_leaktrace(1);
+ #endif
+ 
+-	if ( slap_startup( be ) ) {
++	if ( !dryrun && slap_startup( be ) ) {
+ 		fprintf( stderr, "slap_startup failed\n" );
+ 		exit( EXIT_FAILURE );
+ 	}
+@@ -456,7 +456,9 @@
+ 
+ void slap_tool_destroy( void )
+ {
+-	slap_shutdown( be );
++	if ( !dryrun && be != NULL ) {
++		slap_shutdown( be );
++	}
+ 	slap_destroy();
+ #ifdef SLAPD_MODULES
+ 	if ( slapMode == SLAP_SERVER_MODE ) {
