@@ -16,7 +16,7 @@ Allows manual specification of bind timeout
  N_("  -M         enable Manage DSA IT control (-MM to make critical)\n"),
  N_("  -n         show what would be done but don't actually do it\n"),
  N_("  -O props   SASL security properties\n"),
-+N_("  -o <opt>[=<optparam] general options\n"),
++N_("  -o <opt>[=<optparam>] general options\n"),
 +N_("             nettimeout=<timeout> (in seconds, or \"none\" or \"max\")\n"),
  N_("  -p port    port on LDAP server\n"),
  N_("  -P version procotol version (default: 3)\n"),
@@ -85,3 +85,91 @@ Allows manual specification of bind timeout
  	}
  
  	return ld;
+--- openldap-2.2.13/clients/tools/common.h.orig	2004-01-01 19:16:26.000000000 +0100
++++ openldap-2.2.13/clients/tools/common.h	2007-10-30 21:49:10.000000000 +0100
+@@ -58,6 +58,8 @@
+ extern int   verbose;
+ extern int   version;
+ 
++extern struct timeval  nettimeout;
++
+ /* Defined in common.c, set in main() */
+ extern char *prog;
+ extern const char __Version[];
+--- openldap-2.2.13/clients/tools/ldapcompare.c.orig	2004-03-17 20:54:53.000000000 +0100
++++ openldap-2.2.13/clients/tools/ldapcompare.c		2007-10-30 21:50:33.000000000 +0100
+@@ -98,7 +98,7 @@
+ 
+ 
+ const char options[] = "z"
+-	"Cd:D:e:h:H:IkKMnO:p:P:QR:U:vVw:WxX:y:Y:Z";
++	"Cd:D:e:h:H:IkKMnO:o:p:P:QR:U:vVw:WxX:y:Y:Z";
+ 
+ int
+ handle_private_option( int i )
+--- openldap-2.2.13/clients/tools/ldapdelete.c.orig	2004-03-17 20:54:53.000000000 +0100
++++ openldap-2.2.13/clients/tools/ldapdelete.c		2007-10-30 21:50:36.000000000 +0100
+@@ -74,7 +74,7 @@
+ 
+ 
+ const char options[] = "r"
+-	"cd:D:e:f:h:H:IkKMnO:p:P:QR:U:vVw:WxX:y:Y:Z";
++	"cd:D:e:f:h:H:IkKMnO:o:p:P:QR:U:vVw:WxX:y:Y:Z";
+ 
+ int
+ handle_private_option( int i )
+--- openldap-2.2.13/clients/tools/ldapmodify.c.orig	2004-04-06 18:49:54.000000000 +0200
++++ openldap-2.2.13/clients/tools/ldapmodify.c		2007-10-30 21:50:38.000000000 +0100
+@@ -152,7 +152,7 @@
+ 
+ 
+ const char options[] = "aE:FrS:"
+-	"cd:D:e:f:h:H:IkKMnO:p:P:QR:U:vVw:WxX:y:Y:Z";
++	"cd:D:e:f:h:H:IkKMnO:o:p:P:QR:U:vVw:WxX:y:Y:Z";
+ 
+ int
+ handle_private_option( int i )
+--- openldap-2.2.13/clients/tools/ldapmodrdn.c.orig	2004-03-17 20:54:53.000000000 +0100
++++ openldap-2.2.13/clients/tools/ldapmodrdn.c		2007-10-30 21:50:40.000000000 +0100
+@@ -89,7 +89,7 @@
+ 
+ 
+ const char options[] = "rs:"
+-	"cd:D:e:f:h:H:IkKMnO:p:P:QR:U:vVw:WxX:y:Y:Z";
++	"cd:D:e:f:h:H:IkKMnO:o:p:P:QR:U:vVw:WxX:y:Y:Z";
+ 
+ int
+ handle_private_option( int i )
+--- openldap-2.2.13/clients/tools/ldappasswd.c.orig	2004-03-17 20:54:53.000000000 +0100
++++ openldap-2.2.13/clients/tools/ldappasswd.c		2007-10-30 21:50:42.000000000 +0100
+@@ -81,7 +81,7 @@
+ 
+ 
+ const char options[] = "a:As:St:T:"
+-	"d:D:e:h:H:InO:p:QR:U:vVw:WxX:y:Y:Z";
++	"d:D:e:h:H:InO:o:p:QR:U:vVw:WxX:y:Y:Z";
+ 
+ int
+ handle_private_option( int i )
+--- openldap-2.2.13/clients/tools/ldapsearch.c.orig	2004-05-21 04:11:38.000000000 +0200
++++ openldap-2.2.13/clients/tools/ldapsearch.c		2007-10-30 21:50:44.000000000 +0100
+@@ -227,7 +227,7 @@
+ 
+ 
+ const char options[] = "a:Ab:E:F:l:Ls:S:tT:uz:"
+-	"Cd:D:e:f:h:H:IkKMnO:p:P:QR:U:vVw:WxX:y:Y:Z";
++	"Cd:D:e:f:h:H:IkKMnO:o:p:P:QR:U:vVw:WxX:y:Y:Z";
+ 
+ int
+ handle_private_option( int i )
+--- openldap-2.2.13/clients/tools/ldapwhoami.c.orig	2004-03-17 20:54:53.000000000 +0100
++++ openldap-2.2.13/clients/tools/ldapwhoami.c		2007-10-30 21:50:46.000000000 +0100
+@@ -62,7 +62,7 @@
+ 
+ 
+ const char options[] = ""
+-	"d:D:e:h:H:InO:p:QR:U:vVw:WxX:y:Y:Z";
++	"d:D:e:h:H:InO:o:p:QR:U:vVw:WxX:y:Y:Z";
+ 
+ int
+ handle_private_option( int i )
