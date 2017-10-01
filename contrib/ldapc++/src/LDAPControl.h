@@ -1,4 +1,4 @@
-// $OpenLDAP: pkg/ldap/contrib/ldapc++/src/LDAPControl.h,v 1.5.10.2 2008/09/03 18:03:43 quanah Exp $
+// $OpenLDAP$
 /*
  * Copyright 2000-2011 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file

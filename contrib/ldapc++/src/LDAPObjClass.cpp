@@ -1,4 +1,4 @@
-// $OpenLDAP: pkg/ldap/contrib/ldapc++/src/LDAPObjClass.cpp,v 1.3.6.3 2008/09/02 23:58:15 quanah Exp $
+// $OpenLDAP$
 /*
  * Copyright 2003-2011 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file

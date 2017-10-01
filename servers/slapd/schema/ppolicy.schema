@@ -1,4 +1,4 @@
-# $OpenLDAP: pkg/ldap/servers/slapd/schema/ppolicy.schema,v 1.7.2.6 2011/01/04 23:50:52 kurt Exp $
+# $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 2004-2011 The OpenLDAP Foundation.

@@ -1,4 +1,4 @@
-// $OpenLDAP: pkg/ldap/contrib/ldapc++/examples/main.cpp,v 1.1.8.3 2008/04/14 23:18:59 quanah Exp $
+// $OpenLDAP$
 /*
  * Copyright 2000-2011 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file

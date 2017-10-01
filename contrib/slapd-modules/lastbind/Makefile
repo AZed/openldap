@@ -1,4 +1,4 @@
-# $OpenLDAP: pkg/ldap/contrib/slapd-modules/lastbind/Makefile,v 1.2.2.2 2011/02/04 23:39:17 quanah Exp $
+# $OpenLDAP$
 # Copyright 2009 Jonathan Clarke <jonathan@phillipoux.net>.
 # All rights reserved.
 #

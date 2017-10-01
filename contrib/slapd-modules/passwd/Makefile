@@ -1,4 +1,4 @@
-# $OpenLDAP: pkg/ldap/contrib/slapd-modules/passwd/Makefile,v 1.2.2.2 2009/04/28 01:06:14 quanah Exp $
+# $OpenLDAP$
 CPPFLAGS+=-I../../../include -I../../../servers/slapd
 
 all: kerberos.la netscape.la radius.la

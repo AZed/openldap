@@ -1,5 +1,5 @@
 /* config.c - sock backend configuration file routine */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-sock/config.c,v 1.5.2.4 2011/01/04 23:50:44 kurt Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2007-2011 The OpenLDAP Foundation.

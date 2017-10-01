@@ -1,4 +1,4 @@
-dnl $OpenLDAP: pkg/ldap/contrib/ldapc++/configure.in,v 1.8.2.10 2011/01/04 23:49:29 kurt Exp $
+dnl $OpenLDAP$
 
 dnl Copyright 2000-2011 The OpenLDAP Foundation. All Rights Reserved.
 dnl COPYING RESTRICTIONS APPLY, see COPYRIGHT file
