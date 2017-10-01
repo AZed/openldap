@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/liblber/memory.c,v 1.57.2.5 2006/01/03 22:16:07 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/liblber/memory.c,v 1.57.2.6 2006/07/28 13:01:35 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2006 The OpenLDAP Foundation.

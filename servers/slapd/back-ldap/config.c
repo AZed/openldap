@@ -1,5 +1,5 @@
 /* config.c - ldap backend configuration file routine */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/config.c,v 1.73.2.14 2006/01/03 22:16:18 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/config.c,v 1.73.2.20 2006/05/09 20:54:19 ando Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2003-2006 The OpenLDAP Foundation.

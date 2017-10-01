@@ -1,5 +1,5 @@
 /* ad.c - routines for dealing with attribute descriptions */
-/* $OpenLDAP: pkg/ldap/servers/slapd/ad.c,v 1.74.2.12 2006/01/17 19:09:51 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/ad.c,v 1.74.2.14 2006/05/09 19:26:26 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2006 The OpenLDAP Foundation.

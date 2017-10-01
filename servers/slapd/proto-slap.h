@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/proto-slap.h,v 1.552.2.35 2006/01/23 23:52:17 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/proto-slap.h,v 1.552.2.38 2006/08/15 17:11:09 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2006 The OpenLDAP Foundation.

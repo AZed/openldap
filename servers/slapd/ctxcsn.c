@@ -1,5 +1,5 @@
 /* ctxcsn.c -- Context CSN Management Routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/ctxcsn.c,v 1.31.2.7 2006/01/03 22:16:14 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/ctxcsn.c,v 1.31.2.8 2006/08/15 17:11:09 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2003-2006 The OpenLDAP Foundation.

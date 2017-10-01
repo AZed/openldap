@@ -1,5 +1,5 @@
 /* ldapdelete.c - simple program to delete an entry using LDAP */
-/* $OpenLDAP: pkg/ldap/clients/tools/ldapdelete.c,v 1.109.2.4 2006/01/03 22:16:01 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/clients/tools/ldapdelete.c,v 1.109.2.5 2006/05/13 03:55:00 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2006 The OpenLDAP Foundation.

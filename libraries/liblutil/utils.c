@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/liblutil/utils.c,v 1.24.2.5 2006/01/03 22:16:11 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/liblutil/utils.c,v 1.24.2.8 2006/05/09 17:48:32 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2006 The OpenLDAP Foundation.

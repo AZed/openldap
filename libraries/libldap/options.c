@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/options.c,v 1.67.2.6 2006/01/03 22:16:08 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/options.c,v 1.67.2.7 2006/04/03 19:49:54 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2006 The OpenLDAP Foundation.

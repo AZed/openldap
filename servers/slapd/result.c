@@ -1,5 +1,5 @@
 /* result.c - routines to send ldap results, errors, and referrals */
-/* $OpenLDAP: pkg/ldap/servers/slapd/result.c,v 1.244.2.16 2006/01/03 22:16:15 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/result.c,v 1.244.2.20 2006/05/15 15:51:59 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2006 The OpenLDAP Foundation.

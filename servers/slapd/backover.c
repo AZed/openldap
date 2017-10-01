@@ -1,5 +1,5 @@
 /* backover.c - backend overlay routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/backover.c,v 1.31.2.17 2006/01/03 22:16:13 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/backover.c,v 1.31.2.18 2006/07/28 14:31:18 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2003-2006 The OpenLDAP Foundation.

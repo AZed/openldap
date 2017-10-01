@@ -1,5 +1,5 @@
 # Makefile.in for overlays
-# $OpenLDAP: pkg/ldap/servers/slapd/overlays/Makefile.in,v 1.16.2.14 2006/01/03 22:16:24 kurt Exp $
+# $OpenLDAP: pkg/ldap/servers/slapd/overlays/Makefile.in,v 1.16.2.15 2006/04/05 21:36:15 kurt Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 2003-2006 The OpenLDAP Foundation.
