@@ -1,4 +1,4 @@
-# $OpenLDAP: pkg/ldap/contrib/slapd-modules/comp_match/Makefile,v 1.3.2.5 2006/01/03 22:16:02 kurt Exp $
+# $OpenLDAP: pkg/ldap/contrib/slapd-modules/comp_match/Makefile,v 1.3.2.6 2007/01/02 21:43:42 kurt Exp $
 # This work is part of OpenLDAP Software <http://www.openldap.org/>.
 #
 # Copyright 2003-2007 The OpenLDAP Foundation.

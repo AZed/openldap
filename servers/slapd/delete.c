@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/delete.c,v 1.126.2.7 2006/01/17 19:37:20 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/delete.c,v 1.126.2.8 2007/01/02 21:43:55 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2007 The OpenLDAP Foundation.

@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/modify.c,v 1.29.2.13 2006/04/04 22:55:21 ando Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/modify.c,v 1.29.2.16 2007/01/13 11:19:07 ando Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2007 The OpenLDAP Foundation.

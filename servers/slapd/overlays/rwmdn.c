@@ -1,5 +1,5 @@
 /* rwmdn.c - massages dns */
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/rwmdn.c,v 1.11.2.7 2006/01/03 22:16:25 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/rwmdn.c,v 1.11.2.8 2007/01/02 21:44:08 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2007 The OpenLDAP Foundation.

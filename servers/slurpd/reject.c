@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slurpd/reject.c,v 1.18.2.3 2006/02/13 17:28:44 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slurpd/reject.c,v 1.18.2.4 2007/01/02 21:44:11 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2007 The OpenLDAP Foundation.

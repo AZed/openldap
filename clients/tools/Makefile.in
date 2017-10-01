@@ -1,5 +1,5 @@
 # Makefile for LDAP tools
-# $OpenLDAP$
+# $OpenLDAP: pkg/ldap/clients/tools/Makefile.in,v 1.39.2.5 2007/01/02 21:43:41 kurt Exp $
 ## Copyright 1998-2007 The OpenLDAP Foundation.
 ## All rights reserved.
 ##

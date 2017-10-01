@@ -1,5 +1,5 @@
 /* messages.c */
-/* $OpenLDAP: pkg/ldap/libraries/libldap/messages.c,v 1.15.2.2 2006/01/03 22:16:08 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/messages.c,v 1.15.2.3 2007/01/02 21:43:49 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2007 The OpenLDAP Foundation.

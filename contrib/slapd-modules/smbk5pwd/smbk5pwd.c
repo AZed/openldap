@@ -1,5 +1,5 @@
 /* smbk5pwd.c - Overlay for managing Samba and Heimdal passwords */
-/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/smbk5pwd/smbk5pwd.c,v 1.1.2.9 2005/12/20 23:49:50 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/smbk5pwd/smbk5pwd.c,v 1.1.2.10 2006/12/15 15:39:35 hyc Exp $ */
 /*
  * Copyright 2004-2005 by Howard Chu, Symas Corp.
  * All rights reserved.

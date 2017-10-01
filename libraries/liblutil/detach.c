@@ -1,5 +1,5 @@
 /* detach.c -- routines to daemonize a process */
-/* $OpenLDAP: pkg/ldap/libraries/liblutil/detach.c,v 1.16.2.2 2006/01/03 22:16:11 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/liblutil/detach.c,v 1.16.2.3 2007/01/02 21:43:52 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2007 The OpenLDAP Foundation.

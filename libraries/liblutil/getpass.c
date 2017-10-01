@@ -1,5 +1,5 @@
 /* getpass.c -- get password from user */
-/* $OpenLDAP: pkg/ldap/libraries/liblutil/getpass.c,v 1.15.2.2 2006/01/03 22:16:11 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/liblutil/getpass.c,v 1.15.2.3 2007/01/02 21:43:52 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2007 The OpenLDAP Foundation.

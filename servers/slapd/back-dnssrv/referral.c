@@ -1,5 +1,5 @@
 /* referral.c - DNS SRV backend referral handler */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-dnssrv/referral.c,v 1.17.2.5 2006/01/03 22:16:17 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-dnssrv/referral.c,v 1.17.2.6 2007/01/02 21:44:01 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2007 The OpenLDAP Foundation.

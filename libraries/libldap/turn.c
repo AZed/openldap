@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/turn.c,v 1.1.2.3 2006/04/03 19:49:55 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/turn.c,v 1.1.2.4 2007/01/02 21:43:50 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2005-2007 The OpenLDAP Foundation.

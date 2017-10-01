@@ -1,5 +1,5 @@
 /* ldapcompare.c -- LDAP compare tool */
-/* $OpenLDAP: pkg/ldap/clients/tools/ldapcompare.c,v 1.34.2.4 2006/01/03 22:16:01 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/clients/tools/ldapcompare.c,v 1.34.2.5 2007/01/02 21:43:41 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2007 The OpenLDAP Foundation.
