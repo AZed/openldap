@@ -303,6 +303,7 @@ down:;
 		if ( *mcp == NULL ) {
 			retcode = META_SEARCH_ERR;
 			rs->sr_err = LDAP_UNAVAILABLE;
+			candidates[ candidate ].sr_msgid = META_MSGID_IGNORE;
 			break;
 		}
 		/* fall thru */
@@ -614,6 +615,7 @@ retry:;
 
 		if ( *mcp == NULL ) {
 			retcode = META_SEARCH_ERR;
+			candidates[ candidate ].sr_msgid = META_MSGID_IGNORE;
 			break;
 		}
 		/* fall thru */
@@ -853,7 +855,6 @@ getconn:;
 		int	gotit = 0,
 			doabandon = 0,
 			alreadybound = ncandidates;
-		time_t	curr_time = 0;
 
 		/* check timeout */
 		if ( timeout && lastres_time > 0
@@ -1220,15 +1221,14 @@ really_bad:;
 						NULL /* &candidates[ i ].sr_ctrls (unused) */ ,
 						0 );
 					if ( rs->sr_err != LDAP_SUCCESS ) {
-						ldap_get_option( msc->msc_ld,
-							LDAP_OPT_ERROR_NUMBER,
-							&rs->sr_err );
-						sres = slap_map_api2result( rs );
+						sres = slap_map_api2result( &candidates[ i ] );
 						candidates[ i ].sr_type = REP_RESULT;
 						ldap_msgfree( res );
 						res = NULL;
 						goto really_bad;
 					}
+
+					rs->sr_err = candidates[ i ].sr_err;
 
 					/* massage matchedDN if need be */
 					if ( candidates[ i ].sr_matched != NULL ) {
@@ -1255,37 +1255,60 @@ really_bad:;
 					}
 
 					/* add references to array */
-					if ( references ) {
-						BerVarray	sr_ref;
-						int		cnt;
-	
-						for ( cnt = 0; references[ cnt ]; cnt++ )
-							;
-	
-						sr_ref = ch_calloc( sizeof( struct berval ), cnt + 1 );
-	
-						for ( cnt = 0; references[ cnt ]; cnt++ ) {
-							ber_str2bv( references[ cnt ], 0, 1, &sr_ref[ cnt ] );
-						}
-						BER_BVZERO( &sr_ref[ cnt ] );
-	
-						( void )ldap_back_referral_result_rewrite( &dc, sr_ref );
-					
-						/* cleanup */
-						ber_memvfree( (void **)references );
-	
-						if ( rs->sr_v2ref == NULL ) {
-							rs->sr_v2ref = sr_ref;
+					/* RFC 4511: referrals can only appear
+					 * if result code is LDAP_REFERRAL */
+					if ( references != NULL
+						&& references[ 0 ] != NULL
+						&& references[ 0 ][ 0 ] != '\0' )
+					{
+						if ( rs->sr_err != LDAP_REFERRAL ) {
+							Debug( LDAP_DEBUG_ANY,
+								"%s meta_back_search[%ld]: "
+								"got referrals with err=%d\n",
+								op->o_log_prefix,
+								i, rs->sr_err );
 
 						} else {
-							for ( cnt = 0; !BER_BVISNULL( &sr_ref[ cnt ] ); cnt++ ) {
-								ber_bvarray_add( &rs->sr_v2ref, &sr_ref[ cnt ] );
-							}
-							ber_memfree( sr_ref );
-						}
-					}
+							BerVarray	sr_ref;
+							int		cnt;
 	
-					rs->sr_err = candidates[ i ].sr_err;
+							for ( cnt = 0; references[ cnt ]; cnt++ )
+								;
+	
+							sr_ref = ch_calloc( sizeof( struct berval ), cnt + 1 );
+	
+							for ( cnt = 0; references[ cnt ]; cnt++ ) {
+								ber_str2bv( references[ cnt ], 0, 1, &sr_ref[ cnt ] );
+							}
+							BER_BVZERO( &sr_ref[ cnt ] );
+	
+							( void )ldap_back_referral_result_rewrite( &dc, sr_ref );
+					
+							if ( rs->sr_v2ref == NULL ) {
+								rs->sr_v2ref = sr_ref;
+
+							} else {
+								for ( cnt = 0; !BER_BVISNULL( &sr_ref[ cnt ] ); cnt++ ) {
+									ber_bvarray_add( &rs->sr_v2ref, &sr_ref[ cnt ] );
+								}
+								ber_memfree( sr_ref );
+							}
+						}
+
+					} else if ( rs->sr_err == LDAP_REFERRAL ) {
+						Debug( LDAP_DEBUG_ANY,
+							"%s meta_back_search[%ld]: "
+							"got err=%d with null "
+							"or empty referrals\n",
+							op->o_log_prefix,
+							i, rs->sr_err );
+
+						rs->sr_err = LDAP_NO_SUCH_OBJECT;
+					}
+
+					/* cleanup */
+					ber_memvfree( (void **)references );
+	
 					sres = slap_map_api2result( rs );
 	
 					if ( StatslogTest( LDAP_DEBUG_TRACE | LDAP_DEBUG_ANY ) ) {
@@ -1697,6 +1720,7 @@ meta_send_entry(
 {
 	metainfo_t 		*mi = ( metainfo_t * )op->o_bd->be_private;
 	struct berval		a, mapped;
+	int			check_duplicate_attrs = 0;
 	Entry 			ent = { 0 };
 	BerElement 		ber = *e->lm_ber;
 	Attribute 		*attr, **attrp;
@@ -1762,6 +1786,10 @@ meta_send_entry(
 		if ( BER_BVISNULL( &mapped ) || mapped.bv_val[0] == '\0' ) {
 			( void )ber_scanf( &ber, "x" /* [W] */ );
 			continue;
+		}
+		if ( mapped.bv_val != a.bv_val ) {
+			/* will need to check for duplicate attrs */
+			check_duplicate_attrs++;
 		}
 		attr = ( Attribute * )ch_calloc( 1, sizeof( Attribute ) );
 		if ( attr == NULL ) {
@@ -1835,6 +1863,7 @@ meta_send_entry(
 				ldap_back_map( &mi->mi_targets[ target ]->mt_rwmap.rwm_oc,
 						bv, &mapped, BACKLDAP_REMAP );
 				if ( BER_BVISNULL( &mapped ) || mapped.bv_val[0] == '\0') {
+remove_oc:;
 					free( bv->bv_val );
 					BER_BVZERO( bv );
 					if ( --last < 0 ) {
@@ -1845,8 +1874,23 @@ meta_send_entry(
 					bv--;
 
 				} else if ( mapped.bv_val != bv->bv_val ) {
-					free( bv->bv_val );
-					ber_dupbv( bv, &mapped );
+					int	i;
+
+					for ( i = 0; !BER_BVISNULL( &attr->a_vals[ i ] ); i++ ) {
+						if ( &attr->a_vals[ i ] == bv ) {
+							continue;
+						}
+
+						if ( ber_bvstrcasecmp( &mapped, &attr->a_vals[ i ] ) == 0 ) {
+							break;
+						}
+					}
+
+					if ( !BER_BVISNULL( &attr->a_vals[ i ] ) ) {
+						goto remove_oc;
+					}
+
+					ber_bvreplace( bv, &mapped );
 				}
 			}
 		/*
@@ -1934,6 +1978,48 @@ meta_send_entry(
 		attrp = &attr->a_next;
 next_attr:;
 	}
+
+	/* only check if some mapping occurred */
+	if ( check_duplicate_attrs ) {
+		Attribute	**ap;
+
+		for ( ap = &ent.e_attrs; *ap != NULL; ap = &(*ap)->a_next ) {
+			Attribute	**tap;
+
+			for ( tap = &(*ap)->a_next; *tap != NULL; ) {
+				if ( (*tap)->a_desc == (*ap)->a_desc ) {
+					Entry		e = { 0 };
+					Modification	mod = { 0 };
+					const char	*text = NULL;
+					char		textbuf[ SLAP_TEXT_BUFLEN ];
+					Attribute	*next = (*tap)->a_next;
+
+					BER_BVSTR( &e.e_name, "" );
+					BER_BVSTR( &e.e_nname, "" );
+					e.e_attrs = *ap;
+					mod.sm_op = LDAP_MOD_ADD;
+					mod.sm_desc = (*ap)->a_desc;
+					mod.sm_type = mod.sm_desc->ad_cname;
+					mod.sm_values = (*tap)->a_vals;
+					mod.sm_nvalues = (*tap)->a_nvals;
+
+					(void)modify_add_values( &e, &mod,
+						/* permissive */ 1,
+						&text, textbuf, sizeof( textbuf ) );
+
+					/* should not insert new attrs! */
+					assert( e.e_attrs == *ap );
+
+					attr_free( *tap );
+					*tap = next;
+
+				} else {
+					tap = &(*tap)->a_next;
+				}
+			}
+		}
+	}
+
 	rs->sr_entry = &ent;
 	rs->sr_attrs = op->ors_attrs;
 	rs->sr_flags = 0;

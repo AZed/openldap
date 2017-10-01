@@ -132,6 +132,11 @@ str2entry2( char *s, int checkvals )
 			break;
 		}
 		i++;
+		if (i >= lines) {
+			Debug( LDAP_DEBUG_TRACE,
+				"<= str2entry ran past end of entry\n", 0, 0, 0 );
+			goto fail;
+		}
 
 		rc = ldif_parse_line2( s, type+i, vals+i, &freev );
 		freeval[i] = freev;
@@ -226,6 +231,16 @@ str2entry2( char *s, int checkvals )
 					goto fail;
 				}
 			}
+
+			/* require ';binary' when appropriate (ITS#5071) */
+			if ( slap_syntax_is_binary( ad->ad_type->sat_syntax ) && !slap_ad_is_binary( ad ) ) {
+				Debug( LDAP_DEBUG_ANY,
+					"str2entry: attributeType %s #%d: "
+					"needs ';binary' transfer as per syntax %s\n", 
+					ad->ad_cname.bv_val, 0,
+					ad->ad_type->sat_syntax->ssyn_oid );
+				goto fail;
+			}
 		}
 
 		if (( ad_prev && ad != ad_prev ) || ( i == lines )) {
@@ -261,6 +276,14 @@ str2entry2( char *s, int checkvals )
 			}
 			attr_cnt = 0;
 			if ( i == lines ) break;
+		}
+
+		if ( BER_BVISNULL( &vals[i] ) ) {
+ 			Debug( LDAP_DEBUG_ANY,
+ 				"str2entry: attributeType %s #%d: "
+ 				"no values\n", 
+ 				ad->ad_cname.bv_val, attr_cnt, 0 );
+ 			goto fail;
 		}
 
 		if( slapMode & SLAP_TOOL_MODE ) {

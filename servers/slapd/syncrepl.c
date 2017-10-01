@@ -52,7 +52,7 @@ struct nonpresent_entry {
 typedef struct syncinfo_s {
 	struct slap_backend_db *si_be;
 	struct re_s			*si_re;
-	long				si_rid;
+	int					si_rid;
 	slap_bindconf		si_bindconf;
 	struct berval		si_base;
 	struct berval		si_logbase;
@@ -1029,7 +1029,7 @@ do_syncrepl(
 	int rc = LDAP_SUCCESS;
 	int dostop = 0;
 	ber_socket_t s;
-	int i, defer = 1;
+	int i, defer = 1, fail = 0;
 	Backend *be;
 
 	Debug( LDAP_DEBUG_TRACE, "=>do_syncrepl rid %03d\n", si->si_rid, 0, 0 );
@@ -1148,17 +1148,35 @@ reload:
 
 		if ( !si->si_retrynum || si->si_retrynum[i] == RETRYNUM_TAIL ) {
 			ldap_pvt_runqueue_remove( &slapd_rq, rtask );
+			fail = RETRYNUM_TAIL;
 		} else if ( RETRYNUM_VALID( si->si_retrynum[i] ) ) {
 			if ( si->si_retrynum[i] > 0 )
 				si->si_retrynum[i]--;
+			fail = si->si_retrynum[i];
 			rtask->interval.tv_sec = si->si_retryinterval[i];
 			ldap_pvt_runqueue_resched( &slapd_rq, rtask, 0 );
 			slap_wake_listener();
 		}
 	}
-	
+
 	ldap_pvt_thread_mutex_unlock( &slapd_rq.rq_mutex );
 	ldap_pvt_thread_mutex_unlock( &si->si_mutex );
+
+	if ( rc ) {
+		if ( fail == RETRYNUM_TAIL ) {
+			Debug( LDAP_DEBUG_ANY,
+				"do_syncrepl: rid %03d quitting\n",
+				si->si_rid, 0, 0 );
+		} else if ( fail > 0 ) {
+			Debug( LDAP_DEBUG_ANY,
+				"do_syncrepl: rid %03d retrying (%d retries left)\n",
+				si->si_rid, fail, 0 );
+		} else {
+			Debug( LDAP_DEBUG_ANY,
+				"do_syncrepl: rid %03d retrying\n",
+				si->si_rid, 0, 0 );
+		}
+	}
 
 	return NULL;
 }
@@ -1382,6 +1400,7 @@ syncrepl_message_to_op(
 		} else {
 			op->orm_modlist = modlist;
 			rc = op->o_bd->be_modify( op, &rs );
+			modlist = op->orm_modlist;
 			Debug( rc ? LDAP_DEBUG_ANY : LDAP_DEBUG_SYNC,
 				"syncrepl_message_to_op: rid %03d be_modify %s (%d)\n", 
 				si->si_rid, op->o_req_dn.bv_val, rc );
@@ -2873,6 +2892,14 @@ parse_syncrepl_line(
 				Debug( LDAP_DEBUG_ANY, "%s: %s.\n", c->log, c->msg, 0 );
 				return -1;
 			}
+			if ( select_backend( &si->si_base, 0, 0 ) != c->be ) {
+				ber_memfree( si->si_base.bv_val );
+				snprintf( c->msg, sizeof( c->msg ),
+					"Base DN \"%s\" is not within the database naming context",
+					val );
+				Debug( LDAP_DEBUG_ANY, "%s: %s.\n", c->log, c->msg, 0 );
+				return -1;
+			}
 			gots |= GOT_BASE;
 		} else if ( !strncasecmp( c->argv[ i ], LOGBASESTR "=",
 					STRLENOF( LOGBASESTR "=" ) ) )
@@ -3297,7 +3324,7 @@ syncrepl_unparse( syncinfo_t *si, struct berval *bv )
 	si->si_bindconf.sb_uri = uri;
 
 	ptr = buf;
-	ptr += snprintf( ptr, sizeof( buf ), IDSTR "=%03ld " PROVIDERSTR "=%s",
+	ptr += snprintf( ptr, sizeof( buf ), IDSTR "=%03d " PROVIDERSTR "=%s",
 		si->si_rid, si->si_bindconf.sb_uri.bv_val );
 	if ( !BER_BVISNULL( &bc )) {
 		ptr = lutil_strcopy( ptr, bc.bv_val );

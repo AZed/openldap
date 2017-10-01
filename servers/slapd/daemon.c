@@ -227,7 +227,8 @@ static struct slap_daemon {
 	(int *)(ptr) <= &slap_daemon.sd_index[dtblsize]) ? 0 : 1 )
 
 # define SLAP_EPOLL_EV_PTRFD(ptr)		(SLAP_EPOLL_EV_LISTENER(ptr) ? \
-	((Listener *)ptr)->sl_sd : (int *)(ptr) - slap_daemon.sd_index)
+	((Listener *)ptr)->sl_sd : \
+	(ber_socket_t) ((int *)(ptr) - slap_daemon.sd_index))
 
 # define SLAP_SOCK_DEL(s)		do { \
 	int fd, rc, index = SLAP_EPOLL_SOCK_IX((s)); \
@@ -1582,7 +1583,7 @@ slap_listener(
 	Sockaddr		from;
 
 	ber_socket_t s;
-	socklen_t len = sizeof(from);
+	ber_socklen_t len = sizeof(from);
 	long id;
 	slap_ssf_t ssf = 0;
 	struct berval authid = BER_BVNULL;
@@ -2124,8 +2125,14 @@ slapd_daemon_task(
 		ldap_pvt_thread_mutex_unlock( &slapd_rq.rq_mutex );
 
 		if ( rtask && cat.tv_sec ) {
-			time_t diff = difftime( cat.tv_sec, now );
-			if ( diff == 0 ) diff = tdelta;
+			/* NOTE: diff __should__ always be >= 0,
+			 * AFAI understand; however (ITS#4872),
+			 * time_t might be unsigned in some systems,
+			 * while difftime() returns a double */
+			double diff = difftime( cat.tv_sec, now );
+			if ( diff <= 0 ) {
+				diff = tdelta;
+			}
 			if ( tvp == NULL || diff < tv.tv_sec ) {
 				tv.tv_sec = diff;
 				tv.tv_usec = 0;

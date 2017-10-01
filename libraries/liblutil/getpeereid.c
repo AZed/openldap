@@ -31,9 +31,10 @@
 #include <sys/ucred.h>
 #endif
 
-#if !defined(SO_PEERCRED) && !defined(LOCAL_PEERCRED) && \
+/* Disabled due to ITS#4893, will revisit in release 2.4 */
+#if 0 /* !defined(SO_PEERCRED) && !defined(LOCAL_PEERCRED) && \
 	defined(HAVE_SENDMSG) && (defined(HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTSLEN) || \
-		defined(HAVE_STRUCT_MSGHDR_MSG_CONTROL))
+		defined(HAVE_STRUCT_MSGHDR_MSG_CONTROL)) */
 #define DO_SENDMSG
 #ifdef HAVE_SYS_UIO_H
 #include <sys/uio.h>
@@ -49,7 +50,7 @@ int getpeereid( int s, uid_t *euid, gid_t *egid )
 #ifdef LDAP_PF_LOCAL
 #if defined( SO_PEERCRED )
 	struct ucred peercred;
-	socklen_t peercredlen = sizeof peercred;
+	ber_socklen_t peercredlen = sizeof peercred;
 
 	if(( getsockopt( s, SOL_SOCKET, SO_PEERCRED,
 		(void *)&peercred, &peercredlen ) == 0 )
@@ -62,7 +63,7 @@ int getpeereid( int s, uid_t *euid, gid_t *egid )
 
 #elif defined( LOCAL_PEERCRED )
 	struct xucred peercred;
-	socklen_t peercredlen = sizeof peercred;
+	ber_socklen_t peercredlen = sizeof peercred;
 
 	if(( getsockopt( s, LOCAL_PEERCRED, 1,
 		(void *)&peercred, &peercredlen ) == 0 )
@@ -138,7 +139,7 @@ int getpeereid( int s, uid_t *euid, gid_t *egid )
 	}
 #elif defined(SOCKCREDSIZE)
 	struct msghdr msg;
-	socklen_t crmsgsize;
+	ber_socklen_t crmsgsize;
 	void *crmsg;
 	struct cmsghdr *cmp;
 	struct sockcred *sc;
