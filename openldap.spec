@@ -16,7 +16,7 @@
 Summary: The configuration files, libraries, and documentation for OpenLDAP.
 Name: openldap
 Version: %{version_23}
-Release: 12%{?dist}.1
+Release: 12%{?dist}.2
 License: OpenLDAP
 Group: System Environment/Daemons
 Source0: ftp://ftp.OpenLDAP.org/pub/OpenLDAP/openldap-release/openldap-%{version_23}.tgz
@@ -57,6 +57,7 @@ Patch18: openldap-2.3.43-chase-referral.patch
 Patch19: openldap-2.3.43-tls-connection.patch
 Patch20: openldap-2.3.43-tls-null-char.patch
 Patch21: openldap-2.3.43-modrdn-segfault.patch
+Patch22: openldap-2.3.43-rh620621.patch
 
 # Patches for 2.2.29 for the compat-openldap package.
 Patch100: openldap-2.2.13-tls-fix-connection-test.patch
@@ -227,6 +228,7 @@ pushd openldap-%{version_23}
 %patch19 -p1 -b .tls-connection
 %patch20 -p1 -b .tls-null-char
 %patch21 -p1 -b .modrdn-segfault
+%patch22 -p1 -b .rh620621
 
 cp %{_datadir}/libtool/config.{sub,guess} build/
 popd
@@ -887,6 +889,9 @@ exec > /dev/null 2> /dev/null
 %attr(0644,root,root)      %{evolution_connector_libdir}/*.a
 
 %changelog
+* Fri Aug 06 2010 Adam Tkac <atkac redhat com> - 2.3.43-12.2
+- don't remove task twice during replication
+
 * Tue Jun 22 2010 Jan Zeleny <jzeleny@redhat.com> - 2.3.43-12.1
 - fixed segfault issues in modrdn (#606375)
 - added patch handling null char in TLS to compat package
