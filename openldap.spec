@@ -15,7 +15,7 @@
 Summary: The configuration files, libraries, and documentation for OpenLDAP.
 Name: openldap
 Version: %{version_22}
-Release: 8%{?dist}.1
+Release: 8%{?dist}.2
 License: OpenLDAP
 Group: System Environment/Daemons
 Source0: ftp://ftp.OpenLDAP.org/pub/OpenLDAP/openldap-release/openldap-%{version_22}.tgz
@@ -74,6 +74,7 @@ Patch57: openldap-2.2.13-sb_sasl_readwrites.patch
 Patch58: openldap-2.2.13-config-pid.patch
 Patch59: openldap-2.2.13-acl-parse.patch
 Patch60: openldap-2.2.13-classes.patch
+Patch61: openldap-2.2.13-modify-leak.patch
 
 URL: http://www.openldap.org/
 BuildRoot: %{_tmppath}/%{name}-%{version_22}-root
@@ -192,6 +193,7 @@ pushd openldap-%{version_22}
 %patch58 -p1 -b .config-pid
 %patch59 -p0 -b .acl-parse
 %patch60 -p0 -b .classes
+%patch61 -p0 -b .modify-leak
 
 cp %{_datadir}/libtool/config.{sub,guess} build/
 popd
@@ -788,6 +790,9 @@ fi
 %attr(0644,root,root)      %{evolution_connector_libdir}/*.a
 
 %changelog
+* Wed Nov 28 2007 Jan Safranek <jsafranek@redhat.com> 2.2.13-8.2
+- fix memory leak when adding/modifying entries (#400971)
+
 * Mon Nov  5 2007 Jan Safranek <jsafranek@redhat.com> 2.2.13-8.1
 - fix security issue CVE-2007-5707 (#359981)
 - fix manual bind timeout (#368241)
