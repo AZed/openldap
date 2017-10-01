@@ -2,7 +2,7 @@
 %define db_version 4.4.20
 %define ldbm_backend berkeley
 %define version_22 2.2.29
-%define version_23 2.3.19
+%define version_23 2.3.27
 %define evolution_connector_prefix %{_libdir}/evolution-openldap
 %define evolution_connector_includedir %{evolution_connector_prefix}/include
 %define evolution_connector_libdir %{evolution_connector_prefix}/%{_lib}
@@ -13,7 +13,7 @@
 Summary: The configuration files, libraries, and documentation for OpenLDAP.
 Name: openldap
 Version: %{version_23}
-Release: 4
+Release: 5
 License: OpenLDAP
 Group: System Environment/Daemons
 Source0: ftp://ftp.OpenLDAP.org/pub/OpenLDAP/openldap-release/openldap-%{version_23}.tgz
@@ -39,6 +39,8 @@ Patch4: openldap-2.2.13-pie.patch
 Patch5: openldap-2.3.11-toollinks.patch
 Patch6: openldap-2.3.11-nosql.patch
 #Patch7: openldap-2.3.19-nostrip.patch
+Patch8: openldap-2.3.19-gethostbyXXXX_r.patch
+Patch9: openldap-2.3.27-getdn.patch
 
 # Patches for 2.2.29 for the compat-openldap package.
 Patch100: openldap-2.2.13-tls-fix-connection-test.patch
@@ -57,6 +59,8 @@ Patch303: MigrationTools-26-suffix.patch
 Patch304: MigrationTools-46-schema.patch
 Patch305: MigrationTools-45-noaliases.patch
 
+Patch400: db-4.4.20-1.patch
+Patch401: db-4.4.20-2.patch
 
 URL: http://www.openldap.org/
 BuildRoot: %{_tmppath}/%{name}-%{version_23}-root
@@ -151,6 +155,12 @@ required by some applications.
 %prep
 %setup -q -c -a 1 -a 2 -a 3 -a 4 -a 5
 
+pushd db-%{db_version}
+%patch400 -b .patch1
+%patch401 -b .patch2
+popd
+
+
 pushd openldap-%{version_23}
 cp %{_datadir}/libtool/config.{sub,guess} build/
 popd
@@ -164,6 +174,9 @@ pushd openldap-%{version_23}
 %patch5 -p1 -b .toollinks
 %patch6 -p1 -b .nosql
 #%patch7 -p1 -b .nostrip
+%patch8 -p1 -b .gethostbyname_r
+%patch9 -p1 -b .getdn
+
 cp %{_datadir}/libtool/config.{sub,guess} build/
 popd
 
@@ -221,7 +234,6 @@ popd
 %build
 autodir=`pwd`/auto-instroot
 dbdir=`pwd`/db-instroot
-dbdir40=`pwd`/db-instroot-4.0
 libtool='%{_bindir}/libtool'
 tagname=CC; export tagname
 PATH=${autodir}/bin:${PATH}
@@ -344,6 +356,7 @@ build \
 	--enable-plugins \
 	--enable-slapd \
 	--enable-slurpd \
+	--enable-multimaster \
 	--enable-bdb \
 	--enable-hdb \
 	--enable-ldap \
@@ -682,6 +695,41 @@ fi
 %attr(0644,root,root)      %{evolution_connector_libdir}/*.a
 
 %changelog
+* Fri Dec 22 2006 Jay Fenlason <fenlason@redhat.com> 2.3.27-5
+- Include the -getdn patch to close
+  bz#214768: CVE-2006-5779 Specially crafted authcid makes OpenLDAP fail an assertion
+  Resolves: rhbz#214768
+
+* Sun Oct 01 2006 Jesse Keating <jkeating@redhat.com> - 2.3.27-4
+- rebuilt for unwind info generation, broken in gcc-4.1.1-21
+
+* Mon Sep 18 2006 Jay Fenlason <fenlason@redhat.com> 2.3.27-3
+- Include --enable-multimaster to close
+  bz#185821: adding slapd_multimaster to the configure options
+- Upgade guide.html to the correct one for openladp-2.3.27, closing
+  bz#190383: openldap 2.3 packages contain the administrator's guide for 2.2
+- Remove the quotes from around the slaptestflags in ldap.init
+  This closes one part of
+  bz#204593: service ldap fails after having added entries to ldap
+- include __db.* in the list of files to check ownership of in
+  ldap.init, as suggested in
+  bz#199322: RFE: perform cleanup in ldap.init
+
+* Fri Aug 25 2006 Jay Fenlason <fenlason@redhat.com> 2.3.27-2
+- New upstream release
+- Include the gethostbyname_r patch so that nss_ldap won't hang
+  on recursive attemts to ldap_initialize.
+
+* Wed Jul 12 2006 Jesse Keating <jkeating@redhat.com> - 2.3.24-2.1
+- rebuild
+
+* Wed Jun 7 2006 Jay Fenlason <fenlason@redhat.com> 2.3.24-2
+- New upstream version
+
+* Thu Apr 27 2006 Jay Fenlason <fenlason@redhat.com> 2.3.21-2
+- Upgrade to 2.3.21
+- Add two upstream patches for db-4.4.20
+
 * Mon Feb 13 2006 Jay Fenlason <fenlason@redhat.com> 2.3.19-4
 - Re-fix ldap.init
 
