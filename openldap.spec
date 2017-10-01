@@ -1,12 +1,15 @@
 # TODO: add make test after build
 
+# TODO: hardening using RPM macros - instead of -Wl,-z,relro in LDFLAGS
+#%global _hardened_build 1
+
 %define evolution_connector_prefix %{_libdir}/evolution-openldap
 %define evolution_connector_includedir %{evolution_connector_prefix}/include
 %define evolution_connector_libdir %{evolution_connector_prefix}/%{_lib}
 
 Name: openldap
 Version: 2.4.26
-Release: 1%{?dist}.1
+Release: 8%{?dist}
 Summary: LDAP support libraries
 Group: System Environment/Daemons
 License: OpenLDAP
@@ -27,6 +30,27 @@ Patch4: openldap-smbk5pwd-overlay.patch
 Patch5: openldap-ldaprc-currentdir.patch
 Patch6: openldap-userconfig-setgid.patch
 Patch7: openldap-nss-free-peer-cert.patch
+Patch8: openldap-nss-init-threadsafe.patch
+Patch9: openldap-nss-reqcert-hostname.patch
+Patch10: openldap-nss-verifycert.patch
+Patch11: openldap-nss-memleak-free-certs.patch
+Patch12: openldap-constraint-overlay-config.patch
+Patch13: openldap-dds-overlay-tolerance.patch
+Patch14: openldap-man-slapo-unique.patch
+Patch15: openldap-nss-wildcards.patch
+Patch16: openldap-dns-priority.patch
+Patch17: openldap-man-ldap-sync.patch
+Patch18: openldap-nss-handshake-threadsafe.patch
+Patch19: openldap-syncrepl-unset-tls-options.patch
+Patch20: openldap-nss-deferred-init-copy-params.patch
+Patch21: openldap-nss-segfault-key-not-set.patch
+Patch22: openldap-ld_defconn-rebind.patch
+Patch23: openldap-nss-dont-overwrite-verify-cert-error.patch
+Patch24: openldap-nss-clean-memory-for-token-pin.patch
+Patch25: openldap-cve-nss-cipher-suite-ignored.patch
+Patch26: openldap-nss-default-cipher-suite-always-selected.patch
+Patch27: openldap-tls-unbind-shutdown-order.patch
+Patch28: openldap-cve-assertion-processing-search-queries.patch
 
 # patches for the evolution library (see README.evolution)
 Patch200: openldap-evolution-ntlm.patch
@@ -54,8 +78,8 @@ libraries, and documentation for OpenLDAP.
 %package devel
 Summary: LDAP development libraries and header files
 Group: Development/Libraries
-Requires: openldap = %{version}-%{release}, cyrus-sasl-devel >= 2.1
-Provides: openldap-evolution-devel = %{version}-%{release}
+Requires: openldap%{?_isa} = %{version}-%{release}, cyrus-sasl-devel >= 2.1
+Provides: openldap-evolution-devel%{?_isa} = %{version}-%{release}
 
 %description devel
 The openldap-devel package includes the development libraries and
@@ -68,9 +92,9 @@ customized LDAP clients.
 %package servers
 Summary: LDAP server
 License: OpenLDAP
-Requires: openldap = %{version}-%{release}, openssl
+Requires: openldap%{?_isa} = %{version}-%{release}
 Requires(pre): shadow-utils, initscripts
-Requires(post): chkconfig, /sbin/runuser, make, initscripts
+Requires(post): chkconfig, /sbin/runuser, make, initscripts, openssl
 Requires(preun): chkconfig, initscripts
 # BEWARE: DB 5.1 is the latest version supported by OpenLDAP 2.4.25; however we have 5.2 in Rawhide
 BuildRequires: libdb-devel >= 5.0, libdb-devel < 5.3
@@ -86,7 +110,7 @@ over the Internet. This package contains the slapd server and related files.
 
 %package servers-sql
 Summary: SQL support module for OpenLDAP server
-Requires: openldap-servers = %{version}-%{release}
+Requires: openldap-servers%{?_isa} = %{version}-%{release}
 Group: System Environment/Daemons
 
 %description servers-sql
@@ -100,7 +124,7 @@ slapd server can use to read data from an RDBMS.
 
 %package clients
 Summary: LDAP client utilities
-Requires: openldap = %{version}-%{release}
+Requires: openldap%{?_isa} = %{version}-%{release}
 Group: Applications/Internet
 
 %description clients
@@ -127,6 +151,27 @@ pushd openldap-%{version}
 %patch5 -p1 -b .ldaprc-currentdir
 %patch6 -p1 -b .userconfig-setgid
 %patch7 -p1 -b .nss-free-peer-cert
+%patch8 -p1 -b .nss-init-threadsafe
+%patch9 -p1 -b .nss-reqcert-hostname
+%patch10 -p1 -b .nss-verifycert
+%patch11 -p1 -b .nss-memleak-free-certs
+%patch12 -p1 -b .constraint-overlay-config
+%patch13 -p1 -b .dds-overlay-tolerance
+%patch14 -p1 -b .man-slapo-unique
+%patch15 -p1 -b .nss-wildcards
+%patch16 -p1 -b .dns-priority
+%patch17 -p1 -b .man-ldap-sync
+%patch18 -p1 -b .nss-handshake-threadsafe
+%patch19 -p1 -b .syncrepl-unset-tls-options
+%patch20 -p1 -b .nss-deferred-init-copy-params
+%patch21 -p1 -b .nss-segfault-key-not-set
+%patch22 -p1 -b .ld_defconn-rebind
+%patch23 -p1 -b .nss-dont-overwrite-verify-cert-error
+%patch24 -p1 -b .nss-clean-memory-for-token-pin
+%patch25 -p1 -b .cve-nss-cipher-suite-ignored
+%patch26 -p1 -b .nss-default-cipher-suite-always-selected
+%patch27 -p1 -b .tls-unbind-shutdown-order
+%patch28 -p1 -b .cve-assertion-processing-search-queries
 
 cp %{_datadir}/libtool/config/config.{sub,guess} build/
 
@@ -164,6 +209,7 @@ export CPPFLAGS="-I%_includedir/nss3 -I%_includedir/nspr4"
 export CFLAGS="$RPM_OPT_FLAGS $CPPFLAGS -fPIC -D_REENTRANT -DLDAP_CONNECTIONLESS -D_GNU_SOURCE -DHAVE_TLS -DHAVE_MOZNSS -DSLAPD_LMHASH"
 export NSS_LIBS="-lssl3 -lsmime3 -lnss3 -lnssutil3 -lplds4 -lplc4 -lnspr4"
 export LIBS=""
+export LDFLAGS="$LDFLAGS -Wl,-z,relro"
 
 build() {
 
@@ -175,6 +221,8 @@ build() {
     \
     --with-tls=no \
     --with-cyrus-sasl \
+    \
+    --enable-wrappers \
     \
     --enable-passwd \
     \
@@ -649,6 +697,45 @@ exit 0
 %attr(0644,root,root)      %{evolution_connector_libdir}/*.a
 
 %changelog
+* Wed Jun 27 2012 Jan Vcelak <jvcelak@redhat.com> 2.4.26-8
+- fix: TLS error messages overwriting in tlsm_verify_cert() (#810462)
+- fix: reading pin from file can make all TLS connections hang (#829317)
+- CVE-2012-2668: cipher suite selection by name can be ignored (#825875)
+- fix: default cipher suite is always selected (#828790)
+- fix: invalid order of TLS shutdown operations (#808464)
+- CVE-2012-1164: Assertion failure by processing search queries requesting only attributes for particular entry (#802514)
+
+* Mon Mar 26 2012 Jan Synáček <jsynacek@redhat.com> 2.4.26-7
+- fix: Re-binding to a failed connection can segfault (#784989)
+
+* Tue Jan 31 2012 Jan Vcelak <jvcelak@redhat.com> 2.4.26-6
+- fix requires of main package to include %%{?_isa}
+- fix: replication (syncrepl) with TLS causes segfault (#783431)
+- fix: slapd segfaults when PEM certificate is used and key is not set (#772890)
+
+* Thu Oct 06 2011 Jan Vcelak <jvcelak@redhat.com> 2.4.26-5
+- rebuild: openldap does not work after libdb rebase (#743824)
+- regression fix: openldap built without tcp_wrappers (#743213)
+
+* Wed Sep 21 2011 Jan Vcelak <jvcelak@redhat.com> 2.4.26-4
+- new feature update: honor priority/weight with ldap_domain2hostlist (#733078)
+
+* Mon Sep 12 2011 Jan Vcelak <jvcelak@redhat.com> 2.4.26-3
+- fix: SSL_ForceHandshake function is not thread safe (#701678)
+- fix: allow unsetting of tls_* syncrepl options (#734187)
+
+* Wed Aug 24 2011 Jan Vcelak <jvcelak@redhat.com> 2.4.26-2
+- security hardening: library needs partial RELRO support added (#733071)
+- fix: NSS_Init* functions are not thread safe (#731112)
+- fix: incorrect behavior of allow/try options of VerifyCert and TLS_REQCERT (#725819)
+- fix: memleak - free the return of tlsm_find_and_verify_cert_key (#725818)
+- fix: conversion of constraint overlay settings to cn=config is incorrect (#733067)
+- fix: DDS overlay tolerance parametr doesn't function and breakes default TTL (#733069)
+- manpage fix: errors in manual page slapo-unique (#733070)
+- fix: matching wildcard hostnames in certificate Subject field does not work (#733073)
+- new feature: honor priority/weight with ldap_domain2hostlist (#733078)
+- manpage fix: wrong ldap_sync_destroy() prototype in ldap_sync(3) manpage (#717722)
+
 * Sun Aug 14 2011 Rex Dieter <rdieter@fedoraproject.org> - 2.4.26-1.1
 - Rebuilt for rpm (#728707)
 

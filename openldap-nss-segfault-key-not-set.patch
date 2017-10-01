@@ -1,0 +1,22 @@
+MozNSS + PEM: fix segfault when TLS certificate key is not set
+
+Upstream ITS: #7135
+Upstream commit: 1107103dd7e767db9c080b3276cb6e742fcf36a1
+Resolves: #772890
+Author: Jan Vcelak <jvcelak@redhat.com>
+
+diff --git a/libraries/libldap/tls_m.c b/libraries/libldap/tls_m.c
+index 09348b7..da230c5 100644
+--- a/libraries/libldap/tls_m.c
++++ b/libraries/libldap/tls_m.c
+@@ -2267,8 +2267,8 @@ tlsm_deferred_ctx_init( void *arg )
+ 		}
+ 	} else { /* set up secure server */
+ 		SSLKEAType certKEA;
+-		CERTCertificate *serverCert;
+-		SECKEYPrivateKey *serverKey;
++		CERTCertificate *serverCert = NULL;
++		SECKEYPrivateKey *serverKey = NULL;
+ 		SECStatus status;
+ 
+ 		/* must have a certificate for the server to use */

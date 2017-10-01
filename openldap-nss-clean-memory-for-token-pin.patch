@@ -1,0 +1,31 @@
+MozNSS: read pin from file file can cause infinite loop
+
+The buffer allocated for reading password file has to be initialized
+with zeros, or we need to append zero at the end of the file. Otherwise
+we might read unitialized memory and consider it to be a password.
+
+Author: Jan Vcelak <jvcelak@redhat.com>
+Upstream ITS: #7291
+Upstream commit: 00d0e162720b8cf03b9e5428892158f0768db9a6
+Resolves: #829317
+
+---
+ libraries/libldap/tls_m.c |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/libraries/libldap/tls_m.c b/libraries/libldap/tls_m.c
+index d71fec7..2e755eb 100644
+--- a/libraries/libldap/tls_m.c
++++ b/libraries/libldap/tls_m.c
+@@ -786,7 +786,7 @@ tlsm_get_pin_from_file(const char *token_name, tlsm_ctx *ctx)
+ 	}
+ 
+ 	/* create a buffer to hold the file contents */
+-	if ( !( contents = PR_MALLOC( file_info.size + 1 ) ) ) {
++	if ( !( contents = PR_CALLOC( file_info.size + 1 ) ) ) {
+ 		PRErrorCode errcode = PR_GetError();
+ 		Debug( LDAP_DEBUG_ANY,
+ 		       "TLS: could not alloc a buffer for contents of pin file %s - error %d:%s.\n",
+-- 
+1.7.10.4
+
