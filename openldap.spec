@@ -5,7 +5,7 @@
 
 Name: openldap
 Version: 2.4.23
-Release: 26%{?dist}.2
+Release: 31%{?dist}
 Summary: LDAP support libraries
 Group: System Environment/Daemons
 License: OpenLDAP
@@ -80,6 +80,18 @@ Patch142: openldap-nss-allow-ca-dbdir-pemfile.patch
 Patch143: openldap-memleak-def_urlpre.patch
 Patch144: openldap-cve-nss-cipher-suite-ignored.patch
 Patch145: openldap-cve-nss-default-cipher-suite-always-selected.patch
+Patch146: openldap-tls-unbind-shutdown-order.patch
+Patch147: openldap-nss-dont-overwrite-verify-cert-error.patch
+Patch148: openldap-nss-clean-memory-for-token-pin.patch
+Patch149: openldap-nss-multiple-tls-contexts.patch
+Patch150: openldap-nss-update-cipher-list.patch
+Patch151: openldap-nss-tls_session-reuse-hostname-check.patch
+Patch152: openldap-nss-hashed-cacertdir-filename-matching.patch
+Patch153: openldap-nss-ignore-certdb-type-prefix.patch
+Patch154: openldap-nss-certs-from-certdb-fallback-pem.patch
+Patch155: openldap-dns-ipv6-queries.patch
+Patch156: openldap-slapd-preserve-mirrormode-when-deleting-syncrepl.patch
+Patch157: openldap-rwm-slapd-segfault-modrdn.patch
 
 # patches for the evolution library (see README.evolution)
 Patch200: openldap-evolution-ntlm.patch
@@ -230,6 +242,18 @@ pushd openldap-%{version}
 %patch143 -p1 -b .memleak-def_urlpre
 %patch144 -p1 -b .cve-nss-cipher-suite-ignored
 %patch145 -p1 -b .cve-nss-default-cipher-suite-always-selected
+%patch146 -p1 -b .tls-unbind-shutdown-order
+%patch147 -p1 -b .nss-dont-overwrite-verify-cert-error
+%patch148 -p1 -b .nss-clean-memory-for-token-pin
+%patch149 -p1 -b .nss-multiple-tls-contexts
+%patch150 -p1 -b .nss-update-cipher-list
+%patch151 -p1 -b .nss-tls_session-reuse-hostname-check
+%patch152 -p1 -b .nss-hashed-cacertdir-filename-matching
+%patch153 -p1 -b .nss-ignore-certdb-type-prefix
+%patch154 -p1 -b .nss-certs-from-certdb-fallback-pem
+%patch155 -p1 -b .dns-ipv6-queries
+%patch156 -p1 -b .slapd-preserve-mirrormode-when-deleting-syncrepl
+%patch157 -p1 -b .rwm-slapd-segfault-modrdn
 
 cp %{_datadir}/libtool/config/config.{sub,guess} build/
 
@@ -769,12 +793,31 @@ exit 0
 %attr(0644,root,root)      %{evolution_connector_libdir}/*.a
 
 %changelog
-* Tue Jul 31 2012 Jan Vcelak <jvcelak@redhat.com> 2.4.23-26.2
+* Wed Oct 31 2012 Jan Vcelak <jvcelak@redhat.com> 2.4.23-31
+- fix update: libldap does not load PEM certificate if certdb is used as TLS_CACERTDIR (#859858)
+
+* Fri Oct 12 2012 Jan Vcelak <jvcelak@redhat.com> 2.4.23-30
+- fix: slapd with rwm overlay segfault following ldapmodify (#864913)
+
+* Tue Sep 25 2012 Jan Vcelak <jvcelak@redhat.com> 2.4.23-29
+- fix: invalid order of TLS shutdown operations (#818572)
+- fix: TLS error messages overwriting in tlsm_verify_cert() (#828787)
+- fix: reading pin from file can make all TLS connections hang (#829319)
+- fix: replication with TLS does not work (#707599)
+- fix: some TLS ciphers cannot be enabled (#852339)
+- fix: connection hangs after fallback to second server when certificate hostname verification fails (#843056)
+- fix: not all certificates in OpenSSL compatible CA certificate directory format are loaded (#811468)
+- fix: MozNSS certificate database in SQL format cannot be used (#857390)
+- fix: libldap does not load PEM certificate if certdb is used as TLS_CACERTDIR (#859858)
+- fix: do not send IPv6 DNS queries when IPv6 is disabled on the host (#835012)
+- fix: modification of olcSyncrepl attribute takes server out of MirrorMode (#821848)
+
+* Tue Jul 31 2012 Jan Vcelak <jvcelak@redhat.com> 2.4.23-28
 - CVE-2012-2668 (#825875)
   + cipher suite selection by name can be ignored
   + default cipher suite is always selected
 
-* Tue Jul 31 2012 Jan Vcelak <jvcelak@redhat.com> 2.4.23-26.1
+* Mon Jul 30 2012 Jan Vcelak <jvcelak@redhat.com> 2.4.23-27
 - fix: smbk5pwd module computes invalid LM hashes (#820278)
 
 * Mon May 07 2012 Jan Vcelak <jvcelak@redhat.com> 2.4.23-26

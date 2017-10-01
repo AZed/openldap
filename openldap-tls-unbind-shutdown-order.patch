@@ -1,0 +1,30 @@
+unbind: free socket prior to destroying TLS context
+
+Author: Jan Vcelak <jvcelak@redhat.com>
+Resolves: #818572
+Upstream ITS: #7241
+Upstream commit: 221531b31a02c162c60c7d4491169855454c1ee0
+
+diff a/libraries/libldap/unbind.c b/libraries/libldap/unbind.c
+--- a/libraries/libldap/unbind.c
++++ b/libraries/libldap/unbind.c
+@@ -112,6 +112,8 @@
+ 	ldap_pvt_thread_mutex_unlock( &ld->ld_res_mutex );
+ #endif
+ 
++	ber_sockbuf_free( ld->ld_sb );
++
+ 	/* final close callbacks */
+ 	{
+ 		ldaplist *ll, *next;
+@@ -197,8 +199,6 @@
+ 		ld->ld_options.ldo_cctrls = NULL;
+ 	}
+ 
+-	ber_sockbuf_free( ld->ld_sb );   
+-   
+ #ifdef LDAP_R_COMPILE
+ 	ldap_pvt_thread_mutex_destroy( &ld->ld_req_mutex );
+ 	ldap_pvt_thread_mutex_destroy( &ld->ld_res_mutex );
+-- 
+1.7.10.4
