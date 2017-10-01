@@ -5,7 +5,7 @@
 
 Name: openldap
 Version: 2.4.39
-Release: 6%{?dist}
+Release: 7%{?dist}
 Summary: LDAP support libraries
 Group: System Environment/Daemons
 License: OpenLDAP
@@ -56,6 +56,8 @@ Patch22: openldap-support-tlsv1-and-later.patch
 Patch23: openldap-olcfrontend-config.patch
 # pending upstream inclusion, ITS #7744
 Patch24: openldap-man-tls-reqcert.patch
+# CVE-2015-6908, ITS#8240
+Patch25: openldap-ITS8240-remove-obsolete-assert.patch
 
 # Fedora specific patches
 Patch100: openldap-autoconf-pkgconfig-nss.patch
@@ -177,6 +179,7 @@ AUTOMAKE=%{_bindir}/true autoreconf -fi
 %patch22 -p1
 %patch23 -p1
 %patch24 -p1
+%patch25 -p1
 
 %patch102 -p1
 
@@ -612,6 +615,9 @@ exit 0
 %{_mandir}/man3/*
 
 %changelog
+* Wed Sep 16 2015 Matúš Honěk <mhonek@redhat.com> - 2.4.39-7
+- CVE-2015-6908 openldap: ber_get_next denial of service vulnerability (#1263173)
+
 * Thu Dec  4 2014 Jan Synáček <jsynacek@redhat.com> - 2.4.39-6
 - refix: slapd.ldif olcFrontend missing important/required objectclass (#1132094)
 
