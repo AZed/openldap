@@ -1,0 +1,11 @@
+--- openldap-2.2.13/servers/slapd/back-meta/search.c.search-error-fix
++++ openldap-2.2.13/servers/slapd/back-meta/search.c
+@@ -185,6 +185,8 @@ meta_back_search( Operation *op, SlapRep
+ 				goto new_candidate;
+ 			}
+ 
++		} else {
++			is_scope++;
+ 		}
+ 
+ 		/*

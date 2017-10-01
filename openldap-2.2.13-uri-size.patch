@@ -1,0 +1,11 @@
+--- openldap-2.2.13/libraries/libldap/init.c.orig	2007-05-30 15:03:32.000000000 +0200
++++ openldap-2.2.13/libraries/libldap/init.c	2007-05-30 15:28:15.000000000 +0200
+@@ -108,7 +108,7 @@
+ static void openldap_ldap_init_w_conf(
+ 	const char *file, int userconf )
+ {
+-	char linebuf[128];
++	char linebuf[LINE_MAX];
+ 	FILE *fp;
+ 	int i;
+ 	char *cmd, *opt;

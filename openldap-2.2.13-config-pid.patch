@@ -1,0 +1,13 @@
+--- openldap-2.2.13/servers/slapd/slapd.conf.orig	2007-06-18 17:53:21.000000000 +0200
++++ openldap-2.2.13/servers/slapd/slapd.conf	2007-06-18 17:54:02.000000000 +0200
+@@ -14,8 +14,8 @@
+ # service AND an understanding of referrals.
+ #referral	ldap://root.openldap.org
+ 
+-pidfile		%LOCALSTATEDIR%/run/slapd.pid
+-argsfile	%LOCALSTATEDIR%/run/slapd.args
++pidfile		%LOCALSTATEDIR%/run/openldap/slapd.pid
++argsfile	%LOCALSTATEDIR%/run/openldap/slapd.args
+ 
+ # Load dynamic backend modules:
+ # modulepath	%MODULEDIR%

@@ -8,15 +8,17 @@
 #              for implementing the industry standard directory services.
 # processname: slapd
 # config: /etc/openldap/slapd.conf
-# pidfile: /var/run/slapd.pid
+# pidfile: /var/run/openldap/slapd.pid
 
 # Source function library.
 . /etc/init.d/functions
 
+PIDFILE=/var/run/openldap/slapd.pid
+
 # Source networking configuration and check that networking is up.
 if [ -r /etc/sysconfig/network ] ; then
 	. /etc/sysconfig/network
-	[ ${NETWORKING} = "no" ] && exit 0
+	[ ${NETWORKING} = "no" ] && exit 1
 fi
 
 # Source an auxiliary options file if we have one, and pick up OPTIONS,
@@ -28,31 +30,81 @@ fi
 slapd=/usr/sbin/slapd
 slurpd=/usr/sbin/slurpd
 slaptest=/usr/sbin/slaptest
-[ -x ${slapd} ] || exit 0
-[ -x ${slurpd} ] || exit 0
+[ -x ${slapd} ] || exit 1
+[ -x ${slurpd} ] || exit 1
 
 RETVAL=0
 
-function start() {
-        # Check for simple-but-common errors.
+#
+# Pass commands given in $2 and later to "test" run as user given in $1.
+#
+function testasuser() {
+    local user= cmd=
+    user="$1"
+    shift
+    cmd="$@"
+    if test x"$user" != x ; then
+       if test x"$cmd" != x ; then
+           /sbin/runuser -f -m -s /bin/sh -c "test $cmd" -- "$user"
+       else
+           false
+       fi
+    else
+       false
+    fi
+}
+
+
+function configtest() {
+	local user= ldapuid= dbdir= file=
+	# Check for simple-but-common errors.
 	user=ldap
+	prog=`basename ${slapd}`
 	ldapuid=`id -u $user`
 	# Unaccessible database files.
-	for dbdir in `grep ^directory /etc/openldap/slapd.conf | sed s,^directory,,` ; do
-		for file in `find ${dbdir}/ -not -uid $ldapuid -and \( -name "*.dbb" -or -name "*.gdbm" -or -name "*.bdb" \)` ; do
+	slaptestflags=
+	for dbdir in `LANG=C egrep '^directory[[:space:]]+[[:print:]]+$' /etc/openldap/slapd.conf | sed s,^directory,,` ; do
+		for file in `find ${dbdir}/ -not -uid $ldapuid -and \( -name "*.dbb" -or -name "*.gdbm" -or -name "*.bdb" -or -name "__db.*" -or -name "log.*" -or -name alock \)` ; do
 			echo -n $"$file is not owned by \"$user\"" ; warning ; echo
 		done
 	done
+	# Unaccessible TLS configuration files.
+	tlsconfigs=`LANG=C egrep '^(TLSCACertificateFile|TLSCertificateFile|TLSCertificateKeyFile)[[:space:]]' /etc/openldap/slapd.conf | awk '{print $2}'`
+	for file in $tlsconfigs ; do
+		if ! testasuser $user -r $file ; then
+			echo -n $"$file is not readable by \"$user\"" ; warning ; echo
+		fi
+	done
 	# Check the configuration file.
-        echo -n $"Checking configuration files for $prog: "
-	$slaptest
-	RETVAL=$?
-	if test $RETVAL -eq 0 ; then
-	    success
-	else
-	    failure
-	    exit 1
+	if ! action $"Checking configuration files for $prog: " /sbin/runuser -m -s "$slaptest" -- "$user" $slaptestflags; then
+		exit 1
 	fi
+	# check stale pid of dead slapd (running slapd is filtered out in start() function)
+	if [ -f $PIDFILE ] ; then
+		rm -f $PIDFILE
+		if ! action $"Stale pid file detected, attempt to recover database: " /usr/sbin/slapd_db_recover -h /var/lib/ldap ; then
+			exit 1;
+		fi
+	fi	
+}
+
+
+function start() {
+	# check if we are already running
+	PID=`cat $PIDFILE 2>/dev/null`
+	if [ -n "$PID" ] ; then
+		# .pid file exists
+		if  ps -p $PID >/dev/null ; then
+			#we are still running
+			exit 1;
+		fi
+	fi
+
+        # Check for simple-but-common errors.
+	configtest
+
+	user=ldap
+	ldapuid=`id -u $user`
         # Start daemons.
 	prog=`basename ${slapd}`
         echo -n $"Starting $prog: "
@@ -101,24 +153,30 @@ function stop() {
 case "$1" in
     start)
         start
+	RETVAL=$?
         ;;
     stop)
         stop
+	RETVAL=$?
         ;;
     status)
         status ${slapd}
+	RETVAL=$?
         if grep -q "^replogfile" /etc/openldap/slapd.conf ; then
             status ${slurpd}
+	    [ $RETVAL -eq 0 ] && RETVAL=$?
 	fi
 	;;
     restart)
 	stop
 	start
+	RETVAL=$?
 	;;
     condrestart)
         if [ -f /var/lock/subsys/ldap ] ; then
             stop
             start
+	    RETVAL=$?
         fi
 	;;
     *)

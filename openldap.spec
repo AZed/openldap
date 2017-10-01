@@ -15,7 +15,7 @@
 Summary: The configuration files, libraries, and documentation for OpenLDAP.
 Name: openldap
 Version: %{version_22}
-Release: 7.4E
+Release: 8
 License: OpenLDAP
 Group: System Environment/Daemons
 Source0: ftp://ftp.OpenLDAP.org/pub/OpenLDAP/openldap-release/openldap-%{version_22}.tgz
@@ -62,6 +62,17 @@ Patch45: openldap-2.2.13-nostrip.patch
 Patch46: openldap-2.2.13-wait4msg-select-fix.patch
 Patch47: openldap-2.2.13-gethostbyname_r.patch
 Patch48: openldap-2.2.13-selfwrite.patch
+Patch49: openldap-2.2.13-logon-loop.patch
+Patch50: openldap-2.2.13-config-sasl-options.patch
+Patch51: openldap-2.2.13-timeout-option.patch
+Patch52: openldap-2.2.13-uri-size.patch
+Patch53: openldap-2.2.13-port.patch
+Patch54: openldap-2.2.13-alias-crash.patch
+Patch55: openldap-2.2.13-sets.patch
+Patch56: openldap-2.2.13-search.patch
+Patch57: openldap-2.2.13-sb_sasl_readwrites.patch
+Patch58: openldap-2.2.13-config-pid.patch
+Patch59: openldap-2.2.13-acl-parse.patch
 
 URL: http://www.openldap.org/
 BuildRoot: %{_tmppath}/%{name}-%{version_22}-root
@@ -168,6 +179,17 @@ pushd openldap-%{version_22}
 %patch46 -p1 -b .wait4msg-select-fix
 %patch47 -p1 -b .gethostbyname_r
 %patch48 -p1 -b .selfwrite
+%patch49 -b .logon-loop
+%patch50 -p1 -b .sasl
+%patch51 -p1 -b .timeout
+%patch52 -p1 -b .uri-size
+%patch53 -p1 -b .port
+%patch54 -p1 -b .alias-crash
+%patch55 -p0 -b .sets
+%patch56 -p1 -b .search
+%patch57 -p1 -b .sasl-readwrites
+%patch58 -p1 -b .config-pid
+%patch59 -p0 -b .acl-parse
 
 cp %{_datadir}/libtool/config.{sub,guess} build/
 popd
@@ -504,9 +526,9 @@ popd
 # libraries share sonames, so we have to choose one.
 mkdir -p $RPM_BUILD_ROOT/%{_libdir}/
 pushd openldap-%{compat_version}/build-compat/libraries
-	for lib in libldap libldap_r liblber ; do
+	for lib in liblber libldap libldap_r  ; do
 		pushd $lib
-		../../libtool --mode=install install -m755 $lib.la $RPM_BUILD_ROOT/%{_libdir}/$lib.la
+		$libtool --mode=install install -m755 $lib.la $RPM_BUILD_ROOT/%{_libdir}/$lib.la
 		popd
 	done
 popd
@@ -587,6 +609,8 @@ cp $RPM_SOURCE_DIR/migration-tools.txt TOOLS.migration
 
 # Create the data directory.
 mkdir -p $RPM_BUILD_ROOT/var/lib/ldap
+# Create the new run directory
+mkdir -p $RPM_BUILD_ROOT/var/run/openldap
 
 # Hack the build root out of the default config files.
 perl -pi -e "s|$RPM_BUILD_ROOT||g" $RPM_BUILD_ROOT/%{_sysconfdir}/openldap/*.conf
@@ -729,6 +753,7 @@ fi
 %attr(0755,root,root) %dir %{_datadir}/openldap/ucdata
 %attr(0644,root,root) %dir %{_datadir}/openldap/ucdata/*
 %attr(0700,ldap,ldap) %dir /var/lib/ldap
+%attr(0755,ldap,ldap) %dir /var/run/openldap
 %attr(0755,root,root) %{_libdir}/libslapd_db-*.*.so
 %ifarch %{nptl_arches}
 %attr(0755,root,root) %{_libdir}/tls
@@ -761,6 +786,26 @@ fi
 %attr(0644,root,root)      %{evolution_connector_libdir}/*.a
 
 %changelog
+* Wed Jul 19 2007 Jan Safranek <jsafranek@redhat.com> 2.2.13-8
+- include patch to prevent infinite loop (at user logon)
+  (bz#230404)
+- Include sals patch to close bz#230396
+- Include manual bind timeout patch to close #230390
+- Process URIs bigger than 128 characters (#209607)
+- Check port number of URIs (#197802)
+- Prevent slapd from crashing on dereferencing alias (#180172)
+- fix set access rules (#177731)
+- fix proxy queries (#185648)
+- fix opeldap-compat compilation (#217228)
+- fix GSSAPI query for subschemaSubentries (#215294)
+- fix init script to return appropriate exit codes (#242666)
+- put pid into /var/run/openldap/ directory (#244687)
+- run db_recover on service slapd start after unclean shutdown 
+  (#192861, #195920, #213167)
+- fix acl rules parsing (#244772)
+- init script now checks permissions of certificate files
+  (#171165)
+
 * Thu Mar 22 2007 Jay Fenlason <fenlason@redhat.com> 2.3.13-7.4E
 - include the -selfwrite patch to close
   Resolves: rhbz#205826: CVE-2006-4600 openldap improper selfwrite access

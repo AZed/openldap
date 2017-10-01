@@ -1,0 +1,20 @@
+see openldap-2.2.13-sb_sasl_readwrites.patch for rest of the patch
+(both patches contained common changes and it was easier to modify
+this patch)
+
+===================================================================
+RCS file: /repo/OpenLDAP/pkg/ldap/libraries/libldap/cyrus.c,v
+retrieving revision 1.109
+retrieving revision 1.110
+diff -u -r1.109 -r1.110
+--- libraries/libldap/cyrus.c	2004/06/30 20:30:09	1.109
++++ libraries/libldap/cyrus.c	2004/06/30 20:36:47	1.110
+@@ -352,7 +352,7 @@
+ 		/* Still have something left?? */
+ 		if ( p->buf_out.buf_ptr != p->buf_out.buf_end ) {
+ 			errno = EAGAIN;
+-			return 0;
++			return -1;
+ 		}
+ 	}
+ 
