@@ -1,5 +1,5 @@
 /* Generic wait.h */
-/* $OpenLDAP: pkg/ldap/include/ac/wait.h,v 1.16.2.5 2010/04/13 20:22:52 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/include/ac/wait.h,v 1.16.2.6 2011/01/04 23:49:58 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2011 The OpenLDAP Foundation.

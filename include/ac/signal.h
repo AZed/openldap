@@ -1,5 +1,5 @@
 /* Generic signal.h */
-/* $OpenLDAP: pkg/ldap/include/ac/signal.h,v 1.25.2.5 2010/04/13 20:22:51 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/include/ac/signal.h,v 1.25.2.6 2011/01/04 23:49:57 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2011 The OpenLDAP Foundation.

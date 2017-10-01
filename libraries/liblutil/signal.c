@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/liblutil/signal.c,v 1.10.2.5 2010/04/13 20:23:07 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/liblutil/signal.c,v 1.10.2.6 2011/01/04 23:50:12 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2011 The OpenLDAP Foundation.

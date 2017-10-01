@@ -1,5 +1,5 @@
 /* monitor.c - monitor bdb backend */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/monitor.c,v 1.19.2.15 2010/04/13 20:23:25 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/monitor.c,v 1.19.2.17 2011/01/04 23:50:30 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2011 The OpenLDAP Foundation.

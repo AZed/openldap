@@ -1,5 +1,5 @@
 /* filter.c - routines for parsing and dealing with filters */
-/* $OpenLDAP: pkg/ldap/servers/slapd/filter.c,v 1.134.2.18 2010/04/13 20:23:14 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/filter.c,v 1.134.2.23 2011/02/02 21:26:59 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2011 The OpenLDAP Foundation.

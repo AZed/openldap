@@ -1,5 +1,5 @@
 /* oidm.c - object identifier macro routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/oidm.c,v 1.21.2.5 2010/04/13 20:23:17 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/oidm.c,v 1.21.2.6 2011/01/04 23:50:22 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2011 The OpenLDAP Foundation.

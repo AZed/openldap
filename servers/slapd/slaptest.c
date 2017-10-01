@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/slaptest.c,v 1.7.2.7 2010/04/13 20:23:21 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/slaptest.c,v 1.7.2.8 2011/01/04 23:50:26 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2004-2011 The OpenLDAP Foundation.

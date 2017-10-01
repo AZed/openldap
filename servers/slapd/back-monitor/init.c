@@ -1,5 +1,5 @@
 /* init.c - initialize monitor backend */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/init.c,v 1.125.2.14 2010/04/19 16:53:03 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/init.c,v 1.125.2.17 2011/01/26 23:23:32 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2001-2011 The OpenLDAP Foundation.

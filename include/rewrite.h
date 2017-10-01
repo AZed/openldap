@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/include/rewrite.h,v 1.15.2.5 2010/04/13 20:22:50 kurt Exp $
+/* $OpenLDAP: pkg/ldap/include/rewrite.h,v 1.15.2.6 2011/01/04 23:49:55 kurt Exp $
  */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *

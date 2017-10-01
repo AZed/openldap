@@ -1,5 +1,5 @@
 /* trans.c - bdb backend transaction routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/trans.c,v 1.8.2.5 2010/04/13 20:23:26 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/trans.c,v 1.8.2.6 2011/01/04 23:50:31 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2011 The OpenLDAP Foundation.

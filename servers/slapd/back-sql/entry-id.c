@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/entry-id.c,v 1.67.2.11 2010/04/13 20:23:42 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/entry-id.c,v 1.67.2.15 2011/01/04 23:50:47 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2011 The OpenLDAP Foundation.

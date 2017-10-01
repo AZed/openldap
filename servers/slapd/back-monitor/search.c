@@ -1,5 +1,5 @@
 /* search.c - monitor backend search function */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/search.c,v 1.39.2.7 2010/04/13 20:23:33 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/search.c,v 1.39.2.10 2011/01/13 19:02:46 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2001-2011 The OpenLDAP Foundation.

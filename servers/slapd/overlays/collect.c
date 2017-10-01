@@ -1,5 +1,5 @@
 /* collect.c - Demonstration of overlay code */
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/collect.c,v 1.5.2.12 2010/04/14 17:26:11 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/collect.c,v 1.5.2.15 2011/01/28 18:53:37 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2003-2011 The OpenLDAP Foundation.

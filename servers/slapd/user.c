@@ -1,5 +1,5 @@
 /* user.c - set user id, group id and group access list */
-/* $OpenLDAP: pkg/ldap/servers/slapd/user.c,v 1.25.2.5 2010/04/13 20:23:22 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/user.c,v 1.25.2.6 2011/01/04 23:50:27 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2011 The OpenLDAP Foundation.

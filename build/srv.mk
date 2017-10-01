@@ -1,4 +1,4 @@
-# $OpenLDAP: pkg/ldap/build/srv.mk,v 1.18.2.5 2010/04/13 20:22:22 kurt Exp $
+# $OpenLDAP: pkg/ldap/build/srv.mk,v 1.18.2.6 2011/01/04 23:49:26 kurt Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 1998-2011 The OpenLDAP Foundation.

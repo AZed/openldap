@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/proto-sql.h,v 1.30.2.8 2010/04/13 20:23:43 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/proto-sql.h,v 1.30.2.10 2011/01/04 23:50:47 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2011 The OpenLDAP Foundation.

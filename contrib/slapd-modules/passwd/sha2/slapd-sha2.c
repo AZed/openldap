@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/passwd/sha2/slapd-sha2.c,v 1.1.2.5 2010/04/15 18:40:14 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/passwd/sha2/slapd-sha2.c,v 1.1.2.6 2011/01/04 23:49:35 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2009-2011 The OpenLDAP Foundation.

@@ -1,5 +1,5 @@
 /* mr.c - routines to manage matching rule definitions */
-/* $OpenLDAP: pkg/ldap/servers/slapd/mr.c,v 1.64.2.6 2010/04/13 20:23:17 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/mr.c,v 1.64.2.7 2011/01/04 23:50:21 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2011 The OpenLDAP Foundation.

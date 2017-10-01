@@ -1,7 +1,7 @@
 # corba.schema -- Corba Object Schema
 #	depends upon core.schema
-# $OpenLDAP: pkg/ldap/servers/slapd/schema/corba.schema,v 1.7.2.5 2010/04/13 20:23:47 kurt Exp $
-# $OpenLDAP: pkg/ldap/servers/slapd/schema/corba.schema,v 1.7.2.5 2010/04/13 20:23:47 kurt Exp $
+# $OpenLDAP: pkg/ldap/servers/slapd/schema/corba.schema,v 1.7.2.6 2011/01/04 23:50:51 kurt Exp $
+# $OpenLDAP: pkg/ldap/servers/slapd/schema/corba.schema,v 1.7.2.6 2011/01/04 23:50:51 kurt Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 1998-2011 The OpenLDAP Foundation.

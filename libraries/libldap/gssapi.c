@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/gssapi.c,v 1.1.2.6 2010/04/19 20:40:08 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/gssapi.c,v 1.1.2.8 2011/01/06 18:43:20 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2011 The OpenLDAP Foundation.

@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-perl/config.c,v 1.22.2.5 2010/04/13 20:23:37 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-perl/config.c,v 1.22.2.6 2011/01/04 23:50:41 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2011 The OpenLDAP Foundation.

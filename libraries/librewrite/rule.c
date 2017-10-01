@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/librewrite/rule.c,v 1.23.2.6 2010/04/13 20:23:09 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/librewrite/rule.c,v 1.23.2.7 2011/01/04 23:50:13 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2011 The OpenLDAP Foundation.

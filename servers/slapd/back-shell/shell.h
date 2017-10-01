@@ -1,5 +1,5 @@
 /* shell.h - shell backend header file */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-shell/shell.h,v 1.24.2.5 2010/04/13 20:23:39 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-shell/shell.h,v 1.24.2.6 2011/01/04 23:50:44 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2011 The OpenLDAP Foundation.
