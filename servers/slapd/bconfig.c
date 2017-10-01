@@ -3414,6 +3414,10 @@ loglevel2bvarray( int l, BerVarray *bva )
 		loglevel_init();
 	}
 
+	if ( l == 0 ) {
+		return value_add_one( bva, ber_bvstr( "0" ) );
+	}
+
 	return mask_to_verbs( loglevel_ops, l, bva );
 }
 
@@ -3855,7 +3859,7 @@ config_tls_config(ConfigArgs *c) {
 	}
 	ch_free( c->value_string );
 	c->cleanup = config_tls_cleanup;
-	if ( isdigit( (unsigned char)c->argv[1][0] ) ) {
+	if ( isdigit( (unsigned char)c->argv[1][0] ) && c->type != CFG_TLS_PROTOCOL_MIN ) {
 		if ( lutil_atoi( &i, c->argv[1] ) != 0 ) {
 			Debug(LDAP_DEBUG_ANY, "%s: "
 				"unable to parse %s \"%s\"\n",
@@ -5801,8 +5805,11 @@ out:
 		ca->reply = msg;
 	}
 
-	if ( ca->cleanup )
-		ca->cleanup( ca );
+	if ( ca->cleanup ) {
+		i = ca->cleanup( ca );
+		if (rc == LDAP_SUCCESS)
+			rc = i;
+	}
 out_noop:
 	if ( rc == LDAP_SUCCESS ) {
 		attrs_free( save_attrs );

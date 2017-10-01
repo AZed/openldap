@@ -271,7 +271,7 @@ int mdb_entry_release(
 			SLAP_TRUNCATE_MODE, SLAP_UNDEFINED_MODE */
  
 	mdb_entry_return( op, e );
-	if ( slapMode == SLAP_SERVER_MODE ) {
+	if ( slapMode & SLAP_SERVER_MODE ) {
 		OpExtra *oex;
 		LDAP_SLIST_FOREACH( oex, &op->o_extra, oe_next ) {
 			if ( oex->oe_key == mdb ) {
@@ -505,7 +505,8 @@ mdb_opinfo_get( Operation *op, struct mdb_info *mdb, int rdonly, mdb_op_info **m
 		moi->moi_ref = 0;
 	}
 	if ( renew ) {
-		mdb_txn_renew( moi->moi_txn );
+		rc = mdb_txn_renew( moi->moi_txn );
+		assert(!rc);
 	}
 	moi->moi_ref++;
 	if ( *moip != moi )

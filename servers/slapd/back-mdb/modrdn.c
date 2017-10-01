@@ -492,7 +492,7 @@ txnReturn:
 
 	/* add new DN */
 	rs->sr_err = mdb_dn2id_add( op, mc, mc, np ? np->e_id : p->e_id,
-		np ? nsubs : 0, &dummy );
+		nsubs, np != NULL, &dummy );
 	if ( rs->sr_err != 0 ) {
 		Debug(LDAP_DEBUG_TRACE,
 			"<=- " LDAP_XSTRING(mdb_modrdn)
@@ -656,6 +656,8 @@ done:
 		if ( opinfo.moi_oe.oe_key ) {
 			LDAP_SLIST_REMOVE( &op->o_extra, &opinfo.moi_oe, OpExtra, oe_next );
 		}
+	} else {
+		moi->moi_ref--;
 	}
 
 	if( preread_ctrl != NULL && (*preread_ctrl) != NULL ) {
