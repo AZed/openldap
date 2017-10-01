@@ -25,7 +25,7 @@ CERT_VALID_MONTHS=12
 usage() {
 	printf "usage: generate-server-cert.sh [-d certdb-dir] [-n cert-name]\n" >&2
 	printf "                               [-p password-file] [-h hostnames]\n" >&2
-	pritnf "                               [-a dns-alt-names] [-o]\n" >&2
+	printf "                               [-a dns-alt-names] [-o]\n" >&2
 	exit 1
 }
 
@@ -102,7 +102,7 @@ certutil -d "$CERTDB_DIR" -f "$PASSWORD_FILE" -z "$CERT_RANDOM" \
 	-8 "$ALT_NAMES" \
 	&>/dev/null
 
-rm -f $RANDOM_DATA
+rm -f $CERT_RANDOM
 
 # tune permissions
 

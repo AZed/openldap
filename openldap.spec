@@ -5,7 +5,7 @@
 
 Name: openldap
 Version: 2.4.39
-Release: 3%{?dist}
+Release: 4%{?dist}
 Summary: LDAP support libraries
 Group: System Environment/Daemons
 License: OpenLDAP
@@ -288,7 +288,7 @@ install -m 0700 -d %{buildroot}%{_sharedstatedir}/ldap
 install -m 0755 -d %{buildroot}%{_localstatedir}/run/openldap
 
 # setup autocreation of runtime directories on tmpfs
-mkdir -p %{buildroot}%{_tmpfilesdir}/
+mkdir -p %{buildroot}%{_tmpfilesdir}
 install -m 0644 %SOURCE3 %{buildroot}%{_tmpfilesdir}/slapd.conf
 
 # install default ldap.conf (customized)
@@ -536,8 +536,8 @@ exit 0
 %config(noreplace) %dir %attr(0750,ldap,ldap) %{_sysconfdir}/openldap/slapd.d
 %config(noreplace) %{_sysconfdir}/openldap/schema
 %config(noreplace) %{_sysconfdir}/sysconfig/slapd
-%config(noreplace) %{_tmpfilesdir}/slapd.conf
 %config(noreplace) %{_sysconfdir}/openldap/check_password.conf
+%{_tmpfilesdir}/slapd.conf
 %dir %attr(0700,ldap,ldap) %{_sharedstatedir}/ldap
 %dir %attr(-,ldap,ldap) %{_localstatedir}/run/openldap
 %{_unitdir}/slapd.service
@@ -602,35 +602,49 @@ exit 0
 %{_mandir}/man3/*
 
 %changelog
-* Wed Feb 26 2014 Jan Synáček <jsynacek@redhat.com> - 2.4.39-3
-- move tmpfiles config to correct location (#1069513)
+* Mon Jul 14 2014 Jan Synáček <jsynacek@redhat.com> - 2.4.39-4
+- fix: fix typo in generate-server-cert.sh (#1117229)
 
-* Wed Feb  5 2014 Jan Synáček <jsynacek@redhat.com> - 2.4.39-2
-- CVE-2013-4449: segfault on certain queries with rwm overlay (#1061405)
+* Fri May 30 2014 Jan Synáček <jsynacek@redhat.com> - 2.4.39-3
+- fix: remove correct tmp file when generating server cert (#1103102)
 
-* Thu Jan 30 2014 Jan Synáček <jsynacek@redhat.com> - 2.4.39-1
-- new upstream release (#1040324)
+* Tue Feb  4 2014 Jan Synáček <jsynacek@redhat.com> - 2.4.39-2
+- CVE-2013-4449: segfault on certain queries with rwm overlay (#1060851)
 
-* Fri Jan 24 2014 Daniel Mach <dmach@redhat.com> - 2.4.35-12
-- Mass rebuild 2014-01-24
+* Wed Jan 29 2014 Jan Synáček <jsynacek@redhat.com> - 2.4.39-1
+- new upstream release (#1059186)
 
-* Thu Jan 16 2014 Jan Synáček <jsynacek@redhat.com> - 2.4.35-11
-- fix: missing EOL at the end of default /etc/openldap/ldap.conf (#1053005)
+* Mon Nov 18 2013 Jan Synáček <jsynacek@redhat.com> - 2.4.38-1
+- new upstream release (#1031608)
 
-* Fri Dec 27 2013 Daniel Mach <dmach@redhat.com> - 2.4.35-10
-- Mass rebuild 2013-12-27
+* Mon Nov 11 2013 Jan Synáček <jsynacek@redhat.com> - 2.4.37-2
+- fix: slaptest incorrectly handles 'include' directives containing a custom file (#1028935)
 
-* Tue Dec 17 2013 Jan Synáček <jsynacek@redhat.com> - 2.4.35-9
-- fix: more typos in manpages (#948562)
+* Wed Oct 30 2013 Jan Synáček <jsynacek@redhat.com> - 2.4.37-1
+- new upstream release (#1023916)
+- fix: missing a linefeed at the end of file /etc/openldap/ldap.conf (#1019836)
 
-* Wed Nov 13 2013 Jan Synáček <jsynacek@redhat.com> - 2.4.35-8
-- fix: slaptest incorrectly handles 'include' directives containing a custom file (#1023415)
+* Mon Oct 21 2013 Jan Synáček <jsynacek@redhat.com> - 2.4.36-4
+- fix: slapd daemon fails to start with segmentation fault on s390x (#1020661)
 
-* Mon Oct 14 2013 Jan Synáček <jsynacek@redhat.com> - 2.4.35-7
-- fix: CLDAP is broken for IPv6 (#1007421)
+* Tue Oct 15 2013 Jan Synáček <jsynacek@redhat.com> - 2.4.36-3
+- rebuilt for libdb-5.3.28
 
-* Wed Sep  4 2013 Jan Synáček <jsynacek@redhat.com> - 2.4.35-6
-- fix: typos in manpages (#948562)
+* Mon Oct 14 2013 Jan Synáček <jsynacek@redhat.com> - 2.4.36-2
+- fix: CLDAP is broken for IPv6 (#1018688)
+
+* Wed Sep  4 2013 Jan Synáček <jsynacek@redhat.com> - 2.4.36-2
+- fix: typos in manpages
+
+* Tue Aug 20 2013 Jan Synáček <jsynacek@redhat.com> - 2.4.36-1
+- new upstream release
+  + compile-in mdb backend
+
+* Sat Aug 03 2013 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 2.4.35-7
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_20_Mass_Rebuild
+
+* Wed Jul 17 2013 Petr Pisar <ppisar@redhat.com> - 2.4.35-6
+- Perl 5.18 rebuild
 
 * Fri Jun 14 2013 Jan Synáček <jsynacek@redhat.com> - 2.4.35-5
 - fix: using slaptest to convert slapd.conf to LDIF format ignores "loglevel 0"
