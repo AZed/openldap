@@ -15,7 +15,7 @@
 Summary: The configuration files, libraries, and documentation for OpenLDAP.
 Name: openldap
 Version: %{version_22}
-Release: 8%{?dist}.5
+Release: 12%{?dist}
 License: OpenLDAP
 Group: System Environment/Daemons
 Source0: ftp://ftp.OpenLDAP.org/pub/OpenLDAP/openldap-release/openldap-%{version_22}.tgz
@@ -75,8 +75,12 @@ Patch58: openldap-2.2.13-config-pid.patch
 Patch59: openldap-2.2.13-acl-parse.patch
 Patch60: openldap-2.2.13-classes.patch
 Patch61: openldap-2.2.13-modify-leak.patch
-Patch62: openldap-2.2.13-modify-noop.patch
-Patch63: openldap-2.3.27-ber-decode.patch
+Patch62: openldap-2.2.13-syncrepl-uuid.patch
+Patch63: openldap-2.2.13-modify-crash.patch
+Patch64: openldap-2.2.13-sasl-referral.patch
+Patch65: openldap-2.2.13-modify-noop.patch
+Patch66: openldap-2.2.13-ldapmodify-noop.patch
+Patch67: openldap-2.3.27-ber-decode.patch
 
 URL: http://www.openldap.org/
 BuildRoot: %{_tmppath}/%{name}-%{version_22}-root
@@ -196,8 +200,12 @@ pushd openldap-%{version_22}
 %patch59 -p0 -b .acl-parse
 %patch60 -p0 -b .classes
 %patch61 -p0 -b .modify-leak
-%patch62 -p1 -b .modify-noop
-%patch63 -p1 -b .ber-decode
+%patch62 -p1 -b .syncrepl-uuid
+%patch63 -p0 -b .modify-crash
+%patch64 -p1 -b .sasl-referrals
+%patch65 -p1 -b .modify-noop
+%patch66 -p0 -b .ldapmodify-noop
+%patch67 -p1 -b .ber-decode
 
 cp %{_datadir}/libtool/config.{sub,guess} build/
 popd
@@ -794,23 +802,26 @@ fi
 %attr(0644,root,root)      %{evolution_connector_libdir}/*.a
 
 %changelog
-* Wed Jul  2 2008 Jan Safranek <jsafranek@redhat.com> 2.2.13-8.5
-- fix CVE-2008-2952 (#453637)
+* Wed Jul  2 2008 Jan Safranek <jsafranek@redhat.com> 2.2.13-12
+- fix CVE-2008-2952 (#453638)
 
-* Thu Feb  7 2008 Jan Safranek <jsafranek@redhat.com> 2.2.13-8.4
-- better fix for CVE-2007-6698 (#431405), now it fixes also
-  add/delete/modrdn operations
+* Mon Feb  4 2008 Jan Safranek <jsafranek@redhat.com> 2.2.13-11
+- fix CVE-2007-6698 (#431406)
+- fix crash when ldapmodify client is used with -e option (#431682)
 
-* Mon Feb  4 2008 Jan Safranek <jsafranek@redhat.com> 2.2.13-8.3
-- fix CVE-2007-6698 (#431405)
+* Wed Nov 28 2007 Jan Safranek <jsafranek@redhat.com> 2.2.13-10
+- fix memory leak when adding/modifying entries (#361791)
+- fix entryUUID getting mangled when syncrepl is used
+  for replication (#331821)
+- fix crash on high modify load (#402651)
+- fix initscript to print error when TLS_CACERT file is
+  not readable by ldap user (#165172)
+- fix manual bind timeout (#230390)
+- fix nss_ldap chasing referrals with SASL authentications (#264441)
 
-* Wed Nov 28 2007 Jan Safranek <jsafranek@redhat.com> 2.2.13-8.2
-- fix memory leak when adding/modifying entries (#400971)
-
-* Mon Nov  5 2007 Jan Safranek <jsafranek@redhat.com> 2.2.13-8.1
-- fix security issue CVE-2007-5707 (#359981)
-- fix manual bind timeout (#368241)
-
+* Fri Oct 26 2007 Jan Safranek <jsafranek@redhat.com> 2.2.13-9
+- fix security issue CVE-2007-5707 (#359991)
+  
 * Wed Jul 19 2007 Jan Safranek <jsafranek@redhat.com> 2.2.13-8
 - include patch to prevent infinite loop (at user logon)
   (bz#230404)

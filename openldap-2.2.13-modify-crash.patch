@@ -1,0 +1,140 @@
+402651: Openldap server crashes on high modify load
+
+Source: upstream, see appropriate cvs revissions in diff
+Reviewed-By: Jan Safranek <jsafrane@redhat.com>
+
+Correctly lock entries and retry the operation if locking fails.
+
+Index: back-bdb/cache.c
+===================================================================
+RCS file: /repo/OpenLDAP/pkg/ldap/servers/slapd/back-bdb/cache.c,v
+retrieving revision 1.63
+retrieving revision 1.65
+diff -u -r1.63 -r1.65
+--- servers/slapd/back-bdb/cache.c	12 Jun 2004 05:39:24 -0000	1.63
++++ servers/slapd/back-bdb/cache.c	16 Jun 2004 01:29:02 -0000	1.65
+@@ -794,19 +794,20 @@
+ 	DB_LOCK *lock )
+ {
+ 	EntryInfo *ei = BEI(e);
+-	
++	int rc;
+ 	/* Get write lock on data */
+-	bdb_cache_entry_db_relock( env, locker, ei, 1, 0, lock );
++	rc = bdb_cache_entry_db_relock( env, locker, ei, 1, 0, lock );
+ 
+ 	/* If we've done repeated mods on a cached entry, then e_attrs
+ 	 * is no longer contiguous with the entry, and must be freed.
+ 	 */
+-	if ( (void *)e->e_attrs != (void *)(e+1) ) {
+-		attrs_free( e->e_attrs );
++	if ( ! rc ) {
++		if ( (void *)e->e_attrs != (void *)(e+1) ) {
++			attrs_free( e->e_attrs ); 
++		}
++		e->e_attrs = newAttrs;
+ 	}
+-	e->e_attrs = newAttrs;
+-
+-	return 0;
++	return rc;
+ }
+ 
+ /*
+@@ -824,10 +825,11 @@
+ {
+ 	EntryInfo *ei = BEI(e), *pei;
+ 	struct berval rdn;
+-	int rc = 0;
++	int rc;
+ 
+ 	/* Get write lock on data */
+-	bdb_cache_entry_db_relock( env, locker, ei, 1, 0, lock );
++	rc =  bdb_cache_entry_db_relock( env, locker, ei, 1, 0, lock );
++	if ( rc ) return rc;
+ 
+ 	/* If we've done repeated mods on a cached entry, then e_attrs
+ 	 * is no longer contiguous with the entry, and must be freed.
+@@ -910,7 +912,13 @@
+ 	bdb_cache_entryinfo_lock( ei );
+ 
+ 	/* Get write lock on the data */
+-	bdb_cache_entry_db_relock( env, locker, ei, 1, 0, lock );
++	rc = bdb_cache_entry_db_relock( env, locker, ei, 1, 0, lock );
++	if ( rc ) {
++		/* couldn't lock, undo and give up */
++		ei->bei_state ^= CACHE_ENTRY_DELETED;
++		bdb_cache_entryinfo_unlock( ei );
++		return rc;
++	}
+ 
+ 	/* set cache write lock */
+ 	ldap_pvt_thread_rdwr_wlock( &cache->c_rwlock );
+Index: back-bdb/delete.c
+===================================================================
+RCS file: /repo/OpenLDAP/pkg/ldap/servers/slapd/back-bdb/delete.c,v
+retrieving revision 1.107
+retrieving revision 1.108
+diff -u -r1.107 -r1.108
+--- servers/slapd/back-bdb/delete.c	10 Apr 2004 08:00:58 -0000	1.107
++++ servers/slapd/back-bdb/delete.c	16 Jun 2004 01:29:02 -0000	1.108
+@@ -545,8 +545,13 @@
+ 			goto return_results;
+ 		}
+ 	} else {
+-		bdb_cache_delete( &bdb->bi_cache, e, bdb->bi_dbenv,
++		rc = bdb_cache_delete( &bdb->bi_cache, e, bdb->bi_dbenv,
+ 			locker, &lock );
++		switch( rc ) {
++		case DB_LOCK_DEADLOCK:
++		case DB_LOCK_NOTGRANTED:
++			goto retry;
++		}
+ 
+ 		if ( LDAP_STAILQ_EMPTY( &op->o_bd->be_syncinfo )) {
+ 			if ( ctxcsn_added ) {
+Index: back-bdb/modify.c
+===================================================================
+RCS file: /repo/OpenLDAP/pkg/ldap/servers/slapd/back-bdb/modify.c,v
+retrieving revision 1.102
+retrieving revision 1.103
+diff -u -r1.102 -r1.103
+--- servers/slapd/back-bdb/modify.c	24 Feb 2004 00:55:59 -0000	1.102
++++ servers/slapd/back-bdb/modify.c	15 Jun 2004 19:13:40 -0000	1.103
+@@ -659,7 +659,12 @@
+ 			goto return_results;
+ 		}
+ 	} else {
+-		bdb_cache_modify( e, dummy.e_attrs, bdb->bi_dbenv, locker, &lock );
++		rc = bdb_cache_modify( e, dummy.e_attrs, bdb->bi_dbenv, locker, &lock );
++		switch( rc ) {
++		case DB_LOCK_DEADLOCK:
++		case DB_LOCK_NOTGRANTED:
++			goto retry;
++		}
+ 
+ 		if ( LDAP_STAILQ_EMPTY( &op->o_bd->be_syncinfo )) {
+ 			if ( ctxcsn_added ) {
+Index: back-bdb/modrdn.c
+===================================================================
+RCS file: /repo/OpenLDAP/pkg/ldap/servers/slapd/back-bdb/modrdn.c,v
+retrieving revision 1.141
+retrieving revision 1.142
+diff -u -r1.141 -r1.142
+--- servers/slapd/back-bdb/modrdn.c	10 Apr 2004 08:00:58 -0000	1.141
++++ servers/slapd/back-bdb/modrdn.c	16 Jun 2004 01:29:02 -0000	1.142
+@@ -1017,8 +1017,13 @@
+ 		}
+ 
+ 	} else {
+-		bdb_cache_modrdn( save, &op->orr_nnewrdn, e, neip,
++		rc = bdb_cache_modrdn( save, &op->orr_nnewrdn, e, neip,
+ 			bdb->bi_dbenv, locker, &lock );
++		switch( rc ) {
++		case DB_LOCK_DEADLOCK:
++		case DB_LOCK_NOTGRANTED:
++			goto retry;
++		}
+ 
+ 		if ( LDAP_STAILQ_EMPTY( &op->o_bd->be_syncinfo )) {
+ 			if ( ctxcsn_added ) {

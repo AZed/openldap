@@ -1,0 +1,17 @@
+331821: openldap replication. entryUUID mangled on slave node
+
+Written-by: Jatin Nansi <jnansi@redhat.com>
+Reviewed-by: Jan Safranek <jsafrane@redhat.com>
+
+diff -up openldap-2.2.13/servers/slapd/syncrepl.c.orig openldap-2.2.13/servers/slapd/syncrepl.c
+--- openldap-2.2.13/servers/slapd/syncrepl.c.orig	2008-01-17 13:45:37.000000000 +0100
++++ openldap-2.2.13/servers/slapd/syncrepl.c	2008-01-17 13:46:10.000000000 +0100
+@@ -1191,7 +1191,7 @@ syncrepl_entry(
+ 		{
+ 			attr_delete( &e->e_attrs, slap_schema.si_ad_entryUUID );
+ 			attr_merge_one( e, slap_schema.si_ad_entryUUID,
+-				syncUUID, &ava.aa_value );
++				&syncUUID_strrep, syncUUID );
+ 
+ 			op->o_tag = LDAP_REQ_ADD;
+ 			op->ora_e = e;

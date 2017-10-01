@@ -69,7 +69,7 @@ function configtest() {
 		done
 	done
 	# Unaccessible TLS configuration files.
-	tlsconfigs=`LANG=C egrep '^(TLSCACertificateFile|TLSCertificateFile|TLSCertificateKeyFile)[[:space:]]' /etc/openldap/slapd.conf | awk '{print $2}'`
+	tlsconfigs=`LANG=C egrep '^(TLSCACertificateFile|TLSCertificateFile|TLSCertificateKeyFile|TLS_CACERT)[[:space:]]' /etc/openldap/slapd.conf | awk '{print $2}'`
 	for file in $tlsconfigs ; do
 		if ! testasuser $user -r $file ; then
 			echo -n $"$file is not readable by \"$user\"" ; warning ; echo
