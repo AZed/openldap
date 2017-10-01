@@ -1,4 +1,4 @@
-Copyright 2008-2010 The OpenLDAP Foundation. All rights reserved.
+Copyright 2008-2011 The OpenLDAP Foundation. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted only as authorized by the OpenLDAP
@@ -31,6 +31,9 @@ denyop (overlay)
 
 dsaschema (plugin)
 	Permit loading DSA-specific schema, including operational attrs.
+
+lastbind (overlay)
+	Record the last successful authentication on an entry.
 
 lastmod (overlay)
 	Track the time of the last write operation to a database.

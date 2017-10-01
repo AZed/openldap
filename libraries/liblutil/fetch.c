@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/libraries/liblutil/fetch.c,v 1.10.2.7 2010/04/13 20:23:05 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2010 The OpenLDAP Foundation.
+ * Copyright 1999-2011 The OpenLDAP Foundation.
  * Portions Copyright 1999-2003 Kurt D. Zeilenga.
  * All rights reserved.
  *
@@ -32,7 +32,6 @@
 #include <fetch.h>
 #endif
 
-#include "ldap_log.h"
 #include "lber_pvt.h"
 #include "ldap_pvt.h"
 #include "ldap_config.h"

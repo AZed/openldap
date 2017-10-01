@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/add.c,v 1.152.2.18 2010/04/13 20:23:23 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2010 The OpenLDAP Foundation.
+ * Copyright 2000-2011 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -492,7 +492,6 @@ retry:	/* transaction retry */
 return_results:
 	success = rs->sr_err;
 	send_ldap_result( op, rs );
-	slap_graduate_commit_csn( op );
 
 	if( ltid != NULL ) {
 		TXN_ABORT( ltid );
@@ -517,10 +516,11 @@ return_results:
 		}
 	}
 
+	slap_graduate_commit_csn( op );
+
 	if( postread_ctrl != NULL && (*postread_ctrl) != NULL ) {
 		slap_sl_free( (*postread_ctrl)->ldctl_value.bv_val, op->o_tmpmemctx );
 		slap_sl_free( *postread_ctrl, op->o_tmpmemctx );
 	}
-
 	return rs->sr_err;
 }

@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/clients/tools/ldapdelete.c,v 1.118.2.13 2010/04/15 22:16:50 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2010 The OpenLDAP Foundation.
+ * Copyright 1998-2011 The OpenLDAP Foundation.
  * Portions Copyright 1998-2003 Kurt D. Zeilenga.
  * All rights reserved.
  *

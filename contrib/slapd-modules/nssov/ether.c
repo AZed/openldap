@@ -2,7 +2,7 @@
 /* $OpenLDAP: pkg/ldap/contrib/slapd-modules/nssov/ether.c,v 1.1.2.5 2010/04/15 21:32:56 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2008-2010 The OpenLDAP Foundation.
+ * Copyright 2008-2011 The OpenLDAP Foundation.
  * Copyright 2008 by Howard Chu, Symas Corp.
  * All rights reserved.
  *

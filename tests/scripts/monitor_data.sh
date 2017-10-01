@@ -2,7 +2,7 @@
 # $OpenLDAP: pkg/ldap/tests/scripts/monitor_data.sh,v 1.2.2.3 2010/04/13 20:23:59 kurt Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2010 The OpenLDAP Foundation.
+## Copyright 1998-2011 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
