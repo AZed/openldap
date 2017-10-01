@@ -11,7 +11,7 @@
 Summary: LDAP support libraries
 Name: openldap
 Version: %{version}
-Release: 3%{?dist}
+Release: 7%{?dist}
 License: OpenLDAP
 Group: System Environment/Daemons
 Source0: ftp://ftp.OpenLDAP.org/pub/OpenLDAP/openldap-release/openldap-%{version}.tgz
@@ -35,6 +35,7 @@ Patch6: openldap-2.3.19-gethostbyXXXX_r.patch
 Patch9: openldap-2.3.37-smbk5pwd.patch
 Patch10: openldap-2.4.6-multilib.patch
 Patch11: openldap-2.4.12-options.patch
+Patch12: openldap-2.4.15-tls-null-char.patch
 
 # Patches for the evolution library
 Patch200: openldap-2.4.6-evolution-ntlm.patch
@@ -82,7 +83,7 @@ customized LDAP clients.
 Summary: LDAP server
 # OpenLDAP server includes Berkeley DB library, which is licensed under Sleepycat and BSD licenses)
 License: OpenLDAP and (Sleepycat and BSD)
-Requires: fileutils, make, openldap = %{version}-%{release}, openssl, /usr/sbin/useradd, /sbin/chkconfig, /sbin/runuser
+Requires: fileutils, make, openldap = %{version}-%{release}, openssl, /usr/sbin/useradd, /usr/sbin/groupadd, /sbin/chkconfig, /sbin/runuser
 Group: System Environment/Daemons
 
 %description servers
@@ -141,6 +142,7 @@ pushd openldap-%{version}
 %patch9 -p1 -b .smbk5pwd
 %patch10 -p1 -b .multilib
 %patch11 -p1 -b .options
+%patch12 -p1 -b .tls-null-char
 
 cp %{_datadir}/libtool/config/config.{sub,guess} build/
 popd
@@ -405,7 +407,9 @@ rm -rf $RPM_BUILD_ROOT
 
 %pre servers
 # Take care to only do ownership-changing if we're adding the user.
-if /usr/sbin/useradd -c "LDAP User" -u 55 \
+getent group ldap > /dev/null || \
+/usr/sbin/groupadd -r -g 55 ldap
+if /usr/sbin/useradd -c "LDAP User" -u 55 -g ldap \
     -s /sbin/nologin -r -d /var/lib/ldap ldap 2> /dev/null ; then
     if [ -d /var/lib/ldap ] ; then
         for dbfile in /var/lib/ldap/* ; do
@@ -604,6 +608,18 @@ fi
 %attr(0644,root,root)      %{evolution_connector_libdir}/*.a
 
 %changelog
+* Mon Jan 18 2010 Jan Zeleny <jzeleny@redhat.com> - 2.4.15-7
+- upstream path fixing CVE-2009-3767 (#537895)
+
+* Wed Oct 07 2009 Jan Zeleny <jzeleny@redhat.com> 2.4.15-6
+- fix of smbk5pwd patch - linking with libldap (#526500)
+
+* Tue Aug 25 2009 Jan Zeleny <jzeleny@redhat.com> 2.4.15-5
+- fix of spec file - group ldap created with correct gid
+
+* Tue Jun 09 2009 Jan Zeleny <jzeleny@redhat.com> 2.4.15-4
+- added $SLAPD_URLS variable to init script (#504504)
+
 * Thu Apr 09 2009 Jan Zeleny <jzeleny@redhat.com> 2.4.15-3
 - extended previous patch (#481310) to remove options cfMP
   from some client tools

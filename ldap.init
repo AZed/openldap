@@ -30,6 +30,7 @@
 SLAPD_LDAP="yes"
 SLAPD_LDAPI="no"
 SLAPD_LDAPS="no"
+SLAPD_URLS=""
 SLAPD_SHUTDOWN_TIMEOUT=3
 # OPTIONS, SLAPD_OPTIONS and KTB5_KTNAME are not defined
 
@@ -166,9 +167,9 @@ function start() {
 	# Define a couple of local variables which we'll need. Maybe.
 	user=ldap
 	prog=`basename ${slapd}`
-	harg=""
+	harg="$SLAPD_URLS"
 	if test x$SLAPD_LDAP = xyes ; then
-	    harg="ldap:///"
+	    harg="$harg ldap:///"
 	fi
 	if test x$SLAPD_LDAPS = xyes ; then
 	    harg="$harg ldaps:///"

@@ -47,7 +47,7 @@ diff -up openldap-2.4.11/servers/slapd/overlays/Makefile.in.patch8 openldap-2.4.
  	$(LTLINK_MOD) -module -o $@ valsort.lo version.lo $(LINK_LIBS)
  
 +smbk5pwd.la : smbk5pwd.lo
-+	$(LTLINK_MOD) -module -o $@ smbk5pwd.lo version.lo $(LINK_LIBS)
++	$(LTLINK_MOD) -module -o $@ smbk5pwd.lo version.lo -lldap -L../../../libraries/libldap/.libs/ $(LINK_LIBS)
 +
  install-local:	$(PROGRAMS)
  	@if test -n "$?" ; then \
