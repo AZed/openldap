@@ -5,7 +5,7 @@
 
 Name: openldap
 Version: 2.4.23
-Release: 15%{?dist}
+Release: 15%{?dist}.1
 Summary: LDAP support libraries
 Group: System Environment/Daemons
 License: OpenLDAP
@@ -43,6 +43,7 @@ Patch112: openldap-cve-ppolicy-forward-updates.patch
 Patch113: openldap-cve-ndb-bind-rootdn.patch
 Patch114: openldap-security-dos-empty-modrdn.patch
 Patch115: openldap-slapadd-hang.patch
+Patch116: openldap-nss-free-peer-cert.patch
 
 # patches for the evolution library (see README.evolution)
 Patch200: openldap-evolution-ntlm.patch
@@ -160,6 +161,7 @@ pushd openldap-%{version}
 %patch113 -p1 -b .cve-ndb-bind-rootdn
 %patch114 -p1 -b .security-dos-empty-modrdn
 %patch115 -p1 -b .slapadd-hang
+%patch116 -p1 -b .nss-free-peer-cert
 
 cp %{_datadir}/libtool/config/config.{sub,guess} build/
 
@@ -706,6 +708,9 @@ exit 0
 %attr(0644,root,root)      %{evolution_connector_libdir}/*.a
 
 %changelog
+* Wed Jul 20 2011 Jan Vcelak <jvcelak@redhat.com> 2.4.23-15.1
+- fix: memleak in tlsm_auth_cert_handler (#723134)
+
 * Wed Apr 13 2011 Jan Vcelak <jvcelak@redhat.com> 2.4.23-15
 - fix: rpm -V fail when upgrading with openldap-devel installed (#693716)
   (remove devel *.so symlinks from /lib and leave them in /usr/lib)
