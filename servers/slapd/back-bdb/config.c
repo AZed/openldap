@@ -2,7 +2,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2012 The OpenLDAP Foundation.
+ * Copyright 2000-2013 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -241,6 +241,8 @@ bdb_online_index( void *ctx, void *arg )
 		rc = TXN_BEGIN( bdb->bi_dbenv, NULL, &txn, bdb->bi_db_opflags );
 		if ( rc ) 
 			break;
+		Debug( LDAP_DEBUG_TRACE, LDAP_XSTRING(bdb_online_index) ": txn id: %x\n",
+			txn->id(txn), 0, 0 );
 		if ( getnext ) {
 			getnext = 0;
 			BDB_ID2DISK( id, &nid );
@@ -282,17 +284,16 @@ bdb_online_index( void *ctx, void *arg )
 		}
 		if ( ei->bei_e ) {
 			rc = bdb_index_entry( op, txn, BDB_INDEX_UPDATE_OP, ei->bei_e );
-			if ( rc == DB_LOCK_DEADLOCK ) {
+			if ( rc ) {
 				TXN_ABORT( txn );
-				ldap_pvt_thread_yield();
-				continue;
-			}
-			if ( rc == 0 ) {
-				rc = TXN_COMMIT( txn, 0 );
-				txn = NULL;
-			}
-			if ( rc )
+				if ( rc == DB_LOCK_DEADLOCK ) {
+					ldap_pvt_thread_yield();
+					continue;
+				}
 				break;
+			}
+			rc = TXN_COMMIT( txn, 0 );
+			txn = NULL;
 		}
 		id++;
 		getnext = 1;

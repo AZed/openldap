@@ -2,7 +2,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2012 The OpenLDAP Foundation.
+ * Copyright 1998-2013 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -620,7 +620,7 @@ LDAP_F (int) ldap_int_timeval_dup( struct timeval **dest,
 LDAP_F (int) ldap_connect_to_host( LDAP *ld, Sockbuf *sb,
 	int proto, LDAPURLDesc *srv, int async );
 LDAP_F (int) ldap_int_poll( LDAP *ld, ber_socket_t s,
-	struct timeval *tvp );
+	struct timeval *tvp, int wr );
 
 #if defined(HAVE_TLS) || defined(HAVE_CYRUS_SASL)
 LDAP_V (char *) ldap_int_hostname;

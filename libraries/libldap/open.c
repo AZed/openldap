@@ -1,7 +1,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2012 The OpenLDAP Foundation.
+ * Copyright 1998-2013 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -540,7 +540,7 @@ ldap_int_check_async_open( LDAP *ld, ber_socket_t sd )
 	struct timeval tv = { 0 };
 	int rc;
 
-	rc = ldap_int_poll( ld, sd, &tv );
+	rc = ldap_int_poll( ld, sd, &tv, 1 );
 	switch ( rc ) {
 	case 0:
 		/* now ready to start tls */

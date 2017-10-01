@@ -2,7 +2,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2012 The OpenLDAP Foundation.
+ * Copyright 2000-2013 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -194,8 +194,13 @@ mdb_online_index( void *ctx, void *arg )
 			mdb_txn_abort( txn );
 			txn = NULL;
 		}
-		if ( rc )
+		if ( rc ) {
+			Debug( LDAP_DEBUG_ANY,
+				LDAP_XSTRING(mdb_online_index) ": database %s: "
+				"txn_commit failed: %s (%d)\n",
+				be->be_suffix[0].bv_val, mdb_strerror(rc), rc );
 			break;
+		}
 		id++;
 		getnext = 1;
 	}
@@ -598,7 +603,7 @@ mdb_cf_gen( ConfigArgs *c )
 					c->cleanup = mdb_cf_cleanup;
 					rc = 0;
 				}
-				mdb->mi_dbenv_flags |= mdb_envflags[i].mask;
+				mdb->mi_dbenv_flags |= mdb_envflags[j].mask;
 			} else {
 				/* unknown keyword */
 				rc = 1;

@@ -1,7 +1,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2012 The OpenLDAP Foundation.
+ * Copyright 1999-2013 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * Portions Copyright 1999-2003 Howard Chu.
  * All rights reserved.
@@ -319,7 +319,7 @@ static ConfigTable metacfg[] = {
 		NULL, NULL },
 
 	{ "subtree-exclude", "pattern", 2, 2, 0,
-		ARG_STRING|ARG_MAGIC|LDAP_BACK_CFG_SUBTREE_EX,
+		ARG_MAGIC|LDAP_BACK_CFG_SUBTREE_EX,
 		meta_back_cf_gen, "( OLcfgDbAt:3.103 "
 			"NAME 'olcDbSubtreeExclude' "
 			"DESC 'DN of subtree to exclude from target' "
@@ -327,7 +327,7 @@ static ConfigTable metacfg[] = {
 			"SYNTAX OMsDirectoryString )",
 		NULL, NULL },
 	{ "subtree-include", "pattern", 2, 2, 0,
-		ARG_STRING|ARG_MAGIC|LDAP_BACK_CFG_SUBTREE_IN,
+		ARG_MAGIC|LDAP_BACK_CFG_SUBTREE_IN,
 		meta_back_cf_gen, "( OLcfgDbAt:3.104 "
 			"NAME 'olcDbSubtreeInclude' "
 			"DESC 'DN of subtree to include in target' "
@@ -1089,9 +1089,7 @@ meta_back_cf_gen( ConfigArgs *c )
 
 	assert( mi != NULL );
 
-	if ( c->op == SLAP_CONFIG_EMIT ) {
-		struct berval bv = BER_BVNULL;
-
+	if ( c->op == SLAP_CONFIG_EMIT || c->op == LDAP_MOD_DELETE ) {
 		if ( !mi )
 			return 1;
 
@@ -1102,6 +1100,10 @@ meta_back_cf_gen( ConfigArgs *c )
 			mt = c->ca_private;
 			mc = &mt->mt_mc;
 		}
+	}
+
+	if ( c->op == SLAP_CONFIG_EMIT ) {
+		struct berval bv = BER_BVNULL;
 
 		switch( c->type ) {
 		/* Base attrs */
@@ -1352,15 +1354,18 @@ meta_back_cf_gen( ConfigArgs *c )
 		/* target attrs */
 		case LDAP_BACK_CFG_URI: {
 			char *p2, *p1 = strchr( mt->mt_uri, ' ' );
-			bv.bv_len = strlen( mt->mt_uri ) + 1 + mt->mt_psuffix.bv_len;
+			bv.bv_len = strlen( mt->mt_uri ) + 3 + mt->mt_psuffix.bv_len;
 			bv.bv_val = ch_malloc( bv.bv_len + 1 );
+			p2 = bv.bv_val;
+			*p2++ = '"';
 			if ( p1 ) {
-				p2 = lutil_strncopy( bv.bv_val, mt->mt_uri, p1 - mt->mt_uri );
+				p2 = lutil_strncopy( p2, mt->mt_uri, p1 - mt->mt_uri );
 			} else {
-				p2 = lutil_strcopy( bv.bv_val, mt->mt_uri );
+				p2 = lutil_strcopy( p2, mt->mt_uri );
 			}
 			*p2++ = '/';
 			p2 = lutil_strcopy( p2, mt->mt_psuffix.bv_val );
+			*p2++ = '"';
 			if ( p1 ) {
 				strcpy( p2, p1 );
 			}

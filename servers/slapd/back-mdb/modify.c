@@ -2,7 +2,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2012 The OpenLDAP Foundation.
+ * Copyright 2000-2013 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -457,14 +457,6 @@ txnReturn:
 
 	ctrls[num_ctrls] = NULL;
 
-	/* Don't touch the opattrs, if this is a contextCSN update
-	 * initiated from updatedn */
-	if ( !be_isupdate(op) || !op->orm_modlist || op->orm_modlist->sml_next ||
-		 op->orm_modlist->sml_desc != slap_schema.si_ad_contextCSN ) {
-
-		slap_mods_opattrs( op, &op->orm_modlist, 1 );
-	}
-
 	/* begin transaction */
 	rs->sr_err = mdb_opinfo_get( op, mdb, 0, &moi );
 	rs->sr_text = NULL;
@@ -476,11 +468,18 @@ txnReturn:
 		rs->sr_text = "internal error";
 		goto return_results;
 	}
-
 	txn = moi->moi_txn;
 
+	/* Don't touch the opattrs, if this is a contextCSN update
+	 * initiated from updatedn */
+	if ( !be_isupdate(op) || !op->orm_modlist || op->orm_modlist->sml_next ||
+		 op->orm_modlist->sml_desc != slap_schema.si_ad_contextCSN ) {
+
+		slap_mods_opattrs( op, &op->orm_modlist, 1 );
+	}
+
 	/* get entry or ancestor */
-	rs->sr_err = mdb_dn2entry( op, txn, NULL, &op->o_req_ndn, &e, 1 );
+	rs->sr_err = mdb_dn2entry( op, txn, NULL, &op->o_req_ndn, &e, NULL, 1 );
 
 	if ( rs->sr_err != 0 ) {
 		Debug( LDAP_DEBUG_TRACE,
@@ -630,7 +629,7 @@ txnReturn:
 	}
 
 	if( rs->sr_err != 0 ) {
-		Debug( LDAP_DEBUG_TRACE,
+		Debug( LDAP_DEBUG_ANY,
 			LDAP_XSTRING(mdb_modify) ": txn_%s failed: %s (%d)\n",
 			op->o_noop ? "abort (no-op)" : "commit",
 			mdb_strerror(rs->sr_err), rs->sr_err );

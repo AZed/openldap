@@ -1,7 +1,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2012 The OpenLDAP Foundation.
+ * Copyright 1999-2013 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * Portions Copyright 1999-2003 Howard Chu.
  * All rights reserved.
@@ -456,7 +456,7 @@ typedef struct metainfo_t {
 
 #define	li_flags		mi_flags
 /* uses flags as defined in <back-ldap/back-ldap.h> */
-#define	META_BACK_F_ONERR_STOP		(0x01000000U)
+#define	META_BACK_F_ONERR_STOP		LDAP_BACK_F_ONERR_STOP
 #define	META_BACK_F_ONERR_REPORT	(0x02000000U)
 #define	META_BACK_F_ONERR_MASK		(META_BACK_F_ONERR_STOP|META_BACK_F_ONERR_REPORT)
 #define	META_BACK_F_DEFER_ROOTDN_BIND	(0x04000000U)

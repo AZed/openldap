@@ -1,7 +1,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2012 The OpenLDAP Foundation.
+ * Copyright 1998-2013 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -573,6 +573,11 @@ Connection * connection_init(
 
 	backend_connection_init(c);
 	ldap_pvt_thread_mutex_unlock( &c->c_mutex );
+
+	if ( !(flags & CONN_IS_UDP ))
+		Statslog( LDAP_DEBUG_STATS,
+			"conn=%ld fd=%ld ACCEPT from %s (%s)\n",
+			id, (long) s, peername, listener->sl_name.bv_val, 0 );
 
 	return c;
 }

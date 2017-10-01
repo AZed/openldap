@@ -2,7 +2,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2012 The OpenLDAP Foundation.
+ * Copyright 2000-2013 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -72,7 +72,7 @@ again:
 	if (rc == MDB_SUCCESS) {
 		rc = mdb_entry_encode( op, e, &data, &ec );
 		if( rc != LDAP_SUCCESS )
-			return LDAP_OTHER;
+			return rc;
 	}
 	if (rc) {
 		/* Was there a hole from slapadd? */
@@ -121,12 +121,17 @@ int mdb_id2edata(
 	MDB_val *data )
 {
 	MDB_val key;
+	int rc;
 
 	key.mv_data = &id;
 	key.mv_size = sizeof(ID);
 
 	/* fetch it */
-	return mdb_cursor_get( mc, &key, data, MDB_SET );
+	rc = mdb_cursor_get( mc, &key, data, MDB_SET );
+	/* stubs from missing parents - DB is actually invalid */
+	if ( rc == MDB_SUCCESS && !data->mv_size )
+		rc = MDB_NOTFOUND;
+	return rc;
 }
 
 int mdb_id2entry(
@@ -178,6 +183,9 @@ int mdb_id2entry(
 			return MDB_SUCCESS;
 		}
 	}
+	/* stubs from missing parents - DB is actually invalid */
+	if ( rc == MDB_SUCCESS && !data.mv_size )
+		rc = MDB_NOTFOUND;
 	if ( rc ) return rc;
 
 	rc = mdb_entry_decode( op, &data, e );
@@ -315,7 +323,7 @@ int mdb_entry_get(
 	txn = moi->moi_txn;
 
 	/* can we find entry */
-	rc = mdb_dn2entry( op, txn, NULL, ndn, &e, 0 );
+	rc = mdb_dn2entry( op, txn, NULL, ndn, &e, NULL, 0 );
 	switch( rc ) {
 	case MDB_NOTFOUND:
 	case 0:
@@ -592,6 +600,8 @@ static int mdb_entry_encode(Operation *op, Entry *e, MDB_val *data, Ecount *eh)
 	ptr = (unsigned char *)(lp + eh->offset);
 
 	for (a=e->e_attrs; a; a=a->a_next) {
+		if (!a->a_desc->ad_index)
+			return LDAP_UNDEFINED_TYPE;
 		*lp++ = mdb->mi_adxs[a->a_desc->ad_index];
 		l = a->a_numvals;
 		if (a->a_nvals != a->a_vals)

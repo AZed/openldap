@@ -2,7 +2,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2012 The OpenLDAP Foundation.
+ * Copyright 2000-2013 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -120,11 +120,11 @@ mdb_attr_dbs_open(
 	for ( i=0; i<mdb->mi_nattrs; i++ ) {
 		if ( mdb->mi_attrs[i]->ai_dbi )	/* already open */
 			continue;
-		rc = mdb_open( txn, mdb->mi_attrs[i]->ai_desc->ad_type->sat_cname.bv_val,
+		rc = mdb_dbi_open( txn, mdb->mi_attrs[i]->ai_desc->ad_type->sat_cname.bv_val,
 			flags, &mdb->mi_attrs[i]->ai_dbi );
 		if ( rc ) {
 			snprintf( cr->msg, sizeof(cr->msg), "database \"%s\": "
-				"mdb_open(%s) failed: %s (%d).",
+				"mdb_dbi_open(%s) failed: %s (%d).",
 				be->be_suffix[0].bv_val,
 				mdb->mi_attrs[i]->ai_desc->ad_type->sat_cname.bv_val,
 				mdb_strerror(rc), rc );
@@ -162,8 +162,10 @@ mdb_attr_dbs_close(
 {
 	int i;
 	for ( i=0; i<mdb->mi_nattrs; i++ )
-		if ( mdb->mi_attrs[i]->ai_dbi )
-			mdb_close( mdb->mi_dbenv, mdb->mi_attrs[i]->ai_dbi );
+		if ( mdb->mi_attrs[i]->ai_dbi ) {
+			mdb_dbi_close( mdb->mi_dbenv, mdb->mi_attrs[i]->ai_dbi );
+			mdb->mi_attrs[i]->ai_dbi = 0;
+		}
 }
 
 int
