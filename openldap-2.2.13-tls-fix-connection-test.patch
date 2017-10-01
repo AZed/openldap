@@ -1,0 +1,12 @@
+--- openldap-2.2.13/libraries/libldap/#tls.c~	2005-07-06 13:14:00.000000000 -0400
++++ openldap-2.2.13/libraries/libldap/tls.c	2005-07-06 13:14:00.000000000 -0400
+@@ -1736,7 +1736,8 @@
+ 
+ 	/* XXYYZ: this initiates operation only on default connection! */
+ 
+-	if ( ld->ld_sb != NULL && ldap_pvt_tls_inplace( ld->ld_sb ) != 0 ) {
++	if ( ( ld->ld_defconn != NULL ) ? ( ld->ld_defconn->lconn_sb != NULL && ldap_pvt_tls_inplace( ld->ld_defconn->lconn_sb ) != 0 )
++	    : ( ld->ld_sb != NULL && ldap_pvt_tls_inplace( ld->ld_sb ) != 0 ) ) {
+ 		return LDAP_LOCAL_ERROR;
+ 	}
+ 

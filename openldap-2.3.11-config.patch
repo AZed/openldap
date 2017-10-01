@@ -1,0 +1,111 @@
+--- openldap-2.3.17/servers/slapd/slapd.conf.config	2004-06-17 22:49:08.000000000 -0400
++++ openldap-2.3.17/servers/slapd/slapd.conf	2006-01-12 15:33:04.000000000 -0500
+@@ -3,15 +3,19 @@
+ # This file should NOT be world readable.
+ #
+ include		%SYSCONFDIR%/schema/core.schema
++include		%SYSCONFDIR%/schema/cosine.schema
++include		%SYSCONFDIR%/schema/inetorgperson.schema
++include		%SYSCONFDIR%/schema/nis.schema
+ 
+-# Define global ACLs to disable default read access.
++# Allow LDAPv2 client connections.  This is NOT the default.
++allow bind_v2
+ 
+ # Do not enable referrals until AFTER you have a working directory
+ # service AND an understanding of referrals.
+ #referral	ldap://root.openldap.org
+ 
+-pidfile		%LOCALSTATEDIR%/run/slapd.pid
+-argsfile	%LOCALSTATEDIR%/run/slapd.args
++pidfile		%LOCALSTATEDIR%/run/openldap/slapd.pid
++argsfile	%LOCALSTATEDIR%/run/openldap/slapd.args
+ 
+ # Load dynamic backend modules:
+ # modulepath	%MODULEDIR%
+@@ -21,6 +25,15 @@
+ # moduleload	back_passwd.la
+ # moduleload	back_shell.la
+ 
++# The next three lines allow use of TLS for encrypting connections using a
++# dummy test certificate which you can generate by changing to
++# /etc/pki/tls/certs, running "make slapd.pem", and fixing permissions on
++# slapd.pem so that the ldap user or group can read it.  Your client software
++# may balk at self-signed certificates, however.
++# TLSCACertificateFile /etc/pki/tls/certs/ca-bundle.crt
++# TLSCertificateFile /etc/pki/tls/certs/slapd.pem
++# TLSCertificateKeyFile /etc/pki/tls/certs/slapd.pem
++
+ # Sample security restrictions
+ #	Require integrity protection (prevent hijacking)
+ #	Require 112-bit (3DES or better) encryption for updates
+@@ -49,19 +62,32 @@
+ # rootdn can always read and write EVERYTHING!
+ 
+ #######################################################################
+-# BDB database definitions
++# ldbm and/or bdb database definitions
+ #######################################################################
+ 
+ database	bdb
+ suffix		"dc=my-domain,dc=com"
+ rootdn		"cn=Manager,dc=my-domain,dc=com"
+ # Cleartext passwords, especially for the rootdn, should
+-# be avoid.  See slappasswd(8) and slapd.conf(5) for details.
++# be avoided.  See slappasswd(8) and slapd.conf(5) for details.
+ # Use of strong authentication encouraged.
+-rootpw		secret
++# rootpw		secret
++# rootpw		{crypt}ijFYNcSNctBYg
++
+ # The database directory MUST exist prior to running slapd AND 
+ # should only be accessible by the slapd and slap tools.
+ # Mode 700 recommended.
+-directory	%LOCALSTATEDIR%/openldap-data
+-# Indices to maintain
+-index	objectClass	eq
++directory	/var/lib/ldap
++
++# Indices to maintain for this database
++index objectClass                       eq,pres
++index ou,cn,mail,surname,givenname      eq,pres,sub
++index uidNumber,gidNumber,loginShell    eq,pres
++index uid,memberUid                     eq,pres,sub
++index nisMapName,nisMapEntry            eq,pres,sub
++
++# Replicas of this database
++#replogfile /var/lib/ldap/openldap-master-replog
++#replica host=ldap-1.example.com:389 starttls=critical
++#     bindmethod=sasl saslmech=GSSAPI
++#     authcId=host/ldap-master.example.com@EXAMPLE.COM
+--- openldap-2.2.13/servers/slurpd/slurp.h	2004-01-01 13:16:42.000000000 -0500
++++ openldap-2.2.13/servers/slurpd/slurp.h	2004-06-15 11:40:04.000000000 -0400
+@@ -66,7 +66,7 @@
+ #define SERVICE_NAME	OPENLDAP_PACKAGE "-slurpd"
+ 
+ /* Default directory for slurpd's private copy of replication logs */
+-#define	DEFAULT_SLURPD_REPLICA_DIR	LDAP_RUNDIR LDAP_DIRSEP "openldap-slurp"
++#define	DEFAULT_SLURPD_REPLICA_DIR	"/var/lib/ldap"
+ 
+ /* Default name for slurpd's private copy of the replication log */
+ #define	DEFAULT_SLURPD_REPLOGFILE	"slurpd.replog"
+@@ -75,7 +75,7 @@
+ #define	DEFAULT_SLURPD_STATUS_FILE	"slurpd.status"
+ 
+ /* slurpd dump file - contents of rq struct are written here (debugging) */
+-#define	SLURPD_DUMPFILE			LDAP_TMPDIR LDAP_DIRSEP "slurpd.dump"
++#define	SLURPD_DUMPFILE			DEFAULT_SLURPD_REPLICA_DIR "/slurpd.dump"
+ 
+ /* Amount of time to sleep if no more work to do */
+ #define	DEFAULT_NO_WORK_INTERVAL	3
+--- openldap-2.3.11/doc/man/man8/slurpd.8.config	2005-07-10 00:36:41.000000000 -0400
++++ openldap-2.3.11/doc/man/man8/slurpd.8	2005-10-28 21:07:54.000000000 -0400
+@@ -120,7 +120,7 @@
+ temporary files may contain sensitive information.
+ This option allows you to specify the location of these temporary files. 
+ The default is
+-.BR LOCALSTATEDIR/openldap-slurp .
++.BR /var/lib/ldap .
+ .SH EXAMPLES
+ To start 
+ .I slurpd

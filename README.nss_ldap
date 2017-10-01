@@ -1,9 +1,0 @@
-These files are here specifically for use in building the nss_ldap package,
-and should not be used for any other purpose.
-
-They contain a backported patch which adds two functions which nss_ldap can
-use to avoid blocking in one particular use case, but which are not included
-in the 2.2 branch of OpenLDAP.
-
-When the openldap package updates to 2.3, these libraries will simply
-disappear.

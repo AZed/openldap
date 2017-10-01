@@ -8,7 +8,7 @@
 #              for implementing the industry standard directory services.
 # processname: slapd
 # config: /etc/openldap/slapd.conf
-# pidfile: /var/run/slapd.pid
+# pidfile: /var/run/openldap/slapd.pid
 
 # Source function library.
 . /etc/init.d/functions
@@ -71,7 +71,7 @@ function checkkeytab() {
     export KRB5_KTNAME
     if test -s "$KRB5_KTNAME" ; then
 	if test x"$klist" != x ; then
-	    if LANG=C klist -k "$KRB5_KTNAME" | tail -n 4 | awk '{print $2}' | grep -q ^"$service"/ ; then
+	    if LANG=C $klist -k "$KRB5_KTNAME" | tail -n 4 | awk '{print $2}' | grep -q ^"$service"/ ; then
 		if ! testasuser "$user" -r ${KRB5_KTNAME:-/etc/krb5.keytab} ; then
 		    true
 		else
@@ -121,7 +121,17 @@ function configtest() {
 		fi
 	done
 	# Check the configuration file.
-	action "Checking configuration files for $prog: " $slaptest $slaptestflags || exit 1
+	if ! action $"Checking configuration files for $prog: " /sbin/runuser -m -s "$slaptest" -- "$user" "$slaptestflags"; then
+		if /sbin/runuser -m -s "$slaptest" -- "$user" "-u" > /dev/null 2> /dev/null ; then
+			dirs=`LANG=C egrep '^directory[[:space:]]+[[:print:]]+$' /etc/openldap/slapd.conf | awk '{print $2}'`
+			for directory in $dirs ; do
+				if test -r $directory/__db.001 ; then
+					echo -n $"stale lock files may be present in $directory" ; warning ; echo
+				fi
+			done
+		fi
+		exit 1
+	fi
 }
 
 function start() {
