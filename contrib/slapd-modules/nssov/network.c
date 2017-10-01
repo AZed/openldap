@@ -1,5 +1,5 @@
 /* network.c - network address lookup routines */
-/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/nssov/network.c,v 1.1.2.5 2010/04/13 20:22:28 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/nssov/network.c,v 1.1.2.7 2010/05/26 15:21:53 hyc Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>. 
  *
  * Copyright 2008-2010 The OpenLDAP Foundation.

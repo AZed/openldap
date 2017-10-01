@@ -1,4 +1,4 @@
-# $OpenLDAP: pkg/ldap/contrib/slapd-modules/samba4/README,v 1.2.2.2 2010/04/21 20:13:22 quanah Exp $
+# $OpenLDAP: pkg/ldap/contrib/slapd-modules/samba4/README,v 1.2.2.3 2010/06/10 17:44:02 quanah Exp $
 
 This directory contains slapd overlays specific to samba4 LDAP backend:
 

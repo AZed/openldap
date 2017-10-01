@@ -1,4 +1,4 @@
-# $OpenLDAP: pkg/ldap/contrib/slapd-modules/samba4/Makefile,v 1.3.2.2 2010/04/21 20:13:22 quanah Exp $
+# $OpenLDAP: pkg/ldap/contrib/slapd-modules/samba4/Makefile,v 1.3.2.3 2010/06/10 17:44:02 quanah Exp $
 # This work is part of OpenLDAP Software <http://www.openldap.org/>.
 #
 # Copyright 1998-2010 The OpenLDAP Foundation.

@@ -1,5 +1,5 @@
 /* vernum.c - RDN value overlay */
-/* $OpenLDAP$ */
+/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/samba4/vernum.c,v 1.2.2.2 2010/06/10 17:44:02 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2009 The OpenLDAP Foundation.
